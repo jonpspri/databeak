@@ -5,7 +5,7 @@ title: Architecture
 
 ## Architecture Overview
 
-CSV Editor is built as a Model Context Protocol (MCP) server that provides
+DataBeak is built as a Model Context Protocol (MCP) server that provides
 AI assistants with comprehensive CSV data manipulation capabilities. This
 document explains the technical architecture and design decisions.
 

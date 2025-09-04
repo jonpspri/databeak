@@ -5,7 +5,7 @@ title: Installation
 
 ## Installation Guide
 
-Get CSV Editor up and running in just 2 minutes! This guide covers
+Get DataBeak up and running in just 2 minutes! This guide covers
 installation and client configuration.
 
 ## Prerequisites
@@ -18,7 +18,7 @@ installation and client configuration.
 
 ### Using uvx (Recommended)
 
-The fastest way to install and run CSV Editor:
+The fastest way to install and run DataBeak:
 
 ```bash
 # Install and run directly from GitHub
@@ -58,7 +58,7 @@ csv-editor
 
 ### Claude Desktop
 
-Configure Claude Desktop to use CSV Editor as an MCP server.
+Configure Claude Desktop to use DataBeak as an MCP server.
 
 Add this to your MCP Settings file
 (Claude → Settings → Developer → Show MCP Settings):
@@ -160,7 +160,7 @@ Edit `~/.config/zed/settings.json`:
 
 ## Environment Variables
 
-Configure CSV Editor behavior with these environment variables:
+Configure DataBeak behavior with these environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -232,12 +232,13 @@ mcp-inspector uvx --from \
 ### Getting Help
 
 - **[GitHub Issues](https://github.com/jonpspri/csv-editor/issues)** - Report bugs
-- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** - Ask questions
+- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)**
+  Ask questions
 - **[Documentation](/)** - Browse complete docs
 
 ## Next Steps
 
-Now that CSV Editor is installed:
+Now that DataBeak is installed:
 
 1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the
    basics

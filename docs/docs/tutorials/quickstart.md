@@ -5,14 +5,14 @@ title: Quick Start
 
 ## Quick Start Tutorial
 
-Learn how to use CSV Editor in 10 minutes with this hands-on tutorial.
+Learn how to use DataBeak in 10 minutes with this hands-on tutorial.
 We'll process a sample sales dataset using natural language commands.
 
 ## Prerequisites
 
-- CSV Editor installed and configured ([Installation Guide](../installation))
+- DataBeak installed and configured ([Installation Guide](../installation))
 - An AI assistant client (Claude Desktop, Continue, etc.) configured with
-  CSV Editor
+  DataBeak
 
 ## Step 1: Load Your Data
 
@@ -20,7 +20,8 @@ Ask your AI assistant:
 
 > "Load the sales data from my CSV file"
 
-The AI will use the `load_csv` tool to create a new session and load your data. You'll see a response with:
+The AI will use the `load_csv` tool to create a new session and load your data.
+You'll see a response with:
 
 - Session ID for tracking
 - Data shape (rows × columns)
@@ -174,7 +175,7 @@ monthly totals"
 
 ### 4. **Leverage Auto-Save**
 
-CSV Editor automatically saves your work, so you can focus on analysis
+DataBeak automatically saves your work, so you can focus on analysis
 without worrying about losing changes
 
 ### 5. **Explore History**
@@ -191,5 +192,5 @@ Use undo/redo freely to experiment with different approaches
 
 ---
 
-**Congratulations!** You now know how to use CSV Editor to transform your
+**Congratulations!** You now know how to use DataBeak to transform your
 AI assistant into a powerful data analyst.

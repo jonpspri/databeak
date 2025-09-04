@@ -5,7 +5,7 @@ title: Version Management
 
 ## Version Management
 
-This document describes how version numbers are managed in the CSV Editor project.
+This document describes how version numbers are managed in the DataBeak project.
 
 ## Current Approach - Script-Based Version Sync
 
@@ -88,7 +88,8 @@ The script automatically updates:
 
 ## Advanced Options (Future)
 
-While the current script-based approach works well, you could consider these tools for more automation:
+While the current script-based approach works well, you could consider these
+tools for more automation:
 
 - **semantic-release** - Fully automated releases based on commit messages
 - **hatch version** - Built into the build system

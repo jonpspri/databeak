@@ -5,7 +5,7 @@ title: API Overview
 
 ## API Reference Overview
 
-CSV Editor provides 40+ tools for comprehensive CSV manipulation through the
+DataBeak provides 40+ tools for comprehensive CSV manipulation through the
 Model Context Protocol (MCP). All tools return structured responses and
 include comprehensive error handling.
 
@@ -110,7 +110,7 @@ created and managed with configurable timeouts.
 
 ### Data Types
 
-CSV Editor supports rich data types including:
+DataBeak supports rich data types including:
 
 - **Strings**, **Numbers**, **Booleans**
 - **Dates** and **DateTime** objects

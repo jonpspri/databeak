@@ -3,16 +3,16 @@ sidebar_position: 1
 title: Introduction
 ---
 
-## CSV Editor
+## DataBeak
 
-**Transform how AI assistants work with CSV data.** CSV Editor is a
+**Transform how AI assistants work with CSV data.** DataBeak is a
 high-performance MCP (Model Context Protocol) server that gives Claude, ChatGPT,
 and other AI assistants powerful data manipulation capabilities through simple
 commands.
 
-## What is CSV Editor?
+## What is DataBeak?
 
-CSV Editor bridges the gap between AI assistants and complex data operations.
+DataBeak bridges the gap between AI assistants and complex data operations.
 It provides 40+ specialized tools for CSV operations, turning AI assistants
 into powerful data analysts that can:
 
@@ -46,9 +46,9 @@ into powerful data analysts that can:
 - **Data Profiling**: Complete quality reports
 - **Schema Validation**: Type checking and data quality scoring
 
-## Why Choose CSV Editor?
+## Why Choose DataBeak?
 
-| Feature | CSV Editor | Traditional Tools |
+| Feature | DataBeak | Traditional Tools |
 |---------|-----------|------------------|
 | **AI Integration** | Native MCP protocol | Manual operations |
 | **Auto-Save** | Automatic with strategies | Manual save required |
@@ -86,16 +86,19 @@ Built with modern, high-performance tools:
 
 Ready to supercharge your AI's data capabilities?
 
-1. **[Install CSV Editor](./installation)** - Set up in 2 minutes
+1. **[Install DataBeak](./installation)** - Set up in 2 minutes
 2. **[Quick Start Tutorial](./tutorials/quickstart)** - Your first data processing
 3. **[API Reference](./api/overview)** - Complete tool documentation
 4. **[Architecture](./architecture)** - Technical design and implementation details
 
 ## Community & Support
 
-- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code and releases
-- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** - Ask questions and share ideas
-- **[Report Issues](https://github.com/jonpspri/csv-editor/issues)** - Bug reports and feature requests
+- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code
+  and releases
+- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** -
+  Ask questions and share ideas
+- **[Report Issues](https://github.com/jonpspri/csv-editor/issues)** - Bug
+  reports and feature requests
 
 ---
 
