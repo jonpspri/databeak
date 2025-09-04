@@ -1,14 +1,9 @@
 """Tests for validation module to improve coverage."""
 
 import pytest
-import pandas as pd
 
-from src.databeak.tools.validation import (
-    check_data_quality,
-    find_anomalies,
-    validate_schema,
-)
 from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.tools.validation import check_data_quality, find_anomalies, validate_schema
 
 
 @pytest.fixture
@@ -30,12 +25,12 @@ async def validation_test_session():
     return result["session_id"]
 
 
-@pytest.fixture 
+@pytest.fixture
 async def clean_test_session():
     """Create a session with clean validation data."""
     csv_content = """id,name,age,email
 1,John,25,john@example.com
-2,Jane,30,jane@test.com  
+2,Jane,30,jane@test.com
 3,Bob,35,bob@company.org"""
 
     result = await load_csv_from_content(csv_content)
@@ -186,7 +181,7 @@ class TestSchemaValidation:
     async def test_validate_schema_invalid_session(self):
         """Test schema validation with invalid session."""
         schema = {"id": {"type": "int"}}
-        
+
         result = await validate_schema("invalid-session", schema)
         assert result["success"] is False
         assert "error" in result
@@ -198,7 +193,7 @@ class TestSchemaValidation:
         assert result["valid"] is True
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
 class TestDataQualityChecking:
     """Test data quality checking functionality."""
 
@@ -214,11 +209,11 @@ class TestDataQualityChecking:
     async def test_check_data_quality_completeness(self, problematic_test_session):
         """Test data quality completeness check."""
         rules = [{"type": "completeness", "threshold": 0.8}]
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         # Should find completeness issues in problematic data
         completeness_checks = [c for c in quality["checks"] if c["type"] == "completeness"]
         assert len(completeness_checks) > 0
@@ -226,11 +221,11 @@ class TestDataQualityChecking:
     async def test_check_data_quality_duplicates(self, problematic_test_session):
         """Test data quality duplicate detection."""
         rules = [{"type": "duplicates", "threshold": 0.0}]  # No duplicates allowed
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         # Should find duplicate rows
         duplicate_checks = [c for c in quality["checks"] if c["type"] == "duplicates"]
         assert len(duplicate_checks) > 0
@@ -239,40 +234,40 @@ class TestDataQualityChecking:
     async def test_check_data_quality_uniqueness(self, problematic_test_session):
         """Test data quality uniqueness check."""
         rules = [{"type": "uniqueness", "column": "id", "expected_unique": True}]
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         uniqueness_checks = [c for c in quality["checks"] if c["type"] == "uniqueness"]
         assert len(uniqueness_checks) > 0
 
     async def test_check_data_quality_data_types(self, problematic_test_session):
         """Test data quality data type consistency."""
         rules = [{"type": "data_types"}]
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         type_checks = [c for c in quality["checks"] if c["type"] == "data_type_consistency"]
         assert len(type_checks) > 0
 
     async def test_check_data_quality_outliers(self, problematic_test_session):
-        """Test data quality outlier detection.""" 
+        """Test data quality outlier detection."""
         rules = [{"type": "outliers", "threshold": 0.1}]
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         outlier_checks = [c for c in quality["checks"] if c["type"] == "outliers"]
         assert len(outlier_checks) > 0
 
     async def test_check_data_quality_consistency(self, validation_test_session):
         """Test data quality consistency check."""
         rules = [{"type": "consistency", "columns": ["join_date"]}]
-        
+
         result = await check_data_quality(validation_test_session, rules)
         assert result["success"] is True
 
@@ -287,7 +282,7 @@ class TestDataQualityChecking:
         result = await check_data_quality(clean_test_session)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         # Clean data should have high quality score
         assert quality["overall_score"] > 80
         assert quality["quality_level"] in ["Good", "Excellent"]
@@ -297,7 +292,7 @@ class TestDataQualityChecking:
         result = await check_data_quality(problematic_test_session)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         # Should have issues and lower score
         assert quality["overall_score"] < 100
         assert len(quality["issues"]) > 0
@@ -311,14 +306,12 @@ class TestAnomalyDetection:
     async def test_find_anomalies_statistical(self, problematic_test_session):
         """Test statistical anomaly detection."""
         result = await find_anomalies(
-            problematic_test_session, 
-            methods=["statistical"],
-            sensitivity=0.95
+            problematic_test_session, methods=["statistical"], sensitivity=0.95
         )
         assert result["success"] is True
         assert "anomalies" in result
         assert "by_method" in result["anomalies"]
-        
+
         # Should find statistical anomalies in age, salary columns
         if "statistical" in result["anomalies"]["by_method"]:
             stats_anomalies = result["anomalies"]["by_method"]["statistical"]
@@ -327,9 +320,7 @@ class TestAnomalyDetection:
     async def test_find_anomalies_pattern(self, problematic_test_session):
         """Test pattern anomaly detection."""
         result = await find_anomalies(
-            problematic_test_session,
-            methods=["pattern"],
-            sensitivity=0.8
+            problematic_test_session, methods=["pattern"], sensitivity=0.8
         )
         assert result["success"] is True
         assert "anomalies" in result
@@ -337,9 +328,7 @@ class TestAnomalyDetection:
     async def test_find_anomalies_missing(self, problematic_test_session):
         """Test missing value anomaly detection."""
         result = await find_anomalies(
-            problematic_test_session,
-            methods=["missing"],
-            sensitivity=0.9
+            problematic_test_session, methods=["missing"], sensitivity=0.9
         )
         assert result["success"] is True
         assert "anomalies" in result
@@ -349,7 +338,7 @@ class TestAnomalyDetection:
         result = await find_anomalies(problematic_test_session)
         assert result["success"] is True
         anomalies = result["anomalies"]
-        
+
         assert "summary" in anomalies
         assert "by_column" in anomalies
         assert "by_method" in anomalies
@@ -357,10 +346,7 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_specific_columns(self, problematic_test_session):
         """Test anomaly detection on specific columns."""
-        result = await find_anomalies(
-            problematic_test_session,
-            columns=["age", "score"]
-        )
+        result = await find_anomalies(problematic_test_session, columns=["age", "score"])
         assert result["success"] is True
         assert result["columns_analyzed"] == ["age", "score"]
 
@@ -369,13 +355,13 @@ class TestAnomalyDetection:
         # High sensitivity should find more anomalies
         high_sens = await find_anomalies(problematic_test_session, sensitivity=0.99)
         low_sens = await find_anomalies(problematic_test_session, sensitivity=0.5)
-        
+
         assert high_sens["success"] is True
         assert low_sens["success"] is True
-        
+
         high_count = high_sens["anomalies"]["summary"]["total_anomalies"]
         low_count = low_sens["anomalies"]["summary"]["total_anomalies"]
-        
+
         # High sensitivity should generally find more or equal anomalies
         assert high_count >= low_count
 
@@ -383,7 +369,7 @@ class TestAnomalyDetection:
         """Test anomaly detection on clean data."""
         result = await find_anomalies(clean_test_session)
         assert result["success"] is True
-        
+
         # Clean data should have few or no anomalies
         anomalies = result["anomalies"]
         assert anomalies["summary"]["total_anomalies"] == 0
@@ -416,7 +402,7 @@ class TestValidationEdgeCases:
         """Test schema validation on empty dataframe."""
         empty_result = await load_csv_from_content("id,name\n")  # Header only
         session_id = empty_result["session_id"]
-        
+
         # Empty dataframes have object dtype, so use compatible schema
         schema = {"id": {"type": "str"}, "name": {"type": "str"}}
         result = await validate_schema(session_id, schema)
@@ -427,12 +413,12 @@ class TestValidationEdgeCases:
         """Test schema validation with all supported data types."""
         schema = {
             "id": {"type": "int"},
-            "name": {"type": "str"}, 
+            "name": {"type": "str"},
             "age": {"type": "int"},
             "salary": {"type": "float"},
             # Note: bool and datetime types would need appropriate test data
         }
-        
+
         result = await validate_schema(validation_test_session, schema)
         assert result["success"] is True
 
@@ -446,13 +432,13 @@ class TestValidationEdgeCases:
         """Test data quality with custom thresholds."""
         rules = [
             {"type": "completeness", "threshold": 0.5},  # Very lenient
-            {"type": "duplicates", "threshold": 0.5},    # Allow many duplicates
+            {"type": "duplicates", "threshold": 0.5},  # Allow many duplicates
         ]
-        
+
         result = await check_data_quality(problematic_test_session, rules)
         assert result["success"] is True
         quality = result["quality_results"]
-        
+
         # With lenient thresholds, score should be higher
         assert quality["overall_score"] > 50
 
@@ -464,10 +450,10 @@ class TestValidationEdgeCases:
 3,30,300
 100,40,400
 5,50,500"""
-        
+
         result = await load_csv_from_content(numeric_csv)
         session_id = result["session_id"]
-        
+
         anomaly_result = await find_anomalies(session_id, methods=["statistical"])
         assert anomaly_result["success"] is True
 
@@ -479,10 +465,10 @@ B,Regular item,active
 C,Standard entry,active
 Z,OUTLIER DATA,DIFFERENT
 D,Another normal,active"""
-        
+
         result = await load_csv_from_content(string_csv)
         session_id = result["session_id"]
-        
+
         anomaly_result = await find_anomalies(session_id, methods=["pattern"])
         assert anomaly_result["success"] is True
 
@@ -495,10 +481,10 @@ class TestValidationIntegration:
         """Test validation after data transformations."""
         # First apply some transformations
         from src.databeak.tools.transformations import fill_missing_values
-        
+
         # Fill missing values
         await fill_missing_values(validation_test_session, strategy="drop")
-        
+
         # Then validate
         schema = {"email": {"nullable": False}}
         result = await validate_schema(validation_test_session, schema)
@@ -509,7 +495,7 @@ class TestValidationIntegration:
         """Test that quality check provides useful recommendations."""
         result = await check_data_quality(problematic_test_session)
         assert result["success"] is True
-        
+
         quality = result["quality_results"]
         if quality["overall_score"] < 85:
             assert len(quality["recommendations"]) > 0
@@ -519,9 +505,10 @@ class TestValidationIntegration:
         # Perform validation
         schema = {"id": {"type": "int"}}
         await validate_schema(clean_test_session, schema)
-        
+
         # Check if operation was recorded
         from src.databeak.tools.io_operations import get_session_info
+
         info_result = await get_session_info(clean_test_session)
         assert info_result["success"] is True
         assert info_result["data"]["operations_count"] > 0

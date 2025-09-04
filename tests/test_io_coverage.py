@@ -2,10 +2,8 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-import pandas as pd
 
 from src.databeak.tools.io_operations import (
     close_session,

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Basic usage example for CSV MCP Server
+"""Basic usage example for CSV MCP Server.
 
 This script demonstrates basic CSV operations using the server's tools.
 """

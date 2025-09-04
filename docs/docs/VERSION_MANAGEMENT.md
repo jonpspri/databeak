@@ -10,10 +10,12 @@ This document describes how version numbers are managed in the CSV Editor projec
 ## Current Approach - Script-Based Version Sync
 
 ### 1. Single Source of Truth
+
 - The **primary version** is defined in `pyproject.toml` under `project.version`
 - All other files are synchronized from this single source
 
 ### 2. Dynamic Version Loading
+
 The application uses `importlib.metadata` to read the version at runtime:
 
 ```python
@@ -28,6 +30,7 @@ except importlib.metadata.PackageNotFoundError:
 ```
 
 ### 3. Version Synchronization Script
+
 Run this command to sync versions across all files:
 
 ```bash
@@ -39,7 +42,8 @@ python scripts/sync_versions.py
 ```
 
 The script automatically updates:
-- `package.json` - For npm/MCP registry compatibility  
+
+- `package.json` - For npm/MCP registry compatibility
 - `src/csv_editor/_version.py` - Fallback version for development
 
 ## Release Workflow
@@ -47,17 +51,20 @@ The script automatically updates:
 ### Simple 3-Step Process
 
 1. **Update the version in pyproject.toml:**
+
    ```toml
    [project]
    version = "1.0.3"  # Change this line
    ```
 
 2. **Sync all other files:**
+
    ```bash
    uv run sync-versions
    ```
 
 3. **Commit and tag:**
+
    ```bash
    git add .
    git commit -m "🔖 Bump version to 1.0.3"
@@ -68,13 +75,13 @@ The script automatically updates:
 ## Files That Are Synchronized
 
 1. **pyproject.toml** - Primary source of truth ✅
-2. **package.json** - Synced automatically 🔄  
+2. **package.json** - Synced automatically 🔄
 3. **src/csv_editor/_version.py** - Synced automatically 🔄
 
 ## Benefits
 
 1. **Simplicity** - Easy to understand and maintain
-2. **Reliability** - No complex external tool dependencies  
+2. **Reliability** - No complex external tool dependencies
 3. **Consistency** - One source of truth prevents version mismatches
 4. **Runtime accuracy** - Code always uses the actual installed package version
 5. **Development friendly** - Fallback version for development mode

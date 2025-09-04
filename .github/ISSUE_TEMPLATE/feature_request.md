@@ -18,6 +18,7 @@ A clear and concise description of any alternative solutions or features you've 
 
 **Use case**
 Describe the specific use case for this feature:
+
 - What type of CSV operations would this enable?
 - How would this integrate with AI assistants?
 - What data analysis workflows would this support?

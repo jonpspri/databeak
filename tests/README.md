@@ -5,21 +5,25 @@ Comprehensive test suite for the CSV Editor MCP Server.
 ## Running Tests
 
 ### Run all tests
+
 ```bash
 uv run pytest
 ```
 
 ### Run with coverage
+
 ```bash
 uv run pytest --cov=src/csv_editor --cov-report=html
 ```
 
 ### Run specific test file
+
 ```bash
 uv run pytest tests/test_basic.py
 ```
 
 ### Run integration tests
+
 ```bash
 uv run pytest tests/test_integration.py
 ```
@@ -44,22 +48,24 @@ uv run pytest tests/test_integration.py
 ## Writing New Tests
 
 All test files should:
+
 1. Start with `test_`
 2. Use pytest fixtures from conftest.py
 3. Mark async tests with `@pytest.mark.asyncio`
 4. Clean up sessions after tests
 
 Example:
+
 ```python
 @pytest.mark.asyncio
 async def test_my_feature(test_session):
     """Test description."""
     from src.databeak.tools.analytics import get_statistics
-    
+
     result = await get_statistics(
         session_id=test_session,
         columns=["price"]
     )
-    
+
     assert result["success"] == True
 ```

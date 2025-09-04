@@ -31,7 +31,13 @@ async def demonstrate_auto_save():
             "product": ["Laptop", "Mouse", "Keyboard", "Monitor", "Headphones"],
             "price": [999.99, 29.99, 79.99, 299.99, 149.99],
             "stock": [50, 200, 150, 75, 100],
-            "category": ["Electronics", "Accessories", "Accessories", "Electronics", "Audio"],
+            "category": [
+                "Electronics",
+                "Accessories",
+                "Accessories",
+                "Electronics",
+                "Audio",
+            ],
         }
     )
 

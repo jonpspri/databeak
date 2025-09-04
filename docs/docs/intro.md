@@ -12,7 +12,7 @@ title: Introduction
 CSV Editor bridges the gap between AI assistants and complex data operations. It provides 40+ specialized tools for CSV operations, turning AI assistants into powerful data analysts that can:
 
 - Clean messy datasets in seconds
-- Perform complex statistical analysis  
+- Perform complex statistical analysis
 - Validate data quality automatically
 - Transform data with natural language commands
 - Track all changes with undo/redo capabilities
@@ -20,6 +20,7 @@ CSV Editor bridges the gap between AI assistants and complex data operations. It
 ## Key Features
 
 ### 🎯 Core Capabilities
+
 - **40+ Tools**: Complete data manipulation toolkit
 - **Multiple Formats**: CSV, JSON, Excel, Parquet, HTML, Markdown
 - **Session Management**: Multi-user support with isolation
@@ -27,12 +28,14 @@ CSV Editor bridges the gap between AI assistants and complex data operations. It
 - **History & Undo/Redo**: Full operation tracking with snapshots
 
 ### 📊 Data Operations
+
 - **Load & Export**: Files, URLs, or direct content
 - **Transform**: Filter, sort, group, pivot operations
 - **Clean**: Remove duplicates, handle missing values, fix types
 - **Calculate**: Add computed columns and aggregations
 
 ### 📈 Analysis Tools
+
 - **Statistics**: Descriptive stats, correlations, distributions
 - **Outlier Detection**: IQR, Z-score, custom thresholds
 - **Data Profiling**: Complete quality reports
@@ -56,7 +59,7 @@ Your AI assistant can now do this:
 ```python
 # Natural language becomes powerful data operations
 "Load the sales data and remove duplicates"
-"Filter for Q4 2024 transactions over $10,000"  
+"Filter for Q4 2024 transactions over $10,000"
 "Calculate correlation between price and quantity"
 "Fill missing values with the median"
 "Export as Excel with the analysis"

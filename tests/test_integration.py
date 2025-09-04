@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-"""
-Test script for CSV MCP Server
+"""Test script for CSV MCP Server.
 
-This script tests the core functionality of the CSV MCP Server
-without requiring an MCP client.
+This script tests the core functionality of the CSV MCP Server without requiring an MCP client.
 """
 
 import asyncio
@@ -64,7 +62,7 @@ Tina,34,64000,Sales,2020-01-10
 
 
 class Colors:
-    """ANSI color codes for terminal output"""
+    """ANSI color codes for terminal output."""
 
     HEADER = "\033[95m"
     BLUE = "\033[94m"
@@ -77,27 +75,27 @@ class Colors:
 
 
 def print_test(name: str):
-    """Print test header"""
+    """Print test header."""
     print(f"\n{Colors.HEADER}{Colors.BOLD}Testing: {name}{Colors.ENDC}")
 
 
 def print_success(msg: str):
-    """Print success message"""
+    """Print success message."""
     print(f"{Colors.GREEN}✓ {msg}{Colors.ENDC}")
 
 
 def print_error(msg: str):
-    """Print error message"""
+    """Print error message."""
     print(f"{Colors.FAIL}✗ {msg}{Colors.ENDC}")
 
 
 def print_info(msg: str):
-    """Print info message"""
+    """Print info message."""
     print(f"{Colors.CYAN}ℹ {msg}{Colors.ENDC}")  # noqa: RUF001
 
 
 def print_data(data: any, indent: int = 2):
-    """Print data with indentation"""
+    """Print data with indentation."""
     indent_str = " " * indent
     if isinstance(data, dict):
         for key, value in data.items():
@@ -115,7 +113,7 @@ def print_data(data: any, indent: int = 2):
 
 
 async def test_io_operations():
-    """Test I/O operations"""
+    """Test I/O operations."""
     print_test("I/O Operations")
 
     # Load CSV from content
@@ -145,7 +143,7 @@ async def test_io_operations():
 
 
 async def test_transformations(test_session):
-    """Test data transformation operations"""
+    """Test data transformation operations."""
     print_test("Data Transformations")
 
     session_id = test_session
@@ -155,7 +153,11 @@ async def test_transformations(test_session):
         session_id=session_id,
         conditions=[
             {"column": "salary", "operator": ">", "value": 60000},
-            {"column": "department", "operator": "in", "value": ["Engineering", "Management"]},
+            {
+                "column": "department",
+                "operator": "in",
+                "value": ["Engineering", "Management"],
+            },
         ],
         mode="and",
     )
@@ -195,7 +197,7 @@ async def test_transformations(test_session):
 
 
 async def test_analytics(test_session):
-    """Test analytics operations"""
+    """Test analytics operations."""
     print_test("Analytics")
 
     session_id = test_session
@@ -255,7 +257,7 @@ async def test_analytics(test_session):
 
 
 async def test_validation(test_session):
-    """Test validation operations"""
+    """Test validation operations."""
     print_test("Data Validation")
 
     session_id = test_session
@@ -299,7 +301,7 @@ async def test_validation(test_session):
 
 
 async def test_export(test_session):
-    """Test export operations"""
+    """Test export operations."""
     print_test("Export Operations")
 
     session_id = test_session
@@ -321,7 +323,7 @@ async def test_export(test_session):
 
 
 async def main():
-    """Main test function"""
+    """Main test function."""
     print(f"\n{Colors.HEADER}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}    CSV MCP Server Test Suite{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}")

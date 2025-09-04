@@ -98,7 +98,7 @@ Add to VS Code settings (`settings.json`):
 {
   "cline.mcpServers": {
     "csv-editor": {
-      "command": "uvx", 
+      "command": "uvx",
       "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
     }
   }
@@ -172,7 +172,7 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 ### Verify in Your AI Client
 
 1. **Claude Desktop**: Look for "csv-editor" in the MCP servers list
-2. **VS Code**: Check the extension's MCP panel  
+2. **VS Code**: Check the extension's MCP panel
 3. **Test Command**: Try asking your AI to "list available CSV tools"
 
 ## Troubleshooting
@@ -180,16 +180,19 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 ### Common Issues
 
 #### Server not starting
+
 - Check Python version: `python --version` (must be 3.10+)
 - Verify installation: `uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
 - Check logs with debug level
 
 #### Client can't connect
+
 - Verify the command path in your configuration
 - Ensure uvx is installed and accessible
 - Check firewall settings for local connections
 
 #### Permission errors
+
 - On macOS/Linux: Check file permissions
 - On Windows: Run as administrator if needed
 - Verify the history directory is writable

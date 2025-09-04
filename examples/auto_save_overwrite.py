@@ -73,7 +73,11 @@ async def overwrite_same_file_example():
 
     # Change 2: Add a new product
     new_row = pd.DataFrame(
-        {"product": ["Monitor"], "price": [329.989], "stock": [75]}  # Will be rounded when saved
+        {
+            "product": ["Monitor"],
+            "price": [329.989],
+            "stock": [75],
+        }  # Will be rounded when saved
     )
     session.df = pd.concat([session.df, new_row], ignore_index=True)
     session.record_operation(OperationType.ADD_COLUMN, {"operation": "add_monitor"})

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-"""
-CSV MCP Server Demo
+"""CSV MCP Server Demo.
 
-Demonstrates the full capabilities of the CSV MCP Server.
-Run this to see all features in action.
+Demonstrates the full capabilities of the CSV MCP Server. Run this to see all features in action.
 """
 
 import asyncio
@@ -80,7 +78,8 @@ async def run_demo():
     # Statistics
     Demo.header("Salary Statistics by Department")
     stats = await get_statistics(
-        session_id=session_id, columns=["salary", "years_experience", "performance_rating"]
+        session_id=session_id,
+        columns=["salary", "years_experience", "performance_rating"],
     )
 
     if stats["success"]:
@@ -129,7 +128,8 @@ async def run_demo():
                 Demo.info("\nSignificant Correlations:")
                 for corr in correlations["significant_correlations"][:3]:
                     Demo.result(
-                        f"{corr['column1']} ↔ {corr['column2']}", f"{corr['correlation']:.3f}"
+                        f"{corr['column1']} ↔ {corr['column2']}",
+                        f"{corr['correlation']:.3f}",
                     )
 
     Demo.header("Demo Complete!")

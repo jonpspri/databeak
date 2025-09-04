@@ -1,9 +1,8 @@
 """Tests for server functionality and instruction loading."""
 
-import pytest
-import tempfile
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp

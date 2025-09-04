@@ -260,6 +260,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "benchmark: marks tests as benchmark tests",
+    "asyncio: marks tests as async",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
@@ -315,11 +316,18 @@ repo_name = "databeak"
 
 [dependency-groups]
 dev = [
+    "mypy>=1.17.1",
     "pandas-stubs>=2.3.0",
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.1.0",
+    "pytest-cov>=6.2.1",
     "ruff>=0.12.10",
     "twine>=6.1.0",
+    "types-aiofiles>=24.1.0.20250822",
+    "types-pytz>=2025.2.0.20250809",
+    "types-tabulate>=0.9.0.20241207",
 ]
 
 # Pre-commit hooks configuration (for reference)
 # Create .pre-commit-config.yaml separately
-

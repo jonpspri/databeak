@@ -14,7 +14,7 @@ CSV Editor provides 40+ tools for comprehensive CSV manipulation through the Mod
 Tools for loading and exporting CSV data in various formats:
 
 - **`load_csv`** - Load CSV from file path
-- **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL  
+- **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL
 - **`load_csv_from_content`** - Load CSV from string content
 - **`export_csv`** - Export to CSV, JSON, Excel, Parquet, HTML, Markdown
 - **`get_session_info`** - Get current session details and statistics
@@ -77,7 +77,9 @@ System information and health monitoring:
 ## Common Patterns
 
 ### Error Handling
+
 All tools return consistent response format:
+
 ```json
 {
   "success": true,
@@ -87,6 +89,7 @@ All tools return consistent response format:
 ```
 
 Error responses:
+
 ```json
 {
   "success": false,
@@ -96,16 +99,21 @@ Error responses:
 ```
 
 ### Session Management
+
 Most tools require a `session_id` parameter. Sessions are automatically created and managed with configurable timeouts.
 
 ### Data Types
+
 CSV Editor supports rich data types including:
+
 - **Strings**, **Numbers**, **Booleans**
 - **Dates** and **DateTime** objects
 - **Null values** (JSON `null` → Python `None` → pandas `NaN`)
 
 ### Filtering Conditions
+
 Filter operations support complex conditions:
+
 ```json
 {
   "conditions": [
@@ -131,20 +139,26 @@ All tools respect these environment variables:
 ## Advanced Features
 
 ### Null Value Support
+
 Full support for null values across all operations:
+
 - JSON `null` values are preserved and handled correctly
 - Python `None` and pandas `NaN` compatibility
 - Filtering and operations work seamlessly with nulls
 
 ### Auto-Save Strategies
+
 Configurable auto-save with multiple strategies:
+
 - **Overwrite** - Update original file
-- **Backup** - Create timestamped backups  
+- **Backup** - Create timestamped backups
 - **Versioned** - Maintain version history
 - **Custom** - Save to specified location
 
 ### History and Undo/Redo
+
 Complete operation tracking:
+
 - Persistent history storage
 - Snapshot-based undo/redo
 - Operation metadata and timestamps

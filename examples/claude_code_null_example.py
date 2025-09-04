@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Example demonstrating CSV Editor's null value support and Claude Code compatibility.
+"""Example demonstrating CSV Editor's null value support and Claude Code compatibility.
 
 This example shows how CSV Editor handles the exact scenario that was failing before:
 - JSON null values in row insertion
@@ -9,9 +8,11 @@ This example shows how CSV Editor handles the exact scenario that was failing be
 """
 
 import asyncio
+
 import pandas as pd
-from databeak.tools.transformations import insert_row, get_row_data
+
 from databeak.models.csv_session import get_session_manager
+from databeak.tools.transformations import get_row_data, insert_row
 
 
 async def main():
@@ -90,7 +91,13 @@ async def main():
     # Verify the null values were preserved correctly
     row_data = await get_row_data(session_id, 2)  # Last inserted row
     print("\n📋 Null value verification:")
-    null_fields = ["Job Posting URL", "Contact Person", "Contact Email", "Response Date", "Outcome"]
+    null_fields = [
+        "Job Posting URL",
+        "Contact Person",
+        "Contact Email",
+        "Response Date",
+        "Outcome",
+    ]
     for field in null_fields:
         value = row_data["data"][field]
         is_null = value is None

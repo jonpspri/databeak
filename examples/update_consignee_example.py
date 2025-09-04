@@ -54,7 +54,11 @@ async def update_consignee_example():
     print("\nExporting updated CSV...")
     export_result = await client.call_tool(
         "export_csv",
-        {"session_id": session_id, "file_path": "/tmp/updated_bol_method1.csv", "format": "csv"},
+        {
+            "session_id": session_id,
+            "file_path": "/tmp/updated_bol_method1.csv",
+            "format": "csv",
+        },
     )
     print(f"✓ Exported to: {export_result['file_path']}")
 
@@ -93,7 +97,11 @@ async def update_consignee_example():
     # Export the result
     export_result = await client.call_tool(
         "export_csv",
-        {"session_id": session_id, "file_path": "/tmp/updated_bol_method2.csv", "format": "csv"},
+        {
+            "session_id": session_id,
+            "file_path": "/tmp/updated_bol_method2.csv",
+            "format": "csv",
+        },
     )
     print(f"✓ Exported to: {export_result['file_path']}")
 
@@ -132,14 +140,22 @@ async def update_consignee_example():
         print("\nCleaning up whitespace...")
         result = await client.call_tool(
             "update_column",
-            {"session_id": session_id, "column": "Consignee Name", "operation": "strip"},
+            {
+                "session_id": session_id,
+                "column": "Consignee Name",
+                "operation": "strip",
+            },
         )
         print("✓ Whitespace cleaned")
 
     # Export the result
     export_result = await client.call_tool(
         "export_csv",
-        {"session_id": session_id, "file_path": "/tmp/updated_bol_method3.csv", "format": "csv"},
+        {
+            "session_id": session_id,
+            "file_path": "/tmp/updated_bol_method3.csv",
+            "format": "csv",
+        },
     )
     print(f"✓ Exported to: {export_result['file_path']}")
 

@@ -1,7 +1,6 @@
 """Additional tests for analytics module to improve coverage."""
 
 import pytest
-import pandas as pd
 
 from src.databeak.tools.analytics import (
     detect_outliers,
@@ -112,7 +111,9 @@ class TestAnalyticsAdvancedFeatures:
     async def test_group_by_aggregate_invalid_columns(self, analytics_test_session):
         """Test group by with invalid columns."""
         result = await group_by_aggregate(
-            analytics_test_session, group_by=["nonexistent"], aggregations={"price": ["mean"]}
+            analytics_test_session,
+            group_by=["nonexistent"],
+            aggregations={"price": ["mean"]},
         )
         assert result["success"] is False
         assert "not found" in result["error"]

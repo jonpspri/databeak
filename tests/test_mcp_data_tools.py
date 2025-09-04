@@ -86,5 +86,12 @@ class TestDataToolSignatures:
         sig = inspect.signature(replace_in_column)
         params = list(sig.parameters.keys())
 
-        expected_params = ["session_id", "column", "pattern", "replacement", "regex", "ctx"]
+        expected_params = [
+            "session_id",
+            "column",
+            "pattern",
+            "replacement",
+            "regex",
+            "ctx",
+        ]
         assert all(param in params for param in expected_params)

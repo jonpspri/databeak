@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Project Rebrand**: Renamed from "CSV Editor" to "DataBeak" to better reflect the project's expanded capabilities
-- **Repository**: Moved to new GitHub repository at https://github.com/jonpspri/databeak
+- **Repository**: Moved to new GitHub repository at <https://github.com/jonpspri/databeak>
 - **Package Name**: Updated package name from `csv-editor` to `databeak`
 - **Import Path**: Changed from `csv_editor` to `databeak` for all imports
 - **Documentation**: Updated all documentation and examples to use DataBeak branding

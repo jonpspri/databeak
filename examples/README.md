@@ -5,7 +5,9 @@ This directory contains example scripts demonstrating how to use the CSV Editor 
 ## Available Examples
 
 ### basic_usage.py
+
 Demonstrates basic CSV operations:
+
 - Loading CSV data
 - Calculating statistics
 - Filtering data
@@ -13,12 +15,15 @@ Demonstrates basic CSV operations:
 - Exporting to different formats
 
 **Run it:**
+
 ```bash
 uv run python examples/basic_usage.py
 ```
 
 ### demo.py
+
 Comprehensive feature demonstration:
+
 - Data quality assessment
 - Statistical analysis
 - High performer analysis
@@ -26,6 +31,7 @@ Comprehensive feature demonstration:
 - Correlation detection
 
 **Run it:**
+
 ```bash
 uv run python examples/demo.py
 ```
@@ -35,6 +41,7 @@ uv run python examples/demo.py
 To create your own example:
 
 1. Import the necessary tools:
+
 ```python
 from src.databeak.tools.io_operations import load_csv_from_content
 from src.databeak.tools.transformations import filter_rows

@@ -1,8 +1,8 @@
 """Additional tests for transformations module to improve coverage."""
 
 import pytest
-import pandas as pd
 
+from src.databeak.tools.io_operations import load_csv_from_content
 from src.databeak.tools.transformations import (
     add_column,
     change_column_type,
@@ -18,18 +18,12 @@ from src.databeak.tools.transformations import (
     insert_row,
     remove_columns,
     remove_duplicates,
-    rename_columns,
     replace_in_column,
-    select_columns,
     set_cell_value,
-    sort_data,
     split_column,
-    strip_column,
     transform_column_case,
-    update_column,
     update_row,
 )
-from src.databeak.tools.io_operations import load_csv_from_content
 
 
 @pytest.fixture
@@ -52,7 +46,8 @@ class TestTransformationErrorHandling:
     async def test_filter_rows_invalid_operator(self, transform_test_session):
         """Test filtering with invalid operator."""
         result = await filter_rows(
-            transform_test_session, [{"column": "age", "operator": "invalid_op", "value": 25}]
+            transform_test_session,
+            [{"column": "age", "operator": "invalid_op", "value": 25}],
         )
         assert result["success"] is False
         assert "operator" in result["error"]["message"]
@@ -60,7 +55,8 @@ class TestTransformationErrorHandling:
     async def test_filter_rows_missing_column(self, transform_test_session):
         """Test filtering with missing column."""
         result = await filter_rows(
-            transform_test_session, [{"column": "nonexistent", "operator": "==", "value": "test"}]
+            transform_test_session,
+            [{"column": "nonexistent", "operator": "==", "value": "test"}],
         )
         assert result["success"] is False
         assert "not found" in result["error"]["message"]
@@ -152,7 +148,9 @@ class TestCellAndRowOperations:
 
     async def test_insert_row_wrong_data_type(self, transform_test_session):
         """Test inserting row with wrong data type."""
-        result = await insert_row(transform_test_session, 0, 123)  # Integer instead of dict/list/string
+        result = await insert_row(
+            transform_test_session, 0, 123
+        )  # Integer instead of dict/list/string
         assert result["success"] is False
         assert "must be a dict or list" in result["error"]
 
@@ -274,7 +272,9 @@ class TestAdvancedTransformations:
         """Test duplicate removal with different options."""
         # First add some duplicate data
         await insert_row(
-            transform_test_session, -1, {"name": "John Doe", "age": 30, "email": "john@example.com"}
+            transform_test_session,
+            -1,
+            {"name": "John Doe", "age": 30, "email": "john@example.com"},
         )
 
         # Test different keep options

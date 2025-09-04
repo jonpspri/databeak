@@ -28,11 +28,14 @@ By participating in this project, you agree to abide by our Code of Conduct:
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
+
    ```bash
    git clone https://github.com/jonpspri/databeak.git
    cd databeak
    ```
+
 3. **Add upstream remote**:
+
    ```bash
    git remote add upstream https://github.com/jonpspri/databeak.git
    ```
@@ -149,6 +152,7 @@ We use modern Python tooling for code quality:
 ### Code Guidelines
 
 1. **Type Hints**: All functions must have type hints
+
    ```python
    async def process_data(
        session_id: str,
@@ -160,28 +164,31 @@ We use modern Python tooling for code quality:
    ```
 
 2. **Docstrings**: Use Google-style docstrings
+
    ```python
    def analyze_data(df: pd.DataFrame) -> Dict[str, Any]:
        """Analyze DataFrame and return statistics.
-       
+
        Args:
            df: Input DataFrame to analyze
-           
+
        Returns:
            Dictionary containing analysis results
-           
+
        Raises:
            ValueError: If DataFrame is empty
        """
    ```
 
 3. **Error Handling**: Use specific exceptions
+
    ```python
    if not session:
        raise ValueError(f"Session {session_id} not found")
    ```
 
 4. **Async/Await**: Use async for all tool functions
+
    ```python
    @mcp.tool
    async def my_tool(param: str, ctx: Context) -> Dict[str, Any]:
@@ -190,6 +197,7 @@ We use modern Python tooling for code quality:
    ```
 
 5. **Logging**: Use appropriate log levels
+
    ```python
    logger.debug("Processing row %d", row_num)
    logger.info("Session %s created", session_id)
@@ -240,6 +248,7 @@ tests/
 ### Writing Tests
 
 1. **Use pytest fixtures**:
+
    ```python
    @pytest.fixture
    async def session_with_data():
@@ -253,6 +262,7 @@ tests/
    ```
 
 2. **Test async functions**:
+
    ```python
    @pytest.mark.asyncio
    async def test_filter_rows(session_with_data):
@@ -265,6 +275,7 @@ tests/
    ```
 
 3. **Use parametrize for multiple cases**:
+
    ```python
    @pytest.mark.parametrize("dtype,expected", [
        ("int", True),
@@ -295,29 +306,29 @@ This module provides functionality for X, Y, and Z.
 
 class DataProcessor:
     """Process CSV data with various transformations.
-    
+
     Attributes:
         session_id: Unique session identifier
         df: Pandas DataFrame containing the data
     """
-    
+
     def transform(
         self,
         operation: str,
         **kwargs: Any
     ) -> pd.DataFrame:
         """Apply transformation to data.
-        
+
         Args:
             operation: Name of the transformation
             **kwargs: Additional parameters for the operation
-            
+
         Returns:
             Transformed DataFrame
-            
+
         Raises:
             ValueError: If operation is not supported
-            
+
         Examples:
             >>> processor.transform("normalize", columns=["price"])
             >>> processor.transform("fill_missing", strategy="mean")
@@ -336,12 +347,14 @@ class DataProcessor:
 ### Pull Request Process
 
 1. **Update your branch**:
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -388,6 +401,7 @@ Brief description of changes
 ### Version Numbering
 
 We follow [Semantic Versioning](https://semver.org/):
+
 - **MAJOR**: Breaking changes
 - **MINOR**: New features (backward compatible)
 - **PATCH**: Bug fixes
@@ -409,6 +423,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ## Recognition
 
 Contributors are recognized in:
+
 - AUTHORS.md file
 - Release notes
 - Project README

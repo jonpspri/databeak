@@ -73,7 +73,9 @@ Add to the MCP Settings file
 <summary><b>Other Clients</b> (Continue, Cline, Windsurf, Zed)</summary>
 
 ### Continue (VS Code)
+
 Edit `~/.continue/config.json`:
+
 ```json
 {
   "mcpServers": {
@@ -86,12 +88,14 @@ Edit `~/.continue/config.json`:
 ```
 
 ### Cline
+
 Add to VS Code settings (`settings.json`):
+
 ```json
 {
   "cline.mcpServers": {
     "databeak": {
-      "command": "uvx", 
+      "command": "uvx",
       "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
     }
   }
@@ -99,7 +103,9 @@ Add to VS Code settings (`settings.json`):
 ```
 
 ### Windsurf
+
 Edit `~/.windsurf/mcp_servers.json`:
+
 ```json
 {
   "mcpServers": {
@@ -112,7 +118,9 @@ Edit `~/.windsurf/mcp_servers.json`:
 ```
 
 ### Zed Editor
+
 Edit `~/.config/zed/settings.json`:
+
 ```json
 {
   "experimental.mcp_servers": {
@@ -372,7 +380,7 @@ databeak/
 ### Architecture Principles
 
 1. **Type Safety**: Full type annotations with Pydantic validation
-2. **Modularity**: Clear separation of concerns across modules  
+2. **Modularity**: Clear separation of concerns across modules
 3. **Performance**: Streaming operations for large datasets
 4. **Reliability**: Comprehensive error handling and logging
 5. **Usability**: Simple installation and configuration

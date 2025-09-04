@@ -37,23 +37,27 @@ src/csv_editor/
 ## Key Features
 
 ### Session Management
+
 - **Multi-session support** with automatic cleanup
 - **Configurable timeouts** and resource limits
 - **Session isolation** for concurrent users
 
 ### Data Operations
+
 - **40+ tools** covering I/O, manipulation, analysis, and validation
 - **Multiple format support**: CSV, JSON, Excel, Parquet, HTML, Markdown
 - **Streaming processing** for large files
 - **Type-safe operations** with Pydantic validation
 
 ### Auto-Save & History
+
 - **Automatic saving** after each operation
 - **Undo/redo functionality** with operation tracking
 - **Persistent history** with JSON storage
 - **Configurable strategies**: overwrite, backup, versioned
 
 ### Configuration Management
+
 - **Environment-based settings** using Pydantic Settings
 - **Centralized configuration** in CSVSettings class
 - **Runtime version detection** via importlib.metadata
@@ -91,7 +95,7 @@ The server implements the Model Context Protocol standard:
 ## Design Principles
 
 1. **Type Safety**: Full type annotations with Pydantic validation
-2. **Modularity**: Clear separation of concerns across modules  
+2. **Modularity**: Clear separation of concerns across modules
 3. **Performance**: Streaming operations for large datasets
 4. **Reliability**: Comprehensive error handling and logging
 5. **Usability**: Simple installation and configuration
@@ -100,6 +104,7 @@ The server implements the Model Context Protocol standard:
 ## Development Workflow
 
 ### Package Management
+
 ```bash
 uv sync              # Install dependencies
 uv run csv-editor    # Run server
@@ -108,11 +113,13 @@ uv run all-checks    # Lint, format, type-check, test
 ```
 
 ### Version Management
+
 - **Single source of truth**: pyproject.toml
 - **Automatic synchronization**: `uv run sync-versions`
 - **Dynamic loading**: via importlib.metadata
 
 ### Quality Assurance
+
 - **Linting**: Ruff with comprehensive rule set
 - **Formatting**: Ruff with 100-character lines
 - **Type checking**: MyPy with strict configuration
