@@ -199,9 +199,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastmcp import Context
+from typing import TYPE_CHECKING, Any
 
 from .auto_save_operations import configure_auto_save as _configure_auto_save
 from .auto_save_operations import disable_auto_save as _disable_auto_save
@@ -213,6 +211,9 @@ from .history_operations import get_operation_history as _get_operation_history
 from .history_operations import redo_operation as _redo_operation
 from .history_operations import restore_to_operation as _restore_to_operation
 from .history_operations import undo_operation as _undo_operation
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 def register_history_tools(mcp: Any) -> None:

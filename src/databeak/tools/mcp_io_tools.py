@@ -199,9 +199,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastmcp import Context
+from typing import TYPE_CHECKING, Any
 
 from ..models import ExportFormat
 from .io_operations import close_session as _close_session
@@ -211,6 +209,9 @@ from .io_operations import list_sessions as _list_sessions
 from .io_operations import load_csv as _load_csv
 from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 def register_io_tools(mcp: Any) -> None:

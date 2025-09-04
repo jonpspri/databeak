@@ -199,13 +199,14 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastmcp import Context
+from typing import TYPE_CHECKING, Any
 
 from .validation import check_data_quality as _check_data_quality
 from .validation import find_anomalies as _find_anomalies
 from .validation import validate_schema as _validate_schema
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 def register_validation_tools(mcp: Any) -> None:

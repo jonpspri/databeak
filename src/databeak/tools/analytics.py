@@ -239,6 +239,7 @@ async def get_statistics(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select columns to analyze
         if columns:
@@ -328,6 +329,7 @@ async def get_column_statistics(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         if column not in df.columns:
             return {"success": False, "error": f"Column '{column}' not found"}
@@ -438,6 +440,7 @@ async def get_correlation_matrix(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select columns
         if columns:
@@ -547,6 +550,7 @@ async def group_by_aggregate(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]
@@ -577,9 +581,10 @@ async def group_by_aggregate(
         grouped = df.groupby(group_by).agg(agg_dict)
 
         # Flatten column names
-        grouped.columns = [
+        new_columns = [
             "_".join(col).strip() if col[1] else col[0] for col in grouped.columns.values
         ]
+        grouped.columns = pd.Index(new_columns)
 
         # Reset index to make group columns regular columns
         result_df = grouped.reset_index()
@@ -645,6 +650,7 @@ async def get_value_counts(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         if column not in df.columns:
             return {"success": False, "error": f"Column '{column}' not found"}
@@ -729,6 +735,7 @@ async def detect_outliers(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select numeric columns
         if columns:
@@ -841,6 +848,7 @@ async def profile_data(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         profile = {
             "summary": {

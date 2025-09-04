@@ -136,8 +136,8 @@ class TestIOSessionManagement:
     async def test_list_sessions_structure(self):
         """Test list sessions returns proper structure."""
         # Create multiple sessions
-        result1 = await load_csv_from_content("name,age\nJohn,30")
-        result2 = await load_csv_from_content("product,price\nLaptop,999")
+        await load_csv_from_content("name,age\nJohn,30")
+        await load_csv_from_content("product,price\nLaptop,999")
 
         sessions_result = await list_sessions()
         assert sessions_result["success"] is True

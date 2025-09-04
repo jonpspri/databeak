@@ -366,9 +366,6 @@ async def sort_data(
         Dict with success status
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Parse columns into names and ascending flags
@@ -423,9 +420,6 @@ async def select_columns(
         Dict with success status and selected columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -470,9 +464,6 @@ async def rename_columns(
         Dict with success status and renamed columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -514,9 +505,6 @@ async def add_column(
         Dict with success status
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if name in df.columns:
@@ -575,9 +563,6 @@ async def remove_columns(
         Dict with success status and removed columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -619,9 +604,6 @@ async def change_column_type(
         Dict with success status and conversion info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -695,9 +677,6 @@ async def fill_missing_values(
         Dict with success status and fill info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         null_counts_before = df.isnull().sum().to_dict()
 
@@ -784,9 +763,6 @@ async def update_column(
         Dict with success status and update info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -888,9 +864,6 @@ async def remove_duplicates(
         Dict with success status and duplicate info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         rows_before = len(df)
 
@@ -953,9 +926,6 @@ async def get_cell_value(
         get_cell_value("session123", 2, 1) -> {"success": True, "value": 25, "coordinates": {"row": 2, "column": "age"}}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -1024,9 +994,6 @@ async def set_cell_value(
         set_cell_value("session123", 0, "name", "Jane") -> {"success": True, "old_value": "John", "new_value": "Jane"}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -1109,9 +1076,6 @@ async def get_row_data(
         get_row_data("session123", 1, ["name", "age"]) -> {"success": True, "data": {"name": "Jane", "age": 25}}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -1175,9 +1139,6 @@ async def get_column_data(
         get_column_data("session123", "name", 0, 2) -> {"success": True, "data": ["John", "Jane"]}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate column exists
@@ -1258,9 +1219,6 @@ async def replace_in_column(
         replace_in_column("session123", "name", "Mr\\.", "Mister") -> Replace "Mr." with "Mister"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1325,9 +1283,6 @@ async def extract_from_column(
         extract_from_column("session123", "email", r"(.+)@(.+)") -> Extract username and domain
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1391,9 +1346,6 @@ async def split_column(
         split_column("session123", "full_name", " ", expand_to_columns=True) -> Split into multiple columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1477,9 +1429,6 @@ async def transform_column_case(
         transform_column_case("session123", "name", "title") -> "john doe" becomes "John Doe"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1547,9 +1496,6 @@ async def strip_column(
         strip_column("session123", "code", "()") -> Remove parentheses from ends
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1611,9 +1557,6 @@ async def fill_column_nulls(
         fill_column_nulls("session123", "name", "Unknown") -> Replace missing names with "Unknown"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1698,9 +1641,6 @@ async def insert_row(
                     "success": False,
                     "error": f"Invalid JSON string in data parameter: {e}",
                 }
-
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
 
         session, df = _get_session_data(session_id)
         rows_before = len(df)
@@ -1796,9 +1736,6 @@ async def delete_row(
         delete_row("session123", 1) -> Delete second row
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         rows_before = len(df)
 
@@ -1881,9 +1818,6 @@ async def update_row(
                     "success": False,
                     "error": f"Invalid JSON string in data parameter: {e}",
                 }
-
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
 
         session, df = _get_session_data(session_id)
 
@@ -1988,9 +1922,6 @@ async def inspect_data_around(
         inspect_data_around("session123", 5, "name", 2) -> Get 5x5 grid centered on (5, "name")
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Handle column specification
@@ -2081,9 +2012,6 @@ async def find_cells_with_value(
         find_cells_with_value("session123", 25, "age") -> Find all age cells with value 25
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         matches = []
 
@@ -2120,7 +2048,7 @@ async def find_cells_with_value(
                 if pd.isna(cell_value):
                     cell_value = None
                 elif hasattr(cell_value, "item"):
-                    cell_value = cell_value.item()
+                    cell_value = cell_value.item()  # type: ignore[assignment]
 
                 matches.append(
                     {
@@ -2166,9 +2094,6 @@ async def get_data_summary(
         get_data_summary("session123", True, 5) -> Get summary with 5-row preview
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Basic information

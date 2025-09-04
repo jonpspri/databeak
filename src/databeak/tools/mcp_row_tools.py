@@ -199,9 +199,7 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastmcp import Context
+from typing import TYPE_CHECKING, Any
 
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
@@ -210,6 +208,9 @@ from .transformations import get_row_data as _get_row_data
 from .transformations import insert_row as _insert_row
 from .transformations import set_cell_value as _set_cell_value
 from .transformations import update_row as _update_row
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 def register_row_tools(mcp: Any) -> None:

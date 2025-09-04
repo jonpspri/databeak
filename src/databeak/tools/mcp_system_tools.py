@@ -199,14 +199,15 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from fastmcp import Context
+from typing import TYPE_CHECKING, Any
 
 from .._version import __version__
 from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
 from .registry import tool, with_error_handling
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 @tool("system", "health_check")

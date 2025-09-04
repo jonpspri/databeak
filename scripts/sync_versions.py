@@ -210,7 +210,7 @@ import tomllib
 def get_package_version() -> str:
     """Get the version from pyproject.toml."""
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
+    with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
     return data["project"]["version"]
 
@@ -218,12 +218,12 @@ def get_package_version() -> str:
 def update_package_json(version: str) -> None:
     """Update version in package.json."""
     package_json_path = Path(__file__).parent.parent / "package.json"
-    with open(package_json_path) as f:
+    with package_json_path.open() as f:
         data = json.load(f)
 
     data["version"] = version
 
-    with open(package_json_path, "w") as f:
+    with package_json_path.open("w") as f:
         json.dump(data, f, indent=2)
         f.write("\n")
 
