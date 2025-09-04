@@ -5,7 +5,8 @@ title: Installation
 
 # Installation Guide
 
-Get CSV Editor up and running in just 2 minutes! This guide covers installation and client configuration.
+Get CSV Editor up and running in just 2 minutes! This guide covers
+installation and client configuration.
 
 ## Prerequisites
 
@@ -31,7 +32,8 @@ For development or local installation:
 ```bash
 # Install uv (one-time setup)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# Or on Windows: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Or on Windows:
+# powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Clone and install
 git clone https://github.com/jonpspri/csv-editor.git
@@ -58,14 +60,19 @@ csv-editor
 
 Configure Claude Desktop to use CSV Editor as an MCP server.
 
-Add this to your MCP Settings file (Claude → Settings → Developer → Show MCP Settings):
+Add this to your MCP Settings file
+(Claude → Settings → Developer → Show MCP Settings):
 
 ```json
 {
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"],
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ],
       "env": {
         "CSV_EDITOR_MAX_FILE_SIZE_MB": "1024",
         "CSV_EDITOR_CSV_HISTORY_DIR": "/tmp/csv_history"
@@ -84,7 +91,11 @@ Edit `~/.continue/config.json`:
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -99,7 +110,11 @@ Add to VS Code settings (`settings.json`):
   "cline.mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -114,7 +129,11 @@ Edit `~/.windsurf/mcp_servers.json`:
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -129,7 +148,11 @@ Edit `~/.config/zed/settings.json`:
   "experimental.mcp_servers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -166,7 +189,8 @@ CSV_EDITOR_LOG_LEVEL=DEBUG uv run csv-editor
 npm install -g @modelcontextprotocol/inspector
 
 # Test the server
-mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor
+mcp-inspector uvx --from \
+  git+https://github.com/jonpspri/csv-editor.git csv-editor
 ```
 
 ### Verify in Your AI Client
@@ -182,7 +206,8 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 #### Server not starting
 
 - Check Python version: `python --version` (must be 3.10+)
-- Verify installation: `uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
+- Verify installation: `uvx --from \
+  git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
 - Check logs with debug level
 
 #### Client can't connect
@@ -214,10 +239,13 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 
 Now that CSV Editor is installed:
 
-1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the basics
+1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the
+   basics
 2. **[API Reference](./api/overview)** - Explore all available tools
-3. **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)** - See real-world use cases
+3. **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)**
+   - See real-world use cases
 
 ---
 
-**Installation complete!** Your AI assistant now has powerful data manipulation capabilities. 🎉
+**Installation complete!** Your AI assistant now has powerful data
+manipulation capabilities.

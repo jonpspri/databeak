@@ -5,12 +5,14 @@ title: Quick Start
 
 # Quick Start Tutorial
 
-Learn how to use CSV Editor in 10 minutes with this hands-on tutorial. We'll process a sample sales dataset using natural language commands.
+Learn how to use CSV Editor in 10 minutes with this hands-on tutorial.
+We'll process a sample sales dataset using natural language commands.
 
 ## Prerequisites
 
 - CSV Editor installed and configured ([Installation Guide](../installation))
-- An AI assistant client (Claude Desktop, Continue, etc.) configured with CSV Editor
+- An AI assistant client (Claude Desktop, Continue, etc.) configured with
+  CSV Editor
 
 ## Step 1: Load Your Data
 
@@ -50,7 +52,8 @@ For detailed column analysis:
 
 ### Handle Missing Values
 >
-> "Fill missing quantity values with 0 and missing customer_id values with 'UNKNOWN'"
+> "Fill missing quantity values with 0 and missing customer_id values
+> with 'UNKNOWN'"
 
 ### Fix Data Types
 >
@@ -102,7 +105,8 @@ Made a mistake? No problem:
 
 Set up automatic saving:
 
-> "Configure auto-save to create backups in a backup folder with a maximum of 5 backups"
+> "Configure auto-save to create backups in a backup folder with a
+> maximum of 5 backups"
 
 ### Session Management
 
@@ -155,19 +159,23 @@ Work with multiple datasets:
 
 ### 1. **Be Specific**
 
-Instead of "analyze the data", try "calculate descriptive statistics for numeric columns and show correlation matrix"
+Instead of "analyze the data", try "calculate descriptive statistics for
+numeric columns and show correlation matrix"
 
 ### 2. **Use Session IDs**
 
-For multiple datasets, specify which session: "In session ABC123, filter rows where status equals 'active'"
+For multiple datasets, specify which session: "In session ABC123, filter
+rows where status equals 'active'"
 
 ### 3. **Chain Operations**
 
-"Load sales.csv, remove duplicates, filter for 2024 data, then calculate monthly totals"
+"Load sales.csv, remove duplicates, filter for 2024 data, then calculate
+monthly totals"
 
 ### 4. **Leverage Auto-Save**
 
-CSV Editor automatically saves your work, so you can focus on analysis without worrying about losing changes
+CSV Editor automatically saves your work, so you can focus on analysis
+without worrying about losing changes
 
 ### 5. **Explore History**
 
@@ -176,9 +184,12 @@ Use undo/redo freely to experiment with different approaches
 ## Next Steps
 
 - **[API Reference](../api/overview)** - Complete tool documentation
-- **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)** - More real-world scenarios
-- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code and community
+- **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)**
+  - More real-world scenarios
+- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source
+  code and community
 
 ---
 
-**Congratulations!** You now know how to use CSV Editor to transform your AI assistant into a powerful data analyst. 🎉
+**Congratulations!** You now know how to use CSV Editor to transform your
+AI assistant into a powerful data analyst.

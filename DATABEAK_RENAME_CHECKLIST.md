@@ -1,6 +1,7 @@
 # DataBeak Rename Checklist
 
-Based on analysis of the codebase, here's a comprehensive checklist of places that need updates for the rename from CSV Editor to DataBeak:
+Based on analysis of the codebase, here's a comprehensive checklist of
+places that need updates for the rename from CSV Editor to DataBeak:
 
 ## Package Configuration Files
 
@@ -19,7 +20,8 @@ Based on analysis of the codebase, here's a comprehensive checklist of places th
 ## Source Code Directory Structure
 
 - [ ] Rename `src/csv_editor/` directory to `src/databeak/`
-- [ ] Update all import statements throughout codebase (40+ files affected)
+- [ ] Update all import statements throughout codebase (40+ files
+  affected)
 - [ ] `src/csv_editor/_version.py` - Update internal references
 
 ## Documentation Files
@@ -102,5 +104,7 @@ All files in `src/csv_editor/tools/` need their descriptions and docstrings upda
 - The rename affects 80+ files across the codebase
 - Pay special attention to module import paths
 - All GitHub URLs need to be updated consistently
-- Environment variable prefixes need to change from `CSV_EDITOR_` to `DATABEAK_`
-- Consider creating a migration script for bulk find/replace operations
+- Environment variable prefixes need to change from `CSV_EDITOR_` to
+  `DATABEAK_`
+- Consider creating a migration script for bulk find/replace
+  operations

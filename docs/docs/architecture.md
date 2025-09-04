@@ -5,7 +5,9 @@ title: Architecture
 
 # Architecture Overview
 
-CSV Editor is built as a Model Context Protocol (MCP) server that provides AI assistants with comprehensive CSV data manipulation capabilities. This document explains the technical architecture and design decisions.
+CSV Editor is built as a Model Context Protocol (MCP) server that provides
+AI assistants with comprehensive CSV data manipulation capabilities. This
+document explains the technical architecture and design decisions.
 
 ## Technology Stack
 
@@ -13,12 +15,13 @@ CSV Editor is built as a Model Context Protocol (MCP) server that provides AI as
 - **Data Processing**: Pandas 2.2.3+, NumPy 2.1.3+
 - **Package Manager**: uv (ultra-fast Python package management)
 - **Build System**: Hatchling
-- **Code Quality**: Ruff (linting and formatting), MyPy (type checking)
+- **Code Quality**: Ruff (linting and formatting), MyPy (type
+  checking)
 - **Configuration**: Pydantic Settings for environment management
 
 ## Core Components
 
-```
+```text
 src/csv_editor/
 ├── server.py           # FastMCP server entry point
 ├── models/            # Data models and session management
@@ -45,7 +48,8 @@ src/csv_editor/
 ### Data Operations
 
 - **40+ tools** covering I/O, manipulation, analysis, and validation
-- **Multiple format support**: CSV, JSON, Excel, Parquet, HTML, Markdown
+- **Multiple format support**: CSV, JSON, Excel, Parquet, HTML,
+  Markdown
 - **Streaming processing** for large files
 - **Type-safe operations** with Pydantic validation
 
@@ -88,7 +92,8 @@ The server implements the Model Context Protocol standard:
 1. **I/O Operations** - Load/export data in multiple formats
 2. **Data Manipulation** - Transform, filter, sort, and modify data
 3. **Data Analysis** - Statistics, correlations, outliers, profiling
-4. **Data Validation** - Schema validation, quality checking, anomaly detection
+4. **Data Validation** - Schema validation, quality checking, anomaly
+   detection
 5. **Session Management** - Auto-save, history, undo/redo operations
 6. **System Tools** - Health monitoring and server information
 
@@ -123,7 +128,8 @@ uv run all-checks    # Lint, format, type-check, test
 - **Linting**: Ruff with comprehensive rule set
 - **Formatting**: Ruff with 100-character lines
 - **Type checking**: MyPy with strict configuration
-- **Testing**: pytest with asyncio support and coverage reporting
+- **Testing**: pytest with asyncio support and coverage
+  reporting
 
 ## Future Considerations
 
@@ -135,4 +141,5 @@ uv run all-checks    # Lint, format, type-check, test
 
 ---
 
-**For implementation details and contributing guidelines, see [CONTRIBUTING.md](https://github.com/jonpspri/csv-editor/blob/main/CONTRIBUTING.md)**
+**For implementation details and contributing guidelines, see
+[CONTRIBUTING.md](https://github.com/jonpspri/csv-editor/blob/main/CONTRIBUTING.md)**

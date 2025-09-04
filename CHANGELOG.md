@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Project Rebrand**: Renamed from "CSV Editor" to "DataBeak" to better reflect the project's expanded capabilities
+- **Project Rebrand**: Renamed from "CSV Editor" to "DataBeak" to better
+  reflect the project's expanded capabilities
 - **Repository**: Moved to new GitHub repository at <https://github.com/jonpspri/databeak>
 - **Package Name**: Updated package name from `csv-editor` to `databeak`
 - **Import Path**: Changed from `csv_editor` to `databeak` for all imports
@@ -21,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Null Value Support**: Comprehensive support for JSON `null` → Python `None` → pandas `NaN`
 - **Claude Code Compatibility**: Automatic JSON string deserialization for complex parameters
-- **Modular Tool Architecture**: Organized tools into logical modules (system, I/O, data, row, analytics, validation, history)
+- **Modular Tool Architecture**: Organized tools into logical modules
+  (system, I/O, data, row, analytics, validation, history)
 - **Enhanced Type Safety**: Replaced `Any` types with specific `CellValue`, `RowData`, `FilterCondition` types
 - **JSON String Parsing**: `insert_row` and `update_row` now accept JSON strings from Claude Code
 - **Comprehensive Test Coverage**: Added tests for null value scenarios and JSON string handling
@@ -30,11 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Tool Organization**: Moved FastMCP tool definitions from `server.py` to modular files in `tools/mcp_*.py`
 - **Type Annotations**: Improved type safety with specific types instead of generic `Any`
-- **Documentation**: Updated README and instructions with null value examples and Claude Code compatibility
+- **Documentation**: Updated README and instructions with null value
+  examples and Claude Code compatibility
 
 ### Fixed
 
-- **Claude Code JSON Serialization**: Resolved "Data Validation" errors when Claude Code sends JSON strings
+- **Claude Code JSON Serialization**: Resolved "Data Validation" errors
+  when Claude Code sends JSON strings
 - **Null Value Insertion**: Fixed handling of null values in row insertion and updates
 - **Test Architecture**: Refactored tests to parallel tool module structure
 
@@ -43,7 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Publishing strategy**: Switched to GitHub-based distribution due to PyPI naming conflicts
-- **Installation method**: Primary installation now via `pip install git+https://github.com/jonpspri/databeak.git`
+- **Installation method**: Primary installation now via
+  `pip install git+https://github.com/jonpspri/databeak.git`
 - **Package name**: Updated from `csv-editor` to `databeak`
 
 ### Added
@@ -65,7 +70,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for multiple file formats (CSV, Excel, Parquet)
 - Async operations for high performance
 - Comprehensive error handling and logging
-- FastMCP integration for seamless AI assistant integration
+- FastMCP integration for seamless AI assistant
+  integration
 - Pandas-powered data manipulation
 - Full test coverage with pytest
 - Documentation with examples
@@ -78,10 +84,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data Transformation**: Column operations, data type conversions
 - **Data Validation**: Schema validation, data quality checks
 - **Statistical Analysis**: Descriptive statistics, correlation analysis
-- **Outlier Detection**: Multiple algorithms (IQR, Z-score, Isolation Forest)
+- **Outlier Detection**: Multiple algorithms (IQR, Z-score, Isolation
+  Forest)
 - **Data Profiling**: Comprehensive data profiling reports
 - **Performance**: Optimized for large datasets with chunking support
-- **AI Integration**: Seamless integration with Claude, ChatGPT, and other AI assistants
+- **AI Integration**: Seamless integration with Claude, ChatGPT, and other
+  AI assistants
 
 ### Technical Details
 
