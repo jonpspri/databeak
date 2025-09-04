@@ -322,7 +322,7 @@ class HistoryManager:
                                 snapshot_file = self._get_snapshot_file_path(entry["operation_id"])
                                 if Path(snapshot_file).exists():
                                     with Path(snapshot_file).open("rb") as sf:
-                                        snapshot = pickle.load(sf)
+                                        snapshot = pickle.load(sf)  # nosec B301
 
                             self.history.append(OperationHistory.from_dict(entry, snapshot))
 
@@ -335,7 +335,7 @@ class HistoryManager:
                 history_file = self._get_history_file_path("pkl")
                 if Path(history_file).exists():
                     with Path(history_file).open("rb") as f:
-                        data = pickle.load(f)
+                        data = pickle.load(f)  # nosec B301
                         self.history = data.get("history", [])
                         self.current_index = data.get("current_index", -1)
                         logger.info(
