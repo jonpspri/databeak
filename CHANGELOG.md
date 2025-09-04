@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.2] - 2025-09-03
 
 ### Added
+
 - **Null Value Support**: Comprehensive support for JSON `null` → Python `None` → pandas `NaN`
 - **Claude Code Compatibility**: Automatic JSON string deserialization for complex parameters
 - **Modular Tool Architecture**: Organized tools into logical modules (system, I/O, data, row, analytics, validation, history)
@@ -16,11 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comprehensive Test Coverage**: Added tests for null value scenarios and JSON string handling
 
 ### Changed
+
 - **Tool Organization**: Moved FastMCP tool definitions from `server.py` to modular files in `tools/mcp_*.py`
 - **Type Annotations**: Improved type safety with specific types instead of generic `Any`
 - **Documentation**: Updated README and instructions with null value examples and Claude Code compatibility
 
 ### Fixed
+
 - **Claude Code JSON Serialization**: Resolved "Data Validation" errors when Claude Code sends JSON strings
 - **Null Value Insertion**: Fixed handling of null values in row insertion and updates
 - **Test Architecture**: Refactored tests to parallel tool module structure
@@ -28,11 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.1] - 2025-08-13
 
 ### Changed
+
 - **Publishing strategy**: Switched to GitHub-based distribution due to PyPI naming conflicts
 - **Installation method**: Primary installation now via `pip install git+https://github.com/santoshray02/csv-editor.git`
 - **Package name**: Kept original `csv-editor` name
 
 ### Added
+
 - Alternative publishing guide (ALTERNATIVE_PUBLISHING.md)
 - GitHub Packages publishing workflow
 - GitHub Releases automation
@@ -41,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-08-13
 
 ### Added
+
 - Initial release of CSV Editor MCP Server
 - Core CSV operations: read, write, filter, transform
 - Data validation and quality checks
@@ -56,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type hints and mypy compatibility
 
 ### Features
+
 - **File Operations**: Read/write CSV, Excel, Parquet files
 - **Data Filtering**: Advanced filtering with multiple conditions
 - **Data Transformation**: Column operations, data type conversions
@@ -67,6 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AI Integration**: Seamless integration with Claude, ChatGPT, and other AI assistants
 
 ### Technical Details
+
 - Python 3.10+ support
 - Built with FastMCP framework
 - Pandas and NumPy for data operations

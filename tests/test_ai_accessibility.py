@@ -589,29 +589,29 @@ class TestIntegrationWorkflow:
         assert check_result["data"]["age"] == 41
 
 
-@pytest.mark.asyncio 
+@pytest.mark.asyncio
 class TestCSVQuotingAndSpecialCharacters:
     """Test CSV parsing with quoted values, commas, and special characters."""
 
     async def test_quoted_values_with_commas(self) -> None:
         """Test that quoted values containing commas are parsed correctly."""
         # CSV content with quoted values containing commas
-        csv_content = '''name,description,salary
+        csv_content = """name,description,salary
 "Smith, John","Software Engineer, Senior Level",75000
 "Doe, Jane","Data Scientist, Machine Learning Expert",85000
-"Wilson, Bob","Product Manager, B2B Solutions",90000'''
+"Wilson, Bob","Product Manager, B2B Solutions",90000"""
 
         result = await load_csv_from_content(csv_content)
         assert result["success"], f"Failed to load CSV with quoted commas: {result.get('error')}"
-        
+
         session_id = result["session_id"]
-        
+
         # Verify the data was parsed correctly
         summary = await get_data_summary(session_id, include_preview=True)
         assert summary["success"]
         assert summary["shape"]["rows"] == 3
         assert summary["shape"]["columns"] == 3
-        
+
         # Check that commas within quotes were preserved
         preview_records = summary["preview"]["records"]
         assert preview_records[0]["name"] == "Smith, John"
@@ -627,10 +627,10 @@ Widget B,"Standard grade","No special requirements"'''
 
         result = await load_csv_from_content(csv_content)
         assert result["success"], f"Failed to load CSV with escaped quotes: {result.get('error')}"
-        
+
         session_id = result["session_id"]
         summary = await get_data_summary(session_id, include_preview=True)
-        
+
         # Verify escaped quotes are properly unescaped
         preview_records = summary["preview"]["records"]
         assert preview_records[0]["description"] == 'High-quality widget, "premium" grade'
@@ -638,25 +638,25 @@ Widget B,"Standard grade","No special requirements"'''
 
     async def test_mixed_quoting_with_nulls(self) -> None:
         """Test mixing quoted values, unquoted values, and null values."""
-        csv_content = '''name,address,phone,notes
+        csv_content = """name,address,phone,notes
 John Smith,"123 Main St, Apt 4B",555-0123,"Available: Mon-Fri, 9-5"
 Jane Doe,"456 Oak Ave, Suite 200",,
 Bob Wilson,,"555-0199","Phone contact only"
-Alice Johnson,"789 Pine St, Building C",555-0156,'''
+Alice Johnson,"789 Pine St, Building C",555-0156,"""
 
         result = await load_csv_from_content(csv_content)
         assert result["success"], f"Failed to load mixed quoting CSV: {result.get('error')}"
-        
+
         session_id = result["session_id"]
         summary = await get_data_summary(session_id, include_preview=True)
-        
+
         preview_records = summary["preview"]["records"]
-        
+
         # Verify quoted addresses with commas
         assert preview_records[0]["address"] == "123 Main St, Apt 4B"
         assert preview_records[1]["address"] == "456 Oak Ave, Suite 200"
         assert preview_records[3]["address"] == "789 Pine St, Building C"
-        
+
         # Verify null values are properly handled
         assert preview_records[1]["phone"] is None
         assert preview_records[1]["notes"] is None

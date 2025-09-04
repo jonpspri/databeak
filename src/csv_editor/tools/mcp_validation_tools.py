@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context  # noqa: TC002
 
 from .validation import (
     check_data_quality as _check_data_quality,

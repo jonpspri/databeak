@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from pydantic_settings import BaseSettings
 
+from ..exceptions import HistoryError, HistoryNotEnabledError
 from .auto_save import AutoSaveConfig, AutoSaveManager
 from .data_models import ExportFormat, OperationType, SessionInfo
+from .data_session import DataSession
 from .history_manager import HistoryManager, HistoryStorage
+from .session_lifecycle import SessionLifecycle
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -24,6 +27,10 @@ class CSVSettings(BaseSettings):
     """Configuration settings for CSV Editor sessions."""
 
     csv_history_dir: str = "."  # Default to current directory
+    max_file_size_mb: int = 1024  # Default to 1024 MB
+    session_timeout: int = 3600  # Default to 3600 seconds
+    chunk_size: int = 10000  # Default to 10000 rows
+    auto_save: bool = True  # Default to enabled
 
     model_config = {"env_prefix": "CSV_EDITOR_", "case_sensitive": False}
 
@@ -41,7 +48,7 @@ def get_csv_settings() -> CSVSettings:
 
 
 class CSVSession:
-    """Represents a single CSV editing session."""
+    """Represents a single CSV editing session with focused responsibilities."""
 
     def __init__(
         self,
@@ -53,14 +60,11 @@ class CSVSession:
     ):
         """Initialize a new CSV session."""
         self.session_id = session_id or str(uuid4())
-        self.created_at = datetime.now(timezone.utc)
-        self.last_accessed = datetime.now(timezone.utc)
-        self.ttl = timedelta(minutes=ttl_minutes)
-        self.df: pd.DataFrame | None = None
-        self.original_df: pd.DataFrame | None = None
-        self.metadata: dict[str, Any] = {}
         self.operations_history: list[dict[str, Any]] = []  # Keep for backward compatibility
-        self.file_path: str | None = None
+
+        # Core components
+        self.data_session = DataSession(self.session_id)
+        self.lifecycle = SessionLifecycle(self.session_id, ttl_minutes)
 
         # Auto-save configuration
         self.auto_save_config = auto_save_config or AutoSaveConfig()
@@ -81,19 +85,19 @@ class CSVSession:
             else None
         )
 
+    # Delegate to lifecycle manager
     def update_access_time(self) -> None:
         """Update the last accessed time."""
-        self.last_accessed = datetime.now(timezone.utc)
+        self.lifecycle.update_access_time()
+        self.data_session.update_access_time()
 
     def is_expired(self) -> bool:
         """Check if session has expired."""
-        return datetime.now(timezone.utc) - self.last_accessed > self.ttl
+        return self.lifecycle.is_expired()
 
     def load_data(self, df: pd.DataFrame, file_path: str | None = None) -> None:
         """Load data into the session."""
-        self.df = df.copy()
-        self.original_df = df.copy()
-        self.file_path = file_path
+        self.data_session.load_data(df, file_path)
         self.update_access_time()
         self.record_operation(OperationType.LOAD, {"file_path": file_path, "shape": df.shape})
 
@@ -103,21 +107,19 @@ class CSVSession:
 
     def get_info(self) -> SessionInfo:
         """Get session information."""
-        if self.df is None:
-            raise ValueError("No data loaded in session")
-
-        memory_usage = self.df.memory_usage(deep=True).sum() / (1024 * 1024)  # Convert to MB
+        data_info = self.data_session.get_data_info()
+        lifecycle_info = self.lifecycle.get_lifecycle_info()
 
         return SessionInfo(
             session_id=self.session_id,
-            created_at=self.created_at,
-            last_accessed=self.last_accessed,
-            row_count=len(self.df),
-            column_count=len(self.df.columns),
-            columns=self.df.columns.tolist(),
-            memory_usage_mb=round(memory_usage, 2),
+            created_at=lifecycle_info["created_at"],
+            last_accessed=lifecycle_info["last_accessed"],
+            row_count=data_info["shape"][0],
+            column_count=data_info["shape"][1],
+            columns=data_info["columns"],
+            memory_usage_mb=data_info["memory_usage_mb"],
             operations_count=len(self.operations_history),
-            file_path=self.file_path,
+            file_path=data_info["file_path"],
         )
 
     def record_operation(
@@ -140,30 +142,32 @@ class CSVSession:
         self.update_access_time()
 
         # New persistent history
-        if self.history_manager and self.df is not None:
+        if self.history_manager and self.data_session.df is not None:
             self.history_manager.add_operation(
                 operation_type=operation_value,
                 details=details,
-                current_data=self.df,
+                current_data=self.data_session.df,
                 metadata={
-                    "file_path": self.file_path,
-                    "shape": self.df.shape if self.df is not None else None,
+                    "file_path": self.data_session.file_path,
+                    "shape": (
+                        self.data_session.df.shape if self.data_session.df is not None else (0, 0)
+                    ),
                 },
             )
 
         # Mark that auto-save is needed
-        self.metadata["needs_autosave"] = True
+        self.data_session.metadata["needs_autosave"] = True
 
     async def trigger_auto_save_if_needed(self) -> dict[str, Any] | None:
         """Trigger auto-save after operation if configured."""
-        if self.auto_save_manager.should_save_after_operation() and self.metadata.get(
+        if self.auto_save_manager.should_save_after_operation() and self.data_session.metadata.get(
             "needs_autosave"
         ):
             result = await self.auto_save_manager.trigger_save(
                 self._save_callback, "after_operation"
             )
             if result.get("success"):
-                self.metadata["needs_autosave"] = False
+                self.data_session.metadata["needs_autosave"] = False
             return result
         return None
 
@@ -172,7 +176,7 @@ class CSVSession:
     ) -> dict[str, Any]:
         """Callback for auto-save operations."""
         try:
-            if self.df is None:
+            if self.data_session.df is None:
                 return {"success": False, "error": "No data to save"}
 
             # Handle different export formats
@@ -180,35 +184,35 @@ class CSVSession:
             path_obj.parent.mkdir(parents=True, exist_ok=True)
 
             if format == ExportFormat.CSV:
-                self.df.to_csv(path_obj, index=False, encoding=encoding)
+                self.data_session.df.to_csv(path_obj, index=False, encoding=encoding)
             elif format == ExportFormat.TSV:
-                self.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
+                self.data_session.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
             elif format == ExportFormat.JSON:
-                self.df.to_json(path_obj, orient="records", indent=2)
+                self.data_session.df.to_json(path_obj, orient="records", indent=2)
             elif format == ExportFormat.EXCEL:
-                self.df.to_excel(path_obj, index=False)
+                self.data_session.df.to_excel(path_obj, index=False)
             elif format == ExportFormat.PARQUET:
-                self.df.to_parquet(path_obj, index=False)
+                self.data_session.df.to_parquet(path_obj, index=False)
             else:
                 return {"success": False, "error": f"Unsupported format: {format}"}
 
             return {
                 "success": True,
                 "file_path": str(path_obj),
-                "rows": len(self.df),
-                "columns": len(self.df.columns),
+                "rows": len(self.data_session.df),
+                "columns": len(self.data_session.df.columns),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
     def rollback(self, steps: int = 1) -> bool:
         """Rollback operations by specified number of steps."""
-        if self.original_df is None:
+        if self.data_session.original_df is None:
             return False
 
         if steps >= len(self.operations_history):
             # Rollback to original state
-            self.df = self.original_df.copy()
+            self.data_session.df = self.data_session.original_df.copy()
             self.operations_history = []
             return True
 
@@ -224,7 +228,7 @@ class CSVSession:
             self.auto_save_manager = AutoSaveManager(
                 self.session_id,
                 self.auto_save_config,
-                self.file_path,  # Pass the original file path
+                self.data_session.file_path,  # Pass the original file path
             )
 
             # Start periodic save if needed
@@ -259,7 +263,7 @@ class CSVSession:
     async def undo(self) -> dict[str, Any]:
         """Undo the last operation."""
         if not self.history_manager:
-            return {"success": False, "error": "History is not enabled"}
+            raise HistoryNotEnabledError(self.session_id)
 
         if not self.history_manager.can_undo():
             return {"success": False, "error": "No operations to undo"}
@@ -268,7 +272,7 @@ class CSVSession:
             operation, data_snapshot = self.history_manager.undo()
 
             if data_snapshot is not None and operation is not None:
-                self.df = data_snapshot
+                self.data_session.df = data_snapshot
 
                 # Trigger auto-save if configured
                 if self.auto_save_manager.should_save_after_operation():
@@ -284,14 +288,17 @@ class CSVSession:
             else:
                 return {"success": False, "error": "No snapshot available for undo"}
 
+        except HistoryNotEnabledError as e:
+            logger.error(f"History operation failed: {e.message}")
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Error during undo: {e!s}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Unexpected error during undo: {e!s}")
+            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
 
     async def redo(self) -> dict[str, Any]:
         """Redo the previously undone operation."""
         if not self.history_manager:
-            return {"success": False, "error": "History is not enabled"}
+            raise HistoryNotEnabledError(self.session_id)
 
         if not self.history_manager.can_redo():
             return {"success": False, "error": "No operations to redo"}
@@ -300,7 +307,7 @@ class CSVSession:
             operation, data_snapshot = self.history_manager.redo()
 
             if data_snapshot is not None and operation is not None:
-                self.df = data_snapshot
+                self.data_session.df = data_snapshot
 
                 # Trigger auto-save if configured
                 if self.auto_save_manager.should_save_after_operation():
@@ -316,9 +323,12 @@ class CSVSession:
             else:
                 return {"success": False, "error": "No snapshot available for redo"}
 
+        except HistoryNotEnabledError as e:
+            logger.error(f"History operation failed: {e.message}")
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Error during redo: {e!s}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Unexpected error during redo: {e!s}")
+            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
 
     def get_history(self, limit: int | None = None) -> dict[str, Any]:
         """Get operation history."""
@@ -335,14 +345,17 @@ class CSVSession:
             stats = self.history_manager.get_statistics()
 
             return {"success": True, "history": history, "statistics": stats}
+        except HistoryError as e:
+            logger.error(f"History operation failed: {e.message}")
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Error getting history: {e!s}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Unexpected error getting history: {e!s}")
+            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
 
     async def restore_to_operation(self, operation_id: str) -> dict[str, Any]:
         """Restore data to a specific operation point."""
         if not self.history_manager:
-            return {"success": False, "error": "History is not enabled"}
+            raise HistoryNotEnabledError(self.session_id)
 
         try:
             data_snapshot = self.history_manager.restore_to_operation(operation_id)
@@ -357,14 +370,19 @@ class CSVSession:
                 return {
                     "success": True,
                     "message": f"Restored to operation {operation_id}",
-                    "shape": self.df.shape,
+                    "shape": (
+                        self.data_session.df.shape if self.data_session.df is not None else (0, 0)
+                    ),
                 }
             else:
                 return {"success": False, "error": f"Could not restore to operation {operation_id}"}
 
+        except HistoryNotEnabledError as e:
+            logger.error(f"History operation failed: {e.message}")
+            return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Error during restore: {e!s}")
-            return {"success": False, "error": str(e)}
+            logger.error(f"Unexpected error during restore: {e!s}")
+            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
 
     async def clear(self) -> None:
         """Clear session data to free memory."""
@@ -375,9 +393,8 @@ class CSVSession:
         if self.history_manager:
             self.history_manager.clear_history()
 
-        self.df = None
-        self.original_df = None
-        self.metadata.clear()
+        # Clear data session
+        self.data_session.clear_data()
         self.operations_history.clear()
 
 
@@ -397,7 +414,7 @@ class SessionManager:
 
         if len(self.sessions) >= self.max_sessions:
             # Remove oldest session
-            oldest = min(self.sessions.values(), key=lambda s: s.last_accessed)
+            oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
             del self.sessions[oldest.session_id]
 
         session = CSVSession(ttl_minutes=self.ttl_minutes)
@@ -428,7 +445,11 @@ class SessionManager:
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
         self._cleanup_expired()
-        return [session.get_info() for session in self.sessions.values() if session.df is not None]
+        return [
+            session.get_info()
+            for session in self.sessions.values()
+            if session.data_session.has_data()
+        ]
 
     def _cleanup_expired(self) -> None:
         """Mark expired sessions for cleanup."""
@@ -461,9 +482,9 @@ class SessionManager:
 
         return {
             "session_id": session.session_id,
-            "created_at": session.created_at.isoformat(),
+            "created_at": session.lifecycle.created_at.isoformat(),
             "operations": session.operations_history,
-            "metadata": session.metadata,
+            "metadata": session.data_session.metadata,
         }
 
 

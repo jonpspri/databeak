@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context  # noqa: TC002
 
 from ..models import ExportFormat
 from .io_operations import (
@@ -43,7 +43,7 @@ def register_io_tools(mcp: Any) -> None:
     ) -> dict[str, Any]:
         """Load a CSV file into a session with robust parsing and AI-optimized data preview.
 
-        Provides comprehensive CSV loading with support for various encodings, delimiters, and 
+        Provides comprehensive CSV loading with support for various encodings, delimiters, and
         complex quoted data including commas and escaped quotes. Optimized for AI workflows
         with enhanced data preview and coordinate system information.
 
@@ -57,7 +57,7 @@ def register_io_tools(mcp: Any) -> None:
         Returns:
             Comprehensive load result containing:
             - success: bool indicating load status
-            - session_id: Session identifier for subsequent operations  
+            - session_id: Session identifier for subsequent operations
             - rows_affected: Number of rows loaded
             - columns_affected: List of column names detected
             - data: Enhanced preview with coordinate information including:
@@ -68,7 +68,7 @@ def register_io_tools(mcp: Any) -> None:
 
         CSV Parsing Capabilities:
             ✅ Quoted values with commas: "Smith, John" → Smith, John
-            ✅ Escaped quotes: "product ""premium"" grade" → product "premium" grade  
+            ✅ Escaped quotes: "product ""premium"" grade" → product "premium" grade
             ✅ Mixed quoting with null values
             ✅ Standard RFC 4180 compliance
             ✅ Automatic type detection (int, float, string, datetime)
@@ -77,10 +77,10 @@ def register_io_tools(mcp: Any) -> None:
         Examples:
             # Basic CSV loading
             load_csv("/path/to/data.csv")
-            
+
             # Custom delimiter and encoding
             load_csv("/path/to/european.csv", encoding="latin1", delimiter=";")
-            
+
             # Load into existing session
             load_csv("/path/to/additional.csv", session_id="existing_session_123")
 
@@ -89,7 +89,7 @@ def register_io_tools(mcp: Any) -> None:
             - Invalid encoding or unreadable file format
             - Malformed CSV structure
             - Memory limitations for extremely large files
-            
+
         AI Workflow Integration:
             1. Load CSV → get session_id
             2. Use get_data_summary(session_id) for overview

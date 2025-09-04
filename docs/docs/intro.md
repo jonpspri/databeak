@@ -1,46 +1,42 @@
 ---
 sidebar_position: 1
 title: Introduction
-slug: /intro
 ---
 
-# Welcome to CSV Editor
+# CSV Editor
 
 **Transform how AI assistants work with CSV data.** CSV Editor is a high-performance MCP (Model Context Protocol) server that gives Claude, ChatGPT, and other AI assistants powerful data manipulation capabilities through simple commands.
 
 ## What is CSV Editor?
 
-CSV Editor is a comprehensive data processing tool that bridges the gap between AI assistants and complex data operations. It provides 40+ specialized tools for CSV operations, turning AI assistants into powerful data analysts.
+CSV Editor bridges the gap between AI assistants and complex data operations. It provides 40+ specialized tools for CSV operations, turning AI assistants into powerful data analysts that can:
+
+- Clean messy datasets in seconds
+- Perform complex statistical analysis  
+- Validate data quality automatically
+- Transform data with natural language commands
+- Track all changes with undo/redo capabilities
 
 ## Key Features
 
-### 🚀 Core Capabilities
-- **Session Management**: Multi-user support with isolated sessions
-- **Auto-Save**: Automatic data persistence with multiple strategies
-- **History & Undo/Redo**: Complete operation history with time-travel
-- **Multiple Data Sources**: Load from files, URLs, or strings
-- **Export Formats**: CSV, JSON, Excel, Parquet, HTML, Markdown
+### 🎯 Core Capabilities
+- **40+ Tools**: Complete data manipulation toolkit
+- **Multiple Formats**: CSV, JSON, Excel, Parquet, HTML, Markdown
+- **Session Management**: Multi-user support with isolation
+- **Auto-Save**: Never lose work with configurable strategies
+- **History & Undo/Redo**: Full operation tracking with snapshots
 
 ### 📊 Data Operations
-- Complex filtering with AND/OR logic
-- Multi-column sorting
-- Column operations (add, remove, rename, update)
-- Smart type conversion
-- Missing value handling
-- Duplicate removal
+- **Load & Export**: Files, URLs, or direct content
+- **Transform**: Filter, sort, group, pivot operations
+- **Clean**: Remove duplicates, handle missing values, fix types
+- **Calculate**: Add computed columns and aggregations
 
-### 📈 Analytics
-- Statistical analysis with percentiles
-- Correlation matrices (Pearson, Spearman, Kendall)
-- Group-by aggregations
-- Outlier detection (IQR, Z-score)
-- Comprehensive data profiling
-
-### ✅ Validation
-- Schema validation
-- Data quality scoring
-- Anomaly detection
-- Pattern matching
+### 📈 Analysis Tools
+- **Statistics**: Descriptive stats, correlations, distributions
+- **Outlier Detection**: IQR, Z-score, custom thresholds
+- **Data Profiling**: Complete quality reports
+- **Schema Validation**: Type checking and data quality scoring
 
 ## Why Choose CSV Editor?
 
@@ -48,40 +44,51 @@ CSV Editor is a comprehensive data processing tool that bridges the gap between 
 |---------|-----------|------------------|
 | **AI Integration** | Native MCP protocol | Manual operations |
 | **Auto-Save** | Automatic with strategies | Manual save required |
-| **History Tracking** | Full undo/redo | Limited or none |
-| **Session Management** | Multi-user isolated | Single user |
-| **Performance** | Handles GB+ files | Memory limitations |
+| **History Tracking** | Full undo/redo with snapshots | Limited or none |
+| **Session Management** | Multi-user isolated sessions | Single user |
+| **Data Validation** | Built-in quality scoring | Separate tools needed |
+| **Performance** | Handles GB+ files with chunking | Memory limitations |
 
 ## Quick Example
 
-Here's what your AI assistant can do with CSV Editor:
+Your AI assistant can now do this:
 
 ```python
-# Natural language commands become data operations
+# Natural language becomes powerful data operations
 "Load the sales data and remove duplicates"
 "Filter for Q4 2024 transactions over $10,000"  
 "Calculate correlation between price and quantity"
 "Fill missing values with the median"
 "Export as Excel with the analysis"
+
+# All with automatic history tracking and undo capability!
 ```
+
+## Technology Stack
+
+Built with modern, high-performance tools:
+
+- **Framework**: FastMCP 2.11.3+ (Model Context Protocol)
+- **Data Processing**: Pandas 2.2.3+, NumPy 2.1.3+
+- **Package Manager**: uv (ultra-fast Python package management)
+- **Code Quality**: Ruff (linting and formatting), MyPy (type checking)
+- **Configuration**: Pydantic Settings for environment management
 
 ## Getting Started
 
-Ready to supercharge your AI's data capabilities? Continue to the [Installation Guide](./installation) to set up CSV Editor in just 2 minutes!
+Ready to supercharge your AI's data capabilities?
 
-## Learn More
-
-- [Installation Guide](./installation) - Set up CSV Editor
-- [Quick Start Tutorial](./tutorials/quickstart) - Your first data processing
-- [API Reference](./api/overview) - Complete tool documentation
-- [Examples](./examples) - Real-world use cases
+1. **[Install CSV Editor](./installation)** - Set up in 2 minutes
+2. **[Quick Start Tutorial](./tutorials/quickstart)** - Your first data processing
+3. **[API Reference](./api/overview)** - Complete tool documentation
+4. **[Architecture](./architecture)** - Technical design and implementation details
 
 ## Community & Support
 
-- [GitHub Repository](https://github.com/santoshray02/csv-editor)
-- [GitHub Discussions](https://github.com/santoshray02/csv-editor/discussions)
-- [Report Issues](https://github.com/santoshray02/csv-editor/issues)
+- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code and releases
+- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** - Ask questions and share ideas
+- **[Report Issues](https://github.com/jonpspri/csv-editor/issues)** - Bug reports and feature requests
 
 ---
 
-**Built with ❤️ using [FastMCP](https://github.com/jlowin/fastmcp) and [Pandas](https://pandas.pydata.org/)**
+**Ready to transform your AI's data capabilities?** [Get started now →](./installation)

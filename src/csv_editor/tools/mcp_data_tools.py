@@ -4,11 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context
+from fastmcp import Context  # noqa: TC002
 
 # Import type aliases
 from .transformations import CellValue, FilterCondition, OperationResult
-
 from .transformations import (
     add_column as _add_column,
 )
@@ -86,7 +85,7 @@ def register_data_tools(mcp: Any) -> None:
 
         Supported Operators:
             Comparison: "=", "!=", ">", "<", ">=", "<="
-            Text: "contains", "not_contains", "starts_with", "ends_with" 
+            Text: "contains", "not_contains", "starts_with", "ends_with"
             Lists: "in", "not_in"
             Nulls: "is_null", "is_not_null" (no value parameter needed)
 
@@ -94,25 +93,25 @@ def register_data_tools(mcp: Any) -> None:
             Filtering operation result containing:
             - success: bool operation status
             - rows_before: Original row count
-            - rows_after: Filtered row count  
+            - rows_after: Filtered row count
             - rows_filtered: Number of rows removed
 
         Examples:
             # Numeric filtering
             filter_rows(session_id, [{"column": "age", "operator": ">", "value": 25}])
-            
+
             # Text filtering with null handling
             filter_rows(session_id, [
                 {"column": "name", "operator": "contains", "value": "Smith"},
                 {"column": "email", "operator": "is_not_null"}
             ], mode="and")
-            
+
             # Multiple conditions with OR logic
             filter_rows(session_id, [
                 {"column": "status", "operator": "=", "value": "active"},
                 {"column": "priority", "operator": "=", "value": "high"}
             ], mode="or")
-            
+
             # List membership and null filtering
             filter_rows(session_id, [
                 {"column": "department", "operator": "in", "value": ["sales", "marketing"]},
@@ -121,7 +120,7 @@ def register_data_tools(mcp: Any) -> None:
 
         AI Usage Patterns:
             1. Start broad → narrow with additional conditions
-            2. Use get_value_counts first to understand data distribution  
+            2. Use get_value_counts first to understand data distribution
             3. Combine with sort_data for ordered results
             4. Use get_data_summary after filtering to verify results
         """

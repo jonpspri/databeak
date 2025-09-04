@@ -29,12 +29,12 @@ By participating in this project, you agree to abide by our Code of Conduct:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/santoshray02/csv-editor.git
+   git clone https://github.com/jonpspri/csv-editor.git
    cd csv-editor
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/santoshray02/csv-editor.git
+   git remote add upstream https://github.com/jonpspri/csv-editor.git
    ```
 
 ## Development Setup
@@ -112,13 +112,13 @@ Follow these guidelines:
 - **One feature per PR** - Keep pull requests focused
 - **Write tests** - All new features must have tests
 - **Update docs** - Update README and docstrings as needed
-- **Follow style guide** - Use Black, Ruff, and MyPy
+- **Follow style guide** - Use Ruff and MyPy
 
 ### 3. Run Quality Checks
 
 ```bash
 # All commands use uv for speed and consistency
-uv run fmt         # Format code with Black
+uv run ruff format # Format code with Ruff
 uv run lint        # Lint with Ruff
 uv run type-check  # Type check with MyPy
 uv run all-checks  # Run everything at once
@@ -141,7 +141,7 @@ uv run pytest -x                         # Stop on first failure
 
 We use modern Python tooling for code quality:
 
-- **Black** for code formatting (line length: 100)
+- **Ruff** for code formatting and linting (line length: 100)
 - **Ruff** for linting (replaces flake8, isort, and more)
 - **MyPy** for type checking
 - **Pre-commit** for automated checks

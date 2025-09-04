@@ -4,10 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context
-
-# Import type aliases
-from .transformations import CellValue
+from fastmcp import Context  # noqa: TC002
 
 from .analytics import (
     detect_outliers as _detect_outliers,
@@ -30,6 +27,9 @@ from .analytics import (
 from .analytics import (
     profile_data as _profile_data,
 )
+
+# Import type aliases
+from .transformations import CellValue
 from .transformations import (
     find_cells_with_value as _find_cells_with_value,
 )
@@ -204,11 +204,11 @@ def register_analytics_tools(mcp: Any) -> None:
 
         Examples:
             # Start every AI workflow with comprehensive summary
-            get_data_summary("session123") 
-            
+            get_data_summary("session123")
+
             # Quick overview without sample data
             get_data_summary("session123", False)
-            
+
             # Large preview for detailed analysis
             get_data_summary("session123", True, 20)
 
@@ -221,7 +221,7 @@ def register_analytics_tools(mcp: Any) -> None:
 
         Related Tools:
             → get_session_info(): Basic session metadata
-            → get_row_data(): Detailed row inspection  
+            → get_row_data(): Detailed row inspection
             → get_cell_value(): Individual cell access
             → get_column_data(): Column-specific analysis
         """

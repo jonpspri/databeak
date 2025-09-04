@@ -1,6 +1,6 @@
 {
-  "name": "@santoshray02/csv-editor",
-  "version": "1.0.0",
+  "name": "@jonpspri/csv-editor",
+  "version": "1.0.2",
   "description": "MCP server for comprehensive CSV file operations",
   "keywords": [
     "mcp",
@@ -14,19 +14,25 @@
     "claude",
     "llm"
   ],
-  "homepage": "https://github.com/santoshray02/csv-editor#readme",
+  "homepage": "https://github.com/jonpspri/csv-editor#readme",
   "bugs": {
-    "url": "https://github.com/santoshray02/csv-editor/issues"
+    "url": "https://github.com/jonpspri/csv-editor/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/santoshray02/csv-editor.git"
+    "url": "git+https://github.com/jonpspri/csv-editor.git"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
-    "name": "Santosh Ray",
-    "email": "rayskumar02@gmail.com"
+    "name": "Jonathan Springer",
+    "email": "jps@s390x.com"
   },
+  "contributors": [
+    {
+      "name": "Santosh Ray",
+      "email": "rayskumar02@gmail.com"
+    }
+  ],
   "type": "module",
   "scripts": {
     "build": "echo 'Python package - no JS build needed'",
@@ -35,7 +41,10 @@
   "mcp": {
     "serverType": "python",
     "command": "python",
-    "args": ["-m", "csv_editor.server"],
+    "args": [
+      "-m",
+      "csv_editor.server"
+    ],
     "env": {},
     "capabilities": {
       "tools": true,

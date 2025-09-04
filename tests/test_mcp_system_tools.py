@@ -21,7 +21,7 @@ class TestInstructionsLoading:
 
         # Check for expected content
         assert "CSV Editor MCP Server" in instructions
-        assert "Core Capabilities" in instructions
+        assert "Core Philosophy" in instructions
         assert "Getting Started" in instructions
         assert "Key Features" in instructions
 
@@ -32,9 +32,9 @@ class TestInstructionsLoading:
         # Check for main sections (updated for new AI-focused structure)
         expected_sections = [
             "# CSV Editor MCP Server",
-            "## Coordinate System",
-            "## Core Capabilities:",
-            "## Getting Started (AI Workflow):",
+            "Coordinate System",
+            "Core Philosophy",
+            "Getting Started (AI Workflow)",
         ]
 
         for section in expected_sections:
@@ -102,7 +102,7 @@ class TestServerInitialization:
         # Check for key sections that should be in instructions
         expected_content = [
             "CSV Editor MCP Server",
-            "Capabilities",
+            "Core Philosophy",
         ]
 
         for content in expected_content:

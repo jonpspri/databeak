@@ -8,12 +8,14 @@ version = "1.0.2"
 description = "MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
+    {name = "Jonathan Springer", email = "jps@s390x.com"},
 ]
 maintainers = [
     {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
+    {name = "Jonathan Springer", email = "jps@s390x.com"},
 ]
 keywords = [
     "csv",
@@ -33,7 +35,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Financial and Insurance Industry",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -77,7 +79,6 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-mock>=3.14.0",
     "pytest-benchmark>=5.0.0",
-    "black>=24.10.0",
     "ruff>=0.7.0",
     "mypy>=1.13.0",
     "pre-commit>=4.0.0",
@@ -108,16 +109,17 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/santoshray02/csv-editor"
-Documentation = "https://github.com/santoshray02/csv-editor#readme"
-Repository = "https://github.com/santoshray02/csv-editor"
-Issues = "https://github.com/santoshray02/csv-editor/issues"
-Changelog = "https://github.com/santoshray02/csv-editor/blob/main/CHANGELOG.md"
-"Release Notes" = "https://github.com/santoshray02/csv-editor/releases"
+Homepage = "https://github.com/jonpspri/csv-editor"
+Documentation = "https://github.com/jonpspri/csv-editor#readme"
+Repository = "https://github.com/jonpspri/csv-editor"
+Issues = "https://github.com/jonpspri/csv-editor/issues"
+Changelog = "https://github.com/jonpspri/csv-editor/blob/main/CHANGELOG.md"
+"Release Notes" = "https://github.com/jonpspri/csv-editor/releases"
 
 [project.scripts]
 csv-editor = "csv_editor.server:main"
 csv = "csv_editor.server:main"  # Shorter alias
+sync-versions = "scripts.sync_versions:main"  # Version synchronization utility
 
 # Note: We use uv for environment and dependency management
 # Hatchling is used only as the build backend for packaging
@@ -129,6 +131,7 @@ include = [
     "/examples",
     "README.md",
     "LICENSE",
+    "NOTICE",
     "CHANGELOG.md",
     "pyproject.toml",
     "uv.toml",
@@ -161,21 +164,6 @@ packages = ["src/csv_editor"]
 
 # Modern tool configurations
 
-[tool.black]
-line-length = 100
-target-version = ["py310", "py311", "py312", "py313"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-    \.git
-  | \.venv
-  | build
-  | dist
-  | \.eggs
-  | \.hatch
-)/
-'''
-
 [tool.ruff]
 line-length = 100
 target-version = "py310"
@@ -203,7 +191,7 @@ select = [
     "FA",   # flake8-future-annotations
 ]
 ignore = [
-    "E501",  # line too long (handled by black)
+    "E501",  # line too long (handled by ruff format)
     "B008",  # do not perform function calls in argument defaults
     "B905",  # `zip()` without an explicit `strict=` parameter
     "SIM105", # contextlib.suppress is slower
@@ -245,7 +233,7 @@ show_error_context = true
 [[tool.mypy.overrides]]
 module = [
     "fastmcp",
-    "tabulate", 
+    "tabulate",
     "openpyxl",
     "pyarrow",
     "numexpr",
@@ -322,14 +310,16 @@ pretty_print = true
 site_name = "CSV Editor"
 site_description = "Comprehensive CSV manipulation and analysis via Model Context Protocol"
 site_author = "Santosh Ray"
-repo_url = "https://github.com/santoshray02/csv-editor"
+repo_url = "https://github.com/jonpspri/csv-editor"
 repo_name = "csv-editor"
 
 [dependency-groups]
 dev = [
     "pandas-stubs>=2.3.0",
+    "ruff>=0.12.10",
     "twine>=6.1.0",
 ]
 
 # Pre-commit hooks configuration (for reference)
 # Create .pre-commit-config.yaml separately
+

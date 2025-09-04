@@ -15,14 +15,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://santoshray02.github.io',
+  url: 'https://jonpspri.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/csv-editor/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'santoshray02', // Usually your GitHub org/user name.
+  organizationName: 'jonpspri', // Usually your GitHub org/user name.
   projectName: 'csv-editor', // Usually your repo name.
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
@@ -47,7 +47,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/santoshray02/csv-editor/tree/main/docs/',
+            'https://github.com/jonpspri/csv-editor/tree/main/docs/',
         },
         blog: {
           showReadingTime: true,
@@ -58,7 +58,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/santoshray02/csv-editor/tree/main/docs/',
+            'https://github.com/jonpspri/csv-editor/tree/main/docs/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -89,7 +89,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/santoshray02/csv-editor',
+          href: 'https://github.com/jonpspri/csv-editor',
           label: 'GitHub',
           position: 'right',
         },
@@ -120,7 +120,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub Discussions',
-              href: 'https://github.com/santoshray02/csv-editor/discussions',
+              href: 'https://github.com/jonpspri/csv-editor/discussions',
             },
             {
               label: 'Discord',
@@ -141,7 +141,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/santoshray02/csv-editor',
+              href: 'https://github.com/jonpspri/csv-editor',
             },
             {
               label: 'PyPI',

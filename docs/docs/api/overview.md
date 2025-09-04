@@ -5,179 +5,151 @@ title: API Overview
 
 # API Reference Overview
 
-CSV Editor provides a comprehensive set of tools for CSV manipulation through the Model Context Protocol (MCP). This reference documents all available tools, their parameters, and usage examples.
+CSV Editor provides 40+ tools for comprehensive CSV manipulation through the Model Context Protocol (MCP). All tools return structured responses and include comprehensive error handling.
 
 ## Tool Categories
 
 ### 📁 I/O Operations
-Tools for loading and exporting CSV data in various formats.
 
-- [load_csv](./io/load-csv) - Load CSV from file
-- [load_csv_from_url](./io/load-url) - Load CSV from URL
-- [load_csv_from_content](./io/load-content) - Load CSV from string
-- [export_csv](./io/export) - Export to various formats
-- [get_session_info](./io/session-info) - Get session details
-- [list_sessions](./io/list-sessions) - List active sessions
-- [close_session](./io/close-session) - Close a session
+Tools for loading and exporting CSV data in various formats:
+
+- **`load_csv`** - Load CSV from file path
+- **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL  
+- **`load_csv_from_content`** - Load CSV from string content
+- **`export_csv`** - Export to CSV, JSON, Excel, Parquet, HTML, Markdown
+- **`get_session_info`** - Get current session details and statistics
+- **`list_sessions`** - List all active sessions
+- **`close_session`** - Close and cleanup a session
 
 ### 🔧 Data Manipulation
-Tools for transforming and modifying CSV data.
 
-- [filter_rows](./manipulation/filter) - Filter with conditions
-- [sort_data](./manipulation/sort) - Sort by columns
-- [select_columns](./manipulation/select) - Select specific columns
-- [rename_columns](./manipulation/rename) - Rename columns
-- [add_column](./manipulation/add-column) - Add new columns
-- [remove_columns](./manipulation/remove) - Remove columns
-- [update_column](./manipulation/update) - Update column values
-- [change_column_type](./manipulation/change-type) - Convert data types
-- [fill_missing_values](./manipulation/fill-missing) - Handle nulls
-- [remove_duplicates](./manipulation/remove-duplicates) - Deduplicate
+Tools for transforming and modifying CSV data:
 
-### 📊 Analysis
-Tools for statistical analysis and data exploration.
+- **`filter_rows`** - Filter rows with complex conditions (AND/OR logic)
+- **`sort_data`** - Sort by single or multiple columns
+- **`select_columns`** - Select specific columns by name or pattern
+- **`rename_columns`** - Rename columns with mapping
+- **`add_column`** - Add computed columns with formulas
+- **`remove_columns`** - Remove unwanted columns
+- **`update_column`** - Update column values with transformations
+- **`change_column_type`** - Convert column data types
+- **`fill_missing_values`** - Handle null/NaN values with strategies
+- **`remove_duplicates`** - Remove duplicate rows with optional key columns
 
-- [get_statistics](./analysis/statistics) - Statistical summary
-- [get_column_statistics](./analysis/column-stats) - Column statistics
-- [get_correlation_matrix](./analysis/correlation) - Correlation analysis
-- [group_by_aggregate](./analysis/group-by) - Group operations
-- [get_value_counts](./analysis/value-counts) - Frequency counts
-- [detect_outliers](./analysis/outliers) - Find outliers
-- [profile_data](./analysis/profile) - Data profiling
+### 📊 Data Analysis
 
-### ✅ Validation
-Tools for data quality and validation.
+Tools for statistical analysis and insights:
 
-- [validate_schema](./validation/schema) - Schema validation
-- [check_data_quality](./validation/quality) - Quality metrics
-- [find_anomalies](./validation/anomalies) - Anomaly detection
+- **`get_statistics`** - Descriptive statistics for numeric columns
+- **`get_column_statistics`** - Detailed stats for specific columns
+- **`get_correlation_matrix`** - Pearson, Spearman, and Kendall correlations
+- **`group_by_aggregate`** - Group data with aggregation functions
+- **`get_value_counts`** - Frequency counts for categorical data
+- **`detect_outliers`** - Find outliers using IQR, Z-score, or custom methods
+- **`profile_data`** - Comprehensive data profiling report
 
-### 💾 Auto-Save & History
-Tools for persistence and version control.
+### ✅ Data Validation
 
-- [configure_auto_save](./persistence/auto-save) - Configure auto-save
-- [get_auto_save_status](./persistence/auto-save-status) - Check status
-- [trigger_manual_save](./persistence/manual-save) - Manual save
-- [undo](./persistence/undo) - Undo last operation
-- [redo](./persistence/redo) - Redo operation
-- [get_history](./persistence/history) - View history
-- [restore_to_operation](./persistence/restore) - Time travel
+Tools for schema validation and quality checking:
+
+- **`validate_schema`** - Validate data against schema definitions
+- **`check_data_quality`** - Overall data quality scoring
+- **`find_anomalies`** - Detect statistical and pattern anomalies
+
+### 🔄 Session Management
+
+Tools for managing data sessions and workflow:
+
+- **`configure_auto_save`** - Set up automatic saving strategies
+- **`get_auto_save_status`** - Check current auto-save configuration
+- **`undo`** - Undo the last operation
+- **`redo`** - Redo previously undone operation
+- **`get_history`** - View operation history
+- **`restore_to_operation`** - Restore to specific point in history
+
+### ⚙️ System Tools
+
+System information and health monitoring:
+
+- **`health_check`** - Server health and status
+- **`get_server_info`** - Server capabilities and configuration
 
 ## Common Patterns
 
-### Session Management
-
-All operations require a session ID obtained from loading data:
-
-```python
-# Load data and get session ID
-result = await load_csv(file_path="/path/to/data.csv")
-session_id = result["session_id"]
-
-# Use session ID in subsequent operations
-await filter_rows(session_id=session_id, conditions=[...])
-await export_csv(session_id=session_id, format="excel")
-```
-
 ### Error Handling
-
-All tools return consistent error responses:
-
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "error_type": "ValueError",
-  "details": "Additional context"
-}
-```
-
-### Response Format
-
-Successful operations return:
-
+All tools return consistent response format:
 ```json
 {
   "success": true,
   "data": {...},
-  "message": "Operation completed",
-  "metadata": {
-    "rows_affected": 100,
-    "execution_time": 0.123
-  }
+  "session_id": "uuid-here"
 }
 ```
 
-## Data Types
+Error responses:
+```json
+{
+  "success": false,
+  "error": "Error description",
+  "session_id": "uuid-here"
+}
+```
 
-### Supported Column Types
-- `string` - Text data
-- `integer` - Whole numbers
-- `float` - Decimal numbers
-- `datetime` - Date and time
-- `boolean` - True/False values
-- `category` - Categorical data
+### Session Management
+Most tools require a `session_id` parameter. Sessions are automatically created and managed with configurable timeouts.
 
-### Export Formats
-- `csv` - Comma-separated values
-- `tsv` - Tab-separated values
-- `json` - JSON array or records
-- `excel` - Excel spreadsheet (.xlsx)
-- `parquet` - Apache Parquet format
-- `html` - HTML table
-- `markdown` - Markdown table
+### Data Types
+CSV Editor supports rich data types including:
+- **Strings**, **Numbers**, **Booleans**
+- **Dates** and **DateTime** objects
+- **Null values** (JSON `null` → Python `None` → pandas `NaN`)
 
-## Filter Operators
+### Filtering Conditions
+Filter operations support complex conditions:
+```json
+{
+  "conditions": [
+    {"column": "age", "operator": ">", "value": 18},
+    {"column": "status", "operator": "==", "value": "active"}
+  ],
+  "logic": "AND"  // or "OR"
+}
+```
 
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `==` | Equal to | `{"column": "status", "operator": "==", "value": "active"}` |
-| `!=` | Not equal to | `{"column": "status", "operator": "!=", "value": "inactive"}` |
-| `>` | Greater than | `{"column": "amount", "operator": ">", "value": 1000}` |
-| `<` | Less than | `{"column": "age", "operator": "<", "value": 18}` |
-| `>=` | Greater than or equal | `{"column": "score", "operator": ">=", "value": 80}` |
-| `<=` | Less than or equal | `{"column": "price", "operator": "<=", "value": 100}` |
-| `contains` | Contains substring | `{"column": "name", "operator": "contains", "value": "John"}` |
-| `starts_with` | Starts with | `{"column": "email", "operator": "starts_with", "value": "admin"}` |
-| `ends_with` | Ends with | `{"column": "file", "operator": "ends_with", "value": ".csv"}` |
-| `in` | In list | `{"column": "category", "operator": "in", "value": ["A", "B"]}` |
-| `not_in` | Not in list | `{"column": "status", "operator": "not_in", "value": ["deleted"]}` |
-| `is_null` | Is null | `{"column": "email", "operator": "is_null"}` |
-| `not_null` | Is not null | `{"column": "phone", "operator": "not_null"}` |
+### Environment Configuration
 
-## Aggregation Functions
+All tools respect these environment variables:
 
-Available aggregation functions for `group_by_aggregate`:
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `CSV_EDITOR_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
+| `CSV_EDITOR_CSV_HISTORY_DIR` | "." | History storage location |
+| `CSV_EDITOR_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
+| `CSV_EDITOR_CHUNK_SIZE` | 10000 | Processing chunk size |
+| `CSV_EDITOR_AUTO_SAVE` | true | Enable auto-save |
 
-- `sum` - Sum of values
-- `mean` - Average value
-- `median` - Median value
-- `min` - Minimum value
-- `max` - Maximum value
-- `count` - Count of non-null values
-- `std` - Standard deviation
-- `var` - Variance
-- `first` - First value
-- `last` - Last value
+## Advanced Features
 
-## Best Practices
+### Null Value Support
+Full support for null values across all operations:
+- JSON `null` values are preserved and handled correctly
+- Python `None` and pandas `NaN` compatibility
+- Filtering and operations work seamlessly with nulls
 
-1. **Always close sessions** when done to free resources
-2. **Use chunking** for large files (>100MB)
-3. **Enable auto-save** for important data
-4. **Validate data** before processing
-5. **Use appropriate data types** for better performance
-6. **Handle errors gracefully** in your client code
+### Auto-Save Strategies
+Configurable auto-save with multiple strategies:
+- **Overwrite** - Update original file
+- **Backup** - Create timestamped backups  
+- **Versioned** - Maintain version history
+- **Custom** - Save to specified location
 
-## Rate Limits
+### History and Undo/Redo
+Complete operation tracking:
+- Persistent history storage
+- Snapshot-based undo/redo
+- Operation metadata and timestamps
+- Restore to any point in history
 
-- Maximum file size: 1GB (configurable)
-- Maximum concurrent sessions: 10 per user
-- Session timeout: 1 hour (configurable)
-- Maximum rows per operation: 10 million
+---
 
-## Next Steps
-
-- Explore specific tool documentation in each category
-- See [Examples](../examples) for real-world use cases
-- Check [Tutorials](../tutorials/quickstart) for step-by-step guides
+**For detailed examples and tutorials, see the [Quick Start Guide](../tutorials/quickstart)**

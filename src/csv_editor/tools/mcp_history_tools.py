@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context  # noqa: TC002
 
 from .auto_save_operations import (
     configure_auto_save as _configure_auto_save,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context  # noqa: TC002
 
 from .transformations import (
     delete_row as _delete_row,
@@ -42,7 +42,7 @@ def register_row_tools(mcp: Any) -> None:
         context. Part of the inspection workflow: get_data_summary → get_row_data → get_cell_value.
 
         Args:
-            session_id: Session identifier for the active CSV data session  
+            session_id: Session identifier for the active CSV data session
             row_index: Row index using 0-based indexing (0 = first row, N-1 = last row)
             column: Column targeting options:
                     - String: Column name (e.g., "name", "email", "status") - preferred for clarity
@@ -59,10 +59,10 @@ def register_row_tools(mcp: Any) -> None:
             # Read by column name (recommended)
             get_cell_value("session123", 0, "name")    # → "John Doe"
             get_cell_value("session123", 5, "email")   # → "john@example.com" or None
-            
+
             # Read by column index
             get_cell_value("session123", 2, 1)        # Third row, second column
-            
+
             # Null value handling
             get_cell_value("session123", 1, "phone")  # → None if cell is empty/null
 
@@ -82,7 +82,11 @@ def register_row_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def set_cell_value(
-        session_id: str, row_index: int, column: str | int, value: str | int | float | bool | None, ctx: Context | None = None
+        session_id: str,
+        row_index: int,
+        column: str | int,
+        value: str | int | float | bool | None,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Set the value of a specific cell with precise coordinate targeting and null value support.
 
@@ -113,23 +117,23 @@ def register_row_tools(mcp: Any) -> None:
         Examples:
             # Set by column name
             set_cell_value("session123", 0, "name", "Jane Smith")
-            
-            # Set by column index  
+
+            # Set by column index
             set_cell_value("session123", 2, 1, 25)
-            
+
             # Set to null value
             set_cell_value("session123", 1, "email", null)
             set_cell_value("session123", 0, "phone", None)
-            
+
             # Update status fields
             set_cell_value("session123", 3, "status", "completed")
 
         Error Conditions:
             - Invalid session_id or no data loaded
             - Row index out of range (0 to N-1)
-            - Column name not found or column index out of range  
+            - Column name not found or column index out of range
             - Data type conversion errors (handled gracefully by pandas)
-            
+
         AI Usage Tips:
             - Use column names for clarity when possible
             - Check coordinates in return value to verify targeting
@@ -190,7 +194,9 @@ def register_row_tools(mcp: Any) -> None:
     async def insert_row(
         session_id: str,
         row_index: int,
-        data: dict[str, str | int | float | bool | None] | list[str | int | float | bool | None] | str,  # Accept string for Claude Code compatibility
+        data: (
+            dict[str, str | int | float | bool | None] | list[str | int | float | bool | None] | str
+        ),  # Accept string for Claude Code compatibility
         ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Insert a new row at the specified index with comprehensive null value and JSON string support.
@@ -203,9 +209,9 @@ def register_row_tools(mcp: Any) -> None:
             row_index: Index where to insert the row (0-based indexing). Use -1 to append at end
             data: Row data in multiple formats:
                   - Dict: {"column_name": value, ...} with all or partial columns
-                  - List: [value1, value2, ...] matching column order exactly  
+                  - List: [value1, value2, ...] matching column order exactly
                   - JSON string: Automatically parsed from Claude Code serialization
-                  
+
                   All formats support null/None values:
                   - JSON null → Python None → pandas NaN
                   - Missing dict keys → filled with None
@@ -224,17 +230,17 @@ def register_row_tools(mcp: Any) -> None:
         Examples:
             # Standard dictionary insertion
             insert_row("session123", 1, {"name": "Alice", "age": 28, "city": "Boston"})
-            
+
             # List insertion (append)
             insert_row("session123", -1, ["David", 40, "Miami"])
-            
+
             # Null value support
             insert_row("session123", 0, {"name": "John", "age": null, "city": "NYC"})
             insert_row("session123", 2, ["Jane", None, "LA", None])
-            
+
             # Claude Code JSON string (automatically handled)
             insert_row("session123", 1, '{"name": "Alice", "email": null, "status": "active"}')
-            
+
             # Partial data (missing columns filled with None)
             insert_row("session123", 3, {"name": "Bob", "city": "Seattle"})  # age, email → None
 
@@ -243,7 +249,7 @@ def register_row_tools(mcp: Any) -> None:
             - Row index out of valid range (0 to N for insertion)
             - Invalid JSON string format
             - List length mismatch with column count
-            
+
         Coordinate System:
             - Uses 0-based indexing: row 0 is first, row N-1 is last
             - Insertion index N appends to end (same as row_index=-1)
@@ -271,7 +277,10 @@ def register_row_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def update_row(
-        session_id: str, row_index: int, data: dict[str, str | int | float | bool | None] | str, ctx: Context | None = None
+        session_id: str,
+        row_index: int,
+        data: dict[str, str | int | float | bool | None] | str,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Update specific columns in a row with comprehensive null value and Claude Code JSON string support.
 
@@ -284,7 +293,7 @@ def register_row_tools(mcp: Any) -> None:
             data: Row update data in multiple formats:
                   - Dict: {"column_name": new_value, ...} for partial column updates
                   - JSON string: Automatically parsed from Claude Code serialization
-                  
+
                   All formats support null/None values:
                   - JSON null → Python None → pandas NaN
                   - Explicit None values → preserved as pandas NaN
@@ -302,16 +311,16 @@ def register_row_tools(mcp: Any) -> None:
         Examples:
             # Standard dictionary update
             update_row("session123", 0, {"age": 31, "city": "Boston"})
-            
+
             # Set values to null
             update_row("session123", 1, {"phone": null, "email": null})
-            
+
             # Partial update (only specified columns changed)
             update_row("session123", 2, {"status": "completed"})
 
         Claude Code JSON String Compatibility:
             Claude Code serializes parameters as JSON strings. This tool automatically handles:
-            
+
             What Claude Code sends:
             ```json
             {
@@ -319,7 +328,7 @@ def register_row_tools(mcp: Any) -> None:
               "data": "{\\"status\\": \\"active\\", \\"notes\\": null}"
             }
             ```
-            
+
             Automatically parsed to:
             ```python
             {

@@ -35,9 +35,9 @@ DEMO_CSV = """employee_id,name,department,salary,years_experience,performance_ra
 class Demo:
     @staticmethod
     def header(title: str):
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"  {title}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
     @staticmethod
     def success(msg: str):
@@ -106,7 +106,7 @@ async def run_demo():
     if filtered["success"]:
         Demo.success(f"Found {filtered['rows_after']} high performers")
         Demo.info(
-            f"({filtered['rows_after']}/{filtered['rows_before']} = {filtered['rows_after']/filtered['rows_before']*100:.1f}% of employees)"
+            f"({filtered['rows_after']}/{filtered['rows_before']} = {filtered['rows_after'] / filtered['rows_before'] * 100:.1f}% of employees)"
         )
 
     # Profile the data

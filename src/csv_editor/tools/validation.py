@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 async def validate_schema(
-    session_id: str, schema: dict[str, dict[str, Any]], ctx: Context | None = None  # noqa: ARG001
+    session_id: str,
+    schema: dict[str, dict[str, Any]],
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
     """
     Validate data against a schema definition.
@@ -46,10 +48,10 @@ async def validate_schema(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.df is None:
+        if not session or session.data_session.df is None:
             return {"success": False, "error": "Invalid session or no data loaded"}
 
-        df = session.df
+        df = session.data_session.df
         validation_errors: dict[str, list[dict[str, Any]]] = {}
         validation_summary: dict[str, Any] = {
             "total_columns": len(schema),
@@ -276,10 +278,10 @@ async def check_data_quality(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.df is None:
+        if not session or session.data_session.df is None:
             return {"success": False, "error": "Invalid session or no data loaded"}
 
-        df = session.df
+        df = session.data_session.df
         quality_results: dict[str, Any] = {
             "overall_score": 100.0,
             "checks": [],
@@ -331,7 +333,7 @@ async def check_data_quality(
                                 {
                                     "type": "incomplete_data",
                                     "column": col,
-                                    "message": f"Column '{col}' is only {round(completeness*100, 2)}% complete",
+                                    "message": f"Column '{col}' is only {round(completeness * 100, 2)}% complete",
                                     "severity": "high" if completeness < 0.5 else "medium",
                                 }
                             )
@@ -364,7 +366,7 @@ async def check_data_quality(
                     quality_results["issues"].append(
                         {
                             "type": "duplicate_rows",
-                            "message": f"Found {duplicates.sum()} duplicate rows ({round(duplicate_ratio*100, 2)}%)",
+                            "message": f"Found {duplicates.sum()} duplicate rows ({round(duplicate_ratio * 100, 2)}%)",
                             "severity": "high" if duplicate_ratio > 0.1 else "medium",
                         }
                     )
@@ -486,7 +488,7 @@ async def check_data_quality(
                             {
                                 "type": "outliers",
                                 "column": col,
-                                "message": f"Column '{col}' has {outliers} outliers ({round(outlier_ratio*100, 2)}%)",
+                                "message": f"Column '{col}' has {outliers} outliers ({round(outlier_ratio * 100, 2)}%)",
                                 "severity": "medium",
                             }
                         )
@@ -613,10 +615,10 @@ async def find_anomalies(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.df is None:
+        if not session or session.data_session.df is None:
             return {"success": False, "error": "Invalid session or no data loaded"}
 
-        df = session.df
+        df = session.data_session.df
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
@@ -648,7 +650,7 @@ async def find_anomalies(
                     z_threshold = 3 * (
                         1 - sensitivity + 0.5
                     )  # Adjust threshold based on sensitivity
-                    z_anomalies = df.index[z_scores > z_threshold].tolist()
+                    z_anomalies = col_data.index[z_scores > z_threshold].tolist()
 
                     # IQR method
                     q1 = col_data.quantile(0.25)

@@ -5,361 +5,158 @@ title: Quick Start
 
 # Quick Start Tutorial
 
-Learn how to use CSV Editor in 10 minutes with this hands-on tutorial. We'll process a sample sales dataset step by step.
+Learn how to use CSV Editor in 10 minutes with this hands-on tutorial. We'll process a sample sales dataset using natural language commands.
 
 ## Prerequisites
 
-- CSV Editor installed and configured (see [Installation Guide](../installation))
-- An AI assistant client (Claude Desktop, Continue, etc.) configured
+- CSV Editor installed and configured ([Installation Guide](../installation))
+- An AI assistant client (Claude Desktop, Continue, etc.) configured with CSV Editor
 
-## Sample Dataset
+## Step 1: Load Your Data
 
-For this tutorial, we'll use a sample sales dataset. You can create it or use your own CSV file.
+Ask your AI assistant:
 
-```csv
-date,product,category,quantity,price,customer_id
-2024-01-15,Laptop,Electronics,2,1299.99,C001
-2024-01-16,Mouse,Electronics,5,29.99,C002
-2024-01-16,Desk,Furniture,1,399.99,C001
-2024-01-17,Chair,Furniture,3,199.99,C003
-2024-01-18,Monitor,Electronics,2,599.99,C002
-2024-01-18,Keyboard,Electronics,,89.99,C001
-2024-01-19,Lamp,Furniture,4,49.99,
-2024-01-20,Laptop,Electronics,1,1299.99,C004
-2024-01-20,Mouse,Electronics,3,29.99,C003
-```
+> "Load the sales data from my CSV file"
 
-## Step 1: Load the Data
-
-First, let's load the CSV file into CSV Editor:
-
-```python
-# Load the CSV file
-result = load_csv(file_path="/path/to/sales_data.csv")
-
-# The result contains:
-# - session_id: Unique identifier for this session
-# - row_count: Number of rows loaded
-# - column_count: Number of columns
-# - columns: List of column names
-```
-
-**Expected Output:**
-```json
-{
-  "session_id": "abc123",
-  "row_count": 9,
-  "column_count": 6,
-  "columns": ["date", "product", "category", "quantity", "price", "customer_id"]
-}
-```
+The AI will use the `load_csv` tool to create a new session and load your data. You'll see a response with:
+- Session ID for tracking
+- Data shape (rows × columns)
+- Column names and types
+- Memory usage information
 
 ## Step 2: Explore the Data
 
-Let's get basic statistics about our dataset:
+Get an overview of your dataset:
 
-```python
-# Get statistical summary
-stats = get_statistics(session_id="abc123")
+> "Show me basic statistics for this data"
 
-# Get value counts for categories
-categories = get_value_counts(
-    session_id="abc123",
-    column="category"
-)
-```
+This uses `get_statistics` to provide:
+- Row and column counts
+- Data types summary
+- Missing values count
+- Memory usage
 
-**Statistics Output:**
-```json
-{
-  "quantity": {
-    "count": 8,
-    "mean": 2.625,
-    "std": 1.302,
-    "min": 1,
-    "max": 5
-  },
-  "price": {
-    "count": 9,
-    "mean": 454.43,
-    "std": 498.12,
-    "min": 29.99,
-    "max": 1299.99
-  }
-}
-```
+For detailed column analysis:
+
+> "Get detailed statistics for the price and quantity columns"
 
 ## Step 3: Clean the Data
 
-Notice we have missing values? Let's fix them:
+### Remove Duplicates
+> "Remove any duplicate rows from this dataset"
 
-```python
-# Fill missing quantity with median
-fill_missing_values(
-    session_id="abc123",
-    strategy="median",
-    columns=["quantity"]
-)
+### Handle Missing Values
+> "Fill missing quantity values with 0 and missing customer_id values with 'UNKNOWN'"
 
-# Fill missing customer_id with "UNKNOWN"
-fill_missing_values(
-    session_id="abc123",
-    strategy="fill",
-    columns=["customer_id"],
-    fill_value="UNKNOWN"
-)
-```
+### Fix Data Types
+> "Convert the date column to datetime format"
 
 ## Step 4: Transform the Data
 
-Let's add a calculated column for total sales:
+### Filter Data
+> "Show me only Electronics products with price greater than $100"
 
+### Add Calculated Columns
+> "Add a total_value column that multiplies quantity by price"
+
+### Group and Summarize
+> "Group by category and show total sales and average price for each"
+
+## Step 5: Analyze the Data
+
+### Statistical Analysis
+> "Calculate correlation between price and quantity"
+
+### Outlier Detection
+> "Find any outliers in the price column using the IQR method"
+
+### Data Quality
+> "Check the overall data quality and give me a quality score"
+
+## Step 6: Export Results
+
+> "Export this cleaned and analyzed data as an Excel file named 'sales_analysis.xlsx'"
+
+## Advanced Features
+
+### Undo/Redo Operations
+Made a mistake? No problem:
+
+> "Undo the last operation"
+> "Show me the operation history"
+> "Restore to the state before I added the total_value column"
+
+### Auto-Save Configuration
+Set up automatic saving:
+
+> "Configure auto-save to create backups in a backup folder with a maximum of 5 backups"
+
+### Session Management
+Work with multiple datasets:
+
+> "Create a new session for the customer data"
+> "List all my active sessions"
+> "Close the sales data session"
+
+## Real-World Examples
+
+### Data Cleaning Workflow
 ```python
-# Add total_sales column (quantity * price)
-add_column(
-    session_id="abc123",
-    name="total_sales",
-    formula="quantity * price"
-)
-
-# Convert date to datetime type
-change_column_type(
-    session_id="abc123",
-    column="date",
-    dtype="datetime"
-)
+# Natural language commands:
+"Load the messy customer data"
+"Remove duplicate rows" 
+"Fill missing email addresses with 'no-email@domain.com'"
+"Standardize the phone number format"
+"Remove rows where age is negative or over 120"
+"Export the cleaned data"
 ```
 
-## Step 5: Filter and Sort
-
-Let's find high-value transactions:
-
+### Analysis Pipeline
 ```python
-# Filter for sales over $500
-filter_rows(
-    session_id="abc123",
-    conditions=[
-        {"column": "total_sales", "operator": ">", "value": 500}
-    ]
-)
-
-# Sort by total_sales descending
-sort_data(
-    session_id="abc123",
-    columns=["total_sales"],
-    ascending=[False]
-)
+# Business intelligence workflow:
+"Load quarterly sales data"
+"Filter for completed transactions only"
+"Group by product category and month"
+"Calculate total revenue and average order value"
+"Find the top 10 selling products"
+"Create correlation matrix for price vs quantity vs revenue"
+"Export summary as Excel with charts"
 ```
 
-## Step 6: Analyze
-
-Perform aggregation by category:
-
+### Data Validation
 ```python
-# Group by category and calculate totals
-analysis = group_by_aggregate(
-    session_id="abc123",
-    group_by=["category"],
-    aggregations={
-        "quantity": ["sum", "mean"],
-        "total_sales": ["sum", "mean"],
-        "product": "count"
-    }
-)
-```
-
-**Aggregation Result:**
-```json
-{
-  "data": [
-    {
-      "category": "Electronics",
-      "quantity_sum": 13,
-      "quantity_mean": 2.6,
-      "total_sales_sum": 4919.92,
-      "total_sales_mean": 983.98,
-      "product_count": 5
-    },
-    {
-      "category": "Furniture",
-      "quantity_sum": 8,
-      "quantity_mean": 2.67,
-      "total_sales_sum": 1049.94,
-      "total_sales_mean": 349.98,
-      "product_count": 3
-    }
-  ]
-}
-```
-
-## Step 7: Validate Quality
-
-Check the data quality:
-
-```python
-# Check overall data quality
-quality = check_data_quality(session_id="abc123")
-
-# Validate against schema
-schema = {
-    "date": {"type": "datetime", "required": True},
-    "product": {"type": "string", "required": True},
-    "category": {"type": "string", "required": True},
-    "quantity": {"type": "integer", "min": 0},
-    "price": {"type": "float", "min": 0},
-    "customer_id": {"type": "string", "required": True}
-}
-
-validation = validate_schema(
-    session_id="abc123",
-    schema=schema
-)
-```
-
-## Step 8: Export Results
-
-Finally, export the cleaned and processed data:
-
-```python
-# Export as Excel with formatting
-export_csv(
-    session_id="abc123",
-    file_path="/path/to/processed_sales.xlsx",
-    format="excel"
-)
-
-# Export summary as JSON
-export_csv(
-    session_id="abc123",
-    file_path="/path/to/sales_summary.json",
-    format="json"
-)
-```
-
-## Complete Workflow Example
-
-Here's the entire workflow as a single script:
-
-```python
-# 1. Load data
-session = load_csv("/path/to/sales_data.csv")
-sid = session["session_id"]
-
-# 2. Clean missing values
-fill_missing_values(sid, strategy="median", columns=["quantity"])
-fill_missing_values(sid, strategy="fill", columns=["customer_id"], fill_value="UNKNOWN")
-
-# 3. Add calculated columns
-add_column(sid, name="total_sales", formula="quantity * price")
-change_column_type(sid, column="date", dtype="datetime")
-
-# 4. Analyze by category
-analysis = group_by_aggregate(
-    sid,
-    group_by=["category"],
-    aggregations={
-        "total_sales": ["sum", "mean"],
-        "quantity": "sum"
-    }
-)
-
-# 5. Find high-value transactions
-filter_rows(sid, conditions=[
-    {"column": "total_sales", "operator": ">", "value": 500}
-])
-
-# 6. Export results
-export_csv(sid, "/path/to/results.xlsx", format="excel")
-
-# 7. Clean up
-close_session(sid)
-```
-
-## Using Auto-Save
-
-Enable auto-save to never lose your work:
-
-```python
-# Configure auto-save with backup strategy
-configure_auto_save(
-    session_id="abc123",
-    enabled=True,
-    strategy="backup",
-    backup_dir="/path/to/backups",
-    max_backups=5
-)
-
-# Now all operations are automatically saved!
-```
-
-## Using History
-
-Track and undo operations:
-
-```python
-# View operation history
-history = get_history(session_id="abc123")
-
-# Undo last operation
-undo(session_id="abc123")
-
-# Redo if needed
-redo(session_id="abc123")
-
-# Restore to specific point
-restore_to_operation(
-    session_id="abc123",
-    operation_id="op_5"
-)
+# Quality assurance workflow:
+"Load the new data batch"
+"Validate against the expected schema"
+"Check data quality score"
+"Find any statistical anomalies"
+"Generate a data profiling report"
+"Flag any quality issues for review"
 ```
 
 ## Tips for Success
 
-1. **Start Simple**: Begin with basic operations before complex transformations
-2. **Check Your Data**: Use `get_session_info()` frequently to understand your data state
-3. **Save Often**: Enable auto-save for important data
-4. **Validate Early**: Check data quality before extensive processing
-5. **Use Appropriate Types**: Convert columns to correct types for better performance
+### 1. **Be Specific**
+Instead of "analyze the data", try "calculate descriptive statistics for numeric columns and show correlation matrix"
 
-## Common Use Cases
+### 2. **Use Session IDs**
+For multiple datasets, specify which session: "In session ABC123, filter rows where status equals 'active'"
 
-### Data Cleaning Pipeline
-```python
-# Remove duplicates → Fill missing → Fix types → Validate
-remove_duplicates(sid)
-fill_missing_values(sid, strategy="mean")
-change_column_type(sid, column="date", dtype="datetime")
-check_data_quality(sid)
-```
+### 3. **Chain Operations**
+"Load sales.csv, remove duplicates, filter for 2024 data, then calculate monthly totals"
 
-### Quick Analysis
-```python
-# Stats → Correlations → Outliers → Profile
-get_statistics(sid)
-get_correlation_matrix(sid)
-detect_outliers(sid, method="iqr")
-profile_data(sid)
-```
+### 4. **Leverage Auto-Save**
+CSV Editor automatically saves your work, so you can focus on analysis without worrying about losing changes
 
-### Export Multiple Formats
-```python
-# Same data, different formats for different uses
-export_csv(sid, "report.xlsx", format="excel")  # For business users
-export_csv(sid, "data.parquet", format="parquet")  # For data warehouse
-export_csv(sid, "api_response.json", format="json")  # For API
-```
+### 5. **Explore History**
+Use undo/redo freely to experiment with different approaches
 
 ## Next Steps
 
-Congratulations! You've learned the basics of CSV Editor. Continue with:
+- **[API Reference](../api/overview)** - Complete tool documentation
+- **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)** - More real-world scenarios
+- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code and community
 
-- [Advanced Filtering](./advanced-filtering) - Complex multi-condition filters
-- [Data Transformation](./data-transformation) - Advanced column operations
-- [Statistical Analysis](./statistical-analysis) - In-depth analytics
-- [API Reference](../api/overview) - Complete tool documentation
+---
 
-## Need Help?
-
-- Check the [API Reference](../api/overview) for detailed tool documentation
-- Visit [GitHub Discussions](https://github.com/santoshray02/csv-editor/discussions) for community support
-- Report issues on [GitHub Issues](https://github.com/santoshray02/csv-editor/issues)
+**Congratulations!** You now know how to use CSV Editor to transform your AI assistant into a powerful data analyst. 🎉

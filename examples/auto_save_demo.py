@@ -89,7 +89,7 @@ async def demonstrate_auto_save():
         session2.df["price"] = session2.df["price"] * (1 + i * 0.1)  # Simulate price changes
         session2.record_operation(OperationType.TRANSFORM, {"operation": f"price_increase_{i}"})
         await session2.trigger_auto_save_if_needed()
-        print(f"✓ Created version {i+1}")
+        print(f"✓ Created version {i + 1}")
 
     # List versioned files
     version_files = sorted(Path(backup_dir).glob(f"version_{session2.session_id}_v*.csv"))
@@ -119,7 +119,7 @@ async def demonstrate_auto_save():
     # Wait for a few saves
     for i in range(3):
         await asyncio.sleep(2.5)
-        print(f"✓ Periodic save {i+1} should have triggered")
+        print(f"✓ Periodic save {i + 1} should have triggered")
 
     # Stop periodic save
     await session3.auto_save_manager.stop_periodic_save()
@@ -169,7 +169,7 @@ async def demonstrate_auto_save():
         session5.record_operation(OperationType.ANALYZE, {"step": i})
         await session5.trigger_auto_save_if_needed()
         await asyncio.sleep(0.1)  # Small delay for different timestamps
-        print(f"✓ Save {i+1} completed")
+        print(f"✓ Save {i + 1} completed")
 
     # Check remaining files
     session5_files = list(Path(backup_dir).glob(f"*{session5.session_id}*"))
