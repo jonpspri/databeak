@@ -3,7 +3,7 @@ sidebar_position: 5
 title: Version Management
 ---
 
-# Version Management
+## Version Management
 
 This document describes how version numbers are managed in the CSV Editor project.
 

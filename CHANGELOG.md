@@ -20,18 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Null Value Support**: Comprehensive support for JSON `null` → Python `None` → pandas `NaN`
-- **Claude Code Compatibility**: Automatic JSON string deserialization for complex parameters
+- **Null Value Support**: Comprehensive support for JSON `null` → Python `None`
+  → pandas `NaN`
+- **Claude Code Compatibility**: Automatic JSON string deserialization for
+  complex parameters
 - **Modular Tool Architecture**: Organized tools into logical modules
   (system, I/O, data, row, analytics, validation, history)
-- **Enhanced Type Safety**: Replaced `Any` types with specific `CellValue`, `RowData`, `FilterCondition` types
-- **JSON String Parsing**: `insert_row` and `update_row` now accept JSON strings from Claude Code
-- **Comprehensive Test Coverage**: Added tests for null value scenarios and JSON string handling
+- **Enhanced Type Safety**: Replaced `Any` types with specific `CellValue`,
+  `RowData`, `FilterCondition` types
+- **JSON String Parsing**: `insert_row` and `update_row` now accept JSON
+  strings from Claude Code
+- **Comprehensive Test Coverage**: Added tests for null value scenarios and
+  JSON string handling
 
 ### Changed
 
-- **Tool Organization**: Moved FastMCP tool definitions from `server.py` to modular files in `tools/mcp_*.py`
-- **Type Annotations**: Improved type safety with specific types instead of generic `Any`
+- **Tool Organization**: Moved FastMCP tool definitions from `server.py` to
+  modular files in `tools/mcp_*.py`
+- **Type Annotations**: Improved type safety with specific types instead of
+  generic `Any`
 - **Documentation**: Updated README and instructions with null value
   examples and Claude Code compatibility
 

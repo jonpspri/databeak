@@ -3,7 +3,7 @@ sidebar_position: 4
 title: Architecture
 ---
 
-# Architecture Overview
+## Architecture Overview
 
 CSV Editor is built as a Model Context Protocol (MCP) server that provides
 AI assistants with comprehensive CSV data manipulation capabilities. This

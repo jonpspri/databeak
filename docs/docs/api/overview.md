@@ -3,7 +3,7 @@ sidebar_position: 1
 title: API Overview
 ---
 
-# API Reference Overview
+## API Reference Overview
 
 CSV Editor provides 40+ tools for comprehensive CSV manipulation through the
 Model Context Protocol (MCP). All tools return structured responses and

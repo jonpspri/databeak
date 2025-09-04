@@ -3,7 +3,7 @@ sidebar_position: 1
 title: Quick Start
 ---
 
-# Quick Start Tutorial
+## Quick Start Tutorial
 
 Learn how to use CSV Editor in 10 minutes with this hands-on tutorial.
 We'll process a sample sales dataset using natural language commands.

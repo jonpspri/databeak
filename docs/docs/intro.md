@@ -3,13 +3,18 @@ sidebar_position: 1
 title: Introduction
 ---
 
-# CSV Editor
+## CSV Editor
 
-**Transform how AI assistants work with CSV data.** CSV Editor is a high-performance MCP (Model Context Protocol) server that gives Claude, ChatGPT, and other AI assistants powerful data manipulation capabilities through simple commands.
+**Transform how AI assistants work with CSV data.** CSV Editor is a
+high-performance MCP (Model Context Protocol) server that gives Claude, ChatGPT,
+and other AI assistants powerful data manipulation capabilities through simple
+commands.
 
 ## What is CSV Editor?
 
-CSV Editor bridges the gap between AI assistants and complex data operations. It provides 40+ specialized tools for CSV operations, turning AI assistants into powerful data analysts that can:
+CSV Editor bridges the gap between AI assistants and complex data operations.
+It provides 40+ specialized tools for CSV operations, turning AI assistants
+into powerful data analysts that can:
 
 - Clean messy datasets in seconds
 - Perform complex statistical analysis

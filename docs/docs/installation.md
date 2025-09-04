@@ -3,7 +3,7 @@ sidebar_position: 2
 title: Installation
 ---
 
-# Installation Guide
+## Installation Guide
 
 Get CSV Editor up and running in just 2 minutes! This guide covers
 installation and client configuration.
