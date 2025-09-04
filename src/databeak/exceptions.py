@@ -195,7 +195,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Custom exceptions for CSV Editor MCP Server."""
 
 from __future__ import annotations
@@ -227,7 +226,6 @@ class SessionError(CSVEditorError):
     """Session-related errors."""
 
 
-
 class SessionNotFoundError(SessionError):
     """Session does not exist."""
 
@@ -254,7 +252,6 @@ class SessionExpiredError(SessionError):
 
 class DataError(CSVEditorError):
     """Data-related errors."""
-
 
 
 class NoDataLoadedError(DataError):
@@ -312,7 +309,6 @@ class FileError(CSVEditorError):
     """File operation errors."""
 
 
-
 class FileNotFoundError(FileError):
     """File does not exist."""
 
@@ -353,7 +349,6 @@ class OperationError(CSVEditorError):
     """Operation execution errors."""
 
 
-
 class InvalidOperationError(OperationError):
     """Operation cannot be performed in current state."""
 
@@ -368,7 +363,6 @@ class InvalidOperationError(OperationError):
 
 class ParameterError(CSVEditorError):
     """Parameter validation errors."""
-
 
 
 class InvalidParameterError(ParameterError):
@@ -403,7 +397,6 @@ class HistoryError(CSVEditorError):
     """History management errors."""
 
 
-
 class HistoryNotEnabledError(HistoryError):
     """History tracking is not enabled."""
 
@@ -430,7 +423,6 @@ class InvalidHistoryOperationError(HistoryError):
 
 class AutoSaveError(CSVEditorError):
     """Auto-save operation errors."""
-
 
 
 class AutoSaveConfigError(AutoSaveError):

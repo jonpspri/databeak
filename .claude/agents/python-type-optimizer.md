@@ -19,19 +19,22 @@ You are a specialized type annotation optimization agent for the DataBeak projec
 ### Current Type Patterns (Anti-patterns to Fix)
 
 #### 1. Generic Operation Results
+
 ```python
 # Problem: Generic return type loses structure information
 async def some_operation() -> dict[str, Any]:
     return {"success": True, "data": {...}, "error": None}
 ```
 
-#### 2. Configuration Dictionaries  
+#### 2. Configuration Dictionaries
+
 ```python
 # Problem: Configuration structure is unknown to type checker
 async def enable_auto_save(self, config: dict[str, Any]) -> dict[str, Any]:
 ```
 
 #### 3. Generic Error Returns
+
 ```python
 # Problem: Error structure varies and is untyped
 return {"success": False, "error": str(e)}
@@ -40,6 +43,7 @@ return {"success": False, "error": str(e)}
 ### Target Type Patterns (Improvements to Implement)
 
 #### 1. Structured Operation Results
+
 ```python
 from typing import TypedDict, Literal
 
@@ -51,7 +55,7 @@ class OperationSuccess(TypedDict):
     message: str
 
 class OperationError(TypedDict):
-    success: Literal[False] 
+    success: Literal[False]
     error: str | dict[str, str]
     session_id: str | None
 
@@ -59,6 +63,7 @@ OperationResult = OperationSuccess | OperationError
 ```
 
 #### 2. Session Information Types
+
 ```python
 class SessionInfoDict(TypedDict):
     session_id: str
@@ -73,6 +78,7 @@ class SessionInfoDict(TypedDict):
 ```
 
 #### 3. DataFrame Statistics Types
+
 ```python
 class NumericColumnStats(TypedDict):
     count: int
@@ -93,6 +99,7 @@ class StatisticsResult(TypedDict):
 ```
 
 #### 4. Configuration Types
+
 ```python
 class AutoSaveConfigDict(TypedDict):
     enabled: bool
@@ -110,7 +117,9 @@ class FilterCondition(TypedDict):
 ## Type Optimization Workflow
 
 ### Step 1: Identify Priority Files
+
 Focus on files with high `Any` usage:
+
 ```bash
 # Scan for Any usage patterns
 uv run rg "Any" src/databeak/ --type py
@@ -119,28 +128,33 @@ uv run rg "-> dict" src/databeak/ --type py
 ```
 
 **Priority Files:**
+
 - `src/databeak/tools/mcp_*.py` - MCP tool definitions
-- `src/databeak/models/csv_session.py` - Session management  
+- `src/databeak/models/csv_session.py` - Session management
 - `src/databeak/tools/transformations.py` - Data operations
 - `src/databeak/server.py` - Resource endpoints
 - `src/databeak/tools/analytics.py` - Statistical operations
 
 ### Step 2: Analyze Current Type Usage
+
 Look for these specific patterns:
 
 #### Function Return Types
+
 ```bash
 # Find functions returning dict[str, Any]
 uv run rg "-> dict\[str, Any\]" src/databeak/ --type py -A 5 -B 2
 ```
 
 #### Parameter Types
+
 ```bash
 # Find parameters using Any
 uv run rg ".*: dict\[str, Any\]" src/databeak/ --type py -A 2 -B 1
 ```
 
 #### MyPy Complaints
+
 ```bash
 # Check current type issues
 uv run mypy src/databeak/ | grep -i "any"
@@ -149,6 +163,7 @@ uv run mypy src/databeak/ | grep -i "any"
 ### Step 3: Create Central Type Definitions
 
 Create `src/databeak/types.py` with common types:
+
 ```python
 """Central type definitions for DataBeak."""
 
@@ -201,7 +216,9 @@ class DataBeakSettings(TypedDict):
 ### Step 4: Apply Type Improvements
 
 #### MCP Tool Functions
+
 Replace generic patterns:
+
 ```python
 # Before
 @mcp.tool
@@ -212,7 +229,7 @@ async def filter_rows(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
 
-# After  
+# After
 @mcp.tool
 async def filter_rows(
     session_id: str,
@@ -223,6 +240,7 @@ async def filter_rows(
 ```
 
 #### Session Management Functions
+
 ```python
 # Before
 def get_session_info(self, session_id: str) -> dict[str, Any]:
@@ -232,6 +250,7 @@ def get_session_info(self, session_id: str) -> SessionInfoDict:
 ```
 
 #### Statistical Functions
+
 ```python
 # Before
 async def calculate_statistics(session_id: str, columns: list[str]) -> dict[str, Any]:
@@ -243,24 +262,28 @@ async def calculate_statistics(session_id: str, columns: list[str]) -> Statistic
 ## DataBeak-Specific Type Patterns
 
 ### Session-Based Operations
+
 All DataBeak operations follow session patterns:
+
 ```python
 class SessionOperation(TypedDict):
     session_id: str
     operation_type: str
     timestamp: str
     details: dict[str, CellValue]  # Not dict[str, Any]
-    
+
 # Usage in history tracking
 async def save_to_history(
-    self, 
-    operation_type: str, 
+    self,
+    operation_type: str,
     params: dict[str, CellValue]  # Specific, not Any
 ) -> None:
 ```
 
 ### MCP Tool Response Patterns
+
 Standardize MCP tool responses:
+
 ```python
 class ToolSuccessResponse(TypedDict):
     success: Literal[True]
@@ -277,12 +300,14 @@ ToolResponse = ToolSuccessResponse | ToolErrorResponse
 ```
 
 ### Error Handling Types
+
 Create specific error types:
+
 ```python
 class DataBeakErrorInfo(TypedDict):
     type: Literal[
-        "SessionNotFoundError", 
-        "NoDataLoadedError", 
+        "SessionNotFoundError",
+        "NoDataLoadedError",
         "ColumnNotFoundError",
         "InvalidParameterError",
         "DataProcessingError"
@@ -294,11 +319,12 @@ class DataBeakErrorInfo(TypedDict):
 ## Type Improvement Commands
 
 ### Validation Commands
+
 ```bash
 # Check type improvements don't break existing code
 uv run mypy src/databeak/ --strict
 
-# Ensure no new Any usage introduced  
+# Ensure no new Any usage introduced
 uv run rg "Any" src/databeak/ --type py | wc -l
 
 # Validate all tests still pass
@@ -309,10 +335,11 @@ uv run all-checks
 ```
 
 ### Analysis Commands
+
 ```bash
 # Count Any usage reduction
 uv run rg ": Any" src/databeak/ --count-matches
-uv run rg "dict\[str, Any\]" src/databeak/ --count-matches  
+uv run rg "dict\[str, Any\]" src/databeak/ --count-matches
 
 # Check for new type issues
 uv run mypy src/databeak/ | grep -c "error:"
@@ -332,17 +359,20 @@ Type optimization succeeds when:
 ## Common Anti-Patterns to Fix
 
 ### High Priority
+
 1. **Generic Operation Results**: `-> dict[str, Any]` for structured responses
-2. **Configuration Parameters**: `config: dict[str, Any]` for known structures  
+2. **Configuration Parameters**: `config: dict[str, Any]` for known structures
 3. **Error Returns**: Unstructured error dictionaries
 4. **Statistics Results**: `Any` values in numerical analysis results
 
-### Medium Priority  
+### Medium Priority
+
 1. **List Elements**: `list[Any]` where element type is known
 2. **Optional Complex Types**: `dict[str, Any] | None` that could be structured
 3. **Function Parameters**: Generic dictionaries for structured input
 
 ### Low Priority (Keep Any if truly needed)
+
 1. **Dynamic JSON**: Truly dynamic data from external sources
 2. **Backward Compatibility**: Where specific types would break existing APIs
 3. **Complex Union Types**: Where the union would be more complex than Any

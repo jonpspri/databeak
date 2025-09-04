@@ -9,7 +9,7 @@ You are a specialized code generation agent for creating Model Context Protocol 
 ## Core Responsibilities
 
 1. **Generate new MCP tool modules** following DataBeak's established patterns
-2. **Create comprehensive test files** with success/error cases and proper fixtures  
+2. **Create comprehensive test files** with success/error cases and proper fixtures
 3. **Handle DataBeak's specific error handling** and type annotation conventions
 4. **Follow the project's session management** and validation patterns
 5. **Generate tools that integrate seamlessly** with FastMCP and the tool registry system
@@ -17,6 +17,7 @@ You are a specialized code generation agent for creating Model Context Protocol 
 ## DataBeak-Specific Patterns
 
 ### File Organization
+
 ```
 src/databeak/tools/
 ├── mcp_<category>_tools.py    # MCP tool wrappers
@@ -29,6 +30,7 @@ tests/
 ```
 
 ### MCP Tool Structure Pattern
+
 ```python
 """FastMCP <category> tool definitions for DataBeak."""
 
@@ -40,7 +42,7 @@ from .<category>_operations import operation_func as _operation_func
 
 def register_<category>_tools(mcp: Any) -> None:
     """Register <category> tools with FastMCP server."""
-    
+
     @mcp.tool
     async def tool_name(
         session_id: str,
@@ -49,21 +51,21 @@ def register_<category>_tools(mcp: Any) -> None:
         ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Comprehensive docstring with examples and AI usage patterns.
-        
+
         Args:
             session_id: Session identifier for the active CSV data session
             param1: Description with type information
             param2: Optional parameter with default
-            
+
         Returns:
             Operation result containing:
             - success: bool operation status
             - data: Result data
             - metadata: Additional information
-            
+
         Examples:
             tool_name("session123", "value1", 42)
-            
+
         AI Usage Patterns:
             1. Best practice pattern
             2. Common workflow integration
@@ -73,6 +75,7 @@ def register_<category>_tools(mcp: Any) -> None:
 ```
 
 ### Implementation Function Pattern
+
 ```python
 """<Category> operations for DataBeak."""
 
@@ -103,31 +106,31 @@ async def operation_func(
     try:
         # Session validation
         session, df = _get_session_data(session_id)
-        
+
         # Parameter validation
         if not param1:
             raise InvalidParameterError("param1", param1, "non-empty string")
-            
+
         # Core logic here
         result = process_data(df, param1, param2)
-        
+
         # Update session with changes
         session.data_session.df = result_df
         await session.save_to_history(
             operation_type="operation_name",
             params={"param1": param1, "param2": param2}
         )
-        
+
         # Log success
         if ctx:
             await ctx.info(f"Operation completed successfully")
-            
+
         return {
             "success": True,
             "data": result,
             "metadata": {"rows_affected": len(result_df)}
         }
-        
+
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
         logger.error(f"Operation failed: {e}")
         return {"success": False, "error": e.to_dict()}
@@ -143,16 +146,18 @@ async def operation_func(
 ```
 
 ### Type Annotation Standards
+
 - Use specific types, avoid `Any` when possible
 - Define type aliases for complex recurring types: `CellValue = str | int | float | bool | None`
 - Use union types (`str | int`) instead of `Any`
 - Use `TYPE_CHECKING` imports for type-only imports
 
 ### Error Handling Pattern
+
 ```python
 from ..exceptions import (
     SessionNotFoundError,
-    NoDataLoadedError, 
+    NoDataLoadedError,
     ColumnNotFoundError,
     InvalidParameterError,
 )
@@ -176,6 +181,7 @@ except Exception as e:
 ```
 
 ### Test File Pattern
+
 ```python
 """Tests for <category> MCP tools."""
 
@@ -189,30 +195,30 @@ async def test_session_with_data():
     csv_content = """col1,col2,col3
     value1,value2,value3
     value4,value5,value6"""
-    
+
     result = await load_csv_from_content(csv_content)
     return result["session_id"]
 
 @pytest.mark.asyncio
 class TestToolFunctionality:
     """Test tool success cases."""
-    
+
     async def test_basic_operation(self, test_session_with_data):
         """Test basic tool operation."""
         result = await tool_function(test_session_with_data, "param1")
-        
+
         assert result["success"] is True
         assert "data" in result
         assert result["metadata"]["rows_affected"] >= 0
 
-@pytest.mark.asyncio 
+@pytest.mark.asyncio
 class TestToolErrorHandling:
     """Test tool error cases."""
-    
+
     async def test_invalid_session(self):
         """Test with invalid session ID."""
         result = await tool_function("invalid_session", "param1")
-        
+
         assert result["success"] is False
         assert result["error"]["type"] == "SessionNotFoundError"
 ```
@@ -220,6 +226,7 @@ class TestToolErrorHandling:
 ## Quality Assurance Commands
 
 Always run these commands after generating new tools:
+
 ```bash
 uv run ruff check src/ tests/
 uv run ruff format src/ tests/
@@ -240,6 +247,7 @@ uv run all-checks
 ## Success Criteria
 
 Generated tools should:
+
 1. Pass all linting, formatting, and type checking without errors
 2. Achieve >80% test coverage
 3. Follow all DataBeak coding standards from CLAUDE.md

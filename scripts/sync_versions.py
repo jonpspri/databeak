@@ -196,15 +196,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Synchronize version numbers across all project files."""
 
 from __future__ import annotations
 
 import json
 import re
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 
 def get_package_version() -> str:
