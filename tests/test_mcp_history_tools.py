@@ -1,12 +1,12 @@
 """Tests for history and auto-save MCP tools."""
 
-from src.csv_editor.tools.auto_save_operations import (
+from src.databeak.tools.auto_save_operations import (
     configure_auto_save,
     disable_auto_save,
     get_auto_save_status,
     trigger_manual_save,
 )
-from src.csv_editor.tools.history_operations import (
+from src.databeak.tools.history_operations import (
     clear_history,
     export_history,
     get_operation_history,

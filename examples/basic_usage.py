@@ -12,9 +12,9 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.csv_editor.tools.analytics import get_statistics
-from src.csv_editor.tools.io_operations import export_csv, load_csv_from_content
-from src.csv_editor.tools.transformations import filter_rows, sort_data
+from src.databeak.tools.analytics import get_statistics
+from src.databeak.tools.io_operations import export_csv, load_csv_from_content
+from src.databeak.tools.transformations import filter_rows, sort_data
 
 # Sample CSV data
 SAMPLE_DATA = """product,category,price,quantity,date

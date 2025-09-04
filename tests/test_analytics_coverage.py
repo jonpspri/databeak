@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 
-from src.csv_editor.tools.analytics import (
+from src.databeak.tools.analytics import (
     detect_outliers,
     get_column_statistics,
     get_correlation_matrix,
@@ -12,7 +12,7 @@ from src.csv_editor.tools.analytics import (
     group_by_aggregate,
     profile_data,
 )
-from src.csv_editor.tools.io_operations import load_csv_from_content
+from src.databeak.tools.io_operations import load_csv_from_content
 
 
 @pytest.fixture

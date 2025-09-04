@@ -45,8 +45,8 @@ Diana,28,55000,Sales"""
 @pytest.fixture
 async def test_session():
     """Create a test session."""
-    from src.csv_editor.models import get_session_manager
-    from src.csv_editor.tools.io_operations import load_csv_from_content
+    from src.databeak.models import get_session_manager
+    from src.databeak.tools.io_operations import load_csv_from_content
 
     # Create session with sample data
     result = await load_csv_from_content(

@@ -54,7 +54,7 @@ Example:
 @pytest.mark.asyncio
 async def test_my_feature(test_session):
     """Test description."""
-    from src.csv_editor.tools.analytics import get_statistics
+    from src.databeak.tools.analytics import get_statistics
     
     result = await get_statistics(
         session_id=test_session,

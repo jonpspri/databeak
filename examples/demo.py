@@ -12,10 +12,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.csv_editor.tools.analytics import get_statistics, profile_data
-from src.csv_editor.tools.io_operations import load_csv_from_content
-from src.csv_editor.tools.transformations import filter_rows
-from src.csv_editor.tools.validation import check_data_quality
+from src.databeak.tools.analytics import get_statistics, profile_data
+from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.tools.transformations import filter_rows
+from src.databeak.tools.validation import check_data_quality
 
 # Demo data
 DEMO_CSV = """employee_id,name,department,salary,years_experience,performance_rating

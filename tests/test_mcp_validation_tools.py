@@ -1,6 +1,6 @@
 """Tests for validation MCP tools."""
 
-from src.csv_editor.tools.validation import (
+from src.databeak.tools.validation import (
     check_data_quality,
     find_anomalies,
     validate_schema,

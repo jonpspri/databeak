@@ -2,9 +2,9 @@
 
 import pytest
 
-from src.csv_editor.models import get_session_manager
-from src.csv_editor.tools.io_operations import load_csv_from_content
-from src.csv_editor.tools.transformations import (
+from src.databeak.models import get_session_manager
+from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.tools.transformations import (
     delete_row,
     extract_from_column,
     fill_column_nulls,

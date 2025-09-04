@@ -5,9 +5,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.csv_editor.models import get_session_manager
-from src.csv_editor.server import _load_instructions, main, mcp
-from src.csv_editor.tools.io_operations import load_csv_from_content
+from src.databeak.models import get_session_manager
+from src.databeak.server import _load_instructions, main, mcp
+from src.databeak.tools.io_operations import load_csv_from_content
 
 
 class TestServerInstructions:

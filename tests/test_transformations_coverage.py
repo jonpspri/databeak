@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 
-from src.csv_editor.tools.transformations import (
+from src.databeak.tools.transformations import (
     add_column,
     change_column_type,
     delete_row,
@@ -29,7 +29,7 @@ from src.csv_editor.tools.transformations import (
     update_column,
     update_row,
 )
-from src.csv_editor.tools.io_operations import load_csv_from_content
+from src.databeak.tools.io_operations import load_csv_from_content
 
 
 @pytest.fixture

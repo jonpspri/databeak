@@ -1,4 +1,4 @@
-"""Session management for CSV Editor MCP Server."""
+"""Session management for DataBeak MCP Server."""
 
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CSVSettings(BaseSettings):
-    """Configuration settings for CSV Editor sessions."""
+class DataBeakSettings(BaseSettings):
+    """Configuration settings for DataBeak sessions."""
 
     csv_history_dir: str = "."  # Default to current directory
     max_file_size_mb: int = 1024  # Default to 1024 MB
@@ -32,18 +32,18 @@ class CSVSettings(BaseSettings):
     chunk_size: int = 10000  # Default to 10000 rows
     auto_save: bool = True  # Default to enabled
 
-    model_config = {"env_prefix": "CSV_EDITOR_", "case_sensitive": False}
+    model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
 
 # Global settings instance
-_settings: CSVSettings | None = None
+_settings: DataBeakSettings | None = None
 
 
-def get_csv_settings() -> CSVSettings:
-    """Get or create the global CSV settings."""
+def get_csv_settings() -> DataBeakSettings:
+    """Get or create the global DataBeak settings."""
     global _settings
     if _settings is None:
-        _settings = CSVSettings()
+        _settings = DataBeakSettings()
     return _settings
 
 

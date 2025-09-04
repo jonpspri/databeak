@@ -1,6 +1,6 @@
 """Tests for data manipulation MCP tools."""
 
-from src.csv_editor.tools.transformations import (
+from src.databeak.tools.transformations import (
     add_column,
     change_column_type,
     extract_from_column,

@@ -8,9 +8,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from src.csv_editor.models.auto_save import AutoSaveConfig, AutoSaveMode, AutoSaveStrategy
-from src.csv_editor.models.csv_session import CSVSession, SessionManager
-from src.csv_editor.models.data_models import ExportFormat
+from src.databeak.models.auto_save import AutoSaveConfig, AutoSaveMode, AutoSaveStrategy
+from src.databeak.models.csv_session import CSVSession, SessionManager
+from src.databeak.models.data_models import ExportFormat
 
 
 @pytest.fixture

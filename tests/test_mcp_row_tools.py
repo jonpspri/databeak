@@ -1,6 +1,6 @@
 """Tests for row manipulation MCP tools."""
 
-from src.csv_editor.tools.transformations import (
+from src.databeak.tools.transformations import (
     delete_row,
     get_cell_value,
     get_column_data,

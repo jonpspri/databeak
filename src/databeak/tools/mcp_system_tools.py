@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import os
 from typing import Any
 
 from fastmcp import Context  # noqa: TC002
 
+from .._version import __version__
 from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
-from .._version import __version__
 from .registry import tool, with_error_handling
 
 

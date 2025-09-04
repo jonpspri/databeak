@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 import pandas as pd
 
-from src.csv_editor.tools.io_operations import (
+from src.databeak.tools.io_operations import (
     close_session,
     export_csv,
     get_session_info,

@@ -1,6 +1,6 @@
 """Tests for analytics MCP tools."""
 
-from src.csv_editor.tools.analytics import (
+from src.databeak.tools.analytics import (
     detect_outliers,
     get_column_statistics,
     get_correlation_matrix,
@@ -9,7 +9,7 @@ from src.csv_editor.tools.analytics import (
     group_by_aggregate,
     profile_data,
 )
-from src.csv_editor.tools.transformations import (
+from src.databeak.tools.transformations import (
     find_cells_with_value,
     get_data_summary,
     inspect_data_around,

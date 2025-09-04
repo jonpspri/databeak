@@ -1,7 +1,7 @@
 {
-  "name": "@jonpspri/csv-editor",
+  "name": "@jonpspri/databeak",
   "version": "1.0.2",
-  "description": "MCP server for comprehensive CSV file operations",
+  "description": "DataBeak: MCP server for comprehensive CSV file operations",
   "keywords": [
     "mcp",
     "mcp-server",
@@ -14,13 +14,13 @@
     "claude",
     "llm"
   ],
-  "homepage": "https://github.com/jonpspri/csv-editor#readme",
+  "homepage": "https://github.com/jonpspri/databeak#readme",
   "bugs": {
-    "url": "https://github.com/jonpspri/csv-editor/issues"
+    "url": "https://github.com/jonpspri/databeak/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jonpspri/csv-editor.git"
+    "url": "git+https://github.com/jonpspri/databeak.git"
   },
   "license": "Apache-2.0",
   "author": {
@@ -43,7 +43,7 @@
     "command": "python",
     "args": [
       "-m",
-      "csv_editor.server"
+      "databeak.server"
     ],
     "env": {},
     "capabilities": {

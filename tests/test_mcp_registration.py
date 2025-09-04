@@ -1,7 +1,7 @@
 """Tests for FastMCP tool registration and server integration."""
 
-from src.csv_editor.server import mcp
-from src.csv_editor.tools import (
+from src.databeak.server import mcp
+from src.databeak.tools import (
     mcp_analytics_tools,
     mcp_data_tools,
     mcp_history_tools,
@@ -53,20 +53,20 @@ class TestBackwardCompatibilityThroughModules:
     def test_core_functions_available_in_modules(self) -> None:
         """Test that core functions are available in their respective modules."""
         # Test core I/O functions
-        from src.csv_editor.tools.io_operations import export_csv, load_csv
+        from src.databeak.tools.io_operations import export_csv, load_csv
 
         assert callable(load_csv)
         assert callable(export_csv)
 
         # Test core transformation functions
-        from src.csv_editor.tools.transformations import add_column, filter_rows, insert_row
+        from src.databeak.tools.transformations import add_column, filter_rows, insert_row
 
         assert callable(insert_row)
         assert callable(filter_rows)
         assert callable(add_column)
 
         # Test core analytics functions
-        from src.csv_editor.tools.analytics import get_statistics, profile_data
+        from src.databeak.tools.analytics import get_statistics, profile_data
 
         assert callable(get_statistics)
         assert callable(profile_data)
@@ -76,7 +76,7 @@ class TestBackwardCompatibilityThroughModules:
         # These functions should support None/null values
         import inspect
 
-        from src.csv_editor.tools.transformations import insert_row, set_cell_value, update_row
+        from src.databeak.tools.transformations import insert_row, set_cell_value, update_row
 
         # Check that insert_row accepts Any type for data
         sig = inspect.signature(insert_row)

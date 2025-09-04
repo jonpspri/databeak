@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.csv_editor.models import get_session_manager
-from src.csv_editor.utils.validators import sanitize_filename, validate_column_name, validate_url
+from src.databeak.models import get_session_manager
+from src.databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
 
 
 class TestValidators:
@@ -74,7 +74,7 @@ class TestDataOperations:
 
     async def test_load_csv_from_content(self):
         """Test loading CSV from string content."""
-        from src.csv_editor.tools.io_operations import load_csv_from_content
+        from src.databeak.tools.io_operations import load_csv_from_content
 
         csv_content = """a,b,c
 1,2,3
@@ -92,7 +92,7 @@ class TestDataOperations:
 
     async def test_filter_rows(self, test_session):
         """Test filtering rows."""
-        from src.csv_editor.tools.transformations import filter_rows
+        from src.databeak.tools.transformations import filter_rows
 
         result = await filter_rows(
             session_id=test_session,

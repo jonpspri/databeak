@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-We actively support the following versions of CSV Editor:
+We actively support the following versions of DataBeak:
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -11,12 +11,12 @@ We actively support the following versions of CSV Editor:
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability in CSV Editor, please report it responsibly.
+We take security vulnerabilities seriously. If you discover a security vulnerability in DataBeak, please report it responsibly.
 
 ### How to Report
 
 1. **Email**: Send details to jps@s390x.com
-2. **Subject**: Include "CSV Editor Security" in the subject line
+2. **Subject**: Include "DataBeak Security" in the subject line
 3. **Details**: Provide a detailed description of the vulnerability
 
 ### What to Include
@@ -34,13 +34,13 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 
 ### Security Best Practices
 
-When using CSV Editor:
+When using DataBeak:
 
 1. **Input Validation**: Always validate CSV files before processing
 2. **File Permissions**: Ensure proper file permissions for CSV files
 3. **Network Security**: Use HTTPS when running in HTTP mode
 4. **Access Control**: Limit MCP server access to trusted clients
-5. **Regular Updates**: Keep CSV Editor updated to the latest version
+5. **Regular Updates**: Keep DataBeak updated to the latest version
 
 ### Disclosure Policy
 
@@ -51,11 +51,11 @@ When using CSV Editor:
 
 ### Security Features
 
-CSV Editor includes several security features:
+DataBeak includes several security features:
 
 - Input sanitization for CSV data
 - File path validation to prevent directory traversal
 - Memory usage limits to prevent DoS attacks
 - Error handling to prevent information disclosure
 
-Thank you for helping keep CSV Editor secure!
+Thank you for helping keep DataBeak secure!

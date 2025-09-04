@@ -32,7 +32,7 @@ def update_package_json(version: str) -> None:
 
 def update_version_file(version: str) -> None:
     """Update the _version.py file fallback version."""
-    version_file = Path(__file__).parent.parent / "src" / "csv_editor" / "_version.py"
+    version_file = Path(__file__).parent.parent / "src" / "databeak" / "_version.py"
     content = version_file.read_text()
 
     # Update the fallback version

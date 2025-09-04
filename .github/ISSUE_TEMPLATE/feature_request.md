@@ -27,7 +27,7 @@ If possible, provide an example of how this feature would work:
 
 ```python
 # Example usage
-csv_editor.new_feature(
+databeak.new_feature(
     input_file="data.csv",
     operation="your_feature",
     parameters={"param1": "value1"}

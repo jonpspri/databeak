@@ -1,10 +1,10 @@
-# CSV Editor - AI-Powered CSV Processing via MCP
+# DataBeak - AI-Powered CSV Processing via MCP
 
-**Transform how AI assistants work with CSV data.** CSV Editor is a
+**Transform how AI assistants work with CSV data.** DataBeak is a
 high-performance MCP server that gives Claude, ChatGPT, and other AI assistants
 powerful data manipulation capabilities through simple commands.
 
-## 🎯 Why CSV Editor?
+## 🎯 Why DataBeak?
 
 ### The Problem
 
@@ -12,7 +12,7 @@ AI assistants struggle with complex data operations - they can read files but la
 
 ### The Solution
 
-CSV Editor bridges this gap by providing AI assistants with 40+ specialized tools for CSV operations, turning them into powerful data analysts that can:
+DataBeak bridges this gap by providing AI assistants with 40+ specialized tools for CSV operations, turning them into powerful data analysts that can:
 
 - Clean messy datasets in seconds
 - Perform complex statistical analysis
@@ -22,7 +22,7 @@ CSV Editor bridges this gap by providing AI assistants with 40+ specialized tool
 
 ### Key Differentiators
 
-| Feature | CSV Editor | Traditional Tools |
+| Feature | DataBeak | Traditional Tools |
 |---------|-----------|------------------|
 | **AI Integration** | Native MCP protocol | Manual operations |
 | **Auto-Save** | Automatic with strategies | Manual save required |
@@ -55,9 +55,9 @@ Add to the MCP Settings file
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"],
+      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"],
       "env": {
         "CSV_EDITOR_MAX_FILE_SIZE_MB": "1024",
         "CSV_EDITOR_CSV_HISTORY_DIR": "/tmp/csv_history"
@@ -77,9 +77,9 @@ Edit `~/.continue/config.json`:
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
     }
   }
 }
@@ -90,9 +90,9 @@ Add to VS Code settings (`settings.json`):
 ```json
 {
   "cline.mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx", 
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
     }
   }
 }
@@ -103,9 +103,9 @@ Edit `~/.windsurf/mcp_servers.json`:
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
     }
   }
 }
@@ -116,9 +116,9 @@ Edit `~/.config/zed/settings.json`:
 ```json
 {
   "experimental.mcp_servers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
     }
   }
 }
@@ -286,7 +286,7 @@ anomalies = find_anomalies(methods=["statistical", "pattern"])
 
 ### Auto-Save Strategies
 
-CSV Editor automatically saves your work with configurable strategies:
+DataBeak automatically saves your work with configurable strategies:
 
 - **Overwrite** (default) - Update original file
 - **Backup** - Create timestamped backups
@@ -310,28 +310,28 @@ configure_auto_save(
 ### Using pip
 
 ```bash
-git clone https://github.com/jonpspri/csv-editor.git
-cd csv-editor
+git clone https://github.com/jonpspri/databeak.git
+cd databeak
 pip install -e .
 ```
 
 ### Using pipx (Global)
 
 ```bash
-pipx install git+https://github.com/jonpspri/csv-editor.git
+pipx install git+https://github.com/jonpspri/databeak.git
 ```
 
 ### From GitHub (Recommended)
 
 ```bash
 # Install latest version
-pip install git+https://github.com/jonpspri/csv-editor.git
+pip install git+https://github.com/jonpspri/databeak.git
 
 # Or using uv
-uv pip install git+https://github.com/jonpspri/csv-editor.git
+uv pip install git+https://github.com/jonpspri/databeak.git
 
 # Install specific version
-pip install git+https://github.com/jonpspri/csv-editor.git@v1.0.1
+pip install git+https://github.com/jonpspri/databeak.git@v1.0.1
 ```
 
 </details>
@@ -349,7 +349,7 @@ uv run all-checks     # Format, lint, type-check, test
 ### Project Structure
 
 ```
-csv-editor/
+databeak/
 ├── src/csv_editor/           # Core implementation
 │   ├── server.py            # FastMCP server entry point
 │   ├── models/              # Data models and session management
@@ -401,9 +401,9 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 💬 Support
 
-- **Issues**: [GitHub Issues](https://github.com/jonpspri/csv-editor/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)
-- **Documentation**: [Wiki](https://github.com/jonpspri/csv-editor/wiki)
+- **Issues**: [GitHub Issues](https://github.com/jonpspri/databeak/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jonpspri/databeak/discussions)
+- **Documentation**: [Wiki](https://github.com/jonpspri/databeak/wiki)
 
 ## 📄 License
 
@@ -443,7 +443,7 @@ Automatically handles Claude Code's JSON string serialization:
   "data": "{\"Company\": \"Acme\", \"Contact\": null, \"Status\": \"Active\"}"
 }
 
-// CSV Editor automatically parses it to:
+// DataBeak automatically parses it to:
 {
   "data": {"Company": "Acme", "Contact": null, "Status": "Active"}
 }
@@ -457,4 +457,4 @@ Built with:
 
 ---
 
-**Ready to supercharge your AI's data capabilities?** [Get started in 2 minutes →](#-quick-start-2-minutes)
+**Ready to supercharge your AI's data capabilities?** [Get started in 2 minutes →](#configure-your-ai-assistant)

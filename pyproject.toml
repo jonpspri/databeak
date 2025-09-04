@@ -3,9 +3,9 @@ requires = ["hatchling>=1.26.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "csv-editor"
+name = "databeak"
 version = "1.0.2"
-description = "MCP server for comprehensive CSV file operations with pandas-based tools"
+description = "DataBeak: MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
@@ -105,20 +105,20 @@ test = [
     "faker>=30.0.0",  # Generate test data
 ]
 all = [
-    "csv-editor[performance,dev,docs,test]",
+    "databeak[performance,dev,docs,test]",
 ]
 
 [project.urls]
-Homepage = "https://github.com/jonpspri/csv-editor"
-Documentation = "https://github.com/jonpspri/csv-editor#readme"
-Repository = "https://github.com/jonpspri/csv-editor"
-Issues = "https://github.com/jonpspri/csv-editor/issues"
-Changelog = "https://github.com/jonpspri/csv-editor/blob/main/CHANGELOG.md"
-"Release Notes" = "https://github.com/jonpspri/csv-editor/releases"
+Homepage = "https://github.com/jonpspri/databeak"
+Documentation = "https://github.com/jonpspri/databeak#readme"
+Repository = "https://github.com/jonpspri/databeak"
+Issues = "https://github.com/jonpspri/databeak/issues"
+Changelog = "https://github.com/jonpspri/databeak/blob/main/CHANGELOG.md"
+"Release Notes" = "https://github.com/jonpspri/databeak/releases"
 
 [project.scripts]
-csv-editor = "csv_editor.server:main"
-csv = "csv_editor.server:main"  # Shorter alias
+databeak = "databeak.server:main"
+csv = "databeak.server:main"  # Legacy alias
 sync-versions = "scripts.sync_versions:main"  # Version synchronization utility
 
 # Note: We use uv for environment and dependency management
@@ -153,7 +153,7 @@ exclude = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/csv_editor"]
+packages = ["src/databeak"]
 
 # Use uv instead of hatch environments
 # Run commands with:
@@ -203,7 +203,7 @@ ignore = [
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
 
 [tool.ruff.lint.isort]
-known-first-party = ["src", "csv_editor"]
+known-first-party = ["src", "databeak"]
 section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 
 [tool.ruff.format]
@@ -299,7 +299,7 @@ fail_under = 80
 
 [tool.coverage.html]
 directory = "htmlcov"
-title = "CSV Editor Coverage Report"
+title = "DataBeak Coverage Report"
 
 [tool.coverage.json]
 output = "coverage.json"
@@ -307,11 +307,11 @@ pretty_print = true
 
 # Documentation
 [tool.mkdocs]
-site_name = "CSV Editor"
+site_name = "DataBeak"
 site_description = "Comprehensive CSV manipulation and analysis via Model Context Protocol"
 site_author = "Santosh Ray"
-repo_url = "https://github.com/jonpspri/csv-editor"
-repo_name = "csv-editor"
+repo_url = "https://github.com/jonpspri/databeak"
+repo_name = "databeak"
 
 [dependency-groups]
 dev = [

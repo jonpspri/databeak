@@ -1,4 +1,4 @@
-"""Main FastMCP server for CSV Editor."""
+"""Main FastMCP server for DataBeak."""
 
 from __future__ import annotations
 
@@ -32,14 +32,14 @@ def _load_instructions() -> str:
         return instructions_path.read_text(encoding="utf-8")
     except FileNotFoundError:
         logger.warning(f"Instructions file not found at {instructions_path}")
-        return "CSV Editor MCP Server - Instructions file not available"
+        return "DataBeak MCP Server - Instructions file not available"
     except Exception as e:
         logger.error(f"Error loading instructions: {e}")
-        return "CSV Editor MCP Server - Error loading instructions"
+        return "DataBeak MCP Server - Error loading instructions"
 
 
 # Initialize FastMCP server
-mcp = FastMCP("CSV Editor", instructions=_load_instructions())
+mcp = FastMCP("DataBeak", instructions=_load_instructions())
 
 # Register all tools with the FastMCP server
 register_system_tools(mcp)
@@ -206,7 +206,7 @@ def main() -> None:
     """Main entry point for the server."""
     import argparse
 
-    parser = argparse.ArgumentParser(description="CSV Editor")
+    parser = argparse.ArgumentParser(description="DataBeak")
     parser.add_argument(
         "--transport", choices=["stdio", "http", "sse"], default="stdio", help="Transport method"
     )
@@ -228,7 +228,7 @@ def main() -> None:
     server_correlation_id = set_correlation_id()
 
     logger.info(
-        f"Starting CSV Editor with {args.transport} transport",
+        f"Starting DataBeak with {args.transport} transport",
         transport=args.transport,
         host=args.host if args.transport != "stdio" else None,
         port=args.port if args.transport != "stdio" else None,

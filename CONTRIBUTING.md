@@ -1,6 +1,6 @@
-# Contributing to CSV Editor
+# Contributing to DataBeak
 
-Thank you for your interest in contributing to CSV Editor! This guide will help you get started with contributing to the project.
+Thank you for your interest in contributing to DataBeak! This guide will help you get started with contributing to the project.
 
 ## Table of Contents
 
@@ -29,12 +29,12 @@ By participating in this project, you agree to abide by our Code of Conduct:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/jonpspri/csv-editor.git
-   cd csv-editor
+   git clone https://github.com/jonpspri/databeak.git
+   cd databeak
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/jonpspri/csv-editor.git
+   git remote add upstream https://github.com/jonpspri/databeak.git
    ```
 
 ## Development Setup
@@ -200,7 +200,7 @@ We use modern Python tooling for code quality:
 ### File Structure
 
 ```
-src/csv_editor/
+src/databeak/
 ├── __init__.py          # Package initialization
 ├── server.py            # Main server entry point
 ├── models/              # Data models and schemas
@@ -413,4 +413,4 @@ Contributors are recognized in:
 - Release notes
 - Project README
 
-Thank you for contributing to CSV Editor! 🎉
+Thank you for contributing to DataBeak!

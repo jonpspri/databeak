@@ -135,7 +135,7 @@ def get_logger(name: str) -> CorrelatedLogger:
 
 def log_operation_start(operation: str, session_id: str | None = None, **context: Any) -> None:
     """Log the start of an operation."""
-    logger = get_logger("csv_editor.operations")
+    logger = get_logger("databeak.operations")
     logger.info(
         f"Operation started: {operation}",
         session_id=session_id,
@@ -149,7 +149,7 @@ def log_operation_end(
     operation: str, session_id: str | None = None, success: bool = True, **context: Any
 ) -> None:
     """Log the end of an operation."""
-    logger = get_logger("csv_editor.operations")
+    logger = get_logger("databeak.operations")
     level_method = logger.info if success else logger.error
     level_method(
         f"Operation {'completed' if success else 'failed'}: {operation}",
@@ -163,7 +163,7 @@ def log_operation_end(
 
 def log_session_event(event: str, session_id: str, **context: Any) -> None:
     """Log a session-related event."""
-    logger = get_logger("csv_editor.sessions")
+    logger = get_logger("databeak.sessions")
     logger.info(f"Session event: {event}", session_id=session_id, event_type=event, **context)
 
 

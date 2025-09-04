@@ -13,9 +13,9 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.csv_editor.models.auto_save import AutoSaveConfig, AutoSaveMode, AutoSaveStrategy
-from src.csv_editor.models.csv_session import CSVSession
-from src.csv_editor.models.data_models import OperationType
+from src.databeak.models.auto_save import AutoSaveConfig, AutoSaveMode, AutoSaveStrategy
+from src.databeak.models.csv_session import CSVSession
+from src.databeak.models.data_models import OperationType
 
 
 async def demonstrate_auto_save():

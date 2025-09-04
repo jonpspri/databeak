@@ -36,9 +36,9 @@ To create your own example:
 
 1. Import the necessary tools:
 ```python
-from src.csv_editor.tools.io_operations import load_csv_from_content
-from src.csv_editor.tools.transformations import filter_rows
-from src.csv_editor.tools.analytics import get_statistics
+from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.tools.transformations import filter_rows
+from src.databeak.tools.analytics import get_statistics
 ```
 
 2. Load your data and get a session ID

@@ -10,8 +10,8 @@ This example shows how CSV Editor handles the exact scenario that was failing be
 
 import asyncio
 import pandas as pd
-from csv_editor.tools.transformations import insert_row, get_row_data
-from csv_editor.models.csv_session import get_session_manager
+from databeak.tools.transformations import insert_row, get_row_data
+from databeak.models.csv_session import get_session_manager
 
 
 async def main():

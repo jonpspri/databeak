@@ -15,28 +15,28 @@ import pandas as pd
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.csv_editor.models.csv_session import get_session_manager
-from src.csv_editor.tools.analytics import (
+from src.databeak.models.csv_session import get_session_manager
+from src.databeak.tools.analytics import (
     detect_outliers,
     get_correlation_matrix,
     get_statistics,
     group_by_aggregate,
     profile_data,
 )
-from src.csv_editor.tools.io_operations import (
+from src.databeak.tools.io_operations import (
     export_csv,
     get_session_info,
     list_sessions,
     load_csv_from_content,
 )
-from src.csv_editor.tools.transformations import (
+from src.databeak.tools.transformations import (
     add_column,
     fill_missing_values,
     filter_rows,
     select_columns,
     sort_data,
 )
-from src.csv_editor.tools.validation import check_data_quality, find_anomalies, validate_schema
+from src.databeak.tools.validation import check_data_quality, find_anomalies, validate_schema
 
 # Test data
 TEST_CSV_CONTENT = """name,age,salary,department,hire_date

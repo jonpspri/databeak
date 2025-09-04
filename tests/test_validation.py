@@ -3,12 +3,12 @@
 import pytest
 import pandas as pd
 
-from src.csv_editor.tools.validation import (
+from src.databeak.tools.validation import (
     check_data_quality,
     find_anomalies,
     validate_schema,
 )
-from src.csv_editor.tools.io_operations import load_csv_from_content
+from src.databeak.tools.io_operations import load_csv_from_content
 
 
 @pytest.fixture
@@ -494,7 +494,7 @@ class TestValidationIntegration:
     async def test_validation_after_transformations(self, validation_test_session):
         """Test validation after data transformations."""
         # First apply some transformations
-        from src.csv_editor.tools.transformations import fill_missing_values
+        from src.databeak.tools.transformations import fill_missing_values
         
         # Fill missing values
         await fill_missing_values(validation_test_session, strategy="drop")
@@ -521,7 +521,7 @@ class TestValidationIntegration:
         await validate_schema(clean_test_session, schema)
         
         # Check if operation was recorded
-        from src.csv_editor.tools.io_operations import get_session_info
+        from src.databeak.tools.io_operations import get_session_info
         info_result = await get_session_info(clean_test_session)
         assert info_result["success"] is True
         assert info_result["data"]["operations_count"] > 0

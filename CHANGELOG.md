@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2025-09-04
+
+### Changed
+
+- **Project Rebrand**: Renamed from "CSV Editor" to "DataBeak" to better reflect the project's expanded capabilities
+- **Repository**: Moved to new GitHub repository at https://github.com/jonpspri/databeak
+- **Package Name**: Updated package name from `csv-editor` to `databeak`
+- **Import Path**: Changed from `csv_editor` to `databeak` for all imports
+- **Documentation**: Updated all documentation and examples to use DataBeak branding
+
 ## [1.0.2] - 2025-09-03
 
 ### Added
@@ -33,8 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Publishing strategy**: Switched to GitHub-based distribution due to PyPI naming conflicts
-- **Installation method**: Primary installation now via `pip install git+https://github.com/santoshray02/csv-editor.git`
-- **Package name**: Kept original `csv-editor` name
+- **Installation method**: Primary installation now via `pip install git+https://github.com/jonpspri/databeak.git`
+- **Package name**: Updated from `csv-editor` to `databeak`
 
 ### Added
 
@@ -47,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of CSV Editor MCP Server
+- Initial release of DataBeak MCP Server
 - Core CSV operations: read, write, filter, transform
 - Data validation and quality checks
 - Statistical analysis and profiling capabilities
@@ -84,4 +94,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Type-safe with mypy
 - 100% test coverage
 
-[1.0.0]: https://github.com/santoshray02/csv-editor/releases/tag/v1.0.0
+[1.0.0]: https://github.com/jonpspri/databeak/releases/tag/v1.0.0

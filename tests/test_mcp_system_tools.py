@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.csv_editor.server import _load_instructions, mcp
+from src.databeak.server import _load_instructions, mcp
 
 
 class TestInstructionsLoading:
@@ -42,7 +42,7 @@ class TestInstructionsLoading:
 
     def test_load_instructions_file_not_found(self) -> None:
         """Test handling of missing instructions file."""
-        with patch("src.csv_editor.server.Path") as mock_path:
+        with patch("src.databeak.server.Path") as mock_path:
             # Create a mock path that raises FileNotFoundError on read_text
             mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
             mock_instructions_path.read_text.side_effect = FileNotFoundError("File not found")
@@ -53,7 +53,7 @@ class TestInstructionsLoading:
 
     def test_load_instructions_generic_error(self) -> None:
         """Test handling of generic errors during instructions loading."""
-        with patch("src.csv_editor.server.Path") as mock_path:
+        with patch("src.databeak.server.Path") as mock_path:
             # Create a mock path that raises a generic error
             mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
             mock_instructions_path.read_text.side_effect = Exception("Generic error")
@@ -71,7 +71,7 @@ class TestInstructionsLoading:
             temp_file.flush()
 
             # Mock the path to point to our temp file
-            with patch("src.csv_editor.server.Path") as mock_path:
+            with patch("src.databeak.server.Path") as mock_path:
                 mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
                 mock_instructions_path.read_text.return_value = temp_content
 
@@ -128,7 +128,7 @@ class TestServerTools:
     def test_server_has_health_check_tool(self) -> None:
         """Test that server has health check functionality."""
         # Import the tools to verify they exist in their modules
-        from src.csv_editor.tools.mcp_system_tools import register_system_tools
+        from src.databeak.tools.mcp_system_tools import register_system_tools
 
         # Verify the registration function exists
         assert callable(register_system_tools)

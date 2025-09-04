@@ -19,4 +19,4 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 # Default command
 ENV PYTHONUNBUFFERED=1
-CMD ["csv-editor", "--transport", "stdio"]
+CMD ["databeak", "--transport", "stdio"]

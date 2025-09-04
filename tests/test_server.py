@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-from src.csv_editor.server import _load_instructions, mcp
+from src.databeak.server import _load_instructions, mcp
 
 
 class TestInstructionsLoading:
@@ -42,7 +42,7 @@ class TestInstructionsLoading:
 
     def test_load_instructions_file_not_found(self) -> None:
         """Test handling of missing instructions file."""
-        with patch("src.csv_editor.server.Path") as mock_path:
+        with patch("src.databeak.server.Path") as mock_path:
             # Create a mock path that raises FileNotFoundError on read_text
             mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
             mock_instructions_path.read_text.side_effect = FileNotFoundError("File not found")
@@ -53,7 +53,7 @@ class TestInstructionsLoading:
 
     def test_load_instructions_generic_error(self) -> None:
         """Test handling of generic error during file reading."""
-        with patch("src.csv_editor.server.Path") as mock_path:
+        with patch("src.databeak.server.Path") as mock_path:
             # Create a mock path that raises a generic exception on read_text
             mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
             mock_instructions_path.read_text.side_effect = Exception("Generic error")
@@ -73,7 +73,7 @@ class TestInstructionsLoading:
 
         try:
             # Patch the instructions path to use our temporary file
-            with patch("src.csv_editor.server.Path") as mock_path:
+            with patch("src.databeak.server.Path") as mock_path:
                 mock_instructions_path = mock_path.return_value.parent.__truediv__.return_value
                 mock_instructions_path.read_text.return_value = custom_instructions
 
@@ -148,13 +148,13 @@ class TestModularToolRegistration:
 
     def test_tool_registration_functions_exist(self) -> None:
         """Test that all tool registration functions exist."""
-        from src.csv_editor.tools.mcp_analytics_tools import register_analytics_tools
-        from src.csv_editor.tools.mcp_data_tools import register_data_tools
-        from src.csv_editor.tools.mcp_history_tools import register_history_tools
-        from src.csv_editor.tools.mcp_io_tools import register_io_tools
-        from src.csv_editor.tools.mcp_row_tools import register_row_tools
-        from src.csv_editor.tools.mcp_system_tools import register_system_tools
-        from src.csv_editor.tools.mcp_validation_tools import register_validation_tools
+        from src.databeak.tools.mcp_analytics_tools import register_analytics_tools
+        from src.databeak.tools.mcp_data_tools import register_data_tools
+        from src.databeak.tools.mcp_history_tools import register_history_tools
+        from src.databeak.tools.mcp_io_tools import register_io_tools
+        from src.databeak.tools.mcp_row_tools import register_row_tools
+        from src.databeak.tools.mcp_system_tools import register_system_tools
+        from src.databeak.tools.mcp_validation_tools import register_validation_tools
 
         # Verify all registration functions are callable
         registration_funcs = [
@@ -179,7 +179,7 @@ class TestModularToolRegistration:
 
     def test_enhanced_resources_available(self) -> None:
         """Test that enhanced resources for AI accessibility are available."""
-        from src.csv_editor.server import (
+        from src.databeak.server import (
             get_csv_cell,
             get_csv_data,
             get_csv_preview,
@@ -209,7 +209,7 @@ class TestServerIntegration:
     def test_server_initializes_with_all_tools(self) -> None:
         """Test that server initializes successfully with all tool modules."""
         # The fact that we can import the server means all registrations worked
-        from src.csv_editor.server import mcp
+        from src.databeak.server import mcp
 
         assert mcp is not None
         assert mcp.name == "CSV Editor"
@@ -217,8 +217,8 @@ class TestServerIntegration:
     def test_core_functionality_preserved(self) -> None:
         """Test that core functionality is preserved through modular architecture."""
         # Test that core functions are accessible through their modules
-        from src.csv_editor.tools.io_operations import load_csv
-        from src.csv_editor.tools.transformations import filter_rows, insert_row
+        from src.databeak.tools.io_operations import load_csv
+        from src.databeak.tools.transformations import filter_rows, insert_row
 
         # These should be the actual implementation functions
         assert callable(load_csv)

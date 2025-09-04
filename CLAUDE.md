@@ -1,7 +1,7 @@
-# Claude Code Instructions for CSV Editor Development
+# Claude Code Instructions for DataBeak Development
 
 ## Project Context
-CSV Editor is a Model Context Protocol (MCP) server that provides AI assistants with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and modern Python tooling.
+DataBeak is a Model Context Protocol (MCP) server that provides AI assistants with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and modern Python tooling.
 
 ## Development Guidelines
 
@@ -45,8 +45,8 @@ CSV Editor is a Model Context Protocol (MCP) server that provides AI assistants 
 - Consider using TypedDict for structured dictionary returns
 
 ### Environment Configuration
-- All environment variables use `CSV_EDITOR_` prefix
-- Configuration centralized in `CSVSettings` class in `csv_session.py`
+- All environment variables use `DATABEAK_` prefix
+- Configuration centralized in `DataBeakSettings` class in `csv_session.py`
 - Default values defined in the Settings class, not scattered `os.getenv()` calls
 
 ### Architecture Notes
@@ -60,7 +60,7 @@ CSV Editor is a Model Context Protocol (MCP) server that provides AI assistants 
 ```bash
 # Setup and development
 uv sync                 # Install all dependencies
-uv run csv-editor      # Run the MCP server
+uv run databeak      # Run the MCP server
 uv run test            # Run test suite
 uv run all-checks      # Full quality check pipeline
 
@@ -73,7 +73,7 @@ cd docs && npm run serve  # Serve docs locally
 ```
 
 ## File Structure Context
-- `src/csv_editor/` - Main package code
+- `src/databeak/` - Main package code
 - `tests/` - Test suite mirroring source structure
 - `examples/` - Usage examples and demos
 - `docs/` - Docusaurus documentation site
