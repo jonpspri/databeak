@@ -22,8 +22,7 @@ async def validate_schema(
     schema: dict[str, dict[str, Any]],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Validate data against a schema definition.
+    """Validate data against a schema definition.
 
     Args:
         session_id: Session identifier
@@ -72,7 +71,10 @@ async def validate_schema(
         for col_name, rules in schema.items():
             if col_name not in df.columns:
                 validation_errors[col_name] = [
-                    {"error": "column_missing", "message": f"Column '{col_name}' not found in data"}
+                    {
+                        "error": "column_missing",
+                        "message": f"Column '{col_name}' not found in data",
+                    }
                 ]
                 validation_summary["invalid_columns"] += 1
                 continue
@@ -166,7 +168,10 @@ async def validate_schema(
                             )
                 except Exception as e:
                     col_errors.append(
-                        {"error": "pattern_error", "message": f"Invalid regex pattern: {e!s}"}
+                        {
+                            "error": "pattern_error",
+                            "message": f"Invalid regex pattern: {e!s}",
+                        }
                     )
 
             # Allowed values validation
@@ -258,8 +263,7 @@ async def check_data_quality(
     rules: list[dict[str, Any]] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Check data quality based on predefined or custom rules.
+    """Check data quality based on predefined or custom rules.
 
     Args:
         session_id: Session identifier
@@ -334,7 +338,7 @@ async def check_data_quality(
                                     "type": "incomplete_data",
                                     "column": col,
                                     "message": f"Column '{col}' is only {round(completeness * 100, 2)}% complete",
-                                    "severity": "high" if completeness < 0.5 else "medium",
+                                    "severity": ("high" if completeness < 0.5 else "medium"),
                                 }
                             )
 
@@ -598,8 +602,7 @@ async def find_anomalies(
     methods: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Find anomalies in the data using multiple detection methods.
+    """Find anomalies in the data using multiple detection methods.
 
     Args:
         session_id: Session identifier
@@ -632,7 +635,11 @@ async def find_anomalies(
             methods = ["statistical", "pattern", "missing"]
 
         anomalies: dict[str, Any] = {
-            "summary": {"total_anomalies": 0, "affected_rows": set(), "affected_columns": []},
+            "summary": {
+                "total_anomalies": 0,
+                "affected_rows": set(),
+                "affected_columns": [],
+            },
             "by_column": {},
             "by_method": {},
         }
@@ -787,7 +794,7 @@ async def find_anomalies(
                                 "missing_ratio": round(null_ratio, 4),
                                 "missing_indices": null_indices[:100],
                                 "sequential_clusters": len(sequential_missing),
-                                "pattern": "clustered" if sequential_missing else "random",
+                                "pattern": ("clustered" if sequential_missing else "random"),
                             }
 
                             anomalies["summary"]["affected_columns"].append(col)

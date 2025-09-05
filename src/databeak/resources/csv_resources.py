@@ -21,5 +21,7 @@ async def get_csv_preview(session_id: str, ctx: Context | None) -> dict[str, Any
     return {"session_id": session_id, "preview": "Not yet implemented"}
 
 
-async def list_active_sessions(ctx: Context | None) -> list[dict[str, Any]]:  # noqa: ARG001
+async def list_active_sessions(
+    ctx: Context | None,  # noqa: ARG001
+) -> list[dict[str, Any]]:
     return []

@@ -36,7 +36,7 @@ class TestToolRegistration:
 
         # Verify server is FastMCP instance
         assert isinstance(mcp, FastMCP)
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
         assert mcp.instructions is not None
 
     def test_tool_modules_importable(self) -> None:

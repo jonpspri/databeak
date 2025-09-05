@@ -4,58 +4,26 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context  # noqa: TC002
+from fastmcp import Context
 
 # Import type aliases
 from .transformations import CellValue, FilterCondition, OperationResult
-from .transformations import (
-    add_column as _add_column,
-)
-from .transformations import (
-    change_column_type as _change_column_type,
-)
-from .transformations import (
-    extract_from_column as _extract_from_column,
-)
-from .transformations import (
-    fill_column_nulls as _fill_column_nulls,
-)
-from .transformations import (
-    fill_missing_values as _fill_missing_values,
-)
-from .transformations import (
-    filter_rows as _filter_rows,
-)
-from .transformations import (
-    remove_columns as _remove_columns,
-)
-from .transformations import (
-    remove_duplicates as _remove_duplicates,
-)
-from .transformations import (
-    rename_columns as _rename_columns,
-)
-from .transformations import (
-    replace_in_column as _replace_in_column,
-)
-from .transformations import (
-    select_columns as _select_columns,
-)
-from .transformations import (
-    sort_data as _sort_data,
-)
-from .transformations import (
-    split_column as _split_column,
-)
-from .transformations import (
-    strip_column as _strip_column,
-)
-from .transformations import (
-    transform_column_case as _transform_column_case,
-)
-from .transformations import (
-    update_column as _update_column,
-)
+from .transformations import add_column as _add_column
+from .transformations import change_column_type as _change_column_type
+from .transformations import extract_from_column as _extract_from_column
+from .transformations import fill_column_nulls as _fill_column_nulls
+from .transformations import fill_missing_values as _fill_missing_values
+from .transformations import filter_rows as _filter_rows
+from .transformations import remove_columns as _remove_columns
+from .transformations import remove_duplicates as _remove_duplicates
+from .transformations import rename_columns as _rename_columns
+from .transformations import replace_in_column as _replace_in_column
+from .transformations import select_columns as _select_columns
+from .transformations import sort_data as _sort_data
+from .transformations import split_column as _split_column
+from .transformations import strip_column as _strip_column
+from .transformations import transform_column_case as _transform_column_case
+from .transformations import update_column as _update_column
 
 
 def register_data_tools(mcp: Any) -> None:
@@ -68,7 +36,8 @@ def register_data_tools(mcp: Any) -> None:
         mode: str = "and",
         ctx: Context | None = None,
     ) -> OperationResult:
-        """Filter rows using flexible conditions with comprehensive null value and text matching support.
+        """Filter rows using flexible conditions with comprehensive null value and text matching
+        support.
 
         Provides powerful filtering capabilities optimized for AI-driven data analysis. Supports
         multiple operators, logical combinations, and comprehensive null value handling.
@@ -207,7 +176,8 @@ def register_data_tools(mcp: Any) -> None:
         replacement: str | None = None,
         ctx: Context | None = None,
     ) -> dict[str, Any]:
-        """Update values in a specific column with simple operations like replace, extract, split, etc."""
+        """Update values in a specific column with simple operations like replace, extract, split,
+        etc."""
         return await _update_column(session_id, column, operation, value, pattern, replacement, ctx)
 
     # Focused Column Operations
@@ -240,7 +210,11 @@ def register_data_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def extract_from_column(
-        session_id: str, column: str, pattern: str, expand: bool = False, ctx: Context | None = None
+        session_id: str,
+        column: str,
+        pattern: str,
+        expand: bool = False,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Extract patterns from a column using regex.
 
@@ -313,7 +287,10 @@ def register_data_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def strip_column(
-        session_id: str, column: str, chars: str | None = None, ctx: Context | None = None
+        session_id: str,
+        column: str,
+        chars: str | None = None,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Strip whitespace or specified characters from column values.
 

@@ -239,7 +239,9 @@ async def demonstrate_history_recovery():
     # Create a session and perform operations
     print("\n1. Creating initial session with operations...")
     session1 = CSVSession(
-        session_id="demo-recovery-session", enable_history=True, history_storage=HistoryStorage.JSON
+        session_id="demo-recovery-session",
+        enable_history=True,
+        history_storage=HistoryStorage.JSON,
     )
 
     data = pd.DataFrame({"item": ["A", "B", "C"], "value": [10, 20, 30]})

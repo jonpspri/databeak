@@ -26,8 +26,7 @@ async def configure_auto_save(
     encoding: str = "utf-8",
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """
-    Configure auto-save settings for a session.
+    """Configure auto-save settings for a session.
 
     Args:
         session_id: Session identifier
@@ -101,12 +100,15 @@ async def configure_auto_save(
         logger.error(f"Error configuring auto-save: {e!s}")
         if ctx:
             await ctx.error(f"Failed to configure auto-save: {e!s}")
-        return {"success": False, "message": "Failed to configure auto-save", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to configure auto-save",
+            "error": str(e),
+        }
 
 
 async def disable_auto_save(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Disable auto-save for a session.
+    """Disable auto-save for a session.
 
     Args:
         session_id: Session identifier
@@ -132,7 +134,11 @@ async def disable_auto_save(session_id: str, ctx: Context | None = None) -> dict
             if ctx:
                 await ctx.info(f"Auto-save disabled for session {session_id}")
 
-            return {"success": True, "message": "Auto-save disabled", "session_id": session_id}
+            return {
+                "success": True,
+                "message": "Auto-save disabled",
+                "session_id": session_id,
+            }
         else:
             return {
                 "success": False,
@@ -144,12 +150,15 @@ async def disable_auto_save(session_id: str, ctx: Context | None = None) -> dict
         logger.error(f"Error disabling auto-save: {e!s}")
         if ctx:
             await ctx.error(f"Failed to disable auto-save: {e!s}")
-        return {"success": False, "message": "Failed to disable auto-save", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to disable auto-save",
+            "error": str(e),
+        }
 
 
 async def get_auto_save_status(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Get auto-save status for a session.
+    """Get auto-save status for a session.
 
     Args:
         session_id: Session identifier
@@ -185,12 +194,15 @@ async def get_auto_save_status(session_id: str, ctx: Context | None = None) -> d
         logger.error(f"Error getting auto-save status: {e!s}")
         if ctx:
             await ctx.error(f"Failed to get auto-save status: {e!s}")
-        return {"success": False, "message": "Failed to get auto-save status", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to get auto-save status",
+            "error": str(e),
+        }
 
 
 async def trigger_manual_save(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Manually trigger a save for a session.
+    """Manually trigger a save for a session.
 
     Args:
         session_id: Session identifier
@@ -226,10 +238,18 @@ async def trigger_manual_save(session_id: str, ctx: Context | None = None) -> di
                 "data": result,
             }
         else:
-            return {"success": False, "message": "Manual save failed", "error": result.get("error")}
+            return {
+                "success": False,
+                "message": "Manual save failed",
+                "error": result.get("error"),
+            }
 
     except Exception as e:
         logger.error(f"Error in manual save: {e!s}")
         if ctx:
             await ctx.error(f"Failed to trigger manual save: {e!s}")
-        return {"success": False, "message": "Failed to trigger manual save", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to trigger manual save",
+            "error": str(e),
+        }

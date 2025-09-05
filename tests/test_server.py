@@ -20,7 +20,7 @@ class TestInstructionsLoading:
         assert isinstance(instructions, str)
 
         # Check for expected content
-        assert "CSV Editor MCP Server" in instructions
+        assert "DataBeak MCP Server" in instructions
         assert "Core Philosophy" in instructions
         assert "Getting Started" in instructions
         assert "Key Features" in instructions
@@ -31,7 +31,7 @@ class TestInstructionsLoading:
 
         # Check for main sections (updated for new AI-focused structure)
         expected_sections = [
-            "# CSV Editor MCP Server",
+            "# DataBeak MCP Server",
             "Coordinate System",
             "Core Philosophy",
             "Getting Started (AI Workflow)",
@@ -49,7 +49,7 @@ class TestInstructionsLoading:
 
             instructions = _load_instructions()
 
-            assert instructions == "CSV Editor MCP Server - Instructions file not available"
+            assert instructions == "DataBeak MCP Server - Instructions file not available"
 
     def test_load_instructions_generic_error(self) -> None:
         """Test handling of generic error during file reading."""
@@ -60,12 +60,12 @@ class TestInstructionsLoading:
 
             instructions = _load_instructions()
 
-            assert instructions == "CSV Editor MCP Server - Error loading instructions"
+            assert instructions == "DataBeak MCP Server - Error loading instructions"
 
     def test_load_instructions_with_custom_file(self) -> None:
         """Test loading instructions from a custom file."""
         # Create a temporary instructions file
-        custom_instructions = "# Custom CSV Editor Instructions\n\nThis is a test."
+        custom_instructions = "# Custom DataBeak Instructions\n\nThis is a test."
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
             f.write(custom_instructions)
@@ -90,7 +90,7 @@ class TestServerInitialization:
 
     def test_server_has_correct_name(self) -> None:
         """Test that server has the correct name."""
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
 
     def test_server_has_instructions(self) -> None:
         """Test that server has instructions loaded."""
@@ -104,7 +104,7 @@ class TestServerInitialization:
         assert instructions is not None  # Type guard
 
         # Check for key sections
-        assert "CSV Editor MCP Server" in instructions
+        assert "DataBeak MCP Server" in instructions
         assert "Core Philosophy" in instructions
         assert "Getting Started" in instructions
 
@@ -133,7 +133,7 @@ class TestServerTools:
         # The actual tool functionality is tested elsewhere
         # This is just a smoke test to ensure the server setup is working
         assert mcp is not None
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
 
     def test_server_is_fastmcp_instance(self) -> None:
         """Test that server is a FastMCP instance."""
@@ -212,7 +212,7 @@ class TestServerIntegration:
         from src.databeak.server import mcp
 
         assert mcp is not None
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
 
     def test_core_functionality_preserved(self) -> None:
         """Test that core functionality is preserved through modular architecture."""

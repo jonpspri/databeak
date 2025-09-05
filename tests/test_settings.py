@@ -112,7 +112,10 @@ class TestDataBeakSettingsIntegration:
 
     def test_settings_are_configurable(self):
         """Test that settings can be configured multiple ways."""
-        with tempfile.TemporaryDirectory() as temp_dir1, tempfile.TemporaryDirectory() as temp_dir2:
+        with (
+            tempfile.TemporaryDirectory() as temp_dir1,
+            tempfile.TemporaryDirectory() as temp_dir2,
+        ):
             # Test 1: Direct instantiation
             settings1 = DataBeakSettings(csv_history_dir=temp_dir1)
             assert settings1.csv_history_dir == temp_dir1

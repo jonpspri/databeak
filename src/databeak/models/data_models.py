@@ -121,9 +121,10 @@ class FilterCondition(BaseModel):
         operator = info.data.get("operator") if hasattr(info, "data") else None
         if operator in [ComparisonOperator.IS_NULL, ComparisonOperator.IS_NOT_NULL]:
             return None
-        if operator in [ComparisonOperator.IN, ComparisonOperator.NOT_IN] and not isinstance(
-            v, list
-        ):
+        if operator in [
+            ComparisonOperator.IN,
+            ComparisonOperator.NOT_IN,
+        ] and not isinstance(v, list):
             return [v]
         return v
 

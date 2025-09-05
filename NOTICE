@@ -26,7 +26,7 @@ FastMCP
 Copyright (c) 2024 Marvin AI
 Licensed under the MIT License
 
-Pandas 
+Pandas
 Copyright (c) 2008-2011, AQR Capital Management, LLC, Lambda Foundry, Inc. and PyData Development Team
 Copyright (c) 2011-2024, Open source contributors
 Licensed under the BSD 3-Clause License
@@ -39,5 +39,5 @@ Pydantic
 Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors
 Licensed under the MIT License
 
-For complete license information for all dependencies, see the individual 
+For complete license information for all dependencies, see the individual
 package licenses in the installed packages or visit their respective repositories.

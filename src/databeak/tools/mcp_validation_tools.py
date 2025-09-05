@@ -4,17 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context  # noqa: TC002
+from fastmcp import Context
 
-from .validation import (
-    check_data_quality as _check_data_quality,
-)
-from .validation import (
-    find_anomalies as _find_anomalies,
-)
-from .validation import (
-    validate_schema as _validate_schema,
-)
+from .validation import check_data_quality as _check_data_quality
+from .validation import find_anomalies as _find_anomalies
+from .validation import validate_schema as _validate_schema
 
 
 def register_validation_tools(mcp: Any) -> None:
@@ -29,7 +23,9 @@ def register_validation_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def check_data_quality(
-        session_id: str, rules: list[dict[str, Any]] | None = None, ctx: Context | None = None
+        session_id: str,
+        rules: list[dict[str, Any]] | None = None,
+        ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Check data quality based on predefined or custom rules."""
         return await _check_data_quality(session_id, rules, ctx)

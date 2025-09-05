@@ -63,7 +63,10 @@ class AutoSaveConfig:
         self.encoding = encoding
 
         # Create backup directory if needed
-        if self.enabled and self.strategy in [AutoSaveStrategy.BACKUP, AutoSaveStrategy.VERSIONED]:
+        if self.enabled and self.strategy in [
+            AutoSaveStrategy.BACKUP,
+            AutoSaveStrategy.VERSIONED,
+        ]:
             Path(self.backup_dir).mkdir(parents=True, exist_ok=True)
 
     def to_dict(self) -> dict[str, Any]:
@@ -100,7 +103,10 @@ class AutoSaveManager:
     """Manages auto-save operations for a CSV session."""
 
     def __init__(
-        self, session_id: str, config: AutoSaveConfig, original_file_path: str | None = None
+        self,
+        session_id: str,
+        config: AutoSaveConfig,
+        original_file_path: str | None = None,
     ):
         """Initialize auto-save manager."""
         self.session_id = session_id
@@ -177,7 +183,11 @@ class AutoSaveManager:
                     logger.error(
                         f"Auto-save failed for session {self.session_id}: {result.get('error')}"
                     )
-                    return {"success": False, "error": result.get("error"), "trigger": trigger}
+                    return {
+                        "success": False,
+                        "error": result.get("error"),
+                        "trigger": trigger,
+                    }
 
             except Exception as e:
                 logger.error(f"Auto-save error for session {self.session_id}: {e!s}")

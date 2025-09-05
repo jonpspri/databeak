@@ -125,7 +125,7 @@ class HistoryManager:
                                 snapshot_file = self._get_snapshot_file_path(entry["operation_id"])
                                 if Path(snapshot_file).exists():
                                     with Path(snapshot_file).open("rb") as sf:
-                                        snapshot = pickle.load(sf)
+                                        snapshot = pickle.load(sf)  # nosec B301
 
                             self.history.append(OperationHistory.from_dict(entry, snapshot))
 
@@ -138,7 +138,7 @@ class HistoryManager:
                 history_file = self._get_history_file_path("pkl")
                 if Path(history_file).exists():
                     with Path(history_file).open("rb") as f:
-                        data = pickle.load(f)
+                        data = pickle.load(f)  # nosec B301
                         self.history = data.get("history", [])
                         self.current_index = data.get("current_index", -1)
                         logger.info(
@@ -455,8 +455,8 @@ class HistoryManager:
             "can_redo": self.can_redo(),
             "redo_stack_size": len(self.redo_stack),
             "operation_types": operation_types,
-            "first_operation": self.history[0].timestamp.isoformat() if self.history else None,
-            "last_operation": self.history[-1].timestamp.isoformat() if self.history else None,
+            "first_operation": (self.history[0].timestamp.isoformat() if self.history else None),
+            "last_operation": (self.history[-1].timestamp.isoformat() if self.history else None),
             "snapshots_count": snapshots_count,
             "storage_type": self.storage_type.value,
             "max_history": self.max_history,

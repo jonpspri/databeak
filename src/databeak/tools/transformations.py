@@ -50,8 +50,7 @@ async def filter_rows(
     mode: str = "and",
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Filter rows based on conditions.
+    """Filter rows based on conditions.
 
     Args:
         session_id: Session identifier
@@ -148,7 +147,10 @@ async def filter_rows(
         return {"success": False, "error": {"type": "ParsingError", "message": str(e)}}
     except Exception as e:
         logger.error(f"Unexpected error in filter operation: {e!s}")
-        return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
+        return {
+            "success": False,
+            "error": {"type": "UnexpectedError", "message": str(e)},
+        }
 
 
 async def sort_data(
@@ -156,8 +158,7 @@ async def sort_data(
     columns: list[str | dict[str, str]],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Sort data by one or more columns.
+    """Sort data by one or more columns.
 
     Args:
         session_id: Session identifier
@@ -168,9 +169,6 @@ async def sort_data(
         Dict with success status
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Parse columns into names and ascending flags
@@ -185,7 +183,10 @@ async def sort_data(
                 sort_columns.append(col["column"])
                 ascending.append(bool(col.get("ascending", True)))
             else:
-                return {"success": False, "error": f"Invalid column specification: {col}"}
+                return {
+                    "success": False,
+                    "error": f"Invalid column specification: {col}",
+                }
 
         # Validate columns exist
         for col in sort_columns:
@@ -211,8 +212,7 @@ async def select_columns(
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Select specific columns from the dataframe.
+    """Select specific columns from the dataframe.
 
     Args:
         session_id: Session identifier
@@ -223,9 +223,6 @@ async def select_columns(
         Dict with success status and selected columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -236,7 +233,11 @@ async def select_columns(
         session.data_session.df = df[columns].copy()
         session.record_operation(
             OperationType.SELECT,
-            {"columns": columns, "columns_before": df.columns.tolist(), "columns_after": columns},
+            {
+                "columns": columns,
+                "columns_before": df.columns.tolist(),
+                "columns_after": columns,
+            },
         )
 
         return {
@@ -255,8 +256,7 @@ async def rename_columns(
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Rename columns in the dataframe.
+    """Rename columns in the dataframe.
 
     Args:
         session_id: Session identifier
@@ -267,9 +267,6 @@ async def rename_columns(
         Dict with success status and renamed columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -298,8 +295,7 @@ async def add_column(
     formula: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Add a new column to the dataframe.
+    """Add a new column to the dataframe.
 
     Args:
         session_id: Session identifier
@@ -312,9 +308,6 @@ async def add_column(
         Dict with success status
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if name in df.columns:
@@ -339,7 +332,11 @@ async def add_column(
 
         session.record_operation(
             OperationType.ADD_COLUMN,
-            {"name": name, "value": str(value) if value is not None else None, "formula": formula},
+            {
+                "name": name,
+                "value": str(value) if value is not None else None,
+                "formula": formula,
+            },
         )
 
         return {
@@ -358,8 +355,7 @@ async def remove_columns(
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Remove columns from the dataframe.
+    """Remove columns from the dataframe.
 
     Args:
         session_id: Session identifier
@@ -370,9 +366,6 @@ async def remove_columns(
         Dict with success status and removed columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -401,8 +394,7 @@ async def change_column_type(
     errors: Literal["raise", "coerce"] = "coerce",
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Change the data type of a column.
+    """Change the data type of a column.
 
     Args:
         session_id: Session identifier
@@ -415,9 +407,6 @@ async def change_column_type(
         Dict with success status and conversion info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -448,7 +437,12 @@ async def change_column_type(
 
         session.record_operation(
             OperationType.CHANGE_TYPE,
-            {"column": column, "from_type": original_dtype, "to_type": dtype, "errors": errors},
+            {
+                "column": column,
+                "from_type": original_dtype,
+                "to_type": dtype,
+                "errors": errors,
+            },
         )
 
         return {
@@ -473,8 +467,7 @@ async def fill_missing_values(
     columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Fill or remove missing values.
+    """Fill or remove missing values.
 
     Args:
         session_id: Session identifier
@@ -487,9 +480,6 @@ async def fill_missing_values(
         Dict with success status and fill info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         null_counts_before = df.isnull().sum().to_dict()
 
@@ -561,8 +551,7 @@ async def update_column(
     replacement: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Update values in a specific column with simple operations.
+    """Update values in a specific column with simple operations.
 
     Args:
         session_id: Session identifier
@@ -577,9 +566,6 @@ async def update_column(
         Dict with success status and update info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -599,7 +585,10 @@ async def update_column(
 
         elif operation == "extract":
             if pattern is None:
-                return {"success": False, "error": "Pattern required for extract operation"}
+                return {
+                    "success": False,
+                    "error": "Pattern required for extract operation",
+                }
             session.data_session.df[column] = (
                 df[column].astype(str).str.extract(pattern, expand=False)
             )
@@ -666,8 +655,7 @@ async def remove_duplicates(
     keep: Literal["first", "last", "none"] = "first",
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Remove duplicate rows.
+    """Remove duplicate rows.
 
     Args:
         session_id: Session identifier
@@ -679,9 +667,6 @@ async def remove_duplicates(
         Dict with success status and duplicate info
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         rows_before = len(df)
 
@@ -728,8 +713,7 @@ async def get_cell_value(
     column: str | int,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get the value of a specific cell.
+    """Get the value of a specific cell.
 
     Args:
         session_id: Session identifier
@@ -745,9 +729,6 @@ async def get_cell_value(
         get_cell_value("session123", 2, 1) -> {"success": True, "value": 25, "coordinates": {"row": 2, "column": "age"}}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -800,8 +781,7 @@ async def set_cell_value(
     value: CellValue,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Set the value of a specific cell.
+    """Set the value of a specific cell.
 
     Args:
         session_id: Session identifier
@@ -817,9 +797,6 @@ async def set_cell_value(
         set_cell_value("session123", 0, "name", "Jane") -> {"success": True, "old_value": "John", "new_value": "Jane"}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -886,8 +863,7 @@ async def get_row_data(
     columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get data from a specific row.
+    """Get data from a specific row.
 
     Args:
         session_id: Session identifier
@@ -903,9 +879,6 @@ async def get_row_data(
         get_row_data("session123", 1, ["name", "age"]) -> {"success": True, "data": {"name": "Jane", "age": 25}}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -952,8 +925,7 @@ async def get_column_data(
     end_row: int | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get data from a specific column, optionally sliced by row range.
+    """Get data from a specific column, optionally sliced by row range.
 
     Args:
         session_id: Session identifier
@@ -970,9 +942,6 @@ async def get_column_data(
         get_column_data("session123", "name", 0, 2) -> {"success": True, "data": ["John", "Jane"]}
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate column exists
@@ -1036,8 +1005,7 @@ async def replace_in_column(
     regex: bool = True,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Replace patterns in a column with replacement text.
+    """Replace patterns in a column with replacement text.
 
     Args:
         session_id: Session identifier
@@ -1054,9 +1022,6 @@ async def replace_in_column(
         replace_in_column("session123", "name", "Mr\\.", "Mister") -> Replace "Mr." with "Mister"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1105,8 +1070,7 @@ async def extract_from_column(
     expand: bool = False,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Extract patterns from a column using regex.
+    """Extract patterns from a column using regex.
 
     Args:
         session_id: Session identifier
@@ -1122,9 +1086,6 @@ async def extract_from_column(
         extract_from_column("session123", "email", r"(.+)@(.+)") -> Extract username and domain
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1170,8 +1131,7 @@ async def split_column(
     expand_to_columns: bool = False,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Split column values by delimiter.
+    """Split column values by delimiter.
 
     Args:
         session_id: Session identifier
@@ -1189,9 +1149,6 @@ async def split_column(
         split_column("session123", "full_name", " ", expand_to_columns=True) -> Split into multiple columns
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1260,8 +1217,7 @@ async def transform_column_case(
     transform: Literal["upper", "lower", "title", "capitalize"],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Transform the case of text in a column.
+    """Transform the case of text in a column.
 
     Args:
         session_id: Session identifier
@@ -1276,9 +1232,6 @@ async def transform_column_case(
         transform_column_case("session123", "name", "title") -> "john doe" becomes "John Doe"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1330,8 +1283,7 @@ async def strip_column(
     chars: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Strip whitespace or specified characters from column values.
+    """Strip whitespace or specified characters from column values.
 
     Args:
         session_id: Session identifier
@@ -1347,9 +1299,6 @@ async def strip_column(
         strip_column("session123", "code", "()") -> Remove parentheses from ends
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1395,8 +1344,7 @@ async def fill_column_nulls(
     value: CellValue,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Fill null/NaN values in a column with a specified value.
+    """Fill null/NaN values in a column with a specified value.
 
     Args:
         session_id: Session identifier
@@ -1412,9 +1360,6 @@ async def fill_column_nulls(
         fill_column_nulls("session123", "name", "Unknown") -> Replace missing names with "Unknown"
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -1470,8 +1415,7 @@ async def insert_row(
     data: RowData | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Insert a new row at the specified index.
+    """Insert a new row at the specified index.
 
     Args:
         session_id: Session identifier
@@ -1500,9 +1444,6 @@ async def insert_row(
                     "success": False,
                     "error": f"Invalid JSON string in data parameter: {e}",
                 }
-
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
 
         session, df = _get_session_data(session_id)
         rows_before = len(df)
@@ -1584,8 +1525,7 @@ async def delete_row(
     row_index: int,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Delete a row at the specified index.
+    """Delete a row at the specified index.
 
     Args:
         session_id: Session identifier
@@ -1599,9 +1539,6 @@ async def delete_row(
         delete_row("session123", 1) -> Delete second row
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         rows_before = len(df)
 
@@ -1656,8 +1593,7 @@ async def update_row(
     data: dict[str, CellValue] | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
 ) -> OperationResult:
-    """
-    Update specific columns in a row with new values.
+    """Update specific columns in a row with new values.
 
     Args:
         session_id: Session identifier
@@ -1686,9 +1622,6 @@ async def update_row(
                     "error": f"Invalid JSON string in data parameter: {e}",
                 }
 
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Validate row index
@@ -1700,7 +1633,10 @@ async def update_row(
 
         # Ensure data is a dict at this point
         if not isinstance(data, dict):
-            return {"success": False, "error": "Data must be a dictionary after JSON parsing"}
+            return {
+                "success": False,
+                "error": "Data must be a dictionary after JSON parsing",
+            }
 
         # Validate columns exist
         invalid_cols = [col for col in data if col not in df.columns]
@@ -1773,8 +1709,7 @@ async def inspect_data_around(
     radius: int = 2,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get data around a specific cell for context inspection.
+    """Get data around a specific cell for context inspection.
 
     Args:
         session_id: Session identifier
@@ -1790,9 +1725,6 @@ async def inspect_data_around(
         inspect_data_around("session123", 5, "name", 2) -> Get 5x5 grid centered on (5, "name")
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Handle column specification
@@ -1866,8 +1798,7 @@ async def find_cells_with_value(
     exact_match: bool = True,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Find all cells containing a specific value.
+    """Find all cells containing a specific value.
 
     Args:
         session_id: Session identifier
@@ -1884,9 +1815,6 @@ async def find_cells_with_value(
         find_cells_with_value("session123", 25, "age") -> Find all age cells with value 25
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
         matches = []
 
@@ -1923,7 +1851,7 @@ async def find_cells_with_value(
                 if pd.isna(cell_value):
                     cell_value = None
                 elif hasattr(cell_value, "item"):
-                    cell_value = cell_value.item()
+                    cell_value = cell_value.item()  # type: ignore[assignment]
 
                 matches.append(
                     {
@@ -1954,8 +1882,7 @@ async def get_data_summary(
     max_preview_rows: int = 10,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get comprehensive data summary optimized for AI understanding.
+    """Get comprehensive data summary optimized for AI understanding.
 
     Args:
         session_id: Session identifier
@@ -1970,9 +1897,6 @@ async def get_data_summary(
         get_data_summary("session123", True, 5) -> Get summary with 5-row preview
     """
     try:
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-
         session, df = _get_session_data(session_id)
 
         # Basic information

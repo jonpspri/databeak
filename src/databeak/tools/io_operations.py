@@ -172,7 +172,11 @@ async def load_csv_from_url(
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to load CSV from URL: {e!s}")
-        return {"success": False, "message": "Failed to load CSV from URL", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to load CSV from URL",
+            "error": str(e),
+        }
 
 
 async def load_csv_from_content(
@@ -217,13 +221,20 @@ async def load_csv_from_content(
             "session_id": session.session_id,
             "rows_affected": len(df),
             "columns_affected": df.columns.tolist(),
-            "data": {"shape": df.shape, "preview": create_data_preview_with_indices(df, 5)},
+            "data": {
+                "shape": df.shape,
+                "preview": create_data_preview_with_indices(df, 5),
+            },
         }
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to parse CSV content: {e!s}")
-        return {"success": False, "message": "Failed to parse CSV content", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to parse CSV content",
+            "error": str(e),
+        }
 
 
 async def export_csv(
@@ -351,7 +362,11 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[
         session = session_manager.get_session(session_id)
 
         if not session:
-            return {"success": False, "message": "Session not found", "error": "Invalid session ID"}
+            return {
+                "success": False,
+                "message": "Session not found",
+                "error": "Invalid session ID",
+            }
 
         if ctx:
             await ctx.info(f"Retrieved info for session {session_id}")
@@ -367,7 +382,11 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to get session info: {e!s}")
-        return {"success": False, "message": "Failed to get session info", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to get session info",
+            "error": str(e),
+        }
 
 
 async def list_sessions(ctx: Context | None = None) -> dict[str, Any]:
@@ -413,7 +432,11 @@ async def close_session(session_id: str, ctx: Context | None = None) -> dict[str
         removed = await session_manager.remove_session(session_id)
 
         if not removed:
-            return {"success": False, "message": "Session not found", "error": "Invalid session ID"}
+            return {
+                "success": False,
+                "message": "Session not found",
+                "error": "Invalid session ID",
+            }
 
         if ctx:
             await ctx.info(f"Closed session {session_id}")

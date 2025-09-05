@@ -76,7 +76,7 @@ class CSVSession:
         self.history_manager = (
             HistoryManager(
                 session_id=self.session_id,
-                storage_type=history_storage if enable_history else HistoryStorage.MEMORY,
+                storage_type=(history_storage if enable_history else HistoryStorage.MEMORY),
                 history_dir=settings.csv_history_dir,
                 enable_snapshots=True,
                 snapshot_interval=5,  # Take snapshot every 5 operations
@@ -293,7 +293,10 @@ class CSVSession:
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
             logger.error(f"Unexpected error during undo: {e!s}")
-            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"type": "UnexpectedError", "message": str(e)},
+            }
 
     async def redo(self) -> dict[str, Any]:
         """Redo the previously undone operation."""
@@ -328,7 +331,10 @@ class CSVSession:
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
             logger.error(f"Unexpected error during redo: {e!s}")
-            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"type": "UnexpectedError", "message": str(e)},
+            }
 
     def get_history(self, limit: int | None = None) -> dict[str, Any]:
         """Get operation history."""
@@ -336,7 +342,7 @@ class CSVSession:
             # Return legacy history if new history is not enabled
             return {
                 "success": True,
-                "history": self.operations_history[-limit:] if limit else self.operations_history,
+                "history": (self.operations_history[-limit:] if limit else self.operations_history),
                 "total": len(self.operations_history),
             }
 
@@ -350,7 +356,10 @@ class CSVSession:
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
             logger.error(f"Unexpected error getting history: {e!s}")
-            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"type": "UnexpectedError", "message": str(e)},
+            }
 
     async def restore_to_operation(self, operation_id: str) -> dict[str, Any]:
         """Restore data to a specific operation point."""
@@ -375,14 +384,20 @@ class CSVSession:
                     ),
                 }
             else:
-                return {"success": False, "error": f"Could not restore to operation {operation_id}"}
+                return {
+                    "success": False,
+                    "error": f"Could not restore to operation {operation_id}",
+                }
 
         except HistoryNotEnabledError as e:
             logger.error(f"History operation failed: {e.message}")
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
             logger.error(f"Unexpected error during restore: {e!s}")
-            return {"success": False, "error": {"type": "UnexpectedError", "message": str(e)}}
+            return {
+                "success": False,
+                "error": {"type": "UnexpectedError", "message": str(e)},
+            }
 
     async def clear(self) -> None:
         """Clear session data to free memory."""

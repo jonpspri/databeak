@@ -3,9 +3,10 @@ sidebar_position: 2
 title: Installation
 ---
 
-# Installation Guide
+## Installation Guide
 
-Get CSV Editor up and running in just 2 minutes! This guide covers installation and client configuration.
+Get DataBeak up and running in just 2 minutes! This guide covers
+installation and client configuration.
 
 ## Prerequisites
 
@@ -17,7 +18,7 @@ Get CSV Editor up and running in just 2 minutes! This guide covers installation 
 
 ### Using uvx (Recommended)
 
-The fastest way to install and run CSV Editor:
+The fastest way to install and run DataBeak:
 
 ```bash
 # Install and run directly from GitHub
@@ -31,7 +32,8 @@ For development or local installation:
 ```bash
 # Install uv (one-time setup)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# Or on Windows: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+# Or on Windows:
+# powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Clone and install
 git clone https://github.com/jonpspri/csv-editor.git
@@ -56,16 +58,21 @@ csv-editor
 
 ### Claude Desktop
 
-Configure Claude Desktop to use CSV Editor as an MCP server.
+Configure Claude Desktop to use DataBeak as an MCP server.
 
-Add this to your MCP Settings file (Claude → Settings → Developer → Show MCP Settings):
+Add this to your MCP Settings file
+(Claude → Settings → Developer → Show MCP Settings):
 
 ```json
 {
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"],
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ],
       "env": {
         "CSV_EDITOR_MAX_FILE_SIZE_MB": "1024",
         "CSV_EDITOR_CSV_HISTORY_DIR": "/tmp/csv_history"
@@ -84,7 +91,11 @@ Edit `~/.continue/config.json`:
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -98,8 +109,12 @@ Add to VS Code settings (`settings.json`):
 {
   "cline.mcpServers": {
     "csv-editor": {
-      "command": "uvx", 
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -114,7 +129,11 @@ Edit `~/.windsurf/mcp_servers.json`:
   "mcpServers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -129,7 +148,11 @@ Edit `~/.config/zed/settings.json`:
   "experimental.mcp_servers": {
     "csv-editor": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/csv-editor.git", "csv-editor"]
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/csv-editor.git",
+        "csv-editor"
+      ]
     }
   }
 }
@@ -137,7 +160,7 @@ Edit `~/.config/zed/settings.json`:
 
 ## Environment Variables
 
-Configure CSV Editor behavior with these environment variables:
+Configure DataBeak behavior with these environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -166,13 +189,14 @@ CSV_EDITOR_LOG_LEVEL=DEBUG uv run csv-editor
 npm install -g @modelcontextprotocol/inspector
 
 # Test the server
-mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor
+mcp-inspector uvx --from \
+  git+https://github.com/jonpspri/csv-editor.git csv-editor
 ```
 
 ### Verify in Your AI Client
 
 1. **Claude Desktop**: Look for "csv-editor" in the MCP servers list
-2. **VS Code**: Check the extension's MCP panel  
+2. **VS Code**: Check the extension's MCP panel
 3. **Test Command**: Try asking your AI to "list available CSV tools"
 
 ## Troubleshooting
@@ -180,16 +204,20 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 ### Common Issues
 
 #### Server not starting
+
 - Check Python version: `python --version` (must be 3.10+)
-- Verify installation: `uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
+- Verify installation: `uvx --from \
+  git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
 - Check logs with debug level
 
 #### Client can't connect
+
 - Verify the command path in your configuration
 - Ensure uvx is installed and accessible
 - Check firewall settings for local connections
 
 #### Permission errors
+
 - On macOS/Linux: Check file permissions
 - On Windows: Run as administrator if needed
 - Verify the history directory is writable
@@ -204,17 +232,21 @@ mcp-inspector uvx --from git+https://github.com/jonpspri/csv-editor.git csv-edit
 ### Getting Help
 
 - **[GitHub Issues](https://github.com/jonpspri/csv-editor/issues)** - Report bugs
-- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** - Ask questions
+- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)**
+  Ask questions
 - **[Documentation](/)** - Browse complete docs
 
 ## Next Steps
 
-Now that CSV Editor is installed:
+Now that DataBeak is installed:
 
-1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the basics
+1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the
+   basics
 2. **[API Reference](./api/overview)** - Explore all available tools
-3. **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)** - See real-world use cases
+3. **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)**
+   - See real-world use cases
 
 ---
 
-**Installation complete!** Your AI assistant now has powerful data manipulation capabilities. 🎉
+**Installation complete!** Your AI assistant now has powerful data
+manipulation capabilities.

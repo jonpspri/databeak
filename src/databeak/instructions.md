@@ -1,4 +1,4 @@
-# CSV Editor MCP Server - AI-Powered CSV Data Platform
+# DataBeak MCP Server - AI-Powered CSV Data Platform
 
 A high-performance MCP server providing 40+ specialized tools for CSV data
 manipulation, analysis, and validation. Optimized for AI assistants with
@@ -30,16 +30,17 @@ comprehensive error handling.
 
 ### Data Structure Reference
 
-```
+```text
     Column indices:  0      1      2
                    name   age   city
-Row 0:             John   30    NYC      <- get_cell_value(session, 0, "name") → "John"
+Row 0:             John   30    NYC      <- get_cell_value(session, 0, "name")
 Row 1:             Jane   25    LA       <- get_cell_value(session, 1, 1) → 25
-Row 2:             Bob    35    Chicago  <- get_row_data(session, 2) → {"name": "Bob", "age": 35, "city": "Chicago"}
+Row 2:             Bob    35    Chicago  <- get_row_data(session, 2) →
+                                            {"name": "Bob", "age": 35, "city": "Chicago"}
 ```
 
 **⚠️ Critical**: All operations use 0-based indexing. Row 1 in a spreadsheet =
-Row 0 in CSV Editor.
+Row 0 in DataBeak.
 
 ### 💾 **Auto-Save**
 
@@ -88,9 +89,12 @@ export_csv(session_id, "results.csv")    # Save processed data
 
 • **Session-based**: Multiple independent data sessions with automatic cleanup
 • **History tracking**: Full operation history with snapshots for undo/redo
-• **Coordinate precision**: Every operation includes row/column coordinate information
-• **AI-optimized returns**: All data includes indexing for precise reference
-• **Clear method names**: No confusing operation parameters - method names express intent
+• **Coordinate precision**: Every operation includes row/column coordinate
+  information
+• **AI-optimized returns**: All data includes indexing for precise
+  reference
+• **Clear method names**: No confusing operation parameters - method names
+  express intent
 • **Enhanced error messages**: Include valid coordinate ranges in error responses
 • **Progress reporting**: Real-time feedback for long operations
 • **Type safety**: Proper handling of pandas/numpy types for JSON serialization
@@ -101,7 +105,8 @@ export_csv(session_id, "results.csv")    # Save processed data
 
 **Key Principles:**
 
-- Always start with `get_data_summary()` to understand data structure and coordinate system
+- Always start with `get_data_summary()` to understand data structure and
+  coordinate system
 - Use precise coordinates (0-based indexing) for all operations
 - Check tool docstrings for comprehensive usage examples and workflow patterns
 - All operations include detailed metadata for continued AI analysis

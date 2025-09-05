@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'CSV Editor',
+  title: 'DataBeak',
   tagline: 'AI-Powered CSV Processing via Model Context Protocol',
   favicon: 'img/favicon.ico',
 
@@ -75,9 +75,9 @@ const config: Config = {
     // Replace with your project's social card
     image: 'img/csv-editor-social-card.jpg',
     navbar: {
-      title: 'CSV Editor',
+      title: 'DataBeak',
       logo: {
-        alt: 'CSV Editor Logo',
+        alt: 'DataBeak Logo',
         src: 'img/logo.svg',
       },
       items: [
@@ -150,7 +150,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} CSV Editor. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} DataBeak. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

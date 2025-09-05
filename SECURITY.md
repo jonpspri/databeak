@@ -15,7 +15,7 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 
 ### How to Report
 
-1. **Email**: Send details to jps@s390x.com
+1. **Email**: Send details to <jps@s390x.com>
 2. **Subject**: Include "DataBeak Security" in the subject line
 3. **Details**: Provide a detailed description of the vulnerability
 

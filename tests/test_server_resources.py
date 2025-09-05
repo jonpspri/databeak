@@ -1,9 +1,8 @@
 """Tests for server functionality and instruction loading."""
 
-import pytest
-import tempfile
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp
@@ -18,7 +17,7 @@ class TestServerInstructions:
         instructions = _load_instructions()
         assert isinstance(instructions, str)
         assert len(instructions) > 0
-        assert "CSV Editor MCP Server" in instructions
+        assert "DataBeak MCP Server" in instructions
 
     def test_load_instructions_file_not_found(self):
         """Test instruction loading when file doesn't exist."""
@@ -43,7 +42,7 @@ class TestServerInstructions:
         # Test that mcp server exists and has expected attributes
         assert mcp is not None
         assert hasattr(mcp, "name")
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
         assert hasattr(mcp, "instructions")
         assert isinstance(mcp.instructions, str)
 

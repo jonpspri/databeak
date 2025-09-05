@@ -70,7 +70,14 @@ class TestIOToolSignatures:
         sig = inspect.signature(export_csv)
         params = list(sig.parameters.keys())
 
-        expected_params = ["session_id", "file_path", "format", "encoding", "index", "ctx"]
+        expected_params = [
+            "session_id",
+            "file_path",
+            "format",
+            "encoding",
+            "index",
+            "ctx",
+        ]
         assert all(param in params for param in expected_params)
 
     def test_session_info_signature(self) -> None:

@@ -23,8 +23,7 @@ async def get_statistics(
     include_percentiles: bool = True,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get statistical summary of numerical columns.
+    """Get statistical summary of numerical columns.
 
     Args:
         session_id: Session identifier
@@ -43,6 +42,7 @@ async def get_statistics(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select columns to analyze
         if columns:
@@ -114,8 +114,7 @@ async def get_column_statistics(
     column: str,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get detailed statistics for a specific column.
+    """Get detailed statistics for a specific column.
 
     Args:
         session_id: Session identifier
@@ -133,6 +132,7 @@ async def get_column_statistics(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         if column not in df.columns:
             return {"success": False, "error": f"Column '{column}' not found"}
@@ -156,7 +156,7 @@ async def get_column_statistics(
                     "type": "numeric",
                     "mean": float(non_null.mean()),
                     "median": float(non_null.median()),
-                    "mode": float(non_null.mode()[0]) if len(non_null.mode()) > 0 else None,
+                    "mode": (float(non_null.mode()[0]) if len(non_null.mode()) > 0 else None),
                     "std": float(non_null.std()),
                     "variance": float(cast("float", non_null.var())),
                     "min": float(non_null.min()),
@@ -183,7 +183,9 @@ async def get_column_statistics(
             result.update(
                 {
                     "type": "categorical",
-                    "most_frequent": str(value_counts.index[0]) if len(value_counts) > 0 else None,
+                    "most_frequent": (
+                        str(value_counts.index[0]) if len(value_counts) > 0 else None
+                    ),
                     "most_frequent_count": (
                         int(value_counts.iloc[0]) if len(value_counts) > 0 else 0
                     ),
@@ -221,8 +223,7 @@ async def get_correlation_matrix(
     min_correlation: float | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Calculate correlation matrix for numeric columns.
+    """Calculate correlation matrix for numeric columns.
 
     Args:
         session_id: Session identifier
@@ -242,6 +243,7 @@ async def get_correlation_matrix(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select columns
         if columns:
@@ -256,7 +258,10 @@ async def get_correlation_matrix(
             return {"success": False, "error": "No numeric columns found"}
 
         if len(numeric_df.columns) < 2:
-            return {"success": False, "error": "Need at least 2 numeric columns for correlation"}
+            return {
+                "success": False,
+                "error": "Need at least 2 numeric columns for correlation",
+            }
 
         # Calculate correlation
         if method not in ["pearson", "spearman", "kendall"]:
@@ -291,14 +296,22 @@ async def get_correlation_matrix(
                     float_corr = float(cast("float", corr_value))
                     if abs(float_corr) >= correlation_threshold:
                         high_correlations.append(
-                            {"column1": col1, "column2": col2, "correlation": round(float_corr, 4)}
+                            {
+                                "column1": col1,
+                                "column2": col2,
+                                "correlation": round(float_corr, 4),
+                            }
                         )
 
         high_correlations.sort(key=lambda x: abs(cast("float", x["correlation"])), reverse=True)
 
         session.record_operation(
             OperationType.ANALYZE,
-            {"type": "correlation", "method": method, "columns": list(corr_matrix.columns)},
+            {
+                "type": "correlation",
+                "method": method,
+                "columns": list(corr_matrix.columns),
+            },
         )
 
         return {
@@ -320,8 +333,7 @@ async def group_by_aggregate(
     aggregations: dict[str, str | list[str]],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Group data and apply aggregation functions.
+    """Group data and apply aggregation functions.
 
     Args:
         session_id: Session identifier
@@ -341,17 +353,24 @@ async def group_by_aggregate(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]
         if missing_cols:
-            return {"success": False, "error": f"Group by columns not found: {missing_cols}"}
+            return {
+                "success": False,
+                "error": f"Group by columns not found: {missing_cols}",
+            }
 
         # Validate aggregation columns
         agg_cols = list(aggregations.keys())
         missing_agg_cols = [col for col in agg_cols if col not in df.columns]
         if missing_agg_cols:
-            return {"success": False, "error": f"Aggregation columns not found: {missing_agg_cols}"}
+            return {
+                "success": False,
+                "error": f"Aggregation columns not found: {missing_agg_cols}",
+            }
 
         # Prepare aggregation dict
         agg_dict: dict[str, Any] = {}
@@ -365,9 +384,10 @@ async def group_by_aggregate(
         grouped = df.groupby(group_by).agg(agg_dict)
 
         # Flatten column names
-        grouped.columns = [
+        new_columns = [
             "_".join(col).strip() if col[1] else col[0] for col in grouped.columns.values
         ]
+        grouped.columns = pd.Index(new_columns)
 
         # Reset index to make group columns regular columns
         result_df = grouped.reset_index()
@@ -383,7 +403,11 @@ async def group_by_aggregate(
         session.data_session.df = result_df
         session.record_operation(
             OperationType.GROUP_BY,
-            {"group_by": group_by, "aggregations": aggregations, "result_shape": result["shape"]},
+            {
+                "group_by": group_by,
+                "aggregations": aggregations,
+                "result_shape": result["shape"],
+            },
         )
 
         return {
@@ -407,8 +431,7 @@ async def get_value_counts(
     top_n: int | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Get value counts for a column.
+    """Get value counts for a column.
 
     Args:
         session_id: Session identifier
@@ -430,6 +453,7 @@ async def get_value_counts(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         if column not in df.columns:
             return {"success": False, "error": f"Column '{column}' not found"}
@@ -464,7 +488,12 @@ async def get_value_counts(
 
         session.record_operation(
             OperationType.ANALYZE,
-            {"type": "value_counts", "column": column, "normalize": normalize, "top_n": top_n},
+            {
+                "type": "value_counts",
+                "column": column,
+                "normalize": normalize,
+                "top_n": top_n,
+            },
         )
 
         return {
@@ -489,8 +518,7 @@ async def detect_outliers(
     threshold: float = 1.5,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
-    """
-    Detect outliers in numeric columns.
+    """Detect outliers in numeric columns.
 
     Args:
         session_id: Session identifier
@@ -510,6 +538,7 @@ async def detect_outliers(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select numeric columns
         if columns:
@@ -603,8 +632,7 @@ async def profile_data(
     include_outliers: bool = True,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """
-    Generate comprehensive data profile.
+    """Generate comprehensive data profile.
 
     Args:
         session_id: Session identifier
@@ -623,6 +651,7 @@ async def profile_data(
             return {"success": False, "error": "Invalid session or no data loaded"}
 
         df = session.data_session.df
+        assert df is not None  # Type guard: has_data() ensures df is not None
 
         profile = {
             "summary": {
@@ -681,7 +710,7 @@ async def profile_data(
                 col_profile["type"] = "categorical"
                 value_counts = col_data.value_counts()
                 col_profile["most_frequent"] = {
-                    "value": str(value_counts.index[0]) if len(value_counts) > 0 else None,
+                    "value": (str(value_counts.index[0]) if len(value_counts) > 0 else None),
                     "count": int(value_counts.iloc[0]) if len(value_counts) > 0 else 0,
                 }
 
@@ -710,7 +739,10 @@ async def profile_data(
             outlier_result = await detect_outliers(session_id, ctx=ctx)
             if outlier_result["success"]:
                 profile["outliers"] = {
-                    col: {"count": info["outlier_count"], "percentage": info["outlier_percentage"]}
+                    col: {
+                        "count": info["outlier_count"],
+                        "percentage": info["outlier_percentage"],
+                    }
                     for col, info in outlier_result["outliers"].items()
                 }
 
@@ -722,7 +754,10 @@ async def profile_data(
 
         session.record_operation(
             OperationType.PROFILE,
-            {"include_correlations": include_correlations, "include_outliers": include_outliers},
+            {
+                "include_correlations": include_correlations,
+                "include_outliers": include_outliers,
+            },
         )
 
         return {"success": True, "profile": profile}

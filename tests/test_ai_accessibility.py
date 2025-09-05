@@ -189,7 +189,12 @@ class TestRowManipulation:
 
     async def test_insert_row_dict(self, ai_test_session) -> None:
         """Test inserting row with dictionary data."""
-        new_data = {"name": "Carol White", "age": 32, "city": "Seattle", "email": "carol@email.com"}
+        new_data = {
+            "name": "Carol White",
+            "age": 32,
+            "city": "Seattle",
+            "email": "carol@email.com",
+        }
         result = await insert_row(ai_test_session, 1, new_data)
 
         assert result["success"]
@@ -208,7 +213,12 @@ class TestRowManipulation:
     async def test_insert_row_with_null_dict(self, ai_test_session) -> None:
         """Test inserting row with null values in dictionary data."""
         # Test dict with null values (simulating JSON null -> Python None)
-        new_data = {"name": "Alice Null", "age": None, "city": "Portland", "email": None}
+        new_data = {
+            "name": "Alice Null",
+            "age": None,
+            "city": "Portland",
+            "email": None,
+        }
         result = await insert_row(ai_test_session, 1, new_data)
 
         assert result["success"], f"insert_row with null dict failed: {result.get('error')}"
@@ -264,7 +274,12 @@ class TestRowManipulation:
         import json
 
         # Test JSON string with null values (as Claude Code would send)
-        json_data_dict = {"name": "JSON Test", "age": None, "city": "Portland", "email": None}
+        json_data_dict = {
+            "name": "JSON Test",
+            "age": None,
+            "city": "Portland",
+            "email": None,
+        }
         json_string = json.dumps(json_data_dict)
 
         result = await insert_row(ai_test_session, 1, json_string)
@@ -575,7 +590,12 @@ class TestIntegrationWorkflow:
         insert_result = await insert_row(
             ai_test_session,
             2,
-            {"name": "New Person", "age": 40, "city": "Denver", "email": "new@email.com"},
+            {
+                "name": "New Person",
+                "age": 40,
+                "city": "Denver",
+                "email": "new@email.com",
+            },
         )
         assert insert_result["success"]
 

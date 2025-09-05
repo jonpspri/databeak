@@ -3,9 +3,11 @@ sidebar_position: 1
 title: API Overview
 ---
 
-# API Reference Overview
+## API Reference Overview
 
-CSV Editor provides 40+ tools for comprehensive CSV manipulation through the Model Context Protocol (MCP). All tools return structured responses and include comprehensive error handling.
+DataBeak provides 40+ tools for comprehensive CSV manipulation through the
+Model Context Protocol (MCP). All tools return structured responses and
+include comprehensive error handling.
 
 ## Tool Categories
 
@@ -14,7 +16,7 @@ CSV Editor provides 40+ tools for comprehensive CSV manipulation through the Mod
 Tools for loading and exporting CSV data in various formats:
 
 - **`load_csv`** - Load CSV from file path
-- **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL  
+- **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL
 - **`load_csv_from_content`** - Load CSV from string content
 - **`export_csv`** - Export to CSV, JSON, Excel, Parquet, HTML, Markdown
 - **`get_session_info`** - Get current session details and statistics
@@ -25,7 +27,8 @@ Tools for loading and exporting CSV data in various formats:
 
 Tools for transforming and modifying CSV data:
 
-- **`filter_rows`** - Filter rows with complex conditions (AND/OR logic)
+- **`filter_rows`** - Filter rows with complex conditions (AND/OR
+  logic)
 - **`sort_data`** - Sort by single or multiple columns
 - **`select_columns`** - Select specific columns by name or pattern
 - **`rename_columns`** - Rename columns with mapping
@@ -42,10 +45,12 @@ Tools for statistical analysis and insights:
 
 - **`get_statistics`** - Descriptive statistics for numeric columns
 - **`get_column_statistics`** - Detailed stats for specific columns
-- **`get_correlation_matrix`** - Pearson, Spearman, and Kendall correlations
+- **`get_correlation_matrix`** - Pearson, Spearman, and Kendall
+  correlations
 - **`group_by_aggregate`** - Group data with aggregation functions
 - **`get_value_counts`** - Frequency counts for categorical data
-- **`detect_outliers`** - Find outliers using IQR, Z-score, or custom methods
+- **`detect_outliers`** - Find outliers using IQR, Z-score, or custom
+  methods
 - **`profile_data`** - Comprehensive data profiling report
 
 ### ✅ Data Validation
@@ -77,7 +82,9 @@ System information and health monitoring:
 ## Common Patterns
 
 ### Error Handling
+
 All tools return consistent response format:
+
 ```json
 {
   "success": true,
@@ -87,6 +94,7 @@ All tools return consistent response format:
 ```
 
 Error responses:
+
 ```json
 {
   "success": false,
@@ -96,16 +104,22 @@ Error responses:
 ```
 
 ### Session Management
-Most tools require a `session_id` parameter. Sessions are automatically created and managed with configurable timeouts.
+
+Most tools require a `session_id` parameter. Sessions are automatically
+created and managed with configurable timeouts.
 
 ### Data Types
-CSV Editor supports rich data types including:
+
+DataBeak supports rich data types including:
+
 - **Strings**, **Numbers**, **Booleans**
 - **Dates** and **DateTime** objects
 - **Null values** (JSON `null` → Python `None` → pandas `NaN`)
 
 ### Filtering Conditions
+
 Filter operations support complex conditions:
+
 ```json
 {
   "conditions": [
@@ -131,20 +145,26 @@ All tools respect these environment variables:
 ## Advanced Features
 
 ### Null Value Support
+
 Full support for null values across all operations:
+
 - JSON `null` values are preserved and handled correctly
 - Python `None` and pandas `NaN` compatibility
 - Filtering and operations work seamlessly with nulls
 
 ### Auto-Save Strategies
+
 Configurable auto-save with multiple strategies:
+
 - **Overwrite** - Update original file
-- **Backup** - Create timestamped backups  
+- **Backup** - Create timestamped backups
 - **Versioned** - Maintain version history
 - **Custom** - Save to specified location
 
 ### History and Undo/Redo
+
 Complete operation tracking:
+
 - Persistent history storage
 - Snapshot-based undo/redo
 - Operation metadata and timestamps
@@ -152,4 +172,5 @@ Complete operation tracking:
 
 ---
 
-**For detailed examples and tutorials, see the [Quick Start Guide](../tutorials/quickstart)**
+**For detailed examples and tutorials, see the
+[Quick Start Guide](../tutorials/quickstart)**

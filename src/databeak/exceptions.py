@@ -28,8 +28,6 @@ class CSVEditorError(Exception):
 class SessionError(CSVEditorError):
     """Session-related errors."""
 
-    pass
-
 
 class SessionNotFoundError(SessionError):
     """Session does not exist."""
@@ -57,8 +55,6 @@ class SessionExpiredError(SessionError):
 
 class DataError(CSVEditorError):
     """Data-related errors."""
-
-    pass
 
 
 class NoDataLoadedError(DataError):
@@ -115,8 +111,6 @@ class DataValidationError(DataError):
 class FileError(CSVEditorError):
     """File operation errors."""
 
-    pass
-
 
 class FileNotFoundError(FileError):
     """File does not exist."""
@@ -157,8 +151,6 @@ class FileFormatError(FileError):
 class OperationError(CSVEditorError):
     """Operation execution errors."""
 
-    pass
-
 
 class InvalidOperationError(OperationError):
     """Operation cannot be performed in current state."""
@@ -174,8 +166,6 @@ class InvalidOperationError(OperationError):
 
 class ParameterError(CSVEditorError):
     """Parameter validation errors."""
-
-    pass
 
 
 class InvalidParameterError(ParameterError):
@@ -209,8 +199,6 @@ class MissingParameterError(ParameterError):
 class HistoryError(CSVEditorError):
     """History management errors."""
 
-    pass
-
 
 class HistoryNotEnabledError(HistoryError):
     """History tracking is not enabled."""
@@ -238,8 +226,6 @@ class InvalidHistoryOperationError(HistoryError):
 
 class AutoSaveError(CSVEditorError):
     """Auto-save operation errors."""
-
-    pass
 
 
 class AutoSaveConfigError(AutoSaveError):

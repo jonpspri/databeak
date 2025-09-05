@@ -320,7 +320,9 @@ async def test_enable_disable_auto_save(sample_df, temp_dir):
 async def test_get_auto_save_status(sample_df):
     """Test getting auto-save status."""
     config = AutoSaveConfig(
-        enabled=True, mode=AutoSaveMode.AFTER_OPERATION, strategy=AutoSaveStrategy.BACKUP
+        enabled=True,
+        mode=AutoSaveMode.AFTER_OPERATION,
+        strategy=AutoSaveStrategy.BACKUP,
     )
 
     session = CSVSession(auto_save_config=config)

@@ -14,8 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 async def undo_operation(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Undo the last operation in a session.
+    """Undo the last operation in a session.
 
     Args:
         session_id: Session identifier
@@ -61,12 +60,15 @@ async def undo_operation(session_id: str, ctx: Context | None = None) -> dict[st
         logger.error(f"Error undoing operation: {e!s}")
         if ctx:
             await ctx.error(f"Failed to undo operation: {e!s}")
-        return {"success": False, "message": "Failed to undo operation", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to undo operation",
+            "error": str(e),
+        }
 
 
 async def redo_operation(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Redo a previously undone operation.
+    """Redo a previously undone operation.
 
     Args:
         session_id: Session identifier
@@ -112,14 +114,17 @@ async def redo_operation(session_id: str, ctx: Context | None = None) -> dict[st
         logger.error(f"Error redoing operation: {e!s}")
         if ctx:
             await ctx.error(f"Failed to redo operation: {e!s}")
-        return {"success": False, "message": "Failed to redo operation", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to redo operation",
+            "error": str(e),
+        }
 
 
 async def get_operation_history(
     session_id: str, limit: int | None = None, ctx: Context | None = None
 ) -> dict[str, Any]:
-    """
-    Get operation history for a session.
+    """Get operation history for a session.
 
     Args:
         session_id: Session identifier
@@ -169,8 +174,7 @@ async def get_operation_history(
 async def restore_to_operation(
     session_id: str, operation_id: str, ctx: Context | None = None
 ) -> dict[str, Any]:
-    """
-    Restore session data to a specific operation point.
+    """Restore session data to a specific operation point.
 
     Args:
         session_id: Session identifier
@@ -217,12 +221,15 @@ async def restore_to_operation(
         logger.error(f"Error restoring to operation: {e!s}")
         if ctx:
             await ctx.error(f"Failed to restore to operation: {e!s}")
-        return {"success": False, "message": "Failed to restore to operation", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to restore to operation",
+            "error": str(e),
+        }
 
 
 async def clear_history(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
-    """
-    Clear all operation history for a session.
+    """Clear all operation history for a session.
 
     Args:
         session_id: Session identifier
@@ -270,8 +277,7 @@ async def clear_history(session_id: str, ctx: Context | None = None) -> dict[str
 async def export_history(
     session_id: str, file_path: str, format: str = "json", ctx: Context | None = None
 ) -> dict[str, Any]:
-    """
-    Export operation history to a file.
+    """Export operation history to a file.
 
     Args:
         session_id: Session identifier
@@ -323,4 +329,8 @@ async def export_history(
         logger.error(f"Error exporting history: {e!s}")
         if ctx:
             await ctx.error(f"Failed to export history: {e!s}")
-        return {"success": False, "message": "Failed to export history", "error": str(e)}
+        return {
+            "success": False,
+            "message": "Failed to export history",
+            "error": str(e),
+        }

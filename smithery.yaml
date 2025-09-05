@@ -10,6 +10,7 @@ startCommand:
     # JSON Schema defining the configuration options for the MCP.
     type: object
     default: {}
-    description: No configuration necessary to run the DataBeak MCP server. Supply
+    description:
+      No configuration necessary to run the DataBeak MCP server. Supply
       an empty object.
   exampleConfig: {}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context  # noqa: TC002
+from fastmcp import Context
 
 from .._version import __version__
 from ..models import get_session_manager
@@ -72,7 +72,11 @@ async def get_server_info(ctx: Context) -> dict[str, Any]:
                 "detect_outliers",
                 "profile_data",
             ],
-            "data_validation": ["validate_schema", "check_data_quality", "find_anomalies"],
+            "data_validation": [
+                "validate_schema",
+                "check_data_quality",
+                "find_anomalies",
+            ],
             "session_management": [
                 "multi_session_support",
                 "session_isolation",
@@ -86,7 +90,15 @@ async def get_server_info(ctx: Context) -> dict[str, Any]:
                 "null_value_updates",
             ],
         },
-        "supported_formats": ["csv", "tsv", "json", "excel", "parquet", "html", "markdown"],
+        "supported_formats": [
+            "csv",
+            "tsv",
+            "json",
+            "excel",
+            "parquet",
+            "html",
+            "markdown",
+        ],
         "max_file_size_mb": get_csv_settings().max_file_size_mb,
         "session_timeout_minutes": get_csv_settings().session_timeout // 60,
     }

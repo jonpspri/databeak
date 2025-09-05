@@ -178,7 +178,16 @@ def validate_sql_query(query: str) -> tuple[bool, str]:
         return False, "Only SELECT queries are allowed"
 
     # Check for dangerous keywords
-    dangerous = ["drop", "delete", "insert", "update", "alter", "create", "exec", "execute"]
+    dangerous = [
+        "drop",
+        "delete",
+        "insert",
+        "update",
+        "alter",
+        "create",
+        "exec",
+        "execute",
+    ]
     for keyword in dangerous:
         if keyword in query_lower:
             return False, f"Dangerous operation '{keyword}' not allowed"

@@ -4,41 +4,21 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context  # noqa: TC002
+from fastmcp import Context
 
-from .analytics import (
-    detect_outliers as _detect_outliers,
-)
-from .analytics import (
-    get_column_statistics as _get_column_statistics,
-)
-from .analytics import (
-    get_correlation_matrix as _get_correlation_matrix,
-)
-from .analytics import (
-    get_statistics as _get_statistics,
-)
-from .analytics import (
-    get_value_counts as _get_value_counts,
-)
-from .analytics import (
-    group_by_aggregate as _group_by_aggregate,
-)
-from .analytics import (
-    profile_data as _profile_data,
-)
+from .analytics import detect_outliers as _detect_outliers
+from .analytics import get_column_statistics as _get_column_statistics
+from .analytics import get_correlation_matrix as _get_correlation_matrix
+from .analytics import get_statistics as _get_statistics
+from .analytics import get_value_counts as _get_value_counts
+from .analytics import group_by_aggregate as _group_by_aggregate
+from .analytics import profile_data as _profile_data
 
 # Import type aliases
 from .transformations import CellValue
-from .transformations import (
-    find_cells_with_value as _find_cells_with_value,
-)
-from .transformations import (
-    get_data_summary as _get_data_summary,
-)
-from .transformations import (
-    inspect_data_around as _inspect_data_around,
-)
+from .transformations import find_cells_with_value as _find_cells_with_value
+from .transformations import get_data_summary as _get_data_summary
+from .transformations import inspect_data_around as _inspect_data_around
 
 
 def register_analytics_tools(mcp: Any) -> None:

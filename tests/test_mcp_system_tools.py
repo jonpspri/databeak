@@ -20,7 +20,7 @@ class TestInstructionsLoading:
         assert isinstance(instructions, str)
 
         # Check for expected content
-        assert "CSV Editor MCP Server" in instructions
+        assert "DataBeak MCP Server" in instructions
         assert "Core Philosophy" in instructions
         assert "Getting Started" in instructions
         assert "Key Features" in instructions
@@ -31,7 +31,7 @@ class TestInstructionsLoading:
 
         # Check for main sections (updated for new AI-focused structure)
         expected_sections = [
-            "# CSV Editor MCP Server",
+            "# DataBeak MCP Server",
             "Coordinate System",
             "Core Philosophy",
             "Getting Started (AI Workflow)",
@@ -66,7 +66,7 @@ class TestInstructionsLoading:
         """Test loading instructions from a temporary file."""
         # Create a temporary instructions file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as temp_file:
-            temp_content = "# Test CSV Editor\n\nThis is a test instructions file."
+            temp_content = "# Test DataBeak\n\nThis is a test instructions file."
             temp_file.write(temp_content)
             temp_file.flush()
 
@@ -83,11 +83,11 @@ class TestInstructionsLoading:
 
 
 class TestServerInitialization:
-    """Test CSV Editor server initialization."""
+    """Test DataBeak server initialization."""
 
     def test_server_has_correct_name(self) -> None:
         """Test that server is initialized with correct name."""
-        assert mcp.name == "CSV Editor"
+        assert mcp.name == "DataBeak"
 
     def test_server_has_instructions(self) -> None:
         """Test that server has instructions loaded."""
@@ -101,7 +101,7 @@ class TestServerInitialization:
 
         # Check for key sections that should be in instructions
         expected_content = [
-            "CSV Editor MCP Server",
+            "DataBeak MCP Server",
             "Core Philosophy",
         ]
 
