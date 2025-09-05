@@ -59,8 +59,8 @@ Add to the MCP Settings file
       "command": "uvx",
       "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"],
       "env": {
-        "CSV_EDITOR_MAX_FILE_SIZE_MB": "1024",
-        "CSV_EDITOR_CSV_HISTORY_DIR": "/tmp/csv_history"
+        "DATABEAK_MAX_FILE_SIZE_MB": "1024",
+        "DATABEAK_CSV_HISTORY_DIR": "/tmp/csv_history"
       }
     }
   }
@@ -286,11 +286,11 @@ anomalies = find_anomalies(methods=["statistical", "pattern"])
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CSV_EDITOR_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
-| `CSV_EDITOR_CSV_HISTORY_DIR` | "." | History directory path |
-| `CSV_EDITOR_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
-| `CSV_EDITOR_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `CSV_EDITOR_AUTO_SAVE` | true | Enable auto-save |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
+| `DATABEAK_CSV_HISTORY_DIR` | "." | History directory path |
+| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
+| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
+| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
 
 ### Auto-Save Strategies
 
@@ -356,19 +356,33 @@ uv run all-checks     # Format, lint, type-check, test
 
 ### Project Structure
 
-```
+```text
 databeak/
-├── src/csv_editor/           # Core implementation
+├── src/databeak/            # Core implementation
 │   ├── server.py            # FastMCP server entry point
 │   ├── models/              # Data models and session management
 │   │   ├── csv_session.py      # Session management & settings
 │   │   ├── data_models.py      # Core data types
-│   │   └── data_session.py     # Data operations
-│   ├── tools/               # MCP tool implementations
-│   │   ├── data_io.py          # Load/export operations
-│   │   ├── data_manipulation.py # Transform operations
-│   │   ├── data_analysis.py     # Statistics & analysis
-│   │   └── data_validation.py   # Schema validation
+│   │   ├── data_session.py     # Data operations
+│   │   ├── auto_save.py        # Auto-save functionality
+│   │   ├── history_manager.py  # History and undo/redo
+│   │   └── session_lifecycle.py # Session lifecycle management
+│   ├── tools/               # MCP tool implementations (40+ tools)
+│   │   ├── mcp_data_tools.py   # Core data manipulation tools
+│   │   ├── mcp_io_tools.py     # Load/export operations
+│   │   ├── mcp_analytics_tools.py # Statistics & analysis
+│   │   ├── mcp_validation_tools.py # Schema validation
+│   │   ├── mcp_history_tools.py    # History operations
+│   │   ├── mcp_row_tools.py        # Row-level operations
+│   │   ├── mcp_system_tools.py     # System utilities
+│   │   ├── data_operations.py      # Core data functions
+│   │   ├── analytics.py        # Analytics functions
+│   │   ├── transformations.py  # Data transformations
+│   │   ├── validation.py       # Validation functions
+│   │   └── registry.py         # Tool registration
+│   ├── resources/           # Resource management
+│   ├── utils/               # Utility functions
+│   ├── prompts/             # AI prompt templates
 │   ├── exceptions.py        # Custom error handling
 │   └── _version.py          # Dynamic version loading
 ├── tests/                   # Comprehensive test suite
