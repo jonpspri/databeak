@@ -22,7 +22,7 @@ document explains the technical architecture and design decisions.
 ## Core Components
 
 ```text
-src/csv_editor/
+src/databeak/
 ├── server.py           # FastMCP server entry point
 ├── models/            # Data models and session management
 │   ├── csv_session.py    # Session management & settings
@@ -68,15 +68,15 @@ src/csv_editor/
 
 ## Environment Variables
 
-All configuration uses the `CSV_EDITOR_` prefix:
+All configuration uses the `DATABEAK_` prefix:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `CSV_EDITOR_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
-| `CSV_EDITOR_CSV_HISTORY_DIR` | "." | History storage location |
-| `CSV_EDITOR_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
-| `CSV_EDITOR_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `CSV_EDITOR_AUTO_SAVE` | true | Enable auto-save |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
+| `DATABEAK_CSV_HISTORY_DIR` | "." | History storage location |
+| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
+| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
+| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
 
 ## MCP Integration
 
@@ -112,7 +112,7 @@ The server implements the Model Context Protocol standard:
 
 ```bash
 uv sync              # Install dependencies
-uv run csv-editor    # Run server
+uv run databeak      # Run server
 uv run test          # Run tests
 uv run all-checks    # Lint, format, type-check, test
 ```
@@ -142,4 +142,4 @@ uv run all-checks    # Lint, format, type-check, test
 ---
 
 **For implementation details and contributing guidelines, see
-[CONTRIBUTING.md](https://github.com/jonpspri/csv-editor/blob/main/CONTRIBUTING.md)**
+[CONTRIBUTING.md](https://github.com/jonpspri/databeak/blob/main/CONTRIBUTING.md)**

@@ -18,12 +18,12 @@ const config: Config = {
   url: 'https://jonpspri.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/csv-editor/',
+  baseUrl: '/databeak/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'jonpspri', // Usually your GitHub org/user name.
-  projectName: 'csv-editor', // Usually your repo name.
+  projectName: 'databeak', // Usually your repo name.
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
@@ -47,7 +47,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/jonpspri/csv-editor/tree/main/docs/',
+            'https://github.com/jonpspri/databeak/tree/main/docs/',
         },
         blog: {
           showReadingTime: true,
@@ -58,7 +58,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/jonpspri/csv-editor/tree/main/docs/',
+            'https://github.com/jonpspri/databeak/tree/main/docs/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -73,7 +73,7 @@ const config: Config = {
 
   themeConfig: {
     // Replace with your project's social card
-    image: 'img/csv-editor-social-card.jpg',
+    image: 'img/databeak-social-card.jpg',
     navbar: {
       title: 'DataBeak',
       logo: {
@@ -89,7 +89,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/jonpspri/csv-editor',
+          href: 'https://github.com/jonpspri/databeak',
           label: 'GitHub',
           position: 'right',
         },
@@ -120,11 +120,11 @@ const config: Config = {
           items: [
             {
               label: 'GitHub Discussions',
-              href: 'https://github.com/jonpspri/csv-editor/discussions',
+              href: 'https://github.com/jonpspri/databeak/discussions',
             },
             {
               label: 'Discord',
-              href: 'https://discord.gg/csv-editor',
+              href: 'https://discord.gg/databeak',
             },
             {
               label: 'Twitter',
@@ -141,11 +141,11 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/jonpspri/csv-editor',
+              href: 'https://github.com/jonpspri/databeak',
             },
             {
               label: 'PyPI',
-              href: 'https://pypi.org/project/csv-editor',
+              href: 'https://pypi.org/project/databeak',
             },
           ],
         },

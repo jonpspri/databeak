@@ -185,9 +185,9 @@ Use undo/redo freely to experiment with different approaches
 ## Next Steps
 
 - **[API Reference](../api/overview)** - Complete tool documentation
-- **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)**
+- **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
   - More real-world scenarios
-- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source
+- **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source
   code and community
 
 ---

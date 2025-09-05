@@ -1,489 +1,120 @@
-# DataBeak - AI-Powered CSV Processing via MCP
+# DataBeak
 
-**Transform how AI assistants work with CSV data.** DataBeak is a
-high-performance MCP server that gives Claude, ChatGPT, and other AI assistants
-powerful data manipulation capabilities through simple commands.
+## AI-Powered CSV Processing via Model Context Protocol
 
-## 🎯 Why DataBeak?
+Transform how AI assistants work with CSV data. DataBeak provides 40+
+specialized tools for data manipulation, analysis, and validation through the
+Model Context Protocol (MCP).
 
-### The Problem
+## Features
 
-AI assistants struggle with complex data operations - they can read files but
-lack tools for filtering, transforming, analyzing, and validating CSV data
-efficiently.
+- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV data
+- 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data profiling
+- ✅ **Data Validation** - Schema validation, quality scoring, anomaly detection
+- 💾 **Auto-Save & History** - Never lose work with configurable strategies and undo/redo
+- ⚡ **High Performance** - Handles large datasets with streaming and chunking
+- 🔒 **Session Management** - Multi-user support with isolated sessions
 
-### The Solution
+## Getting Started
 
-DataBeak bridges this gap by providing AI assistants with 40+ specialized
-tools for CSV operations, turning them into powerful data analysts that can:
+The fastest way to use DataBeak is with `uvx` (no installation required):
 
-- Clean messy datasets in seconds
-- Perform complex statistical analysis
-- Validate data quality automatically
-- Transform data with natural language commands
-- Track all changes with undo/redo capabilities
+### For Claude Desktop
 
-### Key Differentiators
-
-| Feature | DataBeak | Traditional Tools |
-|---------|-----------|------------------|
-| **AI Integration** | Native MCP protocol | Manual operations |
-| **Auto-Save** | Automatic with strategies | Manual save required |
-| **History Tracking** | Full undo/redo with snapshots | Limited or none |
-| **Session Management** | Multi-user isolated sessions | Single user |
-| **Data Validation** | Built-in quality scoring | Separate tools needed |
-| **Performance** | Handles GB+ files with chunking | Memory limitations |
-
-## ⚡ Quick Demo
-
-```python
-# Your AI assistant can now do this:
-"Load the sales data and remove duplicates"
-"Filter for Q4 2024 transactions over $10,000"
-"Calculate correlation between price and quantity"
-"Fill missing values with the median"
-"Export as Excel with the analysis"
-
-# All with automatic history tracking and undo capability!
-```
-
-## Configure Your AI Assistant
-
-<details>
-<summary>**Claude Desktop** (Click to expand)</summary>
-
-Add to the MCP Settings file
-( Claude -> Settings -> Developer -> Show MCP Settings ->
-`claude_mcp_settings.json` ):
+Add this to your MCP Settings file:
 
 ```json
 {
   "mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"],
-      "env": {
-        "DATABEAK_MAX_FILE_SIZE_MB": "1024",
-        "DATABEAK_CSV_HISTORY_DIR": "/tmp/csv_history"
-      }
+      "args": [
+        "--from",
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
+      ]
     }
   }
 }
 ```
 
-</details>
+### For Other AI Clients
 
-<details>
-<summary>**Other Clients** (Continue, Cline, Windsurf, Zed)</summary>
+DataBeak works with Continue, Cline, Windsurf, and Zed. See the
+[installation guide](https://jonpspri.github.io/databeak/installation)
+for specific configuration examples.
 
-### Continue (VS Code)
+### Quick Test
 
-Edit `~/.continue/config.json`:
+Once configured, ask your AI assistant:
 
-```json
-{
-  "mcpServers": {
-    "databeak": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
-    }
-  }
-}
+```text
+"Load a CSV file and show me basic statistics"
+"Remove duplicate rows and export as Excel"
+"Find outliers in the price column"
 ```
 
-### Cline
+## Documentation
 
-Add to VS Code settings (`settings.json`):
+📚 **[Complete Documentation](https://jonpspri.github.io/databeak/)**
 
-```json
-{
-  "cline.mcpServers": {
-    "databeak": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
-    }
-  }
-}
-```
+- [Installation Guide](https://jonpspri.github.io/databeak/installation) -
+  Setup for all AI clients
+- [Quick Start Tutorial](https://jonpspri.github.io/databeak/tutorials/quickstart)
+  Learn in 10 minutes
+- [API Reference](https://jonpspri.github.io/databeak/api/overview) -
+  All 40+ tools documented
+- [Architecture](https://jonpspri.github.io/databeak/architecture) -
+  Technical details
 
-### Windsurf
-
-Edit `~/.windsurf/mcp_servers.json`:
-
-```json
-{
-  "mcpServers": {
-    "databeak": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
-    }
-  }
-}
-```
-
-### Zed Editor
-
-Edit `~/.config/zed/settings.json`:
-
-```json
-{
-  "experimental.mcp_servers": {
-    "databeak": {
-      "command": "uvx",
-      "args": ["--from", "git+https://github.com/jonpspri/databeak.git", "databeak"]
-    }
-  }
-}
-```
-
-</details>
-
-## 💡 Real-World Use Cases
-
-### 📊 Data Analyst Workflow
-
-```python
-# Morning: Load yesterday's data
-session = load_csv("daily_sales.csv")
-
-# Clean: Remove duplicates and fix types
-remove_duplicates(session_id)
-change_column_type("date", "datetime")
-fill_missing_values(strategy="median", columns=["revenue"])
-
-# Analyze: Get insights
-get_statistics(columns=["revenue", "quantity"])
-detect_outliers(method="iqr", threshold=1.5)
-get_correlation_matrix(min_correlation=0.5)
-
-# Report: Export cleaned data
-export_csv(format="excel", file_path="clean_sales.xlsx")
-```
-
-### 🏭 ETL Pipeline
-
-```python
-# Extract from multiple sources
-load_csv_from_url("https://api.example.com/data.csv")
-
-# Transform with complex operations
-filter_rows(conditions=[
-    {"column": "status", "operator": "==", "value": "active"},
-    {"column": "amount", "operator": ">", "value": 1000}
-])
-add_column(name="quarter", formula="Q{(month-1)//3 + 1}")
-group_by_aggregate(group_by=["quarter"], aggregations={
-    "amount": ["sum", "mean"],
-    "customer_id": "count"
-})
-
-# Load to different formats
-export_csv(format="parquet")  # For data warehouse
-export_csv(format="json")     # For API
-```
-
-### 🔍 Data Quality Assurance
-
-```python
-# Validate incoming data
-validate_schema(schema={
-    "customer_id": {"type": "integer", "required": True},
-    "email": {"type": "string", "pattern": r"^[^@]+@[^@]+\.[^@]+$"},
-    "age": {"type": "integer", "min": 0, "max": 120}
-})
-
-# Quality scoring
-quality_report = check_data_quality()
-# Returns: overall_score, missing_data%, duplicates, outliers
-
-# Anomaly detection
-anomalies = find_anomalies(methods=["statistical", "pattern"])
-```
-
-## 🎨 Core Features
-
-### Data Operations
-
-- **Load & Export**: CSV, JSON, Excel, Parquet, HTML, Markdown
-- **Transform**: Filter, sort, group, pivot, join
-- **Clean**: Remove duplicates, handle missing values, fix types
-- **Calculate**: Add computed columns, aggregations
-
-### Analysis Tools
-
-- **Statistics**: Descriptive stats, correlations, distributions
-- **Outliers**: IQR, Z-score, custom thresholds
-- **Profiling**: Complete data quality reports
-- **Validation**: Schema checking, quality scoring
-
-### Productivity Features
-
-- **Auto-Save**: Never lose work with configurable strategies
-- **History**: Full undo/redo with operation tracking
-- **Sessions**: Multi-user support with isolation
-- **Performance**: Stream processing for large files
-
-### Advanced Compatibility
-
-- **Null Value Support**: Full support for JSON `null` → Python `None` → pandas `NaN`
-- **Claude Code Compatible**: Handles JSON string serialization automatically
-- **Type Safety**: Improved type annotations with `CellValue`, `RowData`, `FilterCondition`
-- **Modular Architecture**: Organized tool modules for better maintainability
-
-## 📚 Available Tools
-
-<details>
-<summary>**Complete Tool List** (40+ tools)</summary>
-
-### I/O Operations
-
-- `load_csv` - Load from file
-- `load_csv_from_url` - Load from URL
-- `load_csv_from_content` - Load from string
-- `export_csv` - Export to various formats
-- `get_session_info` - Session details
-- `list_sessions` - Active sessions
-- `close_session` - Cleanup
-
-### Data Manipulation
-
-- `filter_rows` - Complex filtering
-- `sort_data` - Multi-column sort
-- `select_columns` - Column selection
-- `rename_columns` - Rename columns
-- `add_column` - Add computed columns
-- `remove_columns` - Remove columns
-- `update_column` - Update values
-- `change_column_type` - Type conversion
-- `fill_missing_values` - Handle nulls
-- `remove_duplicates` - Deduplicate
-
-### Analysis
-
-- `get_statistics` - Statistical summary
-- `get_column_statistics` - Column stats
-- `get_correlation_matrix` - Correlations
-- `group_by_aggregate` - Group operations
-- `get_value_counts` - Frequency counts
-- `detect_outliers` - Find outliers
-- `profile_data` - Data profiling
-
-### Validation
-
-- `validate_schema` - Schema validation
-- `check_data_quality` - Quality metrics
-- `find_anomalies` - Anomaly detection
-
-### Auto-Save & History
-
-- `configure_auto_save` - Setup auto-save
-- `get_auto_save_status` - Check status
-- `undo` / `redo` - Navigate history
-- `get_history` - View operations
-- `restore_to_operation` - Time travel
-
-</details>
-
-## ⚙️ Configuration
-
-### Environment Variables
+## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
-| `DATABEAK_CSV_HISTORY_DIR` | "." | History directory path |
-| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
-| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
+| `DATABEAK_CSV_HISTORY_DIR` | "." | History storage location |
+| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
 
-### Auto-Save Strategies
+## Contributing
 
-DataBeak automatically saves your work with configurable strategies:
-
-- **Overwrite** (default) - Update original file
-- **Backup** - Create timestamped backups
-- **Versioned** - Maintain version history
-- **Custom** - Save to specified location
-
-```python
-# Configure auto-save
-configure_auto_save(
-    strategy="backup",
-    backup_dir="/backups",
-    max_backups=10
-)
-```
-
-## 🛠️ Advanced Installation Options
-
-<details>
-<summary>**Alternative Installation Methods**</summary>
-
-### Using pip
-
-```bash
-git clone https://github.com/jonpspri/databeak.git
-cd databeak
-pip install -e .
-```
-
-### Using pipx (Global)
-
-```bash
-pipx install git+https://github.com/jonpspri/databeak.git
-```
-
-### From GitHub (Recommended)
-
-```bash
-# Install latest version
-pip install git+https://github.com/jonpspri/databeak.git
-
-# Or using uv
-uv pip install git+https://github.com/jonpspri/databeak.git
-
-# Install specific version
-pip install git+https://github.com/jonpspri/databeak.git@v1.0.1
-```
-
-</details>
-
-## 🧪 Development
-
-### Running Tests
-
-```bash
-uv run test           # Run tests
-uv run test-cov       # With coverage
-uv run all-checks     # Format, lint, type-check, test
-```
-
-### Project Structure
-
-```text
-databeak/
-├── src/databeak/            # Core implementation
-│   ├── server.py            # FastMCP server entry point
-│   ├── models/              # Data models and session management
-│   │   ├── csv_session.py      # Session management & settings
-│   │   ├── data_models.py      # Core data types
-│   │   ├── data_session.py     # Data operations
-│   │   ├── auto_save.py        # Auto-save functionality
-│   │   ├── history_manager.py  # History and undo/redo
-│   │   └── session_lifecycle.py # Session lifecycle management
-│   ├── tools/               # MCP tool implementations (40+ tools)
-│   │   ├── mcp_data_tools.py   # Core data manipulation tools
-│   │   ├── mcp_io_tools.py     # Load/export operations
-│   │   ├── mcp_analytics_tools.py # Statistics & analysis
-│   │   ├── mcp_validation_tools.py # Schema validation
-│   │   ├── mcp_history_tools.py    # History operations
-│   │   ├── mcp_row_tools.py        # Row-level operations
-│   │   ├── mcp_system_tools.py     # System utilities
-│   │   ├── data_operations.py      # Core data functions
-│   │   ├── analytics.py        # Analytics functions
-│   │   ├── transformations.py  # Data transformations
-│   │   ├── validation.py       # Validation functions
-│   │   └── registry.py         # Tool registration
-│   ├── resources/           # Resource management
-│   ├── utils/               # Utility functions
-│   ├── prompts/             # AI prompt templates
-│   ├── exceptions.py        # Custom error handling
-│   └── _version.py          # Dynamic version loading
-├── tests/                   # Comprehensive test suite
-├── examples/                # Usage examples and demos
-├── scripts/                 # Maintenance utilities
-└── docs/                    # Docusaurus documentation site
-```
-
-### Architecture Principles
-
-1. **Type Safety**: Full type annotations with Pydantic validation
-2. **Modularity**: Clear separation of concerns across modules
-3. **Performance**: Streaming operations for large datasets
-4. **Reliability**: Comprehensive error handling and logging
-5. **Usability**: Simple installation and configuration
-6. **Maintainability**: Modern tooling and clear documentation
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-### Quick Contribution Guide
+We welcome contributions! Please:
 
 1. Fork the repository
-2. **Create a feature branch** (required - no direct commits to main)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes with tests
-4. Run `uv run all-checks`
-5. **Submit a pull request** (only way to update main branch)
+4. Run quality checks: `uv run all-checks`
+5. Submit a pull request
 
-**Note**: Pre-commit hooks prevent direct commits to main branch. All changes
-must go through feature branches and pull requests.
+**Note**: All changes must go through pull requests. Direct commits to `main`
+are blocked by pre-commit hooks.
 
-## 📈 Roadmap
+## Development
 
-- [ ] SQL query interface
-- [ ] Real-time collaboration
-- [ ] Advanced visualizations
-- [ ] Machine learning integrations
-- [ ] Cloud storage support
-- [ ] Performance optimizations for 10GB+ files
+```bash
+# Setup development environment
+git clone https://github.com/jonpspri/databeak.git
+cd databeak
+uv sync
 
-## 💬 Support
+# Run the server locally
+uv run databeak
+
+# Run tests and quality checks
+uv run test
+uv run all-checks
+```
+
+## License
+
+Apache 2.0 - see [LICENSE](LICENSE) file.
+
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/jonpspri/databeak/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/jonpspri/databeak/discussions)
-- **Documentation**: [Wiki](https://github.com/jonpspri/databeak/wiki)
-
-## 📄 License
-
-Apache 2.0 License - see [LICENSE](LICENSE) file
-
-## 🙏 Acknowledgments
-
-## 💎 Advanced Features
-
-### Null Value Handling
-
-Full support for null values across all operations:
-
-```python
-# Insert rows with null values
-insert_row(session_id, -1, {
-    "name": "John Doe",
-    "email": null,           # JSON null becomes Python None
-    "phone": null,
-    "notes": "Contact pending"
-})
-
-# Update cells to null
-set_cell_value(session_id, 0, "email", null)
-
-# Filter for null values
-filter_rows(session_id, [{"column": "email", "operator": "is_null"}])
-```
-
-### Claude Code Compatibility
-
-Automatically handles Claude Code's JSON string serialization:
-
-```javascript
-// Claude Code sends this:
-{
-  "data": "{\"Company\": \"Acme\", \"Contact\": null, \"Status\": \"Active\"}"
-}
-
-// DataBeak automatically parses it to:
-{
-  "data": {"Company": "Acme", "Contact": null, "Status": "Active"}
-}
-```
-
-Built with:
-
-- [FastMCP](https://github.com/jlowin/fastmcp) - Fast Model Context Protocol
-- [Pandas](https://pandas.pydata.org/) - Data manipulation
-- [NumPy](https://numpy.org/) - Numerical computing
+- **Documentation**: [jonpspri.github.io/databeak](https://jonpspri.github.io/databeak/)
 
 ---
 
-**Ready to supercharge your AI's data capabilities?** [Get started in 2 minutes →](#configure-your-ai-assistant)
+Built with [FastMCP](https://github.com/jlowin/fastmcp),
+[Pandas](https://pandas.pydata.org/), and [NumPy](https://numpy.org/).

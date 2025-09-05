@@ -22,7 +22,7 @@ The fastest way to install and run DataBeak:
 
 ```bash
 # Install and run directly from GitHub
-uvx --from git+https://github.com/jonpspri/csv-editor.git csv-editor
+uvx --from git+https://github.com/jonpspri/databeak.git databeak
 ```
 
 ### Using uv
@@ -36,22 +36,22 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # Clone and install
-git clone https://github.com/jonpspri/csv-editor.git
-cd csv-editor
+git clone https://github.com/jonpspri/databeak.git
+cd databeak
 uv sync
 
 # Run the server
-uv run csv-editor
+uv run databeak
 ```
 
 ### Using pip
 
 ```bash
 # Install directly from GitHub
-pip install git+https://github.com/jonpspri/csv-editor.git
+pip install git+https://github.com/jonpspri/databeak.git
 
 # Run the server
-csv-editor
+databeak
 ```
 
 ## Client Configuration
@@ -66,16 +66,16 @@ Add this to your MCP Settings file
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/jonpspri/csv-editor.git",
-        "csv-editor"
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
       ],
       "env": {
-        "CSV_EDITOR_MAX_FILE_SIZE_MB": "1024",
-        "CSV_EDITOR_CSV_HISTORY_DIR": "/tmp/csv_history"
+        "DATABEAK_MAX_FILE_SIZE_MB": "1024",
+        "DATABEAK_CSV_HISTORY_DIR": "/tmp/csv_history"
       }
     }
   }
@@ -89,12 +89,12 @@ Edit `~/.continue/config.json`:
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/jonpspri/csv-editor.git",
-        "csv-editor"
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
       ]
     }
   }
@@ -108,12 +108,12 @@ Add to VS Code settings (`settings.json`):
 ```json
 {
   "cline.mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/jonpspri/csv-editor.git",
-        "csv-editor"
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
       ]
     }
   }
@@ -127,12 +127,12 @@ Edit `~/.windsurf/mcp_servers.json`:
 ```json
 {
   "mcpServers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/jonpspri/csv-editor.git",
-        "csv-editor"
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
       ]
     }
   }
@@ -146,12 +146,12 @@ Edit `~/.config/zed/settings.json`:
 ```json
 {
   "experimental.mcp_servers": {
-    "csv-editor": {
+    "databeak": {
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/jonpspri/csv-editor.git",
-        "csv-editor"
+        "git+https://github.com/jonpspri/databeak.git",
+        "databeak"
       ]
     }
   }
@@ -164,11 +164,11 @@ Configure DataBeak behavior with these environment variables:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CSV_EDITOR_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
-| `CSV_EDITOR_CSV_HISTORY_DIR` | "." | History directory path |
-| `CSV_EDITOR_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
-| `CSV_EDITOR_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `CSV_EDITOR_AUTO_SAVE` | true | Enable auto-save |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
+| `DATABEAK_CSV_HISTORY_DIR` | "." | History directory path |
+| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
+| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
+| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
 
 ## Verification
 
@@ -176,10 +176,10 @@ Configure DataBeak behavior with these environment variables:
 
 ```bash
 # Check if server starts (if installed locally)
-uv run csv-editor --help
+uv run databeak --help
 
 # Run with verbose output
-CSV_EDITOR_LOG_LEVEL=DEBUG uv run csv-editor
+DATABEAK_LOG_LEVEL=DEBUG uv run databeak
 ```
 
 ### Test with MCP Inspector
@@ -190,12 +190,12 @@ npm install -g @modelcontextprotocol/inspector
 
 # Test the server
 mcp-inspector uvx --from \
-  git+https://github.com/jonpspri/csv-editor.git csv-editor
+  git+https://github.com/jonpspri/databeak.git databeak
 ```
 
 ### Verify in Your AI Client
 
-1. **Claude Desktop**: Look for "csv-editor" in the MCP servers list
+1. **Claude Desktop**: Look for "databeak" in the MCP servers list
 2. **VS Code**: Check the extension's MCP panel
 3. **Test Command**: Try asking your AI to "list available CSV tools"
 
@@ -207,7 +207,7 @@ mcp-inspector uvx --from \
 
 - Check Python version: `python --version` (must be 3.10+)
 - Verify installation: `uvx --from \
-  git+https://github.com/jonpspri/csv-editor.git csv-editor --version`
+  git+https://github.com/jonpspri/databeak.git databeak --version`
 - Check logs with debug level
 
 #### Client can't connect
@@ -225,14 +225,14 @@ mcp-inspector uvx --from \
 ### Performance Tips
 
 - Use uv instead of pip for faster package management
-- Set appropriate `CSV_EDITOR_MAX_FILE_SIZE_MB` for your use case
-- Configure `CSV_EDITOR_CHUNK_SIZE` for large datasets
-- Use SSD storage for `CSV_EDITOR_CSV_HISTORY_DIR`
+- Set appropriate `DATABEAK_MAX_FILE_SIZE_MB` for your use case
+- Configure `DATABEAK_CHUNK_SIZE` for large datasets
+- Use SSD storage for `DATABEAK_CSV_HISTORY_DIR`
 
 ### Getting Help
 
-- **[GitHub Issues](https://github.com/jonpspri/csv-editor/issues)** - Report bugs
-- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)**
+- **[GitHub Issues](https://github.com/jonpspri/databeak/issues)** - Report bugs
+- **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)**
   Ask questions
 - **[Documentation](/)** - Browse complete docs
 
@@ -243,7 +243,7 @@ Now that DataBeak is installed:
 1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the
    basics
 2. **[API Reference](./api/overview)** - Explore all available tools
-3. **[Examples](https://github.com/jonpspri/csv-editor/tree/main/examples)**
+3. **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
    - See real-world use cases
 
 ---
