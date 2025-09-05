@@ -13,7 +13,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 
-1. Install CSV Editor with '...'
+1. Install DataBeak with '...'
 2. Run command '....'
 3. Process CSV file '....'
 4. See error
@@ -21,9 +21,9 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Error message**
+## Error message
 
-```
+```text
 Paste the full error message here
 ```
 
@@ -39,17 +39,22 @@ value1,value2,value3
 
 - OS: [e.g. Ubuntu 22.04, macOS 13, Windows 11]
 - Python version: [e.g. 3.11.0]
-- CSV Editor version: [e.g. 1.0.1]
-- Installation method: [e.g. pip install git+https://github.com/santoshray02/csv-editor.git]
+- DataBeak version: [e.g. 1.0.1]
+- Installation method: [e.g. uvx --from
+  git+https://github.com/jonpspri/databeak.git databeak]
 
 **MCP Configuration**
 If using with an AI assistant, please share your MCP configuration:
 
 ```json
 {
-  "csv-editor": {
-    "command": "csv-editor",
-    "args": []
+  "databeak": {
+    "command": "uvx",
+    "args": [
+      "--from",
+      "git+https://github.com/jonpspri/databeak.git",
+      "databeak"
+    ]
   }
 }
 ```

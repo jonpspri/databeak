@@ -19,11 +19,11 @@ This document describes how version numbers are managed in the DataBeak project.
 The application uses `importlib.metadata` to read the version at runtime:
 
 ```python
-# In src/csv_editor/_version.py
+# In src/databeak/_version.py
 import importlib.metadata
 
 try:
-    __version__ = importlib.metadata.version("csv-editor")
+    __version__ = importlib.metadata.version("databeak")
 except importlib.metadata.PackageNotFoundError:
     # Fallback for development mode
     __version__ = "1.0.2-dev"
@@ -44,7 +44,7 @@ python scripts/sync_versions.py
 The script automatically updates:
 
 - `package.json` - For npm/MCP registry compatibility
-- `src/csv_editor/_version.py` - Fallback version for development
+- `src/databeak/_version.py` - Fallback version for development
 
 ## Release Workflow
 
@@ -76,7 +76,7 @@ The script automatically updates:
 
 1. **pyproject.toml** - Primary source of truth ✅
 2. **package.json** - Synced automatically 🔄
-3. **src/csv_editor/_version.py** - Synced automatically 🔄
+3. **src/databeak/_version.py** - Synced automatically 🔄
 
 ## Benefits
 
