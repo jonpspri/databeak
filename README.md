@@ -407,10 +407,13 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 ### Quick Contribution Guide
 
 1. Fork the repository
-2. Create a feature branch
+2. **Create a feature branch** (required - no direct commits to main)
 3. Make your changes with tests
 4. Run `uv run all-checks`
-5. Submit a pull request
+5. **Submit a pull request** (only way to update main branch)
+
+**Note**: Pre-commit hooks prevent direct commits to main branch. All changes
+must go through feature branches and pull requests.
 
 ## 📈 Roadmap
 
