@@ -6,6 +6,7 @@ import tempfile
 from unittest.mock import AsyncMock, Mock
 
 import pandas as pd
+import pytest
 
 from src.databeak.models.auto_save import AutoSaveConfig, AutoSaveStrategy
 from src.databeak.models.csv_session import CSVSession, get_csv_settings
@@ -37,6 +38,7 @@ class TestCSVSessionAutoSave:
         # Should not set original_file_path when file_path is None
         assert session.auto_save_manager.original_file_path is None
 
+    @pytest.mark.asyncio
     async def test_trigger_auto_save_when_needed(self):
         """Test auto-save triggering when configured and needed."""
         auto_save_config = AutoSaveConfig(enabled=True, strategy=AutoSaveStrategy.OVERWRITE)
@@ -61,6 +63,7 @@ class TestCSVSessionAutoSave:
         # Should clear the autosave flag
         assert session.data_session.metadata["needs_autosave"] is False
 
+    @pytest.mark.asyncio
     async def test_trigger_auto_save_not_needed(self):
         """Test auto-save when not configured or not needed."""
         session = CSVSession()
@@ -194,10 +197,11 @@ class TestCSVSessionInitialization:
         assert len(session.session_id) > 0
         assert isinstance(session.session_id, str)
 
-    def test_session_with_custom_auto_save_config(self):
+    def test_session_with_custom_auto_save_config(self, tmp_path):
         """Test session creation with custom auto-save configuration."""
+        backup_dir = str(tmp_path / "backups")
         custom_config = AutoSaveConfig(
-            enabled=True, strategy=AutoSaveStrategy.BACKUP, backup_dir="/tmp/test"
+            enabled=True, strategy=AutoSaveStrategy.BACKUP, backup_dir=backup_dir
         )
         session = CSVSession(auto_save_config=custom_config)
 
@@ -217,7 +221,7 @@ class TestCSVSessionInitialization:
 
         assert session.enable_history is True
         assert session.history_manager is not None
-        # History storage type should be set correctly
+        assert session.history_manager.storage_type == HistoryStorage.PICKLE
 
 
 class TestCSVSessionSettings:
@@ -226,15 +230,22 @@ class TestCSVSessionSettings:
     def test_session_uses_global_settings(self):
         """Test that session uses global settings for history directory."""
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Create custom settings
+            # Create custom settings and store original value
             custom_settings = get_csv_settings()
-            custom_settings.csv_history_dir = temp_dir
+            original_history_dir = custom_settings.csv_history_dir
 
-            session = CSVSession(enable_history=True)
+            try:
+                custom_settings.csv_history_dir = temp_dir
 
-            # Session should use the global settings
-            assert session.history_manager is not None
-            # The history manager should be configured with the settings directory
+                session = CSVSession(enable_history=True)
+
+                # Session should use the global settings
+                assert session.history_manager is not None
+                # The history manager should be configured with the settings directory
+                assert session.history_manager.history_dir == temp_dir
+            finally:
+                # Restore original settings to avoid affecting other tests
+                custom_settings.csv_history_dir = original_history_dir
 
     def test_session_info_structure(self):
         """Test that get_info returns properly structured SessionInfo."""
@@ -259,7 +270,9 @@ class TestCSVSessionSettings:
         assert info.operations_count >= 1  # At least the load operation
         assert info.created_at is not None
         assert info.last_accessed is not None
-        assert info.memory_usage_mb >= 0  # Memory usage can be 0 for small DataFrames
+        assert info.memory_usage_mb >= 0
+        # Memory usage should be calculated (could be 0.0 for small DataFrames due to rounding)
+        assert isinstance(info.memory_usage_mb, float)
 
 
 class TestSessionManagerIntegration:
