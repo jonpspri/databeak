@@ -8,11 +8,14 @@ powerful data manipulation capabilities through simple commands.
 
 ### The Problem
 
-AI assistants struggle with complex data operations - they can read files but lack tools for filtering, transforming, analyzing, and validating CSV data efficiently.
+AI assistants struggle with complex data operations - they can read files but
+lack tools for filtering, transforming, analyzing, and validating CSV data
+efficiently.
 
 ### The Solution
 
-DataBeak bridges this gap by providing AI assistants with 40+ specialized tools for CSV operations, turning them into powerful data analysts that can:
+DataBeak bridges this gap by providing AI assistants with 40+ specialized
+tools for CSV operations, turning them into powerful data analysts that can:
 
 - Clean messy datasets in seconds
 - Perform complex statistical analysis
@@ -47,10 +50,11 @@ DataBeak bridges this gap by providing AI assistants with 40+ specialized tools 
 ## Configure Your AI Assistant
 
 <details>
-<summary><b>Claude Desktop</b> (Click to expand)</summary>
+<summary>**Claude Desktop** (Click to expand)</summary>
 
 Add to the MCP Settings file
-( Claude -> Settings -> Developer -> Show MCP Settings --> `claude_mcp_settings.json` ):
+( Claude -> Settings -> Developer -> Show MCP Settings ->
+`claude_mcp_settings.json` ):
 
 ```json
 {
@@ -70,7 +74,7 @@ Add to the MCP Settings file
 </details>
 
 <details>
-<summary><b>Other Clients</b> (Continue, Cline, Windsurf, Zed)</summary>
+<summary>**Other Clients** (Continue, Cline, Windsurf, Zed)</summary>
 
 ### Continue (VS Code)
 
@@ -229,7 +233,7 @@ anomalies = find_anomalies(methods=["statistical", "pattern"])
 ## 📚 Available Tools
 
 <details>
-<summary><b>Complete Tool List</b> (40+ tools)</summary>
+<summary>**Complete Tool List** (40+ tools)</summary>
 
 ### I/O Operations
 
@@ -313,7 +317,7 @@ configure_auto_save(
 ## 🛠️ Advanced Installation Options
 
 <details>
-<summary><b>Alternative Installation Methods</b></summary>
+<summary>**Alternative Installation Methods**</summary>
 
 ### Using pip
 
