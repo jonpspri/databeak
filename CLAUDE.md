@@ -53,8 +53,8 @@ git branch -D feature/add-new-tool
 - Use `uv run mypy src/` for type checking
 - Maintain test coverage above 80%
 - **Markdown line length**: Keep lines under 80 characters for readability
-- **HTML in Markdown**: Only `<details>` and `<summary>` tags allowed; use
-  markdown syntax for formatting
+- **HTML in Markdown**: Only `<details>` and `<summary>` tags allowed for
+  collapsible sections; use markdown syntax for all other formatting
 
 ### Testing Approach
 
