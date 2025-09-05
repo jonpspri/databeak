@@ -1,0 +1,45 @@
+/* Custom CSS for DataBeak MkDocs site */
+
+/* Brand colors and custom styling */
+:root {
+  --md-primary-fg-color: #1976d2;
+  --md-primary-fg-color--light: #42a5f5;
+  --md-primary-fg-color--dark: #0d47a1;
+  --md-accent-fg-color: #2196f3;
+}
+
+/* Code block styling for better Python code display */
+.highlight .hll { background-color: #ffffcc }
+.highlight .c { color: #8f5902; font-style: italic } /* Comment */
+.highlight .k { color: #004461; font-weight: bold } /* Keyword */
+.highlight .n { color: #000000 } /* Name */
+.highlight .s { color: #4e9a06 } /* Literal.String */
+
+/* Custom styling for API documentation */
+.md-typeset h1.api-heading {
+  border-bottom: 2px solid var(--md-primary-fg-color);
+  padding-bottom: 0.5rem;
+}
+
+/* Enhanced table styling */
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+}
+
+/* Custom admonition for DataBeak specific notes */
+.md-typeset .admonition.databeak {
+  border-color: var(--md-primary-fg-color);
+}
+
+.md-typeset .admonition.databeak > .admonition-title {
+  background-color: var(--md-primary-fg-color);
+  color: white;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__title {
+    background-color: var(--md-primary-fg-color);
+  }
+}

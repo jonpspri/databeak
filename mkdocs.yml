@@ -1,0 +1,138 @@
+site_name: DataBeak
+site_description: AI-Powered CSV Processing via Model Context Protocol
+site_author: Jonathan Springer
+site_url: https://jonpspri.github.io/databeak/
+
+# Repository
+repo_name: jonpspri/databeak
+repo_url: https://github.com/jonpspri/databeak
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 DataBeak
+
+# Configuration
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - search.highlight
+    - search.share
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+  font:
+    text: Roboto
+    code: Roboto Mono
+  favicon: img/favicon.ico
+  logo: img/logo.svg
+
+# Navigation
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Tutorials:
+      - Quick Start: tutorials/quickstart.md
+  - API Reference:
+      - Overview: api/index.md
+  - Architecture: architecture.md
+  - Version Management: version-management.md
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: jonpspri
+      repo: databeak
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: true
+            merge_init_into_class: true
+            show_source: true
+            show_root_heading: true
+            show_object_full_path: false
+            show_category_heading: true
+
+# Extra
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jonpspri/databeak
+      name: GitHub Repository
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/databeak
+      name: PyPI Package
+    - icon: fontawesome/solid/comment-dots
+      link: https://github.com/jonpspri/databeak/discussions
+      name: GitHub Discussions
+
+# Custom CSS
+extra_css:
+  - stylesheets/extra.css
+
+# Watch additional files for changes during development
+watch:
+  - src/databeak/

@@ -173,4 +173,4 @@ Complete operation tracking:
 ---
 
 **For detailed examples and tutorials, see the
-[Quick Start Guide](../tutorials/quickstart)**
+[Quick Start Guide](../tutorials/quickstart.md)**
