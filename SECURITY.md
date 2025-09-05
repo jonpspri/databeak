@@ -11,7 +11,8 @@ We actively support the following versions of DataBeak:
 
 ## Reporting a Vulnerability
 
-We take security vulnerabilities seriously. If you discover a security vulnerability in DataBeak, please report it responsibly.
+We take security vulnerabilities seriously. If you discover a security
+vulnerability in DataBeak, please report it responsibly.
 
 ### How to Report
 
