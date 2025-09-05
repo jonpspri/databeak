@@ -93,11 +93,11 @@ Ready to supercharge your AI's data capabilities?
 
 ## Community & Support
 
-- **[GitHub Repository](https://github.com/jonpspri/csv-editor)** - Source code
+- **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source code
   and releases
-- **[GitHub Discussions](https://github.com/jonpspri/csv-editor/discussions)** -
+- **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)** -
   Ask questions and share ideas
-- **[Report Issues](https://github.com/jonpspri/csv-editor/issues)** - Bug
+- **[Report Issues](https://github.com/jonpspri/databeak/issues)** - Bug
   reports and feature requests
 
 ---
