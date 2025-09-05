@@ -234,15 +234,15 @@ mcp-inspector uvx --from \
 - **[GitHub Issues](https://github.com/jonpspri/databeak/issues)** - Report bugs
 - **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)**
   Ask questions
-- **[Documentation](/)** - Browse complete docs
+- **[Documentation](index.md)** - Browse complete docs
 
 ## Next Steps
 
 Now that DataBeak is installed:
 
-1. **[Quick Start Tutorial](./tutorials/quickstart)** - Learn the
+1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Learn the
    basics
-2. **[API Reference](./api/overview)** - Explore all available tools
+2. **[API Reference](api/index.md)** - Explore all available tools
 3. **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
    - See real-world use cases
 

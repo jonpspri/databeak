@@ -86,10 +86,10 @@ Built with modern, high-performance tools:
 
 Ready to supercharge your AI's data capabilities?
 
-1. **[Install DataBeak](./installation)** - Set up in 2 minutes
-2. **[Quick Start Tutorial](./tutorials/quickstart)** - Your first data processing
-3. **[API Reference](./api/overview)** - Complete tool documentation
-4. **[Architecture](./architecture)** - Technical design and implementation details
+1. **[Install DataBeak](installation.md)** - Set up in 2 minutes
+2. **[Quick Start Tutorial](tutorials/quickstart.md)** - Your first data processing
+3. **[API Reference](api/index.md)** - Complete tool documentation
+4. **[Architecture](architecture.md)** - Technical design and implementation details
 
 ## Community & Support
 
@@ -102,4 +102,4 @@ Ready to supercharge your AI's data capabilities?
 
 ---
 
-**Ready to transform your AI's data capabilities?** [Get started now →](./installation)
+**Ready to transform your AI's data capabilities?** [Get started now →](installation.md)

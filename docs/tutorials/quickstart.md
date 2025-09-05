@@ -10,7 +10,7 @@ We'll process a sample sales dataset using natural language commands.
 
 ## Prerequisites
 
-- DataBeak installed and configured ([Installation Guide](../installation))
+- DataBeak installed and configured ([Installation Guide](../installation.md))
 - An AI assistant client (Claude Desktop, Continue, etc.) configured with
   DataBeak
 
@@ -184,7 +184,7 @@ Use undo/redo freely to experiment with different approaches
 
 ## Next Steps
 
-- **[API Reference](../api/overview)** - Complete tool documentation
+- **[API Reference](../api/index.md)** - Complete tool documentation
 - **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
   - More real-world scenarios
 - **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source

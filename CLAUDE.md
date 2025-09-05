@@ -113,8 +113,8 @@ uv run all-checks      # Full quality check pipeline
 uv run sync-versions   # Sync version numbers across files
 
 # Documentation
-cd docs && npm run build  # Build Docusaurus site
-cd docs && npm run serve  # Serve docs locally
+uv run mkdocs build       # Build MkDocs site
+uv run mkdocs serve       # Serve docs locally
 ```
 
 ## File Structure Context
@@ -122,7 +122,7 @@ cd docs && npm run serve  # Serve docs locally
 - `src/databeak/` - Main package code
 - `tests/` - Test suite mirroring source structure
 - `examples/` - Usage examples and demos
-- `docs/` - Docusaurus documentation site
+- `docs/` - MkDocs documentation site
 - `scripts/` - Maintenance and utility scripts
 
 ## Key Implementation Details
