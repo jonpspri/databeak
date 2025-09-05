@@ -194,6 +194,9 @@ uv.lock
 # Ruff
 .ruff_cache/
 
+# Pre-commit
+.pre-commit-cache/
+
 # CSV MCP Server specific
 *.csv
 *.tsv
