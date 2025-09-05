@@ -9,7 +9,8 @@ places that need updates for the rename from CSV Editor to DataBeak:
 - [ ] `pyproject.toml:8` - Update description to mention DataBeak
 - [ ] `pyproject.toml:108` - Update self-reference in optional dependencies
 - [ ] `pyproject.toml:112-117` - Update all GitHub URLs from csv-editor to databeak
-- [ ] `pyproject.toml:120-121` - Update script names (csv-editor, csv) to databeak equivalents
+- [ ] `pyproject.toml:120-121` - Update script names (csv-editor, csv) to
+  databeak equivalents
 - [ ] `pyproject.toml:302` - Update coverage report title
 - [ ] `pyproject.toml:310-314` - Update MkDocs site configuration
 - [ ] `package.json:2` - Update npm package name
