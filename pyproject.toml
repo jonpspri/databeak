@@ -39,7 +39,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -277,7 +276,7 @@ omit = [
     "*/tests/*",
     "*/__pycache__/*",
     "*/site-packages/*",
-    "src/csv_editor/__main__.py",
+    "src/databeak/__main__.py",
 ]
 
 [tool.coverage.report]
