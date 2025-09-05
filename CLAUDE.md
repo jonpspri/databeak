@@ -2,7 +2,9 @@
 
 ## Project Context
 
-DataBeak is a Model Context Protocol (MCP) server that provides AI assistants with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and modern Python tooling.
+DataBeak is a Model Context Protocol (MCP) server that provides AI assistants
+with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and
+modern Python tooling.
 
 ## Development Guidelines
 
@@ -50,6 +52,9 @@ git branch -D feature/add-new-tool
 - Use `uv run ruff format` for formatting
 - Use `uv run mypy src/` for type checking
 - Maintain test coverage above 80%
+- **Markdown line length**: Keep lines under 80 characters for readability
+- **HTML in Markdown**: Only `<details>` and `<summary>` tags allowed; use
+  markdown syntax for formatting
 
 ### Testing Approach
 
