@@ -97,25 +97,30 @@ uv run all-checks  # Runs all quality checks
 
 ## Development Workflow
 
+**🚨 IMPORTANT: Direct commits to `main` are prohibited. Pre-commit hooks enforce branch-based development.**
+
 ### 1. Create a Feature Branch
 
 ```bash
 # Update main branch
 git checkout main
-git pull upstream main
+git pull origin main
 
-# Create feature branch
+# Create descriptive feature branch
 git checkout -b feature/your-feature-name
+# OR use other prefixes: fix/, docs/, test/, refactor/, chore/
 ```
 
 ### 2. Make Your Changes
 
 Follow these guidelines:
 
+- **Branch-based development only** - Never commit directly to main
 - **One feature per PR** - Keep pull requests focused
 - **Write tests** - All new features must have tests
 - **Update docs** - Update README and docstrings as needed
 - **Follow style guide** - Use Ruff and MyPy
+- **Conventional commits** - Use conventional commit format (enforced by hooks)
 
 ### 3. Run Quality Checks
 
@@ -137,6 +142,25 @@ uv run pytest tests/test_transformations.py  # Run specific file
 uv run pytest -k "test_filter"          # Run tests matching pattern
 uv run pytest -x                         # Stop on first failure
 ```
+
+### 5. Create Pull Request
+
+```bash
+# Push feature branch
+git push -u origin feature/your-feature-name
+
+# Create PR using GitHub CLI
+gh pr create --title "feat: Add new data filtering tool" --body "Description of changes..."
+
+# OR create via GitHub web interface
+```
+
+**Pull Request Requirements:**
+- **Descriptive title** with conventional commit prefix (feat:, fix:, docs:, etc.)
+- **Clear description** explaining what changes and why
+- **Link related issues** with "Closes #123" syntax
+- **All checks must pass** (tests, linting, type checking)
+- **Review and approval** required before merge
 
 ## Code Standards
 
