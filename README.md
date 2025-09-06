@@ -8,10 +8,14 @@ Model Context Protocol (MCP).
 
 ## Features
 
-- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV data
-- 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data profiling
-- ✅ **Data Validation** - Schema validation, quality scoring, anomaly detection
-- 💾 **Auto-Save & History** - Never lose work with configurable strategies and undo/redo
+- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV
+  data
+- 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data
+  profiling
+- ✅ **Data Validation** - Schema validation, quality scoring, anomaly
+  detection
+- 💾 **Auto-Save & History** - Never lose work with configurable strategies and
+  undo/redo
 - ⚡ **High Performance** - Handles large datasets with streaming and chunking
 - 🔒 **Session Management** - Multi-user support with isolated sessions
 
@@ -60,7 +64,8 @@ Once configured, ask your AI assistant:
 
 - [Installation Guide](https://jonpspri.github.io/databeak/installation) -
   Setup for all AI clients
-- [Quick Start Tutorial](https://jonpspri.github.io/databeak/tutorials/quickstart)
+- [Quick Start
+  Tutorial](https://jonpspri.github.io/databeak/tutorials/quickstart) -
   Learn in 10 minutes
 - [API Reference](https://jonpspri.github.io/databeak/api/overview) -
   All 40+ tools documented
@@ -111,10 +116,7 @@ Apache 2.0 - see [LICENSE](LICENSE) file.
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/jonpspri/databeak/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jonpspri/databeak/discussions)
-- **Documentation**: [jonpspri.github.io/databeak](https://jonpspri.github.io/databeak/)
-
----
-
-Built with [FastMCP](https://github.com/jlowin/fastmcp),
-[Pandas](https://pandas.pydata.org/), and [NumPy](https://numpy.org/).
+- **Discussions**: [GitHub
+  Discussions](https://github.com/jonpspri/databeak/discussions)
+- **Documentation**:
+  [jonpspri.github.io/databeak](https://jonpspri.github.io/databeak/)
