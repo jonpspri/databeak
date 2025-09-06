@@ -43,9 +43,9 @@ improvements.
 
 ## Phase 1: Foundation Refactoring (Weeks 1-3)
 
-### **Week 1: Code Organization & Tool Registration**
+### **Week 1: Data Source Abstraction Layer (CRITICAL PATH)**
 
-*Priority: High | Risk: Low | Value: High*
+*Priority: CRITICAL | Risk: Medium | Value: Very High*
 
 #### **Pre-Week 1 Requirements**
 
@@ -90,9 +90,9 @@ mkdir src/databeak/models/{session,data,validation}
 - [ ] 10+ format constants consolidated into single module
 - [ ] Data models organized in logical subdirectories
 
-### **Week 2: Data Source Abstraction Layer**
+### **Week 2: Tool Registration Automation**
 
-*Priority: Critical | Risk: Medium | Value: Very High*
+*Priority: High | Risk: Low | Value: High*
 
 #### **Pre-Week 2 Requirements**
 
