@@ -1,4 +1,4 @@
-"""FastMCP validation tool definitions for CSV Editor."""
+"""FastMCP validation tool definitions for DataBeak."""
 
 from __future__ import annotations
 

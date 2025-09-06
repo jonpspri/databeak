@@ -1,4 +1,4 @@
-"""FastMCP I/O tool definitions for CSV Editor."""
+"""FastMCP I/O tool definitions for DataBeak."""
 
 from __future__ import annotations
 

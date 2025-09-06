@@ -1,4 +1,4 @@
-"""FastMCP analytics tool definitions for CSV Editor."""
+"""FastMCP analytics tool definitions for DataBeak."""
 
 from __future__ import annotations
 

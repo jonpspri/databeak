@@ -1,4 +1,4 @@
-"""FastMCP system tool definitions for CSV Editor."""
+"""FastMCP system tool definitions for DataBeak."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ def register_system_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def health_check(ctx: Context) -> dict[str, Any]:
-        """Check the health status of the CSV Editor."""
+        """Check the health status of DataBeak."""
         session_manager = get_session_manager()
 
         active_sessions = len(session_manager.sessions)
@@ -35,12 +35,12 @@ def register_system_tools(mcp: Any) -> None:
 
     @mcp.tool
     async def get_server_info(ctx: Context) -> dict[str, Any]:
-        """Get information about the CSV Editor capabilities."""
+        """Get information about DataBeak capabilities."""
         if ctx:
             await ctx.info("Server information requested")
 
         return {
-            "name": "CSV Editor",
+            "name": "DataBeak",
             "version": __version__,
             "description": "A comprehensive MCP server for CSV file operations and data analysis",
             "capabilities": {

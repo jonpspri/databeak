@@ -1,4 +1,4 @@
-"""FastMCP history and auto-save tool definitions for CSV Editor."""
+"""FastMCP history and auto-save tool definitions for DataBeak."""
 
 from __future__ import annotations
 
