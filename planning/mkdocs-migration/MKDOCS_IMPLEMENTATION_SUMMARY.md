@@ -139,6 +139,6 @@ If issues arise:
 **Proceed with Option A (Parallel Deployment)** to ensure zero-downtime
 migration while validating the new MkDocs system in production environment.
 
-The MkDocs migration provides significant benefits in build speed,
-maintenance simplicity, and Python ecosystem integration while maintaining
-full feature parity with the current Docusaurus setup.
+The MkDocs migration provides significant benefits in build speed, maintenance
+simplicity, and Python ecosystem integration while maintaining full feature
+parity with the current Docusaurus setup.

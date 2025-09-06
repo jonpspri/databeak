@@ -1,7 +1,7 @@
 # CSV Editor Examples
 
-This directory contains example scripts demonstrating how to use the
-CSV Editor MCP Server.
+This directory contains example scripts demonstrating how to use the CSV Editor
+MCP Server.
 
 ## Available Examples
 
@@ -50,7 +50,7 @@ from src.databeak.tools.analytics import get_statistics
 ```
 
 1. Load your data and get a session ID
-2. Perform operations using the session ID
-3. Export or analyze results
+1. Perform operations using the session ID
+1. Export or analyze results
 
 See the existing examples for detailed patterns.

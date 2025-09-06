@@ -3,8 +3,8 @@
 ## 📋 Executive Summary
 
 **Goal**: Transform DataBeak from CSV-focused tool to multi-format data platform
-**Timeline**: 10-12 weeks in 3 phases
-**Approach**: Incremental refactoring with mandatory regression testing
+**Timeline**: 10-12 weeks in 3 phases **Approach**: Incremental refactoring with
+mandatory regression testing
 
 ## 🏗️ Current Architecture (Issues)
 
@@ -256,5 +256,5 @@ touch src/databeak/sources/{base.py,types.py,csv.py}
 ______________________________________________________________________
 
 **This quick reference provides immediate access to key information from the
-comprehensive planning documents, enabling developers to quickly understand
-the refactoring strategy and implementation approach.**
+comprehensive planning documents, enabling developers to quickly understand the
+refactoring strategy and implementation approach.**

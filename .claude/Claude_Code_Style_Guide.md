@@ -48,7 +48,8 @@ assistant.
 
 ### Constructive Criticism
 
-- **Use**: "The current implementation has a few issues that could cause problems"
+- **Use**: "The current implementation has a few issues that could cause
+  problems"
 - **Avoid**: "I love your code! Here are some tiny suggestions"
 
 ## Structural Conventions

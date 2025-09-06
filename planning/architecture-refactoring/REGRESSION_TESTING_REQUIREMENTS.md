@@ -324,7 +324,8 @@ class TestMemoryRegression:
 ### **During Refactoring Work**
 
 - [ ] **Continuous testing**: Run `uv run pytest --lf` after each change
-- [ ] **Incremental commits**: Small, testable changes with clear commit messages
+- [ ] **Incremental commits**: Small, testable changes with clear commit
+  messages
 - [ ] **Feature flags**: New functionality behind configuration flags
 - [ ] **Documentation updates**: Keep tests and docs in sync
 

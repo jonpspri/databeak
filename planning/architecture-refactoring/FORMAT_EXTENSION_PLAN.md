@@ -571,5 +571,5 @@ class PerformanceMonitor:
 ```
 
 This comprehensive format extension plan ensures DataBeak can evolve into a
-multi-format data platform while maintaining its current strengths and
-providing clear migration paths for existing users.
+multi-format data platform while maintaining its current strengths and providing
+clear migration paths for existing users.

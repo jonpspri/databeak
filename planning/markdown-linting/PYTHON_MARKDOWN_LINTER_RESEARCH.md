@@ -146,8 +146,8 @@ uv remove markdownlint-cli  # Remove Node.js dependency
       args: [scan]
 ```
 
-**Pros**: Drop-in replacement, similar rule set
-**Cons**: Still just linting, no formatting
+**Pros**: Drop-in replacement, similar rule set **Cons**: Still just linting, no
+formatting
 
 ### **Option B: mdformat + pymarkdownlnt (Recommended)**
 
@@ -176,8 +176,8 @@ uv add pymarkdownlnt mdformat mdformat-gfm mdformat-frontmatter --group dev
       args: [scan]
 ```
 
-**Pros**: Formatting + linting, pure Python, comprehensive
-**Cons**: Two tools to configure and maintain
+**Pros**: Formatting + linting, pure Python, comprehensive **Cons**: Two tools
+to configure and maintain
 
 ### **Option C: mdformat Only (Minimalist)**
 
@@ -193,8 +193,8 @@ uv add mdformat mdformat-gfm mdformat-frontmatter --group dev
 uv run mdformat docs/ --check --wrap=80
 ```
 
-**Pros**: Single tool, automatic formatting
-**Cons**: Less comprehensive validation than dedicated linter
+**Pros**: Single tool, automatic formatting **Cons**: Less comprehensive
+validation than dedicated linter
 
 ## Feature Comparison Matrix
 

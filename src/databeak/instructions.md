@@ -1,8 +1,8 @@
 # DataBeak MCP Server - AI-Powered CSV Data Platform
 
 A high-performance MCP server providing 40+ specialized tools for CSV data
-manipulation, analysis, and validation. Optimized for AI assistants with
-precise coordinate-based operations and comprehensive null value support.
+manipulation, analysis, and validation. Optimized for AI assistants with precise
+coordinate-based operations and comprehensive null value support.
 
 ## 🎯 Core Philosophy
 
@@ -87,19 +87,17 @@ export_csv(session_id, "results.csv")    # Save processed data
 
 ## Key Features
 
-• **Session-based**: Multiple independent data sessions with automatic cleanup
-• **History tracking**: Full operation history with snapshots for undo/redo
-• **Coordinate precision**: Every operation includes row/column coordinate
-  information
-• **AI-optimized returns**: All data includes indexing for precise
-  reference
-• **Clear method names**: No confusing operation parameters - method names
-  express intent
-• **Enhanced error messages**: Include valid coordinate ranges in error responses
-• **Progress reporting**: Real-time feedback for long operations
-• **Type safety**: Proper handling of pandas/numpy types for JSON serialization
-• **Null value support**: Full JSON null → Python None → pandas NaN compatibility
-• **Claude Code compatible**: Automatic JSON string deserialization
+• **Session-based**: Multiple independent data sessions with automatic cleanup •
+**History tracking**: Full operation history with snapshots for undo/redo •
+**Coordinate precision**: Every operation includes row/column coordinate
+information • **AI-optimized returns**: All data includes indexing for precise
+reference • **Clear method names**: No confusing operation parameters - method
+names express intent • **Enhanced error messages**: Include valid coordinate
+ranges in error responses • **Progress reporting**: Real-time feedback for long
+operations • **Type safety**: Proper handling of pandas/numpy types for JSON
+serialization • **Null value support**: Full JSON null → Python None → pandas
+NaN compatibility • **Claude Code compatible**: Automatic JSON string
+deserialization
 
 ## 🎯 AI Assistant Guidelines
 

@@ -5,9 +5,9 @@ title: API Overview
 
 ## API Reference Overview
 
-DataBeak provides 40+ tools for comprehensive CSV manipulation through the
-Model Context Protocol (MCP). All tools return structured responses and
-include comprehensive error handling.
+DataBeak provides 40+ tools for comprehensive CSV manipulation through the Model
+Context Protocol (MCP). All tools return structured responses and include
+comprehensive error handling.
 
 ## Tool Categories
 
@@ -27,8 +27,7 @@ Tools for loading and exporting CSV data in various formats:
 
 Tools for transforming and modifying CSV data:
 
-- **`filter_rows`** - Filter rows with complex conditions (AND/OR
-  logic)
+- **`filter_rows`** - Filter rows with complex conditions (AND/OR logic)
 - **`sort_data`** - Sort by single or multiple columns
 - **`select_columns`** - Select specific columns by name or pattern
 - **`rename_columns`** - Rename columns with mapping
@@ -45,12 +44,10 @@ Tools for statistical analysis and insights:
 
 - **`get_statistics`** - Descriptive statistics for numeric columns
 - **`get_column_statistics`** - Detailed stats for specific columns
-- **`get_correlation_matrix`** - Pearson, Spearman, and Kendall
-  correlations
+- **`get_correlation_matrix`** - Pearson, Spearman, and Kendall correlations
 - **`group_by_aggregate`** - Group data with aggregation functions
 - **`get_value_counts`** - Frequency counts for categorical data
-- **`detect_outliers`** - Find outliers using IQR, Z-score, or custom
-  methods
+- **`detect_outliers`** - Find outliers using IQR, Z-score, or custom methods
 - **`profile_data`** - Comprehensive data profiling report
 
 ### ✅ Data Validation
@@ -105,8 +102,8 @@ Error responses:
 
 ### Session Management
 
-Most tools require a `session_id` parameter. Sessions are automatically
-created and managed with configurable timeouts.
+Most tools require a `session_id` parameter. Sessions are automatically created
+and managed with configurable timeouts.
 
 ### Data Types
 

@@ -8,12 +8,10 @@ Model Context Protocol (MCP).
 
 ## Features
 
-- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV
-  data
+- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV data
 - 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data
   profiling
-- ✅ **Data Validation** - Schema validation, quality scoring, anomaly
-  detection
+- ✅ **Data Validation** - Schema validation, quality scoring, anomaly detection
 - 💾 **Auto-Save & History** - Never lose work with configurable strategies and
   undo/redo
 - ⚡ **High Performance** - Handles large datasets with streaming and chunking
@@ -45,8 +43,8 @@ Add this to your MCP Settings file:
 ### For Other AI Clients
 
 DataBeak works with Continue, Cline, Windsurf, and Zed. See the
-[installation guide](https://jonpspri.github.io/databeak/installation)
-for specific configuration examples.
+[installation guide](https://jonpspri.github.io/databeak/installation) for
+specific configuration examples.
 
 ### Quick Test
 
@@ -62,15 +60,14 @@ Once configured, ask your AI assistant:
 
 📚 **[Complete Documentation](https://jonpspri.github.io/databeak/)**
 
-- [Installation Guide](https://jonpspri.github.io/databeak/installation) -
-  Setup for all AI clients
-- [Quick Start
-  Tutorial](https://jonpspri.github.io/databeak/tutorials/quickstart) -
-  Learn in 10 minutes
-- [API Reference](https://jonpspri.github.io/databeak/api/overview) -
-  All 40+ tools documented
-- [Architecture](https://jonpspri.github.io/databeak/architecture) -
-  Technical details
+- [Installation Guide](https://jonpspri.github.io/databeak/installation) - Setup
+  for all AI clients
+- [Quick Start Tutorial](https://jonpspri.github.io/databeak/tutorials/quickstart)
+  \- Learn in 10 minutes
+- [API Reference](https://jonpspri.github.io/databeak/api/overview) - All 40+
+  tools documented
+- [Architecture](https://jonpspri.github.io/databeak/architecture) - Technical
+  details
 
 ## Environment Variables
 
@@ -116,7 +113,7 @@ Apache 2.0 - see [LICENSE](LICENSE) file.
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/jonpspri/databeak/issues)
-- **Discussions**: [GitHub
-  Discussions](https://github.com/jonpspri/databeak/discussions)
+- **Discussions**:
+  [GitHub Discussions](https://github.com/jonpspri/databeak/discussions)
 - **Documentation**:
   [jonpspri.github.io/databeak](https://jonpspri.github.io/databeak/)

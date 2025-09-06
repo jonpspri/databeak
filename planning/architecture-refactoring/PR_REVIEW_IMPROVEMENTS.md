@@ -7,8 +7,8 @@ incorporated into the architecture planning.
 
 ### **1. Implementation Prioritization Adjustment**
 
-**Original Order**: Tool Registration → Data Source Abstraction
-**Revised Order**: Data Source Abstraction → Tool Registration
+**Original Order**: Tool Registration → Data Source Abstraction **Revised
+Order**: Data Source Abstraction → Tool Registration
 
 **Rationale**: Data source abstraction is the critical path that enables all
 multi-format capabilities. Tool registration automation, while valuable for
@@ -178,7 +178,8 @@ Phase 3 (Weeks 8-10): Advanced Features
 
 #### **File Security Enhancements**
 
-- [ ] **Excel file validation**: Check for macros, external links, embedded objects
+- [ ] **Excel file validation**: Check for macros, external links, embedded
+  objects
 - [ ] **File size limits**: Enforce reasonable limits per format
 - [ ] **Path validation**: Prevent directory traversal attacks
 - [ ] **Content scanning**: Basic malware/suspicious content detection

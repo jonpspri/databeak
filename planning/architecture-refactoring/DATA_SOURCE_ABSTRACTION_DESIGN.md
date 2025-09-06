@@ -3,8 +3,8 @@
 ## Overview
 
 Design for a flexible data source abstraction layer that enables DataBeak to
-support multiple input/output formats while maintaining the current session-based
-architecture and MCP tool interface.
+support multiple input/output formats while maintaining the current
+session-based architecture and MCP tool interface.
 
 ## Core Abstraction Design
 

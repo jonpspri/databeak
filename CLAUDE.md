@@ -3,8 +3,8 @@
 ## Project Context
 
 DataBeak is a Model Context Protocol (MCP) server that provides AI assistants
-with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and
-modern Python tooling.
+with 40+ tools for CSV data manipulation. Built with FastMCP, Pandas, and modern
+Python tooling.
 
 ## Development Guidelines
 
@@ -13,10 +13,13 @@ modern Python tooling.
 **IMPORTANT**: All development must follow a branch-based workflow:
 
 - **NEVER commit directly to `main` branch**
-- **Always create feature branches** for any changes (use `git checkout -b feature/description`)
+- **Always create feature branches** for any changes (use
+  `git checkout -b feature/description`)
 - **All changes to `main` must go through Pull Requests**
-- **Pre-commit hooks enforce this policy** and will reject direct commits to main
-- **Branch naming**: Use descriptive prefixes like `feature/`, `fix/`, `docs/`, `test/`
+- **Pre-commit hooks enforce this policy** and will reject direct commits to
+  main
+- **Branch naming**: Use descriptive prefixes like `feature/`, `fix/`, `docs/`,
+  `test/`
 
 #### Typical Development Flow
 
@@ -47,7 +50,8 @@ git branch -D feature/add-new-tool
 
 ### Code Quality Standards
 
-- Run `uv run all-checks` before committing (includes lint, format, type-check, test)
+- Run `uv run all-checks` before committing (includes lint, format, type-check,
+  test)
 - Use `uv run ruff check` for linting
 - Use `uv run ruff format` for formatting
 - Use `uv run mypy src/` for type checking
@@ -60,7 +64,8 @@ git branch -D feature/add-new-tool
   collapsible sections; use markdown syntax for all other formatting
 - **Linting**: Use `uv run pymarkdownlnt scan docs/` for markdown validation
 - **Formatting**: Use `uv run mdformat docs/` to auto-format markdown files
-- **Pre-commit**: Both tools integrated in pre-commit hooks for automatic checking
+- **Pre-commit**: Both tools integrated in pre-commit hooks for automatic
+  checking
 
 ### Testing Approach
 
@@ -87,7 +92,8 @@ git branch -D feature/add-new-tool
 ### Type Checking Guidelines
 
 - Avoid using `Any` when a more specific type can be declared
-- Be especially sparing in using `Any` as a function return type or dict datatype
+- Be especially sparing in using `Any` as a function return type or dict
+  datatype
 - Prefer specific types like `dict[str, str]` over `dict[str, Any]`
 - Use union types when multiple specific types are acceptable
 - Consider using TypedDict for structured dictionary returns
@@ -96,7 +102,8 @@ git branch -D feature/add-new-tool
 
 - All environment variables use `DATABEAK_` prefix
 - Configuration centralized in `DataBeakSettings` class in `csv_session.py`
-- Default values defined in the Settings class, not scattered `os.getenv()` calls
+- Default values defined in the Settings class, not scattered `os.getenv()`
+  calls
 
 ### Architecture Notes
 
