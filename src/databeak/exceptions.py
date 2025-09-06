@@ -1,4 +1,4 @@
-"""Custom exceptions for CSV Editor MCP Server."""
+"""Custom exceptions for DataBeak MCP Server."""
 
 from __future__ import annotations
 
@@ -6,10 +6,10 @@ from typing import Any
 
 
 class CSVEditorError(Exception):
-    """Base exception for CSV Editor operations."""
+    """Base exception for DataBeak operations."""
 
     def __init__(self, message: str, error_code: str | None = None, details: dict | None = None):
-        """Initialize CSV Editor error."""
+        """Initialize DataBeak error."""
         super().__init__(message)
         self.message = message
         self.error_code = error_code
