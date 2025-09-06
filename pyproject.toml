@@ -307,6 +307,12 @@ title = "DataBeak Coverage Report"
 output = "coverage.json"
 pretty_print = true
 
+# Markdown formatting
+[tool.mdformat]
+wrap = 80
+number = true
+end_of_line = "lf"
+
 # Documentation
 [tool.mkdocs]
 site_name = "DataBeak"
@@ -317,6 +323,9 @@ repo_name = "databeak"
 
 [dependency-groups]
 dev = [
+    "mdformat>=0.7.22",
+    "mdformat-frontmatter>=2.0.8",
+    "mdformat-gfm>=0.4.1",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.18",
     "mkdocs-mermaid2-plugin>=1.2.2",
@@ -324,6 +333,7 @@ dev = [
     "mypy>=1.17.1",
     "pandas-stubs>=2.3.0",
     "pre-commit>=4.3.0",
+    "pymarkdownlnt>=0.9.32",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.1.0",
     "pytest-cov>=6.2.1",

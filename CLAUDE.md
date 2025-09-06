@@ -52,9 +52,15 @@ git branch -D feature/add-new-tool
 - Use `uv run ruff format` for formatting
 - Use `uv run mypy src/` for type checking
 - Maintain test coverage above 80%
-- **Markdown line length**: Keep lines under 80 characters for readability
+
+### Markdown Standards
+
+- **Line length**: Keep lines under 80 characters for readability
 - **HTML in Markdown**: Only `<details>` and `<summary>` tags allowed for
   collapsible sections; use markdown syntax for all other formatting
+- **Linting**: Use `uv run pymarkdownlnt scan docs/` for markdown validation
+- **Formatting**: Use `uv run mdformat docs/` to auto-format markdown files
+- **Pre-commit**: Both tools integrated in pre-commit hooks for automatic checking
 
 ### Testing Approach
 
@@ -111,6 +117,10 @@ uv run all-checks      # Full quality check pipeline
 
 # Version management
 uv run sync-versions   # Sync version numbers across files
+
+# Markdown quality
+uv run mdformat docs/              # Auto-format markdown files
+uv run pymarkdownlnt scan docs/    # Lint markdown files
 
 # Documentation
 uv run mkdocs build       # Build MkDocs site
