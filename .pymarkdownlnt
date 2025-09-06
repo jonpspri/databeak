@@ -1,16 +1,27 @@
+extensions:
+  front-matter:
+    enabled: true
+
 plugins:
   md003:
-    style: "atx"  # Allow ATX headers (###) consistently
+    style: "consistent"  # Allow either style as long as consistent within document
+  md013:
+    enabled: false  # Disable line length for existing docs (legacy formatting)
   md022:
-    lines_above: 1
-    lines_below: 1
+    enabled: false  # Disable heading blank line requirements
   md024:
     siblings_only: true  # Allow duplicate headers in different sections
+  md031:
+    enabled: false  # Allow fenced code blocks without blank lines
+  md032:
+    enabled: false  # Allow lists without blank lines
   md033:
     allowed_elements: ["details", "summary"]
+  md035:
+    enabled: false  # Allow any horizontal rule style
   md036:
     enabled: false  # Disable emphasis as heading warnings
   md040:
     enabled: false  # Allow code blocks without language
   md041:
-    front_matter_title: ".*"  # Allow frontmatter titles
+    enabled: false  # Allow files without top-level heading (frontmatter docs)

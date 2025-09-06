@@ -162,13 +162,13 @@ Edit `~/.config/zed/settings.json`:
 
 Configure DataBeak behavior with these environment variables:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size in MB |
-| `DATABEAK_CSV_HISTORY_DIR` | "." | History directory path |
-| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout in seconds |
-| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
+| Variable                    | Default | Description                |
+| --------------------------- | ------- | -------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size in MB    |
+| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History directory path     |
+| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout in seconds |
+| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size      |
+| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save           |
 
 ## Verification
 
@@ -196,8 +196,8 @@ mcp-inspector uvx --from \
 ### Verify in Your AI Client
 
 1. **Claude Desktop**: Look for "databeak" in the MCP servers list
-2. **VS Code**: Check the extension's MCP panel
-3. **Test Command**: Try asking your AI to "list available CSV tools"
+1. **VS Code**: Check the extension's MCP panel
+1. **Test Command**: Try asking your AI to "list available CSV tools"
 
 ## Troubleshooting
 
@@ -242,11 +242,11 @@ Now that DataBeak is installed:
 
 1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Learn the
    basics
-2. **[API Reference](api/index.md)** - Explore all available tools
-3. **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
+1. **[API Reference](api/index.md)** - Explore all available tools
+1. **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
    - See real-world use cases
 
----
+______________________________________________________________________
 
 **Installation complete!** Your AI assistant now has powerful data
 manipulation capabilities.

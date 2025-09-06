@@ -14,11 +14,11 @@ replacing generic `Any` types with specific, structured type definitions.
 ## Core Responsibilities
 
 1. **Identify problematic Any usage** in function returns and dictionary types
-2. **Create structured TypedDict definitions** for DataBeak's common patterns
-3. **Improve MCP tool type annotations** following DataBeak's operation result
+1. **Create structured TypedDict definitions** for DataBeak's common patterns
+1. **Improve MCP tool type annotations** following DataBeak's operation result
    patterns
-4. **Optimize session management types** for CSV data handling
-5. **Enhance DataFrame operation types** with pandas integration
+1. **Optimize session management types** for CSV data handling
+1. **Enhance DataFrame operation types** with pandas integration
 
 ## DataBeak Type Architecture Understanding
 
@@ -362,12 +362,12 @@ uv run mypy src/databeak/ | grep -c "error:"
 Type optimization succeeds when:
 
 1. **Reduced Any Usage**: Measurable reduction in `Any` type annotations
-2. **No New MyPy Errors**: Type improvements don't break existing type checking
-3. **Better Structure**: Operation results use TypedDict instead of generic
+1. **No New MyPy Errors**: Type improvements don't break existing type checking
+1. **Better Structure**: Operation results use TypedDict instead of generic
    dicts
-4. **Maintained Functionality**: All MCP tools continue working correctly
-5. **Enhanced IDE Support**: Better autocomplete and error detection
-6. **Clear API Contracts**: Function signatures clearly indicate expected data
+1. **Maintained Functionality**: All MCP tools continue working correctly
+1. **Enhanced IDE Support**: Better autocomplete and error detection
+1. **Clear API Contracts**: Function signatures clearly indicate expected data
    structures
 
 ## Common Anti-Patterns to Fix
@@ -375,31 +375,31 @@ Type optimization succeeds when:
 ### High Priority
 
 1. **Generic Operation Results**: `-> dict[str, Any]` for structured responses
-2. **Configuration Parameters**: `config: dict[str, Any]` for known structures
-3. **Error Returns**: Unstructured error dictionaries
-4. **Statistics Results**: `Any` values in numerical analysis results
+1. **Configuration Parameters**: `config: dict[str, Any]` for known structures
+1. **Error Returns**: Unstructured error dictionaries
+1. **Statistics Results**: `Any` values in numerical analysis results
 
 ### Medium Priority
 
 1. **List Elements**: `list[Any]` where element type is known
-2. **Optional Complex Types**: `dict[str, Any] | None` that could be structured
-3. **Function Parameters**: Generic dictionaries for structured input
+1. **Optional Complex Types**: `dict[str, Any] | None` that could be structured
+1. **Function Parameters**: Generic dictionaries for structured input
 
 ### Low Priority (Keep Any if truly needed)
 
 1. **Dynamic JSON**: Truly dynamic data from external sources
-2. **Backward Compatibility**: Where specific types would break existing APIs
-3. **Complex Union Types**: Where the union would be more complex than Any
+1. **Backward Compatibility**: Where specific types would break existing APIs
+1. **Complex Union Types**: Where the union would be more complex than Any
 
 ## Integration with DataBeak Architecture
 
 The type optimizer must understand:
 
 1. **FastMCP Integration**: Tool functions use `@mcp.tool` decorators
-2. **Session Management**: All operations are session-based with cleanup
-3. **Pandas Integration**: DataFrame operations with null handling
-4. **Pydantic Models**: Existing validation patterns in session management
-5. **Error Handling**: DataBeak's custom exception hierarchy
+1. **Session Management**: All operations are session-based with cleanup
+1. **Pandas Integration**: DataFrame operations with null handling
+1. **Pydantic Models**: Existing validation patterns in session management
+1. **Error Handling**: DataBeak's custom exception hierarchy
 
 This ensures type improvements align with DataBeak's architecture and don't
 break the MCP server functionality or session-based data operations.

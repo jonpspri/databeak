@@ -397,8 +397,8 @@ async def get_table_schema(
 
 - [ ] Support XLSX files as first-class input format
 - [ ] Database connectivity with 3+ engines (PostgreSQL, SQLite, MySQL)
-- [ ] Memory usage <50% of current for equivalent operations
-- [ ] Build time remains <1 second
+- [ ] Memory usage \<50% of current for equivalent operations
+- [ ] Build time remains \<1 second
 - [ ] Test coverage maintains >80%
 
 ### **User Experience Metrics**
@@ -499,8 +499,8 @@ class PerformanceBaseline:
 ### **High-Risk Areas**
 
 1. **Session Management Changes**: Use adapter pattern to maintain compatibility
-2. **Tool Interface Updates**: Maintain existing signatures, add new overloads
-3. **Performance Regressions**: Continuous benchmarking during refactoring
+1. **Tool Interface Updates**: Maintain existing signatures, add new overloads
+1. **Performance Regressions**: Continuous benchmarking during refactoring
 
 ### **Rollback Plans**
 
@@ -514,10 +514,10 @@ class PerformanceBaseline:
 #### **Mandatory Steps for Each Refactoring**
 
 1. **Pre-work**: Establish >90% test coverage for target area
-2. **During work**: Run tests continuously (`uv run pytest --lf`)
-3. **Post-work**: Full regression suite + performance validation
-4. **Documentation**: Update tests to reflect new patterns
-5. **Review**: Code review focusing on backward compatibility
+1. **During work**: Run tests continuously (`uv run pytest --lf`)
+1. **Post-work**: Full regression suite + performance validation
+1. **Documentation**: Update tests to reflect new patterns
+1. **Review**: Code review focusing on backward compatibility
 
 #### **Continuous Validation**
 
@@ -533,12 +533,12 @@ uv run all-checks               # Code quality standards
 ## Next Steps
 
 1. **Get stakeholder approval** for refactoring approach and timeline
-2. **Create feature branch** for architecture refactoring work
-3. **Begin Phase 1** with tool registration decorator implementation
-4. **Set up feature flags** for gradual rollout of new capabilities
-5. **Establish performance baselines** for regression detection
+1. **Create feature branch** for architecture refactoring work
+1. **Begin Phase 1** with tool registration decorator implementation
+1. **Set up feature flags** for gradual rollout of new capabilities
+1. **Establish performance baselines** for regression detection
 
----
+______________________________________________________________________
 
 **Conclusion**: This refactoring plan provides a clear path to transform DataBeak
 into a multi-format data platform while preserving its strengths in session

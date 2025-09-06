@@ -134,13 +134,13 @@ Filter operations support complex conditions:
 
 All tools respect these environment variables:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
-| `DATABEAK_CSV_HISTORY_DIR` | "." | History storage location |
-| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
-| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
+| Variable                    | Default | Purpose                   |
+| --------------------------- | ------- | ------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
+| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
+| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
+| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size     |
+| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save          |
 
 ## Advanced Features
 
@@ -170,7 +170,7 @@ Complete operation tracking:
 - Operation metadata and timestamps
 - Restore to any point in history
 
----
+______________________________________________________________________
 
 **For detailed examples and tutorials, see the
 [Quick Start Guide](../tutorials/quickstart.md)**

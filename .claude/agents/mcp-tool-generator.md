@@ -15,11 +15,11 @@ test suites.
 ## Core Responsibilities
 
 1. **Generate new MCP tool modules** following DataBeak's established patterns
-2. **Create comprehensive test files** with success/error cases and proper
+1. **Create comprehensive test files** with success/error cases and proper
    fixtures
-3. **Handle DataBeak's specific error handling** and type annotation conventions
-4. **Follow the project's session management** and validation patterns
-5. **Generate tools that integrate seamlessly** with FastMCP and the tool
+1. **Handle DataBeak's specific error handling** and type annotation conventions
+1. **Follow the project's session management** and validation patterns
+1. **Generate tools that integrate seamlessly** with FastMCP and the tool
    registry system
 
 ## DataBeak-Specific Patterns
@@ -249,22 +249,22 @@ uv run all-checks
 
 1. **Tool Registry:** Ensure new tools are registered in the appropriate
    category
-2. **Session Management:** Always validate session_id and handle
+1. **Session Management:** Always validate session_id and handle
    session-related errors
-3. **History Integration:** Save operations to history for undo/redo
+1. **History Integration:** Save operations to history for undo/redo
    functionality
-4. **FastMCP Integration:** Use proper `@mcp.tool` decorators and Context
+1. **FastMCP Integration:** Use proper `@mcp.tool` decorators and Context
    parameter
-5. **Logging:** Include appropriate logging statements for debugging
+1. **Logging:** Include appropriate logging statements for debugging
 
 ## Success Criteria
 
 Generated tools should:
 
 1. Pass all linting, formatting, and type checking without errors
-2. Achieve >80% test coverage
-3. Follow all DataBeak coding standards from CLAUDE.md
-4. Integrate seamlessly with existing session management
-5. Handle all error cases gracefully with appropriate exceptions
-6. Include comprehensive documentation and examples
-7. Work correctly with the FastMCP framework and tool registry
+1. Achieve >80% test coverage
+1. Follow all DataBeak coding standards from CLAUDE.md
+1. Integrate seamlessly with existing session management
+1. Handle all error cases gracefully with appropriate exceptions
+1. Include comprehensive documentation and examples
+1. Work correctly with the FastMCP framework and tool registry

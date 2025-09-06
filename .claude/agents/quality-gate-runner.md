@@ -14,11 +14,11 @@ maintaining code standards.
 ## Core Responsibilities
 
 1. **Execute complete quality pipeline** using DataBeak's UV-based toolchain
-2. **Identify and categorize failures** with specific file paths and line
+1. **Identify and categorize failures** with specific file paths and line
    numbers
-3. **Provide actionable fix recommendations** with code examples and commands
-4. **Verify quality standards compliance** (80% coverage, type safety, linting)
-5. **Handle DataBeak-specific issues** (session management, MCP tools,
+1. **Provide actionable fix recommendations** with code examples and commands
+1. **Verify quality standards compliance** (80% coverage, type safety, linting)
+1. **Handle DataBeak-specific issues** (session management, MCP tools,
    pandas operations)
 
 ## DataBeak Quality Pipeline
@@ -367,11 +367,11 @@ grep -r "version.*=" pyproject.toml src/databeak/__init__.py
 Quality gate passes when:
 
 1. **All linting checks pass** (0 ruff errors)
-2. **Code formatting is consistent** (ruff format --check passes)
-3. **Type checking passes** (0 mypy errors)
-4. **All tests pass** (100% test success rate)
-5. **Coverage meets threshold** (≥80% overall coverage)
-6. **No critical security issues** (if security scanning is enabled)
+1. **Code formatting is consistent** (ruff format --check passes)
+1. **Type checking passes** (0 mypy errors)
+1. **All tests pass** (100% test success rate)
+1. **Coverage meets threshold** (≥80% overall coverage)
+1. **No critical security issues** (if security scanning is enabled)
 
 ## Quality Report Format
 

@@ -70,13 +70,13 @@ src/databeak/
 
 All configuration uses the `DATABEAK_` prefix:
 
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
-| `DATABEAK_CSV_HISTORY_DIR` | "." | History storage location |
-| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
-| `DATABEAK_CHUNK_SIZE` | 10000 | Processing chunk size |
-| `DATABEAK_AUTO_SAVE` | true | Enable auto-save |
+| Variable                    | Default | Purpose                   |
+| --------------------------- | ------- | ------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
+| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
+| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
+| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size     |
+| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save          |
 
 ## MCP Integration
 
@@ -90,21 +90,21 @@ The server implements the Model Context Protocol standard:
 ### Tool Categories
 
 1. **I/O Operations** - Load/export data in multiple formats
-2. **Data Manipulation** - Transform, filter, sort, and modify data
-3. **Data Analysis** - Statistics, correlations, outliers, profiling
-4. **Data Validation** - Schema validation, quality checking, anomaly
+1. **Data Manipulation** - Transform, filter, sort, and modify data
+1. **Data Analysis** - Statistics, correlations, outliers, profiling
+1. **Data Validation** - Schema validation, quality checking, anomaly
    detection
-5. **Session Management** - Auto-save, history, undo/redo operations
-6. **System Tools** - Health monitoring and server information
+1. **Session Management** - Auto-save, history, undo/redo operations
+1. **System Tools** - Health monitoring and server information
 
 ## Design Principles
 
 1. **Type Safety**: Full type annotations with Pydantic validation
-2. **Modularity**: Clear separation of concerns across modules
-3. **Performance**: Streaming operations for large datasets
-4. **Reliability**: Comprehensive error handling and logging
-5. **Usability**: Simple installation and configuration
-6. **Maintainability**: Modern tooling and clear documentation
+1. **Modularity**: Clear separation of concerns across modules
+1. **Performance**: Streaming operations for large datasets
+1. **Reliability**: Comprehensive error handling and logging
+1. **Usability**: Simple installation and configuration
+1. **Maintainability**: Modern tooling and clear documentation
 
 ## Development Workflow
 
@@ -139,7 +139,7 @@ uv run all-checks    # Lint, format, type-check, test
 - **Cloud storage support** for remote data sources
 - **Advanced visualization tools** for data exploration
 
----
+______________________________________________________________________
 
 **For implementation details and contributing guidelines, see
 [CONTRIBUTING.md](https://github.com/jonpspri/databeak/blob/main/CONTRIBUTING.md)**

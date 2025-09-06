@@ -465,9 +465,9 @@ query_database(connection, query, ...) -> ...    # ✅ New, optional
 ### **Gradual Adoption Path**
 
 1. **Phase 1**: Users can continue using existing CSV workflows
-2. **Phase 2**: Excel tools available as optional enhancement
-3. **Phase 3**: Database connectivity for advanced users
-4. **Phase 4**: Cross-format workflows for power users
+1. **Phase 2**: Excel tools available as optional enhancement
+1. **Phase 3**: Database connectivity for advanced users
+1. **Phase 4**: Cross-format workflows for power users
 
 ## Environment Variable Extensions
 
@@ -537,17 +537,17 @@ class ExcelSecurityValidator:
 
 Current CSV performance baselines to maintain:
 
-- **Small files** (<1MB): <100ms processing
-- **Medium files** (1-100MB): <5s processing
-- **Large files** (100MB-1GB): <30s with chunking
-- **Memory usage**: <2x file size for processing
+- **Small files** (\<1MB): \<100ms processing
+- **Medium files** (1-100MB): \<5s processing
+- **Large files** (100MB-1GB): \<30s with chunking
+- **Memory usage**: \<2x file size for processing
 
 ### **Multi-Format Performance Targets**
 
-- **Excel files**: <150ms for small files (50% overhead acceptable)
-- **Database queries**: <500ms for typical queries (<10K rows)
-- **Cross-format operations**: <20% overhead vs single-format
-- **Streaming operations**: Process 10GB+ files with <1GB memory
+- **Excel files**: \<150ms for small files (50% overhead acceptable)
+- **Database queries**: \<500ms for typical queries (\<10K rows)
+- **Cross-format operations**: \<20% overhead vs single-format
+- **Streaming operations**: Process 10GB+ files with \<1GB memory
 
 ### **Monitoring and Metrics**
 

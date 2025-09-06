@@ -265,22 +265,22 @@ def validate_data_schema(df: pd.DataFrame, schema: dict) -> ValidationResult:
 ### **High Coupling Areas**
 
 1. **Session → pandas**: CSVSession directly manipulates DataFrames
-2. **Tools → CSVSession**: All tools assume CSV session type
-3. **Operations → pandas**: Direct DataFrame API usage throughout
+1. **Tools → CSVSession**: All tools assume CSV session type
+1. **Operations → pandas**: Direct DataFrame API usage throughout
 
 ### **Low Coupling Areas**
 
 1. **MCP layer**: Well isolated from business logic
-2. **Error handling**: Consistent patterns across modules
-3. **Configuration**: Centralized settings management
+1. **Error handling**: Consistent patterns across modules
+1. **Configuration**: Centralized settings management
 
 ### **Abstraction Opportunities**
 
 1. **Data source abstraction**: Hide format details from sessions
-2. **Operation interfaces**: Abstract DataFrame operations for other formats
-3. **Result standardization**: Consistent return types across all operations
+1. **Operation interfaces**: Abstract DataFrame operations for other formats
+1. **Result standardization**: Consistent return types across all operations
 
----
+______________________________________________________________________
 
 This analysis reveals a well-architected system with clear separation of concerns
 but limited by CSV-centric assumptions. The proposed refactoring will transform

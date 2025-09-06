@@ -16,10 +16,10 @@ improvements.
 **Before beginning ANY refactoring work, each phase MUST:**
 
 1. **Establish comprehensive regression test suite** for existing functionality
-2. **Achieve >90% test coverage** for code areas being refactored
-3. **Create integration tests** that validate end-to-end workflows
-4. **Document current behavior** through tests to prevent unintended changes
-5. **Set up continuous testing** to catch regressions immediately
+1. **Achieve >90% test coverage** for code areas being refactored
+1. **Create integration tests** that validate end-to-end workflows
+1. **Document current behavior** through tests to prevent unintended changes
+1. **Set up continuous testing** to catch regressions immediately
 
 #### **Required Test Categories**
 
@@ -292,7 +292,7 @@ touch src/databeak/sources/database/{postgresql.py,mysql.py}
 
 #### **Performance Targets**
 
-- Process 10GB CSV files with <2GB memory usage
+- Process 10GB CSV files with \<2GB memory usage
 - Handle 100-sheet Excel workbooks efficiently
 - Database result sets >1M rows with streaming
 - 50% reduction in memory usage for large operations
@@ -336,8 +336,8 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 *Weeks 1-3 | High Value, Low Risk*
 
 1. **Tool Registration Cleanup** - Eliminate boilerplate, easier maintenance
-2. **Format Constants** - Single source of truth for supported formats
-3. **Data Source Abstraction** - Foundation for all future extensions
+1. **Format Constants** - Single source of truth for supported formats
+1. **Data Source Abstraction** - Foundation for all future extensions
 
 **Benefits**:
 
@@ -350,7 +350,7 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 *Weeks 4-7 | High Value, Medium Risk*
 
 1. **Excel Integration** - Addresses major user request for XLSX support
-2. **Database Connectivity** - Enables enterprise data workflows
+1. **Database Connectivity** - Enables enterprise data workflows
 
 **Benefits**:
 
@@ -363,8 +363,8 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 *Weeks 8-10 | Medium Value, Low Risk*
 
 1. **Streaming Processing** - Handle larger datasets
-2. **Cross-format workflows** - Advanced user scenarios
-3. **Performance optimization** - Production-ready scalability
+1. **Cross-format workflows** - Advanced user scenarios
+1. **Performance optimization** - Production-ready scalability
 
 **Benefits**:
 
@@ -427,9 +427,9 @@ async def load_excel(...):
 #### **Gradual Deployment Strategy**
 
 1. **Development**: All new features behind flags
-2. **Alpha**: Enable for internal testing
-3. **Beta**: Enable for select power users
-4. **Production**: Full rollout with monitoring
+1. **Alpha**: Enable for internal testing
+1. **Beta**: Enable for select power users
+1. **Production**: Full rollout with monitoring
 
 ## Success Metrics
 
@@ -451,7 +451,7 @@ async def load_excel(...):
 ### **Architectural Metrics**
 
 - [ ] **Modularity**: Lower coupling scores across modules
-- [ ] **Extensibility**: New format can be added in <1 week
+- [ ] **Extensibility**: New format can be added in \<1 week
 - [ ] **Maintainability**: Fewer files to touch for feature additions
 - [ ] **Testability**: Isolated components with dependency injection
 
@@ -460,10 +460,10 @@ async def load_excel(...):
 ### **Immediate Actions**
 
 1. **Get architectural approval** for refactoring approach
-2. **Create feature branch** for Phase 1 implementation
-3. **Set up feature flags** in configuration system
-4. **Establish performance baselines** for regression detection
-5. **Begin Week 1 deliverables** with tool registration decorator
+1. **Create feature branch** for Phase 1 implementation
+1. **Set up feature flags** in configuration system
+1. **Establish performance baselines** for regression detection
+1. **Begin Week 1 deliverables** with tool registration decorator
 
 ### **Long-term Considerations**
 
@@ -472,7 +472,7 @@ async def load_excel(...):
 - **Documentation**: Comprehensive guides for each format
 - **Community feedback**: Gather user input on format priorities
 
----
+______________________________________________________________________
 
 **Recommendation**: Begin implementation immediately with Phase 1. The
 incremental approach minimizes risk while delivering value at each phase.

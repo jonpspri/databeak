@@ -99,32 +99,32 @@ site/                                  # Generated static site (gitignored)
 ### **Option A: Parallel Deployment (Recommended)**
 
 1. Deploy MkDocs to test subdomain or path
-2. Validate all functionality with users
-3. Switch DNS/configuration when ready
-4. Keep Docusaurus as fallback
+1. Validate all functionality with users
+1. Switch DNS/configuration when ready
+1. Keep Docusaurus as fallback
 
 ### **Option B: Direct Replacement**
 
 1. Disable current Docusaurus deployment
-2. Enable MkDocs GitHub Actions workflow
-3. Deploy immediately to production
-4. Monitor for issues
+1. Enable MkDocs GitHub Actions workflow
+1. Deploy immediately to production
+1. Monitor for issues
 
 ### **Option C: Feature Flag Approach**
 
 1. Deploy both systems
-2. Use feature flags or A/B testing
-3. Gradually migrate users
-4. Full cutover when confident
+1. Use feature flags or A/B testing
+1. Gradually migrate users
+1. Full cutover when confident
 
 ## Rollback Strategy
 
 If issues arise:
 
 1. **Disable MkDocs workflow**: Stop GitHub Actions deployment
-2. **Re-enable Docusaurus**: Existing system unchanged in `docs/` directory
-3. **DNS/URL revert**: Point back to Docusaurus build
-4. **Investigate issues**: Debug while maintaining user access
+1. **Re-enable Docusaurus**: Existing system unchanged in `docs/` directory
+1. **DNS/URL revert**: Point back to Docusaurus build
+1. **Investigate issues**: Debug while maintaining user access
 
 ## Quality Assurance
 
