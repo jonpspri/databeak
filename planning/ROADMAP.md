@@ -291,11 +291,6 @@ Enhance development workflow and debugging capabilities.
 
 #### 5.3 Documentation Improvements
 
-- MkDocs Migration: Replace Docusaurus with MkDocs Material
-  - Pure Python documentation tooling
-  - Automatic API documentation generation
-  - Simplified maintenance workflow
-  - Better integration with Python ecosystem
 - Architecture decision records
 - API design guidelines
 - Troubleshooting runbooks
@@ -312,7 +307,6 @@ Enhance development workflow and debugging capabilities.
 
 - Comprehensive debugging toolkit
 - Streamlined development environment
-- MkDocs-based documentation system
 - Enhanced documentation suite
 - Automated quality assurance pipeline
 
