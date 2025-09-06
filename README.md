@@ -74,21 +74,21 @@ Once configured, ask your AI assistant:
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024 | Maximum file size |
-| `DATABEAK_CSV_HISTORY_DIR` | "." | History storage location |
-| `DATABEAK_SESSION_TIMEOUT` | 3600 | Session timeout (seconds) |
+| Variable                    | Default | Description               |
+| --------------------------- | ------- | ------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
+| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
+| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
 
 ## Contributing
 
 We welcome contributions! Please:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with tests
-4. Run quality checks: `uv run all-checks`
-5. Submit a pull request
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+1. Make your changes with tests
+1. Run quality checks: `uv run all-checks`
+1. Submit a pull request
 
 **Note**: All changes must go through pull requests. Direct commits to `main`
 are blocked by pre-commit hooks.

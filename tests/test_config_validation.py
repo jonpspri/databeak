@@ -118,9 +118,9 @@ class TestCoverageConfiguration:
                 path = Path(pattern)
                 # For this test, we allow non-existent paths if they're clearly patterns
                 if not path.exists():
-                    assert "*" in pattern or pattern.startswith(
-                        "src/"
-                    ), f"Non-existent specific path in coverage omit: {pattern}"
+                    assert "*" in pattern or pattern.startswith("src/"), (
+                        f"Non-existent specific path in coverage omit: {pattern}"
+                    )
 
     def test_coverage_source_paths_exist(self):
         """Test that coverage source paths exist."""

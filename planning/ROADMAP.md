@@ -1,6 +1,6 @@
 # DataBeak Development Roadmap
 
-*Strategic Development Phases for DataBeak 1.1.0 - 2.0.0*
+Strategic Development Phases for DataBeak 1.1.0 - 2.0.0
 
 ## Executive Summary
 
@@ -17,11 +17,11 @@ with clear success criteria and clean boundaries for pull requests.
 - **Performance**: Good for typical datasets, needs optimization for large files
 - **Documentation**: Comprehensive user docs, moderate internal documentation
 
----
+______________________________________________________________________
 
 ## Phase 1: Foundation Strengthening (v1.1.0)
 
-**Priority: Critical | Duration: 2-3 weeks**
+Priority: Critical | Duration: 2-3 weeks
 
 ### Objectives
 
@@ -39,7 +39,7 @@ bug fixes.
 
 #### 1.1 Test Coverage Expansion
 
-- **Critical Modules** (0-37% coverage):
+- Critical Modules (0-37% coverage):
   - `data_prompts.py` (0% � 90%)
   - `csv_resources.py` (0% � 85%)
   - `history_operations.py` (6% � 80%)
@@ -62,13 +62,13 @@ bug fixes.
 
 #### 1.4 Development Tooling Modernization (PRIORITY)
 
-- **Markdown Tooling Migration**: Replace Node.js markdownlint with Python tools
+- Markdown Tooling Migration: Replace Node.js markdownlint with Python tools
   - Install PyMarkdownLnt for comprehensive linting
   - Install mdformat for automatic formatting
   - Update pre-commit configuration to pure Python
   - Remove Node.js dependencies from CI/CD
   - Update development documentation
-- **Immediate Benefits**: Simplified CI builds, consistent Python toolchain,
+- Immediate Benefits: Simplified CI builds, consistent Python toolchain,
   faster local development
 
 #### 1.5 Performance Baseline
@@ -85,11 +85,11 @@ bug fixes.
 - Performance benchmark baseline
 - Production deployment guide
 
----
+______________________________________________________________________
 
 ## Phase 2: Architecture Refinement (v1.2.0)
 
-**Priority: High | Duration: 3-4 weeks**
+Priority: High | Duration: 3-4 weeks
 
 ### Objectives
 
@@ -106,7 +106,7 @@ Improve maintainability and type safety while reducing technical debt.
 
 #### 2.1 Module Refactoring
 
-- **Break down `transformations.py`** (1,940 lines):
+- Break down `transformations.py` (1,940 lines):
   - Extract column operations � `column_operations.py`
   - Extract row operations � `row_operations.py`
   - Extract aggregation logic � `aggregations.py`
@@ -121,11 +121,11 @@ Improve maintainability and type safety while reducing technical debt.
 
 #### 2.3 Data Source Abstraction Layer
 
-- **DataSource Protocol**: Create format-agnostic data source interface
-- **Tool Registration System**: Implement `@register_mcp_tool` decorator
-- **Format Constants Consolidation**: Single source of truth for supported formats
-- **Session Factory Pattern**: Format-appropriate session creation
-- **Plugin Architecture Foundation**: Extensible format support system
+- DataSource Protocol: Create format-agnostic data source interface
+- Tool Registration System: Implement `@register_mcp_tool` decorator
+- Format Constants Consolidation: Single source of truth for supported formats
+- Session Factory Pattern: Format-appropriate session creation
+- Plugin Architecture Foundation: Extensible format support system
 
 #### 2.4 Dependency Management
 
@@ -148,11 +148,11 @@ Improve maintainability and type safety while reducing technical debt.
 - Dependency injection framework
 - Improved error handling system
 
----
+______________________________________________________________________
 
 ## Phase 3: Feature Completeness (v1.3.0)
 
-**Priority: High | Duration: 3-4 weeks**
+Priority: High | Duration: 3-4 weeks
 
 ### Objectives
 
@@ -202,11 +202,11 @@ Complete partial implementations and add high-value features for production use.
 - Multi-user collaboration system
 - Enhanced data processing capabilities
 
----
+______________________________________________________________________
 
 ## Phase 4: Performance Optimization (v1.4.0)
 
-**Priority: Medium | Duration: 2-3 weeks**
+Priority: Medium | Duration: 2-3 weeks
 
 ### Objectives
 
@@ -256,11 +256,11 @@ Optimize performance for production workloads and large datasets.
 - Comprehensive monitoring dashboard
 - Performance optimization guide
 
----
+______________________________________________________________________
 
 ## Phase 5: Developer Experience (v1.5.0)
 
-**Priority: Medium | Duration: 2-3 weeks**
+Priority: Medium | Duration: 2-3 weeks
 
 ### Objectives
 
@@ -269,7 +269,7 @@ Enhance development workflow and debugging capabilities.
 ### Success Criteria
 
 - [ ] Complete debugging toolkit available
-- [ ] Development setup time reduced to <5 minutes
+- [ ] Development setup time reduced to \<5 minutes
 - [ ] Comprehensive development documentation
 - [ ] Automated code quality enforcement
 
@@ -291,7 +291,7 @@ Enhance development workflow and debugging capabilities.
 
 #### 5.3 Documentation Improvements
 
-- **MkDocs Migration**: Replace Docusaurus with MkDocs Material
+- MkDocs Migration: Replace Docusaurus with MkDocs Material
   - Pure Python documentation tooling
   - Automatic API documentation generation
   - Simplified maintenance workflow
@@ -312,15 +312,15 @@ Enhance development workflow and debugging capabilities.
 
 - Comprehensive debugging toolkit
 - Streamlined development environment
-- **MkDocs-based documentation system**
+- MkDocs-based documentation system
 - Enhanced documentation suite
 - Automated quality assurance pipeline
 
----
+______________________________________________________________________
 
 ## Phase 6: Multi-Format Support (v1.6.0)
 
-**Priority: High | Duration: 4-5 weeks**
+Priority: High | Duration: 4-5 weeks
 
 ### Objectives
 
@@ -337,37 +337,37 @@ Transform DataBeak from CSV-focused to comprehensive multi-format data platform.
 
 #### 6.1 Excel Integration
 
-- **ExcelDataSource Implementation**: Full .xlsx support with openpyxl
-- **Multi-sheet Operations**: Load, switch, and analyze multiple sheets
-- **Excel-specific MCP Tools**:
+- ExcelDataSource Implementation: Full .xlsx support with openpyxl
+- Multi-sheet Operations: Load, switch, and analyze multiple sheets
+- Excel-specific MCP Tools:
   - `load_excel`, `list_excel_sheets`, `switch_excel_sheet`
   - `export_to_excel`, `merge_excel_sheets`
-- **ExcelSession Type**: Sheet-aware session management
-- **Workbook Metadata Extraction**: Schema and structure analysis
+- ExcelSession Type: Sheet-aware session management
+- Workbook Metadata Extraction: Schema and structure analysis
 
 #### 6.2 Database Connectivity
 
-- **Database Connection Management**: Async SQLAlchemy with pooling
-- **Core Database Operations**:
+- Database Connection Management: Async SQLAlchemy with pooling
+- Core Database Operations:
   - `connect_database`, `query_database`
   - `list_database_tables`, `describe_table`
   - `export_to_database`
-- **SQL Query Builder**: Safe query construction with parameter binding
-- **Database Sources**: SQLite, PostgreSQL, MySQL support
-- **DatabaseSession Type**: Query history and transaction support
+- SQL Query Builder: Safe query construction with parameter binding
+- Database Sources: SQLite, PostgreSQL, MySQL support
+- DatabaseSession Type: Query history and transaction support
 
 #### 6.3 Cross-Format Workflows
 
-- **Format Bridge Operations**: Transfer data between different session types
-- **Analysis Pipelines**: Multi-source data integration
-- **Streaming Processing**: Memory-efficient large dataset handling
-- **Format Conversion Utilities**: Seamless data format transitions
+- Format Bridge Operations: Transfer data between different session types
+- Analysis Pipelines: Multi-source data integration
+- Streaming Processing: Memory-efficient large dataset handling
+- Format Conversion Utilities: Seamless data format transitions
 
 #### 6.4 Enhanced Configuration
 
-- **Multi-format Settings**: Excel, Database, and cross-format configurations
-- **Security Framework**: Database connection validation and SQL injection prevention
-- **Performance Optimization**: Connection pooling and query optimization
+- Multi-format Settings: Excel, Database, and cross-format configurations
+- Security Framework: Database connection validation and SQL injection prevention
+- Performance Optimization: Connection pooling and query optimization
 
 ### Deliverables
 
@@ -376,11 +376,11 @@ Transform DataBeak from CSV-focused to comprehensive multi-format data platform.
 - Cross-format data processing capabilities
 - Streaming large dataset support
 
----
+______________________________________________________________________
 
 ## Phase 7: Advanced Features (v2.0.0)
 
-**Priority: Low | Duration: 4-5 weeks**
+Priority: Low | Duration: 4-5 weeks
 
 ### Objectives
 
@@ -430,7 +430,7 @@ Add advanced capabilities that differentiate DataBeak in the market.
 - Plugin development framework
 - Enterprise security suite
 
----
+______________________________________________________________________
 
 ## Risk Assessment and Mitigation
 
@@ -438,16 +438,16 @@ Add advanced capabilities that differentiate DataBeak in the market.
 
 1. **Large Module Refactoring**: May introduce regressions
    - *Mitigation*: Comprehensive test coverage before refactoring
-2. **Performance Optimization**: Could destabilize existing functionality
+1. **Performance Optimization**: Could destabilize existing functionality
    - *Mitigation*: Feature flags and gradual rollout
-3. **Multi-user Features**: Complex concurrency challenges
+1. **Multi-user Features**: Complex concurrency challenges
    - *Mitigation*: Phased implementation with extensive testing
 
 ### Dependencies and Blockers
 
-- **External Dependencies**: FastMCP, Pandas version compatibility
-- **Infrastructure**: Testing environment for performance optimization
-- **Resources**: Development capacity for parallel workstreams
+- External Dependencies: FastMCP, Pandas version compatibility
+- Infrastructure: Testing environment for performance optimization
+- Resources: Development capacity for parallel workstreams
 
 ## Success Metrics
 
@@ -465,7 +465,7 @@ Add advanced capabilities that differentiate DataBeak in the market.
 - Adoption rate: Monitor via download statistics
 - Community engagement: Contributions and issue resolution
 
----
+______________________________________________________________________
 
 ## Implementation Guidelines
 
@@ -491,7 +491,7 @@ Add advanced capabilities that differentiate DataBeak in the market.
 - Community feedback incorporation
 - Stakeholder review sessions
 
----
+______________________________________________________________________
 
 *Last Updated: September 2025*
 *Next Review: October 2025*

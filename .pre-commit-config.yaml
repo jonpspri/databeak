@@ -85,12 +85,22 @@ repos:
         args: ['-r', 'src/', '-ll', '-x', 'tests/']
         pass_filenames: false
 
-  # Markdown formatting
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
+  # Markdown formatting and linting (Python-based)
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.22
     hooks:
-      - id: markdownlint
-        args: ['--fix']
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-gfm
+          - mdformat-frontmatter
+        args: [--wrap=80]
+        exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
+
+  - repo: https://github.com/jackdewinter/pymarkdownlnt
+    rev: v0.9.32
+    hooks:
+      - id: pymarkdownlnt
+        args: [scan]
         exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
 
