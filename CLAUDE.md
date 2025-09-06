@@ -66,6 +66,8 @@ git branch -D feature/add-new-tool
 - **Formatting**: Use `uv run mdformat docs/` to auto-format markdown files
 - **Pre-commit**: Both tools integrated in pre-commit hooks for automatic
   checking
+- **README files**: Provide concise context and structure information only, not
+  project status or tracking
 
 ### Testing Approach
 
