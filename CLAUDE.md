@@ -132,3 +132,7 @@ uv run mkdocs serve       # Serve docs locally
 - Pandas for data operations
 - Session management with configurable timeouts
 - Comprehensive error handling and logging
+
+## Additional Resources
+
+- @./.claude/Claude_Code_Style_Guide.md
