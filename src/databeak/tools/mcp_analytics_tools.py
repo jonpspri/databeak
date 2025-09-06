@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
@@ -21,7 +21,7 @@ from .transformations import get_data_summary as _get_data_summary
 from .transformations import inspect_data_around as _inspect_data_around
 
 
-def register_analytics_tools(mcp: Any) -> None:
+def register_analytics_tools(mcp: FastMCP) -> None:
     """Register analytics tools with FastMCP server."""
 
     @mcp.tool
@@ -56,7 +56,7 @@ def register_analytics_tools(mcp: Any) -> None:
     async def group_by_aggregate(
         session_id: str,
         group_by: list[str],
-        aggregations: dict[str, Any],
+        aggregations: dict[str, str | list[str]],
         ctx: Context | None = None,
     ) -> dict[str, Any]:
         """Group data and apply aggregation functions."""

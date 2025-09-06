@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from ..models import ExportFormat
 from .io_operations import close_session as _close_session
@@ -16,7 +16,7 @@ from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
 
 
-def register_io_tools(mcp: Any) -> None:
+def register_io_tools(mcp: FastMCP) -> None:
     """Register I/O tools with FastMCP server."""
 
     @mcp.tool

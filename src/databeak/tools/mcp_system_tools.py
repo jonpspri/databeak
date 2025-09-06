@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from .._version import __version__
 from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
 
 
-def register_system_tools(mcp: Any) -> None:
+def register_system_tools(mcp: FastMCP) -> None:
     """Register system tools with FastMCP server."""
 
     @mcp.tool
