@@ -94,14 +94,14 @@ repos:
           - mdformat-gfm
           - mdformat-frontmatter
         args: [--wrap=80]
-        exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
+        # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
-  - repo: https://github.com/jackdewinter/pymarkdownlnt
+  - repo: https://github.com/jackdewinter/pymarkdown
     rev: v0.9.32
     hooks:
-      - id: pymarkdownlnt
-        args: [scan]
-        exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
+      - id: pymarkdown
+        args: [--config=.pymarkdownlnt, scan]
+        # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
 
   # Docstring formatting

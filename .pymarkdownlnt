@@ -1,3 +1,16 @@
 plugins:
+  md003:
+    style: "atx"  # Allow ATX headers (###) consistently
+  md022:
+    lines_above: 1
+    lines_below: 1
   md024:
-    siblings_only: true
+    siblings_only: true  # Allow duplicate headers in different sections
+  md033:
+    allowed_elements: ["details", "summary"]
+  md036:
+    enabled: false  # Disable emphasis as heading warnings
+  md040:
+    enabled: false  # Allow code blocks without language
+  md041:
+    front_matter_title: ".*"  # Allow frontmatter titles
