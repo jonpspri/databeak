@@ -14,11 +14,11 @@ test cases to achieve the project's 80%+ coverage requirement.
 ## Core Responsibilities
 
 1. **Analyze current test coverage** using DataBeak's coverage infrastructure
-2. **Identify specific untested code paths** and functions requiring test
+1. **Identify specific untested code paths** and functions requiring test
    coverage
-3. **Generate targeted test cases** following DataBeak's testing patterns
-4. **Create test stubs** for missing coverage areas with proper fixtures
-5. **Suggest coverage improvement strategies** aligned with DataBeak's
+1. **Generate targeted test cases** following DataBeak's testing patterns
+1. **Create test stubs** for missing coverage areas with proper fixtures
+1. **Suggest coverage improvement strategies** aligned with DataBeak's
    architecture
 
 ## DataBeak Testing Architecture Understanding
@@ -129,11 +129,11 @@ uv run pytest --cov=src/databeak --cov-branch --cov-report=term-missing
 Focus on these patterns when analyzing uncovered code:
 
 1. **Exception handling blocks** - Often untested error paths
-2. **Edge case branches** - Null handling, empty data, invalid parameters
-3. **Complex conditional logic** - Multi-condition if/elif chains
-4. **Async operation error paths** - Session timeouts, connection failures
-5. **Data validation branches** - Type checking, format validation
-6. **Integration points** - MCP protocol handling, pandas operations
+1. **Edge case branches** - Null handling, empty data, invalid parameters
+1. **Complex conditional logic** - Multi-condition if/elif chains
+1. **Async operation error paths** - Session timeouts, connection failures
+1. **Data validation branches** - Type checking, format validation
+1. **Integration points** - MCP protocol handling, pandas operations
 
 ### Step 3: Generate Targeted Tests
 
@@ -165,24 +165,28 @@ async def test_validates_column_exists(self, test_session):
 ### High-Priority Coverage Targets
 
 1. **Analytics Module (4.12% coverage)**
+
    - Statistical calculation error paths
    - Edge cases with null/infinite values
    - Data type validation branches
    - Complex aggregation operations
 
-2. **Validation Module (2.15% coverage)**
+1. **Validation Module (2.15% coverage)**
+
    - Schema validation error conditions
    - Data type checking branches
    - Format validation edge cases
    - Custom validation rule paths
 
-3. **Transformations Module (7.29% coverage)**
+1. **Transformations Module (7.29% coverage)**
+
    - Data transformation error handling
    - Type conversion edge cases
    - Complex transformation pipelines
    - Memory-efficient processing paths
 
-4. **IO Operations Module (11.74% coverage)**
+1. **IO Operations Module (11.74% coverage)**
+
    - File format error handling
    - Large dataset processing paths
    - Export format validation
@@ -202,7 +206,7 @@ async def test_validates_column_exists(self, test_session):
        # Test concurrent access patterns
    ```
 
-2. **Data Validation Branches**
+1. **Data Validation Branches**
 
    ```python
    async def test_invalid_data_types(self, test_session):
@@ -214,7 +218,7 @@ async def test_validates_column_exists(self, test_session):
        # Test parsing error branches
    ```
 
-3. **MCP Protocol Error Paths**
+1. **MCP Protocol Error Paths**
 
    ```python
    async def test_mcp_context_error_handling(self):
@@ -231,17 +235,17 @@ async def test_validates_column_exists(self, test_session):
 ### For New Coverage Tests
 
 1. **Analyze uncovered lines** using coverage reports
-2. **Create coverage-focused test files** following `test_*_coverage.py` pattern
-3. **Target specific code paths** with minimal, focused tests
-4. **Use appropriate fixtures** from conftest.py
-5. **Follow DataBeak error handling patterns**
+1. **Create coverage-focused test files** following `test_*_coverage.py` pattern
+1. **Target specific code paths** with minimal, focused tests
+1. **Use appropriate fixtures** from conftest.py
+1. **Follow DataBeak error handling patterns**
 
 ### For Existing Test Enhancement
 
 1. **Identify missing test scenarios** in existing test files
-2. **Add parameterized tests** for edge cases
-3. **Enhance error handling tests** with more specific assertions
-4. **Add integration test scenarios** for complex workflows
+1. **Add parameterized tests** for edge cases
+1. **Enhance error handling tests** with more specific assertions
+1. **Add integration test scenarios** for complex workflows
 
 ## Quality Assurance Commands
 
@@ -266,20 +270,20 @@ uv run pytest --cov=src/databeak --cov-report=term-missing
 Generated tests should:
 
 1. **Increase overall coverage** toward 80% target
-2. **Target specific uncovered lines** identified in coverage reports
-3. **Follow DataBeak testing patterns** (async, fixtures, error handling)
-4. **Pass all quality checks** (linting, type checking, formatting)
-5. **Maintain test performance** and not introduce flaky tests
-6. **Cover both success and error paths** comprehensively
-7. **Use appropriate test data** and session fixtures
-8. **Include clear test documentation** explaining coverage purpose
+1. **Target specific uncovered lines** identified in coverage reports
+1. **Follow DataBeak testing patterns** (async, fixtures, error handling)
+1. **Pass all quality checks** (linting, type checking, formatting)
+1. **Maintain test performance** and not introduce flaky tests
+1. **Cover both success and error paths** comprehensively
+1. **Use appropriate test data** and session fixtures
+1. **Include clear test documentation** explaining coverage purpose
 
 ## Coverage Analysis Output Format
 
 When analyzing coverage gaps, provide:
 
 1. **Current coverage percentage** for target modules
-2. **Specific uncovered line numbers** and code paths
-3. **Suggested test scenarios** to cover each gap
-4. **Priority ranking** based on code criticality
-5. **Estimated coverage improvement** from proposed tests
+1. **Specific uncovered line numbers** and code paths
+1. **Suggested test scenarios** to cover each gap
+1. **Priority ranking** based on code criticality
+1. **Estimated coverage improvement** from proposed tests

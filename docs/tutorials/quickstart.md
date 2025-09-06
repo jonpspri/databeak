@@ -48,44 +48,44 @@ For detailed column analysis:
 ## Step 3: Clean the Data
 
 ### Remove Duplicates
->
+
 > "Remove any duplicate rows from this dataset"
 
 ### Handle Missing Values
->
+
 > "Fill missing quantity values with 0 and missing customer_id values
 > with 'UNKNOWN'"
 
 ### Fix Data Types
->
+
 > "Convert the date column to datetime format"
 
 ## Step 4: Transform the Data
 
 ### Filter Data
->
+
 > "Show me only Electronics products with price greater than $100"
 
 ### Add Calculated Columns
->
+
 > "Add a total_value column that multiplies quantity by price"
 
 ### Group and Summarize
->
+
 > "Group by category and show total sales and average price for each"
 
 ## Step 5: Analyze the Data
 
 ### Statistical Analysis
->
+
 > "Calculate correlation between price and quantity"
 
 ### Outlier Detection
->
+
 > "Find any outliers in the price column using the IQR method"
 
 ### Data Quality
->
+
 > "Check the overall data quality and give me a quality score"
 
 ## Step 6: Export Results
@@ -190,7 +190,7 @@ Use undo/redo freely to experiment with different approaches
 - **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source
   code and community
 
----
+______________________________________________________________________
 
 **Congratulations!** You now know how to use DataBeak to transform your
 AI assistant into a powerful data analyst.

@@ -48,14 +48,14 @@ into powerful data analysts that can:
 
 ## Why Choose DataBeak?
 
-| Feature | DataBeak | Traditional Tools |
-|---------|-----------|------------------|
-| **AI Integration** | Native MCP protocol | Manual operations |
-| **Auto-Save** | Automatic with strategies | Manual save required |
-| **History Tracking** | Full undo/redo with snapshots | Limited or none |
-| **Session Management** | Multi-user isolated sessions | Single user |
-| **Data Validation** | Built-in quality scoring | Separate tools needed |
-| **Performance** | Handles GB+ files with chunking | Memory limitations |
+| Feature                | DataBeak                        | Traditional Tools     |
+| ---------------------- | ------------------------------- | --------------------- |
+| **AI Integration**     | Native MCP protocol             | Manual operations     |
+| **Auto-Save**          | Automatic with strategies       | Manual save required  |
+| **History Tracking**   | Full undo/redo with snapshots   | Limited or none       |
+| **Session Management** | Multi-user isolated sessions    | Single user           |
+| **Data Validation**    | Built-in quality scoring        | Separate tools needed |
+| **Performance**        | Handles GB+ files with chunking | Memory limitations    |
 
 ## Quick Example
 
@@ -87,9 +87,9 @@ Built with modern, high-performance tools:
 Ready to supercharge your AI's data capabilities?
 
 1. **[Install DataBeak](installation.md)** - Set up in 2 minutes
-2. **[Quick Start Tutorial](tutorials/quickstart.md)** - Your first data processing
-3. **[API Reference](api/index.md)** - Complete tool documentation
-4. **[Architecture](architecture.md)** - Technical design and implementation details
+1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Your first data processing
+1. **[API Reference](api/index.md)** - Complete tool documentation
+1. **[Architecture](architecture.md)** - Technical design and implementation details
 
 ## Community & Support
 
@@ -100,6 +100,6 @@ Ready to supercharge your AI's data capabilities?
 - **[Report Issues](https://github.com/jonpspri/databeak/issues)** - Bug
   reports and feature requests
 
----
+______________________________________________________________________
 
 **Ready to transform your AI's data capabilities?** [Get started now →](installation.md)

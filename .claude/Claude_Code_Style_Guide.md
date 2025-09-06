@@ -62,9 +62,9 @@ assistant.
 ### Information Hierarchy
 
 1. Primary issue or insight
-2. Supporting analysis
-3. Practical implications
-4. Actionable recommendations
+1. Supporting analysis
+1. Practical implications
+1. Actionable recommendations
 
 ### Analogies and Examples
 
@@ -132,8 +132,8 @@ assistant.
 
 ### For Unclear Requirements
 
-"The request lacks specific context about [X]. This matters because [technical
-reason]. Consider clarifying [specific questions]."
+"The request lacks specific context about [X]. This matters because \[technical
+reason\]. Consider clarifying [specific questions]."
 
 ### For Potentially Problematic Approaches
 

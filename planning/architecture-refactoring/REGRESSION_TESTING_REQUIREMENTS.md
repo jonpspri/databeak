@@ -558,12 +558,12 @@ jobs:
 Each refactoring phase must include:
 
 1. **Test plan document** outlining what will be tested
-2. **Baseline metrics** for performance and behavior
-3. **Test results** before and after refactoring
-4. **Regression analysis** documenting any behavior changes
-5. **Sign-off checklist** confirming no unintended regressions
+1. **Baseline metrics** for performance and behavior
+1. **Test results** before and after refactoring
+1. **Regression analysis** documenting any behavior changes
+1. **Sign-off checklist** confirming no unintended regressions
 
----
+______________________________________________________________________
 
 **SUMMARY**: This regression testing strategy ensures that DataBeak's
 architecture refactoring maintains 100% backward compatibility while enabling

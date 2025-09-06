@@ -222,20 +222,20 @@ Convert auto-generated sidebar to explicit YAML navigation structure.
 
 ### **Estimated Total Time: 6-11 hours**
 
-| Phase | Duration | Dependencies |
-|-------|----------|-------------|
-| Setup & Configuration | 2-4 hours | - |
-| Content Migration | 1-2 hours | Phase 1 complete |
-| Customization | 2-3 hours | Phase 2 complete |
-| Deployment & Testing | 1-2 hours | Phase 3 complete |
-| Cleanup | 30 minutes | Phase 4 complete |
+| Phase                 | Duration   | Dependencies     |
+| --------------------- | ---------- | ---------------- |
+| Setup & Configuration | 2-4 hours  | -                |
+| Content Migration     | 1-2 hours  | Phase 1 complete |
+| Customization         | 2-3 hours  | Phase 2 complete |
+| Deployment & Testing  | 1-2 hours  | Phase 3 complete |
+| Cleanup               | 30 minutes | Phase 4 complete |
 
 ### **Critical Path Items**
 
 1. MkDocs configuration with proper navigation
-2. Homepage content conversion
-3. GitHub Pages deployment configuration
-4. Link validation and testing
+1. Homepage content conversion
+1. GitHub Pages deployment configuration
+1. Link validation and testing
 
 ## Risk Assessment
 
@@ -279,20 +279,20 @@ Convert auto-generated sidebar to explicit YAML navigation structure.
 ## Next Steps
 
 1. **Get approval** for migration approach and timeline
-2. **Create mkdocs.yml** configuration file
-3. **Set up parallel development** environment for testing
-4. **Begin content migration** in phases
-5. **Test deployment** to ensure smooth transition
+1. **Create mkdocs.yml** configuration file
+1. **Set up parallel development** environment for testing
+1. **Begin content migration** in phases
+1. **Test deployment** to ensure smooth transition
 
 ## Rollback Plan
 
 If migration encounters critical issues:
 
 1. **Preserve current Docusaurus setup** until MkDocs is fully functional
-2. **Parallel deployment** approach - run both systems until MkDocs proven
-3. **Quick rollback**: Keep current GitHub Pages deployment active
-4. **Documentation links**: Use feature flags or redirects during transition
+1. **Parallel deployment** approach - run both systems until MkDocs proven
+1. **Quick rollback**: Keep current GitHub Pages deployment active
+1. **Documentation links**: Use feature flags or redirects during transition
 
----
+______________________________________________________________________
 
 **Recommendation**: Proceed with migration. DataBeak will benefit from simplified tooling, better Python integration, and reduced maintenance overhead while maintaining all current documentation functionality.

@@ -45,6 +45,7 @@
 ## ⚡ Implementation Phases
 
 ### **Phase 1: Foundation (Weeks 1-3)**
+
 ```
 Week 1: Data Source Abstraction (CRITICAL PATH)
 ├── DataSource protocol design
@@ -66,6 +67,7 @@ Week 3: Testing & Validation
 ```
 
 ### **Phase 2: Format Extensions (Weeks 4-7)**
+
 ```
 Week 4-5: Excel Integration
 ├── ExcelDataSource implementation
@@ -81,6 +83,7 @@ Week 6-7: Database Connectivity
 ```
 
 ### **Phase 3: Advanced Features (Weeks 8-10)**
+
 ```
 Week 8: Streaming & Performance
 ├── Chunked processing for large datasets
@@ -104,6 +107,7 @@ Week 10: Integration & Polish
 ## 🔒 Mandatory Testing Requirements
 
 ### **⚠️ BEFORE ANY REFACTORING**
+
 ```bash
 # Required before starting each week:
 uv run pytest --cov=src/databeak --cov-fail-under=90
@@ -117,15 +121,17 @@ Test coverage report → Identify coverage gaps
 ```
 
 ### **Test Coverage Requirements**
+
 - **>90% coverage** for areas being refactored
 - **Integration tests** for end-to-end workflows
-- **Performance baselines** with <10% regression tolerance
+- **Performance baselines** with \<10% regression tolerance
 - **Error condition tests** for all failure modes
 - **Backward compatibility** validation for existing tools
 
 ## 🛡️ Safety & Risk Mitigation
 
 ### **Rollback Strategy**
+
 ```
 Safety Measures:
 ├── Feature Flags - Enable/disable new formats individually
@@ -136,6 +142,7 @@ Safety Measures:
 ```
 
 ### **High-Risk Areas**
+
 - **Session Management**: Core to all operations (use adapter patterns)
 - **Tool Interfaces**: Breaking changes affect all MCP tools
 - **Database Security**: SQL injection, unauthorized access risks
@@ -144,18 +151,21 @@ Safety Measures:
 ## 💼 Business Value
 
 ### **Immediate Wins (Phase 1)**
+
 - **30% code reduction** through boilerplate elimination
 - **Simplified maintenance** with standardized patterns
 - **Foundation for growth** enabling format extensions
 - **Improved testability** with better abstractions
 
 ### **Format Expansion (Phase 2)**
+
 - **Excel support** addresses major user requests
 - **Database connectivity** enables enterprise adoption
 - **Competitive advantage** over CSV-only tools
 - **Expanded user base** through multi-format capabilities
 
 ### **Scalability (Phase 3)**
+
 - **10GB+ file support** through streaming processing
 - **Enterprise performance** with connection pooling
 - **Advanced workflows** for power users
@@ -164,6 +174,7 @@ Safety Measures:
 ## 🔧 Technical Implementation
 
 ### **Key Abstractions**
+
 ```python
 # Core abstraction pattern:
 class DataSource(Protocol):
@@ -181,6 +192,7 @@ DataSession (base) → CSVSession, ExcelSession, DatabaseSession
 ```
 
 ### **Tool Registration Automation**
+
 ```python
 # Replace manual boilerplate:
 @mcp.tool
@@ -196,6 +208,7 @@ async def filter_rows(session_id: str, conditions: list[FilterCondition]) -> Fil
 ## 📊 Success Metrics
 
 ### **Technical Metrics**
+
 - [ ] **Multi-format support**: CSV, Excel, SQLite, PostgreSQL
 - [ ] **Code reduction**: 30% less boilerplate code
 - [ ] **Performance**: Maintain speed, add streaming for >1GB files
@@ -203,12 +216,14 @@ async def filter_rows(session_id: str, conditions: list[FilterCondition]) -> Fil
 - [ ] **Test coverage**: >90% across all implementations
 
 ### **User Experience Metrics**
+
 - [ ] **Zero breaking changes**: All existing workflows unchanged
 - [ ] **Enhanced capabilities**: Excel and database tools available
 - [ ] **Clear error messages**: Categorized, actionable feedback
 - [ ] **Seamless adoption**: New formats work with existing tools
 
 ### **Development Metrics**
+
 - [ ] **Reduced maintenance**: Fewer files to modify for changes
 - [ ] **Faster development**: New tools easier to create
 - [ ] **Better testing**: Isolated components with dependency injection
@@ -217,13 +232,15 @@ async def filter_rows(session_id: str, conditions: list[FilterCondition]) -> Fil
 ## 🚀 Getting Started
 
 ### **Pre-Implementation Checklist**
+
 1. **Get stakeholder approval** for refactoring approach
-2. **Create feature branch** for Phase 1 work
-3. **Set up regression test suite** (>90% coverage requirement)
-4. **Establish performance baselines** for regression detection
-5. **Configure feature flags** for gradual rollout
+1. **Create feature branch** for Phase 1 work
+1. **Set up regression test suite** (>90% coverage requirement)
+1. **Establish performance baselines** for regression detection
+1. **Configure feature flags** for gradual rollout
 
 ### **Week 1 Kickoff**
+
 ```bash
 # Start with data source abstraction (critical path):
 git checkout -b refactor/data-source-abstraction
@@ -236,7 +253,7 @@ mkdir src/databeak/sources/
 touch src/databeak/sources/{base.py,types.py,csv.py}
 ```
 
----
+______________________________________________________________________
 
 **This quick reference provides immediate access to key information from the
 comprehensive planning documents, enabling developers to quickly understand

@@ -57,13 +57,13 @@ The script automatically updates:
    version = "1.0.3"  # Change this line
    ```
 
-2. **Sync all other files:**
+1. **Sync all other files:**
 
    ```bash
    uv run sync-versions
    ```
 
-3. **Commit and tag:**
+1. **Commit and tag:**
 
    ```bash
    git add .
@@ -75,16 +75,16 @@ The script automatically updates:
 ## Files That Are Synchronized
 
 1. **pyproject.toml** - Primary source of truth ✅
-2. **package.json** - Synced automatically 🔄
-3. **src/databeak/_version.py** - Synced automatically 🔄
+1. **package.json** - Synced automatically 🔄
+1. **src/databeak/\_version.py** - Synced automatically 🔄
 
 ## Benefits
 
 1. **Simplicity** - Easy to understand and maintain
-2. **Reliability** - No complex external tool dependencies
-3. **Consistency** - One source of truth prevents version mismatches
-4. **Runtime accuracy** - Code always uses the actual installed package version
-5. **Development friendly** - Fallback version for development mode
+1. **Reliability** - No complex external tool dependencies
+1. **Consistency** - One source of truth prevents version mismatches
+1. **Runtime accuracy** - Code always uses the actual installed package version
+1. **Development friendly** - Fallback version for development mode
 
 ## Advanced Options (Future)
 
