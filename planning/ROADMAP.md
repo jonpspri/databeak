@@ -4,10 +4,10 @@ Strategic Development Phases for DataBeak 1.1.0 - 2.0.0
 
 ## Executive Summary
 
-This roadmap prioritizes technical debt resolution, test coverage improvement, and
-architectural refinements to establish DataBeak as a production-ready MCP server.
-Each phase represents a logical milestone suitable for minor version releases,
-with clear success criteria and clean boundaries for pull requests.
+This roadmap prioritizes technical debt resolution, test coverage improvement,
+and architectural refinements to establish DataBeak as a production-ready MCP
+server. Each phase represents a logical milestone suitable for minor version
+releases, with clear success criteria and clean boundaries for pull requests.
 
 ## Current State Assessment (v1.0.2)
 
@@ -68,8 +68,8 @@ bug fixes.
   - Update pre-commit configuration to pure Python
   - Remove Node.js dependencies from CI/CD
   - Update development documentation
-- Immediate Benefits: Simplified CI builds, consistent Python toolchain,
-  faster local development
+- Immediate Benefits: Simplified CI builds, consistent Python toolchain, faster
+  local development
 
 #### 1.5 Performance Baseline
 
@@ -366,7 +366,8 @@ Transform DataBeak from CSV-focused to comprehensive multi-format data platform.
 #### 6.4 Enhanced Configuration
 
 - Multi-format Settings: Excel, Database, and cross-format configurations
-- Security Framework: Database connection validation and SQL injection prevention
+- Security Framework: Database connection validation and SQL injection
+  prevention
 - Performance Optimization: Connection pooling and query optimization
 
 ### Deliverables
@@ -493,5 +494,4 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-*Last Updated: September 2025*
-*Next Review: October 2025*
+*Last Updated: September 2025* *Next Review: October 2025*

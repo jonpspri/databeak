@@ -5,8 +5,8 @@ title: Quick Start
 
 ## Quick Start Tutorial
 
-Learn how to use DataBeak in 10 minutes with this hands-on tutorial.
-We'll process a sample sales dataset using natural language commands.
+Learn how to use DataBeak in 10 minutes with this hands-on tutorial. We'll
+process a sample sales dataset using natural language commands.
 
 ## Prerequisites
 
@@ -53,8 +53,8 @@ For detailed column analysis:
 
 ### Handle Missing Values
 
-> "Fill missing quantity values with 0 and missing customer_id values
-> with 'UNKNOWN'"
+> "Fill missing quantity values with 0 and missing customer_id values with
+> 'UNKNOWN'"
 
 ### Fix Data Types
 
@@ -90,7 +90,8 @@ For detailed column analysis:
 
 ## Step 6: Export Results
 
-> "Export this cleaned and analyzed data as an Excel file named 'sales_analysis.xlsx'"
+> "Export this cleaned and analyzed data as an Excel file named
+> 'sales_analysis.xlsx'"
 
 ## Advanced Features
 
@@ -98,23 +99,21 @@ For detailed column analysis:
 
 Made a mistake? No problem:
 
-> "Undo the last operation"
-> "Show me the operation history"
-> "Restore to the state before I added the total_value column"
+> "Undo the last operation" "Show me the operation history" "Restore to the
+> state before I added the total_value column"
 
 ### Auto-Save Configuration
 
 Set up automatic saving:
 
-> "Configure auto-save to create backups in a backup folder with a
-> maximum of 5 backups"
+> "Configure auto-save to create backups in a backup folder with a maximum of 5
+> backups"
 
 ### Session Management
 
 Work with multiple datasets:
 
-> "Create a new session for the customer data"
-> "List all my active sessions"
+> "Create a new session for the customer data" "List all my active sessions"
 > "Close the sales data session"
 
 ## Real-World Examples
@@ -160,23 +159,23 @@ Work with multiple datasets:
 
 ### 1. **Be Specific**
 
-Instead of "analyze the data", try "calculate descriptive statistics for
-numeric columns and show correlation matrix"
+Instead of "analyze the data", try "calculate descriptive statistics for numeric
+columns and show correlation matrix"
 
 ### 2. **Use Session IDs**
 
-For multiple datasets, specify which session: "In session ABC123, filter
-rows where status equals 'active'"
+For multiple datasets, specify which session: "In session ABC123, filter rows
+where status equals 'active'"
 
 ### 3. **Chain Operations**
 
-"Load sales.csv, remove duplicates, filter for 2024 data, then calculate
-monthly totals"
+"Load sales.csv, remove duplicates, filter for 2024 data, then calculate monthly
+totals"
 
 ### 4. **Leverage Auto-Save**
 
-DataBeak automatically saves your work, so you can focus on analysis
-without worrying about losing changes
+DataBeak automatically saves your work, so you can focus on analysis without
+worrying about losing changes
 
 ### 5. **Explore History**
 
@@ -187,10 +186,10 @@ Use undo/redo freely to experiment with different approaches
 - **[API Reference](../api/index.md)** - Complete tool documentation
 - **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
   - More real-world scenarios
-- **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source
-  code and community
+- **[GitHub Repository](https://github.com/jonpspri/databeak)** - Source code
+  and community
 
 ______________________________________________________________________
 
-**Congratulations!** You now know how to use DataBeak to transform your
-AI assistant into a powerful data analyst.
+**Congratulations!** You now know how to use DataBeak to transform your AI
+assistant into a powerful data analyst.

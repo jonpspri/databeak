@@ -191,7 +191,8 @@ mkdir tests/{sources,abstractions,integration}
 - [ ] **Foundation tests passing**: All Phase 1 refactoring tests green
 - [ ] **Excel test data**: Multi-sheet test workbooks prepared
 - [ ] **Excel operation baseline**: Performance metrics for openpyxl operations
-- [ ] **Format compatibility tests**: Ensure CSV tools work with new abstractions
+- [ ] **Format compatibility tests**: Ensure CSV tools work with new
+  abstractions
 
 #### **Deliverables**
 
@@ -236,7 +237,8 @@ touch src/databeak/tools/mcp_excel_tools.py
 #### **Pre-Week 6 Requirements**
 
 - [ ] **Excel integration tests**: All Excel functionality verified
-- [ ] **Database test infrastructure**: Test databases (SQLite, PostgreSQL containers)
+- [ ] **Database test infrastructure**: Test databases (SQLite, PostgreSQL
+  containers)
 - [ ] **SQL security tests**: Query validation and injection prevention
 - [ ] **Connection management tests**: Pool limits, timeouts, cleanup
 
@@ -378,8 +380,7 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 
 #### **1. Session Management Changes**
 
-**Risk**: Breaking existing tool interfaces
-**Mitigation**:
+**Risk**: Breaking existing tool interfaces **Mitigation**:
 
 - Adapter pattern to maintain existing signatures
 - Comprehensive backward compatibility tests
@@ -387,8 +388,7 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 
 #### **2. Database Security**
 
-**Risk**: SQL injection, unauthorized access
-**Mitigation**:
+**Risk**: SQL injection, unauthorized access **Mitigation**:
 
 - Parameterized queries only
 - Query validation and sanitization
@@ -397,8 +397,7 @@ export_to_excel(analysis_session, "quarterly_report.xlsx") -> result
 
 #### **3. Performance Regressions**
 
-**Risk**: Slower operations with abstraction overhead
-**Mitigation**:
+**Risk**: Slower operations with abstraction overhead **Mitigation**:
 
 - Continuous performance benchmarking
 - Memory usage monitoring
@@ -476,5 +475,5 @@ ______________________________________________________________________
 
 **Recommendation**: Begin implementation immediately with Phase 1. The
 incremental approach minimizes risk while delivering value at each phase.
-Foundation improvements in Weeks 1-3 enable all subsequent format extensions
-and provide immediate benefits to current users.
+Foundation improvements in Weeks 1-3 enable all subsequent format extensions and
+provide immediate benefits to current users.

@@ -12,9 +12,9 @@ commands.
 
 ## What is DataBeak?
 
-DataBeak bridges the gap between AI assistants and complex data operations.
-It provides 40+ specialized tools for CSV operations, turning AI assistants
-into powerful data analysts that can:
+DataBeak bridges the gap between AI assistants and complex data operations. It
+provides 40+ specialized tools for CSV operations, turning AI assistants into
+powerful data analysts that can:
 
 - Clean messy datasets in seconds
 - Perform complex statistical analysis
@@ -87,9 +87,11 @@ Built with modern, high-performance tools:
 Ready to supercharge your AI's data capabilities?
 
 1. **[Install DataBeak](installation.md)** - Set up in 2 minutes
-1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Your first data processing
+1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Your first data
+   processing
 1. **[API Reference](api/index.md)** - Complete tool documentation
-1. **[Architecture](architecture.md)** - Technical design and implementation details
+1. **[Architecture](architecture.md)** - Technical design and implementation
+   details
 
 ## Community & Support
 
@@ -97,9 +99,10 @@ Ready to supercharge your AI's data capabilities?
   and releases
 - **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)** -
   Ask questions and share ideas
-- **[Report Issues](https://github.com/jonpspri/databeak/issues)** - Bug
-  reports and feature requests
+- **[Report Issues](https://github.com/jonpspri/databeak/issues)** - Bug reports
+  and feature requests
 
 ______________________________________________________________________
 
-**Ready to transform your AI's data capabilities?** [Get started now →](installation.md)
+**Ready to transform your AI's data capabilities?**
+[Get started now →](installation.md)

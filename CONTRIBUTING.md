@@ -1,6 +1,7 @@
 # Contributing to DataBeak
 
-Thank you for your interest in contributing to DataBeak! This guide will help you get started with contributing to the project.
+Thank you for your interest in contributing to DataBeak! This guide will help
+you get started with contributing to the project.
 
 ## Table of Contents
 
@@ -27,14 +28,15 @@ By participating in this project, you agree to abide by our Code of Conduct:
 ## Getting Started
 
 1. **Fork the repository** on GitHub
-2. **Clone your fork** locally:
+
+1. **Clone your fork** locally:
 
    ```bash
    git clone https://github.com/jonpspri/databeak.git
    cd databeak
    ```
 
-3. **Add upstream remote**:
+1. **Add upstream remote**:
 
    ```bash
    git remote add upstream https://github.com/jonpspri/databeak.git
@@ -81,7 +83,8 @@ pip install -e ".[dev,test,docs]"
 pre-commit install
 ```
 
-**Note**: We standardize on `uv` for all development. It's significantly faster and handles everything pip does plus more.
+**Note**: We standardize on `uv` for all development. It's significantly faster
+and handles everything pip does plus more.
 
 ### Verify Installation
 
@@ -97,7 +100,8 @@ uv run all-checks  # Runs all quality checks
 
 ## Development Workflow
 
-**🚨 IMPORTANT: Direct commits to `main` are prohibited. Pre-commit hooks enforce branch-based development.**
+**🚨 IMPORTANT: Direct commits to `main` are prohibited. Pre-commit hooks enforce
+branch-based development.**
 
 ### 1. Create a Feature Branch
 
@@ -156,7 +160,9 @@ gh pr create --title "feat: Add new data filtering tool" --body "Description of 
 ```
 
 **Pull Request Requirements:**
-- **Descriptive title** with conventional commit prefix (feat:, fix:, docs:, etc.)
+
+- **Descriptive title** with conventional commit prefix (feat:, fix:, docs:,
+  etc.)
 - **Clear description** explaining what changes and why
 - **Link related issues** with "Closes #123" syntax
 - **All checks must pass** (tests, linting, type checking)
@@ -187,7 +193,7 @@ We use modern Python tooling for code quality:
        ...
    ```
 
-2. **Docstrings**: Use Google-style docstrings
+1. **Docstrings**: Use Google-style docstrings
 
    ```python
    def analyze_data(df: pd.DataFrame) -> Dict[str, Any]:
@@ -204,14 +210,14 @@ We use modern Python tooling for code quality:
        """
    ```
 
-3. **Error Handling**: Use specific exceptions
+1. **Error Handling**: Use specific exceptions
 
    ```python
    if not session:
        raise ValueError(f"Session {session_id} not found")
    ```
 
-4. **Async/Await**: Use async for all tool functions
+1. **Async/Await**: Use async for all tool functions
 
    ```python
    @mcp.tool
@@ -220,7 +226,7 @@ We use modern Python tooling for code quality:
        return {"success": True, "data": result}
    ```
 
-5. **Logging**: Use appropriate log levels
+1. **Logging**: Use appropriate log levels
 
    ```python
    logger.debug("Processing row %d", row_num)
@@ -285,7 +291,7 @@ tests/
        manager.remove_session(session_id)
    ```
 
-2. **Test async functions**:
+1. **Test async functions**:
 
    ```python
    @pytest.mark.asyncio
@@ -298,7 +304,7 @@ tests/
        assert result["rows_after"] < result["rows_before"]
    ```
 
-3. **Use parametrize for multiple cases**:
+1. **Use parametrize for multiple cases**:
 
    ```python
    @pytest.mark.parametrize("dtype,expected", [
@@ -362,9 +368,9 @@ class DataProcessor:
 ### Updating Documentation
 
 1. **README.md**: Update for new features or breaking changes
-2. **API Docs**: Ensure docstrings are complete
-3. **Examples**: Add examples for new features
-4. **Changelog**: Update CHANGELOG.md
+1. **API Docs**: Ensure docstrings are complete
+1. **Examples**: Add examples for new features
+1. **Changelog**: Update CHANGELOG.md
 
 ## Submitting Changes
 
@@ -377,13 +383,14 @@ class DataProcessor:
    git rebase upstream/main
    ```
 
-2. **Push to your fork**:
+1. **Push to your fork**:
 
    ```bash
    git push origin feature/your-feature-name
    ```
 
-3. **Create Pull Request**:
+1. **Create Pull Request**:
+
    - Go to GitHub and create a PR from your fork
    - Use a clear, descriptive title
    - Fill out the PR template
@@ -416,9 +423,9 @@ Brief description of changes
 ### Review Process
 
 1. **Automated checks** must pass
-2. **Code review** by at least one maintainer
-3. **Address feedback** promptly
-4. **Squash commits** if requested
+1. **Code review** by at least one maintainer
+1. **Address feedback** promptly
+1. **Squash commits** if requested
 
 ## Release Process
 
@@ -433,10 +440,10 @@ We follow [Semantic Versioning](https://semver.org/):
 ### Release Steps
 
 1. **Update version** in `pyproject.toml`
-2. **Update CHANGELOG.md**
-3. **Create release PR**
-4. **Tag release** after merge
-5. **Publish to PyPI** (automated)
+1. **Update CHANGELOG.md**
+1. **Create release PR**
+1. **Tag release** after merge
+1. **Publish to PyPI** (automated)
 
 ## Getting Help
 

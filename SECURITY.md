@@ -17,8 +17,8 @@ vulnerability in DataBeak, please report it responsibly.
 ### How to Report
 
 1. **Email**: Send details to <jps@s390x.com>
-2. **Subject**: Include "DataBeak Security" in the subject line
-3. **Details**: Provide a detailed description of the vulnerability
+1. **Subject**: Include "DataBeak Security" in the subject line
+1. **Details**: Provide a detailed description of the vulnerability
 
 ### What to Include
 
@@ -38,10 +38,10 @@ vulnerability in DataBeak, please report it responsibly.
 When using DataBeak:
 
 1. **Input Validation**: Always validate CSV files before processing
-2. **File Permissions**: Ensure proper file permissions for CSV files
-3. **Network Security**: Use HTTPS when running in HTTP mode
-4. **Access Control**: Limit MCP server access to trusted clients
-5. **Regular Updates**: Keep DataBeak updated to the latest version
+1. **File Permissions**: Ensure proper file permissions for CSV files
+1. **Network Security**: Use HTTPS when running in HTTP mode
+1. **Access Control**: Limit MCP server access to trusted clients
+1. **Regular Updates**: Keep DataBeak updated to the latest version
 
 ### Disclosure Policy
 

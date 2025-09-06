@@ -18,8 +18,8 @@ maintaining code standards.
    numbers
 1. **Provide actionable fix recommendations** with code examples and commands
 1. **Verify quality standards compliance** (80% coverage, type safety, linting)
-1. **Handle DataBeak-specific issues** (session management, MCP tools,
-   pandas operations)
+1. **Handle DataBeak-specific issues** (session management, MCP tools, pandas
+   operations)
 
 ## DataBeak Quality Pipeline
 

@@ -209,8 +209,8 @@ class FileOperationError(DataBeakError): ...
 {"success": False, "error": error_message, "session_id": session_id}
 ```
 
-**Strengths**: Predictable client interface
-**Issues**: Could be more structured (error codes, categories)
+**Strengths**: Predictable client interface **Issues**: Could be more structured
+(error codes, categories)
 
 ## Data Processing Patterns
 
@@ -257,8 +257,8 @@ def validate_data_schema(df: pd.DataFrame, schema: dict) -> ValidationResult:
     return ValidationResult(results)
 ```
 
-**Strengths**: Extensible validation framework
-**Opportunity**: Could be extended for format-specific validation
+**Strengths**: Extensible validation framework **Opportunity**: Could be
+extended for format-specific validation
 
 ## Current Dependencies & Coupling Analysis
 
@@ -282,7 +282,7 @@ def validate_data_schema(df: pd.DataFrame, schema: dict) -> ValidationResult:
 
 ______________________________________________________________________
 
-This analysis reveals a well-architected system with clear separation of concerns
-but limited by CSV-centric assumptions. The proposed refactoring will transform
-it into a flexible, multi-format data platform while preserving existing
-strengths.
+This analysis reveals a well-architected system with clear separation of
+concerns but limited by CSV-centric assumptions. The proposed refactoring will
+transform it into a flexible, multi-format data platform while preserving
+existing strengths.

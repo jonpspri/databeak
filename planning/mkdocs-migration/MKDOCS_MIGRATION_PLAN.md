@@ -3,8 +3,8 @@
 ## Executive Summary
 
 Plan to migrate DataBeak documentation from Docusaurus to MkDocs Material for
-improved Python ecosystem integration, simpler maintenance, and better
-alignment with project tooling.
+improved Python ecosystem integration, simpler maintenance, and better alignment
+with project tooling.
 
 ## Current State Analysis
 
@@ -38,7 +38,8 @@ docs/docs/
 
 #### ✅ **Python Ecosystem Alignment**
 
-- **Native Python tooling**: Integrates seamlessly with uv, pip, and Python dev workflow
+- **Native Python tooling**: Integrates seamlessly with uv, pip, and Python dev
+  workflow
 - **Simplified dependency management**: Already configured in pyproject.toml
 - **No Node.js complexity**: Eliminates 290MB+ of JS dependencies
 - **Better CI/CD integration**: Faster builds, simpler GitHub Actions
@@ -71,23 +72,23 @@ docs/docs/
 
 #### **1. Configuration Migration**
 
-**Challenge**: Convert TypeScript config to YAML
-**Solution**: Create `mkdocs.yml` with equivalent settings and plugins
+**Challenge**: Convert TypeScript config to YAML **Solution**: Create
+`mkdocs.yml` with equivalent settings and plugins
 
 #### **2. Content Conversion**
 
-**Challenge**: Frontmatter and Docusaurus-specific syntax
-**Solution**: Minimal - content is pure markdown with standard frontmatter
+**Challenge**: Frontmatter and Docusaurus-specific syntax **Solution**: Minimal
+\- content is pure markdown with standard frontmatter
 
 #### **3. Custom Styling**
 
-**Challenge**: Preserve current visual design
-**Solution**: Use Material theme with custom CSS overrides
+**Challenge**: Preserve current visual design **Solution**: Use Material theme
+with custom CSS overrides
 
 #### **4. Homepage Components**
 
-**Challenge**: React components → static content
-**Solution**: Convert to markdown/HTML or use Material theme features
+**Challenge**: React components → static content **Solution**: Convert to
+markdown/HTML or use Material theme features
 
 ### 📋 **Content Migration**
 
@@ -295,4 +296,6 @@ If migration encounters critical issues:
 
 ______________________________________________________________________
 
-**Recommendation**: Proceed with migration. DataBeak will benefit from simplified tooling, better Python integration, and reduced maintenance overhead while maintaining all current documentation functionality.
+**Recommendation**: Proceed with migration. DataBeak will benefit from
+simplified tooling, better Python integration, and reduced maintenance overhead
+while maintaining all current documentation functionality.

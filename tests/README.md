@@ -31,16 +31,19 @@ uv run pytest tests/test_integration.py
 ## Test Structure
 
 - **test_basic.py** - Unit tests for core functionality
+
   - Validators
   - Session management
   - Basic operations
 
 - **test_integration.py** - Full integration tests
+
   - Complete workflows
   - All tool operations
   - Export functionality
 
 - **conftest.py** - Pytest configuration and fixtures
+
   - Session fixtures
   - Sample data fixtures
   - Event loop configuration
@@ -50,9 +53,9 @@ uv run pytest tests/test_integration.py
 All test files should:
 
 1. Start with `test_`
-2. Use pytest fixtures from conftest.py
-3. Mark async tests with `@pytest.mark.asyncio`
-4. Clean up sessions after tests
+1. Use pytest fixtures from conftest.py
+1. Mark async tests with `@pytest.mark.asyncio`
+1. Clean up sessions after tests
 
 Example:
 

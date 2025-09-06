@@ -5,8 +5,8 @@ title: Installation
 
 ## Installation Guide
 
-Get DataBeak up and running in just 2 minutes! This guide covers
-installation and client configuration.
+Get DataBeak up and running in just 2 minutes! This guide covers installation
+and client configuration.
 
 ## Prerequisites
 
@@ -60,8 +60,8 @@ databeak
 
 Configure Claude Desktop to use DataBeak as an MCP server.
 
-Add this to your MCP Settings file
-(Claude → Settings → Developer → Show MCP Settings):
+Add this to your MCP Settings file (Claude → Settings → Developer → Show MCP
+Settings):
 
 ```json
 {
@@ -206,8 +206,8 @@ mcp-inspector uvx --from \
 #### Server not starting
 
 - Check Python version: `python --version` (must be 3.10+)
-- Verify installation: `uvx --from \
-  git+https://github.com/jonpspri/databeak.git databeak --version`
+- Verify installation:
+  `uvx --from \ git+https://github.com/jonpspri/databeak.git databeak --version`
 - Check logs with debug level
 
 #### Client can't connect
@@ -232,21 +232,20 @@ mcp-inspector uvx --from \
 ### Getting Help
 
 - **[GitHub Issues](https://github.com/jonpspri/databeak/issues)** - Report bugs
-- **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)**
-  Ask questions
+- **[GitHub Discussions](https://github.com/jonpspri/databeak/discussions)** Ask
+  questions
 - **[Documentation](index.md)** - Browse complete docs
 
 ## Next Steps
 
 Now that DataBeak is installed:
 
-1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Learn the
-   basics
+1. **[Quick Start Tutorial](tutorials/quickstart.md)** - Learn the basics
 1. **[API Reference](api/index.md)** - Explore all available tools
 1. **[Examples](https://github.com/jonpspri/databeak/tree/main/examples)**
    - See real-world use cases
 
 ______________________________________________________________________
 
-**Installation complete!** Your AI assistant now has powerful data
-manipulation capabilities.
+**Installation complete!** Your AI assistant now has powerful data manipulation
+capabilities.

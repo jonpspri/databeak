@@ -11,8 +11,8 @@ session management, but limited by CSV-centric design and some structural
 redundancies.
 
 **Recommendation**: Implement data source abstraction layer and modular
-architecture patterns to enable seamless multi-format support without
-breaking existing functionality.
+architecture patterns to enable seamless multi-format support without breaking
+existing functionality.
 
 ## Current Architecture Assessment
 
@@ -540,7 +540,7 @@ uv run all-checks               # Code quality standards
 
 ______________________________________________________________________
 
-**Conclusion**: This refactoring plan provides a clear path to transform DataBeak
-into a multi-format data platform while preserving its strengths in session
-management, type safety, and MCP integration. The phased approach minimizes
-risk while delivering incremental value to users.
+**Conclusion**: This refactoring plan provides a clear path to transform
+DataBeak into a multi-format data platform while preserving its strengths in
+session management, type safety, and MCP integration. The phased approach
+minimizes risk while delivering incremental value to users.

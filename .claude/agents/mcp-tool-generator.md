@@ -249,8 +249,8 @@ uv run all-checks
 
 1. **Tool Registry:** Ensure new tools are registered in the appropriate
    category
-1. **Session Management:** Always validate session_id and handle
-   session-related errors
+1. **Session Management:** Always validate session_id and handle session-related
+   errors
 1. **History Integration:** Save operations to history for undo/redo
    functionality
 1. **FastMCP Integration:** Use proper `@mcp.tool` decorators and Context
