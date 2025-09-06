@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 # Import type aliases
 from .transformations import CellValue, FilterCondition, OperationResult
@@ -26,7 +26,7 @@ from .transformations import transform_column_case as _transform_column_case
 from .transformations import update_column as _update_column
 
 
-def register_data_tools(mcp: Any) -> None:
+def register_data_tools(mcp: FastMCP) -> None:
     """Register data manipulation tools with FastMCP server."""
 
     @mcp.tool

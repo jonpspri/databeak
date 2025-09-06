@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
@@ -15,7 +15,7 @@ from .transformations import set_cell_value as _set_cell_value
 from .transformations import update_row as _update_row
 
 
-def register_row_tools(mcp: Any) -> None:
+def register_row_tools(mcp: FastMCP) -> None:
     """Register row manipulation tools with FastMCP server."""
 
     @mcp.tool

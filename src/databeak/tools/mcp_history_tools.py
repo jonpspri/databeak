@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from .auto_save_operations import configure_auto_save as _configure_auto_save
 from .auto_save_operations import disable_auto_save as _disable_auto_save
@@ -18,7 +18,7 @@ from .history_operations import restore_to_operation as _restore_to_operation
 from .history_operations import undo_operation as _undo_operation
 
 
-def register_history_tools(mcp: Any) -> None:
+def register_history_tools(mcp: FastMCP) -> None:
     """Register history and auto-save tools with FastMCP server."""
 
     # Auto-save tools

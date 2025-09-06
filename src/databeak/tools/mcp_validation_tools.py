@@ -4,19 +4,19 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastmcp import Context
+from fastmcp import Context, FastMCP
 
 from .validation import check_data_quality as _check_data_quality
 from .validation import find_anomalies as _find_anomalies
 from .validation import validate_schema as _validate_schema
 
 
-def register_validation_tools(mcp: Any) -> None:
+def register_validation_tools(mcp: FastMCP) -> None:
     """Register validation tools with FastMCP server."""
 
     @mcp.tool
     async def validate_schema(
-        session_id: str, schema: dict[str, dict[str, Any]], ctx: Context | None = None
+        session_id: str, schema: dict[str, dict[str, str]], ctx: Context | None = None
     ) -> dict[str, Any]:
         """Validate data against a schema definition."""
         return await _validate_schema(session_id, schema, ctx)
