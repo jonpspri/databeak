@@ -2,10 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from fastmcp import Context, FastMCP
 
+from ..models.tool_responses import (  # noqa: TCH001
+    ColumnStatisticsResult,
+    CorrelationResult,
+    DataSummaryResult,
+    FindCellsResult,
+    GroupAggregateResult,
+    InspectDataResult,
+    OutliersResult,
+    ProfileResult,
+    StatisticsResult,
+    ValueCountsResult,
+)
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
 from .analytics import get_correlation_matrix as _get_correlation_matrix
@@ -19,20 +31,6 @@ from .transformations import CellValue
 from .transformations import find_cells_with_value as _find_cells_with_value
 from .transformations import get_data_summary as _get_data_summary
 from .transformations import inspect_data_around as _inspect_data_around
-
-if TYPE_CHECKING:
-    from ..models.tool_responses import (
-        ColumnStatisticsResult,
-        CorrelationResult,
-        DataSummaryResult,
-        FindCellsResult,
-        GroupAggregateResult,
-        InspectDataResult,
-        OutliersResult,
-        ProfileResult,
-        StatisticsResult,
-        ValueCountsResult,
-    )
 
 
 def register_analytics_tools(mcp: FastMCP) -> None:

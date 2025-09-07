@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from fastmcp import Context, FastMCP
 
 from ..models import ExportFormat
+from ..models.tool_responses import (  # noqa: TCH001
+    CloseSessionResult,
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
+    SessionListResult,
+)
 from .io_operations import close_session as _close_session
 from .io_operations import export_csv as _export_csv
 from .io_operations import get_session_info as _get_session_info
@@ -14,15 +19,6 @@ from .io_operations import list_sessions as _list_sessions
 from .io_operations import load_csv as _load_csv
 from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
-
-if TYPE_CHECKING:
-    from ..models.tool_responses import (
-        CloseSessionResult,
-        ExportResult,
-        LoadResult,
-        SessionInfoResult,
-        SessionListResult,
-    )
 
 
 def register_io_tools(mcp: FastMCP) -> None:

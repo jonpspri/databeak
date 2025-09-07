@@ -7,6 +7,7 @@ This script tests the core functionality of the CSV MCP Server without requiring
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
@@ -94,7 +95,7 @@ def print_info(msg: str):
     print(f"{Colors.CYAN}ℹ {msg}{Colors.ENDC}")  # noqa: RUF001
 
 
-def get_attr(obj: any, attr: str, default: any | None = None):
+def get_attr(obj: Any, attr: str, default: Any | None = None):
     """Get attribute from object, works with both dict and Pydantic models."""
     if isinstance(obj, dict):
         return obj.get(attr, default)
@@ -102,7 +103,7 @@ def get_attr(obj: any, attr: str, default: any | None = None):
         return getattr(obj, attr, default)
 
 
-def print_data(data: any, indent: int = 2):
+def print_data(data: Any, indent: int = 2):
     """Print data with indentation."""
     indent_str = " " * indent
     if isinstance(data, dict):

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
 
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult  # noqa: TCH001
 from .transformations import add_column as _add_column
 from .transformations import change_column_type as _change_column_type
 from .transformations import extract_from_column as _extract_from_column
@@ -22,9 +23,6 @@ from .transformations import split_column as _split_column
 from .transformations import strip_column as _strip_column
 from .transformations import transform_column_case as _transform_column_case
 from .transformations import update_column as _update_column
-
-if TYPE_CHECKING:
-    from ..models.tool_responses import ColumnOperationResult, FilterOperationResult
 
 # Type aliases - define locally to avoid import issues
 CellValue = str | int | float | bool | None
