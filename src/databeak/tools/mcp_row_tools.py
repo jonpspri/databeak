@@ -2,17 +2,10 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastmcp import Context, FastMCP
 
-from ..models.tool_responses import (
-    CellValueResult,
-    ColumnDataResult,
-    DeleteRowResult,
-    InsertRowResult,
-    RowDataResult,
-    SetCellResult,
-    UpdateRowResult,
-)
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
 from .transformations import get_column_data as _get_column_data
@@ -20,6 +13,17 @@ from .transformations import get_row_data as _get_row_data
 from .transformations import insert_row as _insert_row
 from .transformations import set_cell_value as _set_cell_value
 from .transformations import update_row as _update_row
+
+if TYPE_CHECKING:
+    from ..models.tool_responses import (
+        CellValueResult,
+        ColumnDataResult,
+        DeleteRowResult,
+        InsertRowResult,
+        RowDataResult,
+        SetCellResult,
+        UpdateRowResult,
+    )
 
 
 def register_row_tools(mcp: FastMCP) -> None:
@@ -72,14 +76,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             → set_cell_value(): Update this cell value
             → inspect_data_around(): Get surrounding data context
         """
-        result = await _get_cell_value(session_id, row_index, column, ctx)
-
-        # Convert dict response to Pydantic model
-        return CellValueResult(
-            value=result.get("value"),
-            coordinates=result.get("coordinates", {}),
-            data_type=result.get("data_type", "unknown"),
-        )
+        return await _get_cell_value(session_id, row_index, column, ctx)
 
     @mcp.tool
     async def set_cell_value(
@@ -142,15 +139,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             - Use get_cell_value first to inspect current value
             - Combine with get_row_data for context around changes
         """
-        result = await _set_cell_value(session_id, row_index, column, value, ctx)
-
-        # Convert dict response to Pydantic model
-        return SetCellResult(
-            coordinates=result.get("coordinates", {}),
-            old_value=result.get("old_value"),
-            new_value=result.get("new_value"),
-            data_type=result.get("data_type", "unknown"),
-        )
+        return await _set_cell_value(session_id, row_index, column, value, ctx)
 
     @mcp.tool
     async def get_row_data(
@@ -173,15 +162,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             get_row_data("session123", 0) -> Get all data from first row
             get_row_data("session123", 1, ["name", "age"]) -> Get specific columns from second row
         """
-        result = await _get_row_data(session_id, row_index, columns, ctx)
-
-        # Convert dict response to Pydantic model
-        return RowDataResult(
-            session_id=session_id,
-            row_index=row_index,
-            data=result.get("data", {}),
-            columns=result.get("columns", []),
-        )
+        return await _get_row_data(session_id, row_index, columns, ctx)
 
     @mcp.tool
     async def get_column_data(
@@ -206,17 +187,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             get_column_data("session123", "age") -> Get all values from "age" column
             get_column_data("session123", "name", 0, 5) -> Get first 5 values from "name" column
         """
-        result = await _get_column_data(session_id, column, start_row, end_row, ctx)
-
-        # Convert dict response to Pydantic model
-        return ColumnDataResult(
-            session_id=session_id,
-            column=column,
-            values=result.get("values", []),
-            total_values=result.get("total_values", 0),
-            start_row=start_row,
-            end_row=end_row,
-        )
+        return await _get_column_data(session_id, column, start_row, end_row, ctx)
 
     @mcp.tool
     async def insert_row(
@@ -284,17 +255,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             - Insertion index N appends to end (same as row_index=-1)
             - All operations include precise coordinate tracking for AI assistance
         """
-        result = await _insert_row(session_id, row_index, data, ctx)
-
-        # Convert dict response to Pydantic model
-        return InsertRowResult(
-            row_index=result.get("row_index", row_index),
-            rows_before=result.get("rows_before", 0),
-            rows_after=result.get("rows_after", 0),
-            data_inserted=result.get("data_inserted", {}),
-            columns=result.get("columns", []),
-            session_id=session_id,
-        )
+        return await _insert_row(session_id, row_index, data, ctx)
 
     @mcp.tool
     async def delete_row(
@@ -312,15 +273,7 @@ def register_row_tools(mcp: FastMCP) -> None:
         Example:
             delete_row("session123", 1) -> Delete second row
         """
-        result = await _delete_row(session_id, row_index, ctx)
-
-        # Convert dict response to Pydantic model
-        return DeleteRowResult(
-            session_id=session_id,
-            row_index=row_index,
-            rows_before=result.get("rows_before", 0),
-            rows_after=result.get("rows_after", 0),
-        )
+        return await _delete_row(session_id, row_index, ctx)
 
     @mcp.tool
     async def update_row(
@@ -397,13 +350,4 @@ def register_row_tools(mcp: FastMCP) -> None:
             → insert_row(): Add new rows instead of updating
             → set_cell_value(): Update single cell instead of multiple columns
         """
-        result = await _update_row(session_id, row_index, data, ctx)
-
-        # Convert dict response to Pydantic model
-        return UpdateRowResult(
-            row_index=row_index,
-            columns_updated=result.get("columns_updated", []),
-            old_values=result.get("old_values", {}),
-            new_values=result.get("new_values", {}),
-            changes_made=result.get("changes_made", 0),
-        )
+        return await _update_row(session_id, row_index, data, ctx)

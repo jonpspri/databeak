@@ -8,8 +8,20 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
+from fastmcp.exceptions import ToolError
 
 from ..models import ExportFormat, OperationType, get_session_manager
+from ..models.tool_responses import (
+    CloseSessionResult,
+    DataPreview,
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
+    SessionListResult,
+)
+from ..models.tool_responses import (
+    SessionInfo as SessionInfoResponse,
+)
 from ..utils.validators import validate_file_path, validate_url
 from .data_operations import create_data_preview_with_indices
 
@@ -26,7 +38,7 @@ async def load_csv(
     na_values: list[str] | None = None,
     parse_dates: list[str] | None = None,
     ctx: Context | None = None,
-) -> dict[str, Any]:
+) -> LoadResult:
     """Load a CSV file into a session.
 
     Args:
@@ -46,11 +58,7 @@ async def load_csv(
         # Validate file path
         is_valid, validated_path = validate_file_path(file_path)
         if not is_valid:
-            return {
-                "success": False,
-                "message": f"Invalid file path: {validated_path}",
-                "error": validated_path,
-            }
+            raise ToolError(f"Invalid file path: {validated_path}")
 
         if ctx:
             await ctx.info(f"Loading CSV file: {validated_path}")
@@ -88,24 +96,27 @@ async def load_csv(
             await ctx.report_progress(1.0)
             await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns")
 
-        return {
-            "success": True,
-            "message": "Successfully loaded CSV file",
-            "session_id": session.session_id,
-            "rows_affected": len(df),
-            "columns_affected": df.columns.tolist(),
-            "data": {
-                "shape": df.shape,
-                "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
-                "memory_usage_mb": df.memory_usage(deep=True).sum() / (1024 * 1024),
-                "preview": create_data_preview_with_indices(df, 5),
-            },
-        }
+        # Create data preview
+        preview_data = create_data_preview_with_indices(df, 5)
+        data_preview = DataPreview(
+            rows=preview_data["records"],
+            row_count=preview_data["total_rows"],
+            column_count=preview_data["total_columns"],
+            truncated=preview_data["preview_rows"] < preview_data["total_rows"],
+        )
+
+        return LoadResult(
+            session_id=session.session_id,
+            rows_affected=len(df),
+            columns_affected=df.columns.tolist(),
+            data=data_preview,
+            memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to load CSV: {e!s}")
-        return {"success": False, "message": "Failed to load CSV file", "error": str(e)}
+        raise ToolError(f"Failed to load CSV: {e}") from e
 
 
 async def load_csv_from_url(
@@ -114,7 +125,7 @@ async def load_csv_from_url(
     delimiter: str = ",",
     session_id: str | None = None,
     ctx: Context | None = None,
-) -> dict[str, Any]:
+) -> LoadResult:
     """Load a CSV file from a URL.
 
     Args:
@@ -131,11 +142,7 @@ async def load_csv_from_url(
         # Validate URL
         is_valid, validated_url = validate_url(url)
         if not is_valid:
-            return {
-                "success": False,
-                "message": f"Invalid URL: {validated_url}",
-                "error": validated_url,
-            }
+            raise ToolError(f"Invalid URL: {validated_url}")
 
         if ctx:
             await ctx.info(f"Loading CSV from URL: {url}")
@@ -156,27 +163,26 @@ async def load_csv_from_url(
             await ctx.report_progress(1.0)
             await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns")
 
-        return {
-            "success": True,
-            "message": "Successfully loaded CSV from URL",
-            "session_id": session.session_id,
-            "rows_affected": len(df),
-            "columns_affected": df.columns.tolist(),
-            "data": {
-                "shape": df.shape,
-                "source_url": url,
-                "preview": create_data_preview_with_indices(df, 5),
-            },
-        }
+        # Create data preview
+        preview_data = create_data_preview_with_indices(df, 5)
+        data_preview = DataPreview(
+            rows=preview_data["records"],
+            row_count=preview_data["total_rows"],
+            column_count=preview_data["total_columns"],
+            truncated=preview_data["preview_rows"] < preview_data["total_rows"],
+        )
+
+        return LoadResult(
+            session_id=session.session_id,
+            rows_affected=len(df),
+            columns_affected=df.columns.tolist(),
+            data=data_preview,
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to load CSV from URL: {e!s}")
-        return {
-            "success": False,
-            "message": "Failed to load CSV from URL",
-            "error": str(e),
-        }
+        raise ToolError(f"Failed to load CSV from URL: {e}") from e
 
 
 async def load_csv_from_content(
@@ -185,7 +191,7 @@ async def load_csv_from_content(
     session_id: str | None = None,
     has_header: bool = True,
     ctx: Context | None = None,
-) -> dict[str, Any]:
+) -> LoadResult:
     """Load CSV data from a string content.
 
     Args:
@@ -215,26 +221,26 @@ async def load_csv_from_content(
         if ctx:
             await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns")
 
-        return {
-            "success": True,
-            "message": "Successfully loaded CSV from content",
-            "session_id": session.session_id,
-            "rows_affected": len(df),
-            "columns_affected": df.columns.tolist(),
-            "data": {
-                "shape": df.shape,
-                "preview": create_data_preview_with_indices(df, 5),
-            },
-        }
+        # Create data preview
+        preview_data = create_data_preview_with_indices(df, 5)
+        data_preview = DataPreview(
+            rows=preview_data["records"],
+            row_count=preview_data["total_rows"],
+            column_count=preview_data["total_columns"],
+            truncated=preview_data["preview_rows"] < preview_data["total_rows"],
+        )
+
+        return LoadResult(
+            session_id=session.session_id,
+            rows_affected=len(df),
+            columns_affected=df.columns.tolist(),
+            data=data_preview,
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to parse CSV content: {e!s}")
-        return {
-            "success": False,
-            "message": "Failed to parse CSV content",
-            "error": str(e),
-        }
+        raise ToolError(f"Failed to parse CSV content: {e}") from e
 
 
 async def export_csv(
@@ -244,7 +250,7 @@ async def export_csv(
     encoding: str = "utf-8",
     index: bool = False,
     ctx: Context | None = None,
-) -> dict[str, Any]:
+) -> ExportResult:
     """Export session data to various formats.
 
     Args:
@@ -264,11 +270,7 @@ async def export_csv(
         session = session_manager.get_session(session_id)
 
         if not session or session.data_session.df is None:
-            return {
-                "success": False,
-                "message": "Session not found or no data loaded",
-                "error": "Invalid session ID",
-            }
+            raise ToolError(f"Session not found or no data loaded: {session_id}")
 
         if ctx:
             await ctx.info(f"Exporting data in {format.value} format")
@@ -314,11 +316,7 @@ async def export_csv(
         elif format == ExportFormat.MARKDOWN:
             df.to_markdown(path_obj, index=index)
         else:
-            return {
-                "success": False,
-                "message": f"Unsupported format: {format}",
-                "error": "Invalid export format",
-            }
+            raise ToolError(f"Unsupported format: {format}")
 
         # Record operation
         session.record_operation(
@@ -329,25 +327,21 @@ async def export_csv(
             await ctx.report_progress(1.0)
             await ctx.info(f"Exported to {file_path}")
 
-        return {
-            "success": True,
-            "message": f"Successfully exported data to {format.value}",
-            "session_id": session_id,
-            "data": {
-                "file_path": str(file_path),
-                "format": format.value,
-                "rows_exported": len(df),
-                "file_size_bytes": path_obj.stat().st_size,
-            },
-        }
+        return ExportResult(
+            session_id=session_id,
+            file_path=str(file_path),
+            format=format.value,  # type: ignore
+            rows_exported=len(df),
+            file_size_mb=path_obj.stat().st_size / (1024 * 1024),
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to export data: {e!s}")
-        return {"success": False, "message": "Failed to export data", "error": str(e)}
+        raise ToolError(f"Failed to export data: {e}") from e
 
 
-async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
     """Get information about a specific session.
 
     Args:
@@ -362,34 +356,29 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[
         session = session_manager.get_session(session_id)
 
         if not session:
-            return {
-                "success": False,
-                "message": "Session not found",
-                "error": "Invalid session ID",
-            }
+            raise ToolError(f"Session not found: {session_id}")
 
         if ctx:
             await ctx.info(f"Retrieved info for session {session_id}")
 
         info = session.get_info()
-        return {
-            "success": True,
-            "message": "Session info retrieved",
-            "session_id": session_id,
-            "data": info.model_dump(),
-        }
+        return SessionInfoResult(
+            session_id=session_id,
+            created_at=info.created_at.isoformat(),
+            last_modified=info.last_accessed.isoformat(),
+            data_loaded=session.data_session.df is not None,
+            row_count=info.row_count if session.data_session.df is not None else None,
+            column_count=info.column_count if session.data_session.df is not None else None,
+            auto_save_enabled=session.auto_save_config.enabled,
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to get session info: {e!s}")
-        return {
-            "success": False,
-            "message": "Failed to get session info",
-            "error": str(e),
-        }
+        raise ToolError(f"Failed to get session info: {e}") from e
 
 
-async def list_sessions(ctx: Context | None = None) -> dict[str, Any]:
+async def list_sessions(ctx: Context | None = None) -> SessionListResult:
     """List all active sessions.
 
     Args:
@@ -405,19 +394,41 @@ async def list_sessions(ctx: Context | None = None) -> dict[str, Any]:
         if ctx:
             await ctx.info(f"Found {len(sessions)} active sessions")
 
-        return {
-            "success": True,
-            "message": f"Found {len(sessions)} active sessions",
-            "sessions": [s.model_dump() for s in sessions],
-        }
+        # Convert session info to SessionInfoResponse objects for tool response
+        session_infos = []
+        active_count = 0
+        for s in sessions:
+            # s is already a SessionInfo from data_models, so we can access its attributes directly
+            session_info = SessionInfoResponse(
+                session_id=s.session_id,
+                created_at=s.created_at.isoformat(),
+                last_accessed=s.last_accessed.isoformat(),
+                row_count=s.row_count,
+                column_count=s.column_count,
+                columns=s.columns,
+                memory_usage_mb=s.memory_usage_mb,
+                file_path=s.file_path,
+            )
+            session_infos.append(session_info)
+
+            # Count active sessions (those with data loaded)
+            if s.row_count > 0:
+                active_count += 1
+
+        return SessionListResult(
+            sessions=session_infos,
+            total_sessions=len(sessions),
+            active_sessions=active_count,
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to list sessions: {e!s}")
-        return {"success": False, "message": "Failed to list sessions", "error": str(e)}
+        # Return empty list on error for consistency
+        return SessionListResult(sessions=[], total_sessions=0, active_sessions=0)
 
 
-async def close_session(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
     """Close and clean up a session.
 
     Args:
@@ -432,22 +443,18 @@ async def close_session(session_id: str, ctx: Context | None = None) -> dict[str
         removed = await session_manager.remove_session(session_id)
 
         if not removed:
-            return {
-                "success": False,
-                "message": "Session not found",
-                "error": "Invalid session ID",
-            }
+            raise ToolError(f"Session not found: {session_id}")
 
         if ctx:
             await ctx.info(f"Closed session {session_id}")
 
-        return {
-            "success": True,
-            "message": f"Session {session_id} closed successfully",
-            "session_id": session_id,
-        }
+        return CloseSessionResult(
+            session_id=session_id,
+            message=f"Session {session_id} closed successfully",
+            data_preserved=False,  # Sessions are removed, so data is not preserved
+        )
 
     except Exception as e:
         if ctx:
             await ctx.error(f"Failed to close session: {e!s}")
-        return {"success": False, "message": "Failed to close session", "error": str(e)}
+        raise ToolError(f"Failed to close session: {e}") from e

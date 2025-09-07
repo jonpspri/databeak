@@ -2,22 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from fastmcp import Context, FastMCP
 
-from ..models.tool_responses import (
-    ColumnStatisticsResult,
-    CorrelationResult,
-    DataSummaryResult,
-    FindCellsResult,
-    GroupAggregateResult,
-    InspectDataResult,
-    OutliersResult,
-    ProfileResult,
-    StatisticsResult,
-    ValueCountsResult,
-)
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
 from .analytics import get_correlation_matrix as _get_correlation_matrix
@@ -32,6 +20,20 @@ from .transformations import find_cells_with_value as _find_cells_with_value
 from .transformations import get_data_summary as _get_data_summary
 from .transformations import inspect_data_around as _inspect_data_around
 
+if TYPE_CHECKING:
+    from ..models.tool_responses import (
+        ColumnStatisticsResult,
+        CorrelationResult,
+        DataSummaryResult,
+        FindCellsResult,
+        GroupAggregateResult,
+        InspectDataResult,
+        OutliersResult,
+        ProfileResult,
+        StatisticsResult,
+        ValueCountsResult,
+    )
+
 
 def register_analytics_tools(mcp: FastMCP) -> None:
     """Register analytics tools with FastMCP server."""
@@ -44,32 +46,14 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> StatisticsResult:
         """Get statistical summary of numerical columns."""
-        result = await _get_statistics(session_id, columns, include_percentiles, ctx)
-
-        # Convert dict response to Pydantic model
-        return StatisticsResult(
-            session_id=session_id,
-            statistics=result.get("statistics", {}),
-            column_count=result.get("column_count", 0),
-            numeric_columns=result.get("numeric_columns", []),
-            total_rows=result.get("total_rows", 0),
-        )
+        return await _get_statistics(session_id, columns, include_percentiles, ctx)
 
     @mcp.tool
     async def get_column_statistics(
         session_id: str, column: str, ctx: Context | None = None
     ) -> ColumnStatisticsResult:
         """Get detailed statistics for a specific column."""
-        result = await _get_column_statistics(session_id, column, ctx)
-
-        # Convert dict response to Pydantic model
-        return ColumnStatisticsResult(
-            session_id=session_id,
-            column=column,
-            statistics=result.get("statistics", {}),
-            data_type=result.get("data_type", "unknown"),
-            non_null_count=result.get("non_null_count", 0),
-        )
+        return await _get_column_statistics(session_id, column, ctx)
 
     @mcp.tool
     async def get_correlation_matrix(
@@ -80,15 +64,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> CorrelationResult:
         """Calculate correlation matrix for numeric columns."""
-        result = await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
-
-        # Convert dict response to Pydantic model
-        return CorrelationResult(
-            session_id=session_id,
-            correlation_matrix=result.get("correlation_matrix", {}),
-            method=method,
-            columns_analyzed=result.get("columns_analyzed", []),
-        )
+        return await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
 
     @mcp.tool
     async def group_by_aggregate(
@@ -98,16 +74,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> GroupAggregateResult:
         """Group data and apply aggregation functions."""
-        result = await _group_by_aggregate(session_id, group_by, aggregations, ctx)
-
-        # Convert dict response to Pydantic model
-        return GroupAggregateResult(
-            session_id=session_id,
-            groups=result.get("groups", {}),
-            group_columns=group_by,
-            aggregation_functions=aggregations,
-            total_groups=result.get("total_groups", 0),
-        )
+        return await _group_by_aggregate(session_id, group_by, aggregations, ctx)
 
     @mcp.tool
     async def get_value_counts(
@@ -120,16 +87,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> ValueCountsResult:
         """Get value counts for a column."""
-        result = await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
-
-        # Convert dict response to Pydantic model
-        return ValueCountsResult(
-            session_id=session_id,
-            column=column,
-            value_counts=result.get("value_counts", {}),
-            total_values=result.get("total_values", 0),
-            unique_values=result.get("unique_values", 0),
-        )
+        return await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
 
     @mcp.tool
     async def detect_outliers(
@@ -140,16 +98,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> OutliersResult:
         """Detect outliers in numeric columns."""
-        result = await _detect_outliers(session_id, columns, method, threshold, ctx)
-
-        # Convert dict response to Pydantic model
-        return OutliersResult(
-            session_id=session_id,
-            outliers_found=result.get("outliers_found", 0),
-            outliers_by_column=result.get("outliers_by_column", {}),
-            method=method,  # type: ignore[arg-type]
-            threshold=threshold,
-        )
+        return await _detect_outliers(session_id, columns, method, threshold, ctx)
 
     @mcp.tool
     async def profile_data(
@@ -159,16 +108,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> ProfileResult:
         """Generate comprehensive data profile."""
-        result = await _profile_data(session_id, include_correlations, include_outliers, ctx)
-
-        # Convert dict response to Pydantic model
-        return ProfileResult(
-            session_id=session_id,
-            profile=result.get("profile", {}),
-            total_rows=result.get("total_rows", 0),
-            total_columns=result.get("total_columns", 0),
-            memory_usage_mb=result.get("memory_usage_mb", 0.0),
-        )
+        return await _profile_data(session_id, include_correlations, include_outliers, ctx)
 
     # AI-Friendly convenience tools
     @mcp.tool
@@ -193,15 +133,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         Example:
             inspect_data_around("session123", 5, "name", 2) -> Get 5x5 grid centered on (5, "name")
         """
-        result = await _inspect_data_around(session_id, row, column, radius, ctx)
-
-        # Convert dict response to Pydantic model
-        return InspectDataResult(
-            session_id=session_id,
-            center_coordinates={"row": row, "column": column},
-            surrounding_data=result.get("surrounding_data", {}),
-            radius=radius,
-        )
+        return await _inspect_data_around(session_id, row, column, radius, ctx)
 
     @mcp.tool
     async def find_cells_with_value(
@@ -227,16 +159,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
             find_cells_with_value("session123", 25, "age") -> Find all age cells with value 25
             find_cells_with_value("session123", "john", None, False) -> Substring search across all columns
         """
-        result = await _find_cells_with_value(session_id, value, column, exact_match, ctx)
-
-        # Convert dict response to Pydantic model
-        return FindCellsResult(
-            session_id=session_id,
-            search_value=value,
-            matches_found=result.get("matches_found", 0),
-            coordinates=result.get("coordinates", []),
-            search_column=column,
-        )
+        return await _find_cells_with_value(session_id, value, column, exact_match, ctx)
 
     @mcp.tool
     async def get_data_summary(
@@ -296,16 +219,4 @@ def register_analytics_tools(mcp: FastMCP) -> None:
             → get_cell_value(): Individual cell access
             → get_column_data(): Column-specific analysis
         """
-        result = await _get_data_summary(session_id, include_preview, max_preview_rows, ctx)
-
-        # Convert dict response to Pydantic model
-        return DataSummaryResult(
-            session_id=session_id,
-            coordinate_system=result.get("coordinate_system", {}),
-            shape=result.get("shape", {}),
-            columns=result.get("columns", {}),
-            data_types=result.get("data_types", {}),
-            missing_data=result.get("missing_data", {}),
-            memory_usage_mb=result.get("memory_usage_mb", 0.0),
-            preview=result.get("preview", {}),
-        )
+        return await _get_data_summary(session_id, include_preview, max_preview_rows, ctx)

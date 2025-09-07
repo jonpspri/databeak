@@ -261,7 +261,7 @@ class DataSummaryResult(BaseToolResponse):
     data_types: dict[str, list[str]]
     missing_data: MissingDataInfo
     memory_usage_mb: float
-    preview: DataPreview
+    preview: DataPreview | None = None
 
 
 class ColumnStatisticsResult(BaseToolResponse):
@@ -301,6 +301,7 @@ class FindCellsResult(BaseToolResponse):
     matches_found: int
     coordinates: list[CellLocation]
     search_column: str | None
+    exact_match: bool
 
 
 # =============================================================================
@@ -361,9 +362,11 @@ class DeleteRowResult(BaseToolResponse):
     """Response model for row deletion operations."""
 
     session_id: str
+    operation: str = "delete_row"
     row_index: int
     rows_before: int
     rows_after: int
+    deleted_data: dict[str, Any]
 
 
 class UpdateRowResult(BaseToolResponse):
@@ -399,6 +402,12 @@ class ColumnOperationResult(BaseToolResponse):
     operation: str
     rows_affected: int
     columns_affected: list[str]
+    original_sample: list[Any] | None = None
+    updated_sample: list[Any] | None = None
+    # Additional fields for specific operations
+    part_index: int | None = None
+    transform: str | None = None
+    nulls_filled: int | None = None
 
 
 # =============================================================================
@@ -406,12 +415,7 @@ class ColumnOperationResult(BaseToolResponse):
 # =============================================================================
 
 
-class ErrorResult(BaseToolResponse):
-    """Standardized error response format."""
-
-    success: bool = False
-    error: str
-    session_id: str | None = None
+# ErrorResult class removed - now using ToolError exceptions instead
 
 
 # =============================================================================
@@ -446,5 +450,4 @@ ToolResponse = (
     | UpdateRowResult
     | FilterOperationResult
     | ColumnOperationResult
-    | ErrorResult
 )

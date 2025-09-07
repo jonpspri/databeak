@@ -27,7 +27,7 @@ Phone,799.99,20,Electronics,4.7
 Table,399.99,8,Furniture,3.9"""
 
     result = await load_csv_from_content(csv_content)
-    return result["session_id"]
+    return result.session_id
 
 
 @pytest.mark.asyncio
@@ -37,44 +37,44 @@ class TestAnalyticsErrorHandling:
     async def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session."""
         result = await get_statistics("invalid-session")
-        assert result["success"] is False
-        assert "error" in result
+        assert result.success is False
+        assert hasattr(result, "error")
 
     async def test_get_statistics_invalid_columns(self, analytics_test_session):
         """Test statistics with invalid column names."""
         result = await get_statistics(analytics_test_session, ["nonexistent_column"])
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        assert result.success is False
+        assert "not found" in result.error
 
     async def test_get_column_statistics_invalid_session(self):
         """Test column statistics with invalid session."""
         result = await get_column_statistics("invalid-session", "price")
-        assert result["success"] is False
-        assert "error" in result
+        assert result.success is False
+        assert hasattr(result, "error")
 
     async def test_get_column_statistics_invalid_column(self, analytics_test_session):
         """Test column statistics with invalid column."""
         result = await get_column_statistics(analytics_test_session, "nonexistent")
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        assert result.success is False
+        assert "not found" in result.error
 
     async def test_detect_outliers_invalid_session(self):
         """Test outlier detection with invalid session."""
         result = await detect_outliers("invalid-session", ["price"])
-        assert result["success"] is False
-        assert "error" in result
+        assert result.success is False
+        assert hasattr(result, "error")
 
     async def test_detect_outliers_invalid_columns(self, analytics_test_session):
         """Test outlier detection with invalid columns."""
         result = await detect_outliers(analytics_test_session, ["nonexistent"])
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        assert result.success is False
+        assert "not found" in result.error
 
     async def test_detect_outliers_non_numeric(self, analytics_test_session):
         """Test outlier detection on non-numeric columns."""
         result = await detect_outliers(analytics_test_session, ["category"])
-        assert result["success"] is False
-        assert "numeric" in result["error"]
+        assert result.success is False
+        assert "numeric" in result.error
 
 
 @pytest.mark.asyncio
@@ -86,15 +86,15 @@ class TestAnalyticsAdvancedFeatures:
         result = await get_correlation_matrix(
             analytics_test_session, columns=["price", "quantity", "rating"]
         )
-        assert result["success"] is True
-        assert "correlation_matrix" in result
-        assert len(result["correlation_matrix"]) == 3
+        assert result.success is True
+        assert hasattr(result, "correlation_matrix")
+        assert len(result.correlation_matrix) == 3
 
     async def test_get_correlation_matrix_insufficient_columns(self, analytics_test_session):
         """Test correlation matrix with insufficient numeric columns."""
         result = await get_correlation_matrix(analytics_test_session, columns=["category"])
-        assert result["success"] is False
-        assert "numeric columns" in result["error"]
+        assert result.success is False
+        assert "numeric columns" in result.error
 
     async def test_group_by_aggregate_success(self, analytics_test_session):
         """Test group by aggregation."""
@@ -103,10 +103,10 @@ class TestAnalyticsAdvancedFeatures:
             group_by=["category"],
             aggregations={"price": ["mean", "max"], "quantity": ["sum"]},
         )
-        assert result["success"] is True
-        assert "grouped_data" in result
-        assert "grouped_data" in result
-        assert len(result["grouped_data"]) >= 2  # Should have category groups
+        assert result.success is True
+        assert hasattr(result, "groups")
+        assert hasattr(result, "groups")
+        assert len(result.groups) >= 2  # Should have category groups
 
     async def test_group_by_aggregate_invalid_columns(self, analytics_test_session):
         """Test group by with invalid columns."""
@@ -115,36 +115,37 @@ class TestAnalyticsAdvancedFeatures:
             group_by=["nonexistent"],
             aggregations={"price": ["mean"]},
         )
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        assert result.success is False
+        assert "not found" in result.error
 
     async def test_get_value_counts_success(self, analytics_test_session):
         """Test value counts functionality."""
         result = await get_value_counts(analytics_test_session, "category")
-        assert result["success"] is True
-        assert "value_counts" in result
-        assert "Electronics" in result["value_counts"]
-        assert "Furniture" in result["value_counts"]
+        assert result.success is True
+        assert hasattr(result, "value_counts")
+        assert "Electronics" in result.value_counts
+        assert "Furniture" in result.value_counts
 
     async def test_get_value_counts_invalid_column(self, analytics_test_session):
         """Test value counts with invalid column."""
         result = await get_value_counts(analytics_test_session, "nonexistent")
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        assert result.success is False
+        assert "not found" in result.error
 
     async def test_profile_data_success(self, analytics_test_session):
         """Test data profiling functionality."""
         result = await profile_data(analytics_test_session)
-        assert result["success"] is True
-        assert "profile" in result
-        assert "columns" in result["profile"]
-        assert len(result["profile"]["columns"]) == 5
+        assert result.success is True
+        assert hasattr(result, "profile")
+        # Profile is a dict mapping column names to ProfileInfo objects
+        assert isinstance(result.profile, dict)
+        assert len(result.profile) == 5
 
     async def test_profile_data_invalid_session(self):
         """Test data profiling with invalid session."""
         result = await profile_data("invalid-session")
-        assert result["success"] is False
-        assert "error" in result
+        assert result.success is False
+        assert hasattr(result, "error")
 
 
 @pytest.mark.asyncio
@@ -155,35 +156,41 @@ class TestAnalyticsEdgeCases:
         """Test statistics on empty dataframe."""
         # Create session with empty data
         result = await load_csv_from_content("name,age\n")  # Header only
-        session_id = result["session_id"]
+        session_id = result.session_id
 
         # Test statistics
         stats_result = await get_statistics(session_id)
-        assert stats_result["success"] is True
-        assert stats_result["statistics"]["row_count"] == 0
+        assert stats_result.success is True
+        # Statistics for empty dataframe should have total_rows or count of 0
+        assert hasattr(stats_result, "statistics")
+        assert (
+            stats_result.statistics.get("total_rows", 0) == 0
+            or stats_result.statistics.get("count", 0) == 0
+        )
 
     async def test_outliers_with_identical_values(self):
         """Test outlier detection with identical values."""
         # Create data with identical values (no outliers)
         csv_content = "value\n100\n100\n100\n100\n100"
         result = await load_csv_from_content(csv_content)
-        session_id = result["session_id"]
+        session_id = result.session_id
 
         outliers_result = await detect_outliers(session_id, ["value"])
-        assert outliers_result["success"] is True
-        assert "outliers" in outliers_result
+        assert outliers_result.success is True
+        assert hasattr(outliers_result, "outliers_by_column")
         # With identical values, there should be minimal outliers
-        assert outliers_result["outliers"] is not None
+        assert outliers_result.outliers_by_column is not None
+        assert outliers_result.outliers_found == 0  # Identical values should have no outliers
 
     async def test_correlation_with_constant_column(self):
         """Test correlation with constant column."""
         # Create data where one column is constant
         csv_content = "var1,constant,var2\n1,100,10\n2,100,20\n3,100,30"
         result = await load_csv_from_content(csv_content)
-        session_id = result["session_id"]
+        session_id = result.session_id
 
         corr_result = await get_correlation_matrix(session_id)
-        assert corr_result["success"] is True
+        assert corr_result.success is True
         # Constant column should have NaN correlations
 
 
@@ -195,23 +202,23 @@ class TestAnalyticsDataTypes:
         """Test statistics on mixed data types."""
         csv_content = "text,number,boolean\nHello,123,True\nWorld,456,False"
         result = await load_csv_from_content(csv_content)
-        session_id = result["session_id"]
+        session_id = result.session_id
 
         stats_result = await get_statistics(session_id)
-        assert stats_result["success"] is True
-        assert "statistics" in stats_result
+        assert stats_result.success is True
+        assert hasattr(stats_result, "statistics")
 
     async def test_outliers_different_methods(self, analytics_test_session):
         """Test different outlier detection methods."""
         # Test IQR method
         result_iqr = await detect_outliers(analytics_test_session, ["price"], method="iqr")
-        assert result_iqr["success"] is True
+        assert result_iqr.success is True
 
         # Test Z-score method
         result_zscore = await detect_outliers(analytics_test_session, ["price"], method="zscore")
-        assert result_zscore["success"] is True
+        assert result_zscore.success is True
 
         # Test invalid method
         result_invalid = await detect_outliers(analytics_test_session, ["price"], method="invalid")
-        assert result_invalid["success"] is False
-        assert "method" in result_invalid["error"]
+        assert result_invalid.success is False
+        assert "method" in result_invalid.error

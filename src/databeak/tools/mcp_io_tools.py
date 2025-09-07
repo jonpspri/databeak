@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from fastmcp import Context, FastMCP
 
 from ..models import ExportFormat
-from ..models.tool_responses import (
-    CloseSessionResult,
-    ExportResult,
-    LoadResult,
-    SessionInfoResult,
-    SessionListResult,
-)
 from .io_operations import close_session as _close_session
 from .io_operations import export_csv as _export_csv
 from .io_operations import get_session_info as _get_session_info
@@ -19,6 +14,15 @@ from .io_operations import list_sessions as _list_sessions
 from .io_operations import load_csv as _load_csv
 from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
+
+if TYPE_CHECKING:
+    from ..models.tool_responses import (
+        CloseSessionResult,
+        ExportResult,
+        LoadResult,
+        SessionInfoResult,
+        SessionListResult,
+    )
 
 
 def register_io_tools(mcp: FastMCP) -> None:
@@ -87,16 +91,7 @@ def register_io_tools(mcp: FastMCP) -> None:
             3. Inspect with get_cell_value/get_row_data for details
             4. Apply transformations based on data understanding
         """
-        result = await _load_csv(file_path, encoding, delimiter, session_id, ctx=ctx)
-
-        # Convert dict response to Pydantic model
-        return LoadResult(
-            session_id=result.get("session_id", ""),
-            rows_affected=result.get("rows_affected", 0),
-            columns_affected=result.get("columns_affected", []),
-            data=result.get("data"),
-            memory_usage_mb=result.get("memory_usage_mb"),
-        )
+        return await _load_csv(file_path, encoding, delimiter, session_id, ctx=ctx)
 
     @mcp.tool
     async def load_csv_from_url(
@@ -107,16 +102,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> LoadResult:
         """Load a CSV file from a URL."""
-        result = await _load_csv_from_url(url, encoding, delimiter, session_id, ctx)
-
-        # Convert dict response to Pydantic model
-        return LoadResult(
-            session_id=result.get("session_id", ""),
-            rows_affected=result.get("rows_affected", 0),
-            columns_affected=result.get("columns_affected", []),
-            data=result.get("data"),
-            memory_usage_mb=result.get("memory_usage_mb"),
-        )
+        return await _load_csv_from_url(url, encoding, delimiter, session_id, ctx)
 
     @mcp.tool
     async def load_csv_from_content(
@@ -127,16 +113,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         ctx: Context | None = None,
     ) -> LoadResult:
         """Load CSV data from string content."""
-        result = await _load_csv_from_content(content, delimiter, session_id, has_header, ctx)
-
-        # Convert dict response to Pydantic model
-        return LoadResult(
-            session_id=result.get("session_id", ""),
-            rows_affected=result.get("rows_affected", 0),
-            columns_affected=result.get("columns_affected", []),
-            data=result.get("data"),
-            memory_usage_mb=result.get("memory_usage_mb"),
-        )
+        return await _load_csv_from_content(content, delimiter, session_id, has_header, ctx)
 
     @mcp.tool
     async def export_csv(
@@ -149,54 +126,19 @@ def register_io_tools(mcp: FastMCP) -> None:
     ) -> ExportResult:
         """Export session data to various formats."""
         format_enum = ExportFormat(format)
-        result = await _export_csv(session_id, file_path, format_enum, encoding, index, ctx)
-
-        # Convert dict response to Pydantic model
-        return ExportResult(
-            session_id=session_id,
-            file_path=result.get("file_path", file_path or ""),
-            format=format.lower(),  # type: ignore[arg-type]
-            rows_exported=result.get("rows_exported", 0),
-            file_size_mb=result.get("file_size_mb"),
-        )
+        return await _export_csv(session_id, file_path, format_enum, encoding, index, ctx)
 
     @mcp.tool
     async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
         """Get information about a specific session."""
-        result = await _get_session_info(session_id, ctx)
-
-        # Convert dict response to Pydantic model
-        return SessionInfoResult(
-            session_id=session_id,
-            created_at=result.get("created_at", ""),
-            last_modified=result.get("last_modified", ""),
-            data_loaded=result.get("data_loaded", False),
-            row_count=result.get("row_count"),
-            column_count=result.get("column_count"),
-            auto_save_enabled=result.get("auto_save_enabled", False),
-        )
+        return await _get_session_info(session_id, ctx)
 
     @mcp.tool
     async def list_sessions(ctx: Context | None = None) -> SessionListResult:
         """List all active sessions."""
-        result = await _list_sessions(ctx)
-
-        # Convert dict response to Pydantic model
-        sessions_data = result.get("sessions", [])
-        return SessionListResult(
-            sessions=sessions_data,
-            total_sessions=len(sessions_data),
-            active_sessions=result.get("active_sessions", len(sessions_data)),
-        )
+        return await _list_sessions(ctx)
 
     @mcp.tool
     async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
         """Close and clean up a session."""
-        result = await _close_session(session_id, ctx)
-
-        # Convert dict response to Pydantic model
-        return CloseSessionResult(
-            session_id=session_id,
-            message=result.get("message", "Session closed successfully"),
-            data_preserved=result.get("data_preserved", False),
-        )
+        return await _close_session(session_id, ctx)

@@ -81,7 +81,7 @@ class TestServerSessionHandling:
         """Test session operations with data."""
         # Create session with data
         result = await load_csv_from_content("name,age\nJohn,30\nJane,25")
-        session_id = result["session_id"]
+        session_id = result.session_id
 
         session_manager = get_session_manager()
         session = session_manager.get_session(session_id)
