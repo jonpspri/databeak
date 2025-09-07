@@ -17,11 +17,12 @@ from ..models.csv_session import get_session_manager
 from ..models.data_models import OperationType
 from .data_operations import create_data_preview_with_indices
 
-# Type aliases for better type safety
+# Type aliases for better type safety (non-conflicting)
 CellValue = str | int | float | bool | None
 RowData = dict[str, CellValue] | list[CellValue]
-OperationResult = dict[str, Any]  # Operation results have complex mixed types
-FilterCondition = dict[str, str | CellValue]  # For filter condition dicts
+
+# Note: FilterCondition and OperationResult are imported from data_models.py when needed
+# To avoid conflicts with tool response models, use them as dict types in function signatures
 
 if TYPE_CHECKING:
     from fastmcp import Context
@@ -46,10 +47,10 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 async def filter_rows(
     session_id: str,
-    conditions: list[FilterCondition],
+    conditions: list[dict[str, str | CellValue]],
     mode: str = "and",
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Filter rows based on conditions.
 
     Args:
@@ -294,7 +295,7 @@ async def add_column(
     value: CellValue | list[CellValue] = None,
     formula: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Add a new column to the dataframe.
 
     Args:
@@ -466,7 +467,7 @@ async def fill_missing_values(
     value: CellValue = None,
     columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Fill or remove missing values.
 
     Args:
@@ -780,7 +781,7 @@ async def set_cell_value(
     column: str | int,
     value: CellValue,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Set the value of a specific cell.
 
     Args:
@@ -1414,7 +1415,7 @@ async def insert_row(
     row_index: int,
     data: RowData | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Insert a new row at the specified index.
 
     Args:
@@ -1592,7 +1593,7 @@ async def update_row(
     row_index: int,
     data: dict[str, CellValue] | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> dict[str, Any]:
     """Update specific columns in a row with new values.
 
     Args:

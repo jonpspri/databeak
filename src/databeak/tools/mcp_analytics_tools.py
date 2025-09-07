@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel
 
+from ..models.tool_responses import (
+    ColumnStatisticsResult,
+    CorrelationResult,
+    DataSummaryResult,
+    FindCellsResult,
+    GroupAggregateResult,
+    InspectDataResult,
+    OutliersResult,
+    ProfileResult,
+    StatisticsResult,
+    ValueCountsResult,
+)
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
 from .analytics import get_correlation_matrix as _get_correlation_matrix
@@ -20,117 +31,6 @@ from .transformations import CellValue
 from .transformations import find_cells_with_value as _find_cells_with_value
 from .transformations import get_data_summary as _get_data_summary
 from .transformations import inspect_data_around as _inspect_data_around
-
-
-class StatisticsResult(BaseModel):
-    """Response model for statistical analysis operations."""
-
-    success: bool = True
-    session_id: str
-    statistics: dict[str, dict[str, float]]
-    column_count: int
-    numeric_columns: list[str]
-    total_rows: int
-
-
-class CorrelationResult(BaseModel):
-    """Response model for correlation matrix operations."""
-
-    success: bool = True
-    session_id: str
-    correlation_matrix: dict[str, dict[str, float]]
-    method: str
-    columns_analyzed: list[str]
-
-
-class ValueCountsResult(BaseModel):
-    """Response model for value counts operations."""
-
-    success: bool = True
-    session_id: str
-    column: str
-    value_counts: dict[str, int | float]
-    total_values: int
-    unique_values: int
-
-
-class OutliersResult(BaseModel):
-    """Response model for outlier detection operations."""
-
-    success: bool = True
-    session_id: str
-    outliers_found: int
-    outliers_by_column: dict[str, list[dict[str, Any]]]
-    method: str
-    threshold: float
-
-
-class ProfileResult(BaseModel):
-    """Response model for comprehensive data profiling."""
-
-    success: bool = True
-    session_id: str
-    profile: dict[str, Any]
-    total_rows: int
-    total_columns: int
-    memory_usage_mb: float
-
-
-class DataSummaryResult(BaseModel):
-    """Response model for comprehensive data summary."""
-
-    success: bool = True
-    session_id: str
-    coordinate_system: dict[str, str]
-    shape: dict[str, int]
-    columns: dict[str, Any]
-    data_types: dict[str, list[str]]
-    missing_data: dict[str, Any]
-    memory_usage_mb: float
-    preview: dict[str, Any]
-
-
-class ColumnStatisticsResult(BaseModel):
-    """Response model for column-specific statistics."""
-
-    success: bool = True
-    session_id: str
-    column: str
-    statistics: dict[str, float]
-    data_type: str
-    non_null_count: int
-
-
-class GroupAggregateResult(BaseModel):
-    """Response model for group-by aggregation operations."""
-
-    success: bool = True
-    session_id: str
-    groups: dict[str, dict[str, Any]]
-    group_columns: list[str]
-    aggregation_functions: dict[str, str | list[str]]
-    total_groups: int
-
-
-class InspectDataResult(BaseModel):
-    """Response model for data inspection around specific coordinates."""
-
-    success: bool = True
-    session_id: str
-    center_coordinates: dict[str, str | int]
-    surrounding_data: dict[str, Any]
-    radius: int
-
-
-class FindCellsResult(BaseModel):
-    """Response model for cell search operations."""
-
-    success: bool = True
-    session_id: str
-    search_value: str | int | float | bool | None
-    matches_found: int
-    coordinates: list[dict[str, str | int]]
-    search_column: str | None
 
 
 def register_analytics_tools(mcp: FastMCP) -> None:

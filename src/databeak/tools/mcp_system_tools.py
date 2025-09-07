@@ -3,34 +3,11 @@
 from __future__ import annotations
 
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel
 
 from .._version import __version__
 from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
-
-
-class HealthResult(BaseModel):
-    """Response model for system health check."""
-
-    success: bool = True
-    status: str
-    version: str
-    active_sessions: int
-    max_sessions: int
-    session_ttl_minutes: int
-
-
-class ServerInfoResult(BaseModel):
-    """Response model for server information and capabilities."""
-
-    name: str
-    version: str
-    description: str
-    capabilities: dict[str, list[str]]
-    supported_formats: list[str]
-    max_file_size_mb: int
-    session_timeout_minutes: int
+from ..models.tool_responses import HealthResult, ServerInfoResult
 
 
 def register_system_tools(mcp: FastMCP) -> None:

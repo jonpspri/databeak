@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel
 
 from ..models import ExportFormat
+from ..models.tool_responses import (
+    CloseSessionResult,
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
+    SessionListResult,
+)
 from .io_operations import close_session as _close_session
 from .io_operations import export_csv as _export_csv
 from .io_operations import get_session_info as _get_session_info
@@ -15,59 +19,6 @@ from .io_operations import list_sessions as _list_sessions
 from .io_operations import load_csv as _load_csv
 from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
-
-
-class LoadResult(BaseModel):
-    """Response model for data loading operations."""
-
-    success: bool = True
-    session_id: str
-    rows_affected: int
-    columns_affected: list[str]
-    data: dict[str, Any] | None = None
-    memory_usage_mb: float | None = None
-
-
-class ExportResult(BaseModel):
-    """Response model for data export operations."""
-
-    success: bool = True
-    session_id: str
-    file_path: str
-    format: str
-    rows_exported: int
-    file_size_mb: float | None = None
-
-
-class SessionInfoResult(BaseModel):
-    """Response model for session information."""
-
-    success: bool = True
-    session_id: str
-    created_at: str
-    last_modified: str
-    data_loaded: bool
-    row_count: int | None = None
-    column_count: int | None = None
-    auto_save_enabled: bool
-
-
-class SessionListResult(BaseModel):
-    """Response model for listing all sessions."""
-
-    success: bool = True
-    sessions: list[dict[str, Any]]
-    total_sessions: int
-    active_sessions: int
-
-
-class CloseSessionResult(BaseModel):
-    """Response model for session closure operations."""
-
-    success: bool = True
-    session_id: str
-    message: str
-    data_preserved: bool
 
 
 def register_io_tools(mcp: FastMCP) -> None:

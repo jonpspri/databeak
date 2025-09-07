@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel
 
+from ..models.tool_responses import (
+    CellValueResult,
+    ColumnDataResult,
+    DeleteRowResult,
+    InsertRowResult,
+    RowDataResult,
+    SetCellResult,
+    UpdateRowResult,
+)
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
 from .transformations import get_column_data as _get_column_data
@@ -12,82 +20,6 @@ from .transformations import get_row_data as _get_row_data
 from .transformations import insert_row as _insert_row
 from .transformations import set_cell_value as _set_cell_value
 from .transformations import update_row as _update_row
-
-
-class CellValueResult(BaseModel):
-    """Response model for cell value operations."""
-
-    success: bool = True
-    value: str | int | float | bool | None
-    coordinates: dict[str, str | int]
-    data_type: str
-
-
-class RowDataResult(BaseModel):
-    """Response model for row data operations."""
-
-    success: bool = True
-    session_id: str
-    row_index: int
-    data: dict[str, str | int | float | bool | None]
-    columns: list[str]
-
-
-class SetCellResult(BaseModel):
-    """Response model for cell update operations."""
-
-    success: bool = True
-    coordinates: dict[str, str | int]
-    old_value: str | int | float | bool | None
-    new_value: str | int | float | bool | None
-    data_type: str
-
-
-class InsertRowResult(BaseModel):
-    """Response model for row insertion operations."""
-
-    success: bool = True
-    operation: str = "insert_row"
-    row_index: int
-    rows_before: int
-    rows_after: int
-    data_inserted: dict[str, str | int | float | bool | None]
-    columns: list[str]
-    session_id: str
-
-
-class DeleteRowResult(BaseModel):
-    """Response model for row deletion operations."""
-
-    success: bool = True
-    session_id: str
-    row_index: int
-    rows_before: int
-    rows_after: int
-
-
-class UpdateRowResult(BaseModel):
-    """Response model for row update operations."""
-
-    success: bool = True
-    operation: str = "update_row"
-    row_index: int
-    columns_updated: list[str]
-    old_values: dict[str, str | int | float | bool | None]
-    new_values: dict[str, str | int | float | bool | None]
-    changes_made: int
-
-
-class ColumnDataResult(BaseModel):
-    """Response model for column data operations."""
-
-    success: bool = True
-    session_id: str
-    column: str
-    values: list[str | int | float | bool | None]
-    total_values: int
-    start_row: int | None = None
-    end_row: int | None = None
 
 
 def register_row_tools(mcp: FastMCP) -> None:

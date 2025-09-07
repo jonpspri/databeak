@@ -5,10 +5,8 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel
 
-# Import type aliases
-from .transformations import CellValue, FilterCondition, OperationResult
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult
 from .transformations import add_column as _add_column
 from .transformations import change_column_type as _change_column_type
 from .transformations import extract_from_column as _extract_from_column
@@ -26,26 +24,11 @@ from .transformations import strip_column as _strip_column
 from .transformations import transform_column_case as _transform_column_case
 from .transformations import update_column as _update_column
 
+# Type aliases - define locally to avoid import issues
+CellValue = str | int | float | bool | None
 
-class FilterResult(BaseModel):
-    """Response model for row filtering operations."""
-
-    success: bool = True
-    session_id: str
-    rows_before: int
-    rows_after: int
-    rows_filtered: int
-    conditions_applied: int
-
-
-class ColumnOperationResult(BaseModel):
-    """Response model for column operations (add, remove, rename, etc.)."""
-
-    success: bool = True
-    session_id: str
-    operation: str
-    rows_affected: int
-    columns_affected: list[str]
+# For transformations.py compatibility, use the dict-based types
+FilterConditionDict = dict[str, str | CellValue]
 
 
 def register_data_tools(mcp: FastMCP) -> None:
@@ -54,10 +37,10 @@ def register_data_tools(mcp: FastMCP) -> None:
     @mcp.tool
     async def filter_rows(
         session_id: str,
-        conditions: list[FilterCondition],
+        conditions: list[FilterConditionDict],
         mode: str = "and",
         ctx: Context | None = None,
-    ) -> FilterResult:
+    ) -> FilterOperationResult:
         """Filter rows using flexible conditions with comprehensive null value and text matching
         support.
 
@@ -118,7 +101,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         result = await _filter_rows(session_id, conditions, mode, ctx)
 
         # Convert dict response to Pydantic model
-        return FilterResult(
+        return FilterOperationResult(
             session_id=session_id,
             rows_before=result.get("rows_before", 0),
             rows_after=result.get("rows_after", 0),
@@ -154,9 +137,17 @@ def register_data_tools(mcp: FastMCP) -> None:
         value: CellValue | list[CellValue] = None,
         formula: str | None = None,
         ctx: Context | None = None,
-    ) -> OperationResult:
+    ) -> ColumnOperationResult:
         """Add a new column to the dataframe."""
-        return await _add_column(session_id, name, value, formula, ctx)
+        result = await _add_column(session_id, name, value, formula, ctx)
+
+        # Convert dict response to Pydantic model
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="add_column",
+            rows_affected=0,  # Not applicable for column operations
+            columns_affected=[result.get("column_added", name)] if result.get("success") else [],
+        )
 
     @mcp.tool
     async def remove_columns(
