@@ -52,6 +52,24 @@ class SessionInfoResult(BaseModel):
     auto_save_enabled: bool
 
 
+class SessionListResult(BaseModel):
+    """Response model for listing all sessions."""
+
+    success: bool = True
+    sessions: list[dict[str, Any]]
+    total_sessions: int
+    active_sessions: int
+
+
+class CloseSessionResult(BaseModel):
+    """Response model for session closure operations."""
+
+    success: bool = True
+    session_id: str
+    message: str
+    data_preserved: bool
+
+
 def register_io_tools(mcp: FastMCP) -> None:
     """Register I/O tools with FastMCP server."""
 
@@ -136,9 +154,18 @@ def register_io_tools(mcp: FastMCP) -> None:
         delimiter: str = ",",
         session_id: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load a CSV file from a URL."""
-        return await _load_csv_from_url(url, encoding, delimiter, session_id, ctx)
+        result = await _load_csv_from_url(url, encoding, delimiter, session_id, ctx)
+
+        # Convert dict response to Pydantic model
+        return LoadResult(
+            session_id=result.get("session_id", ""),
+            rows_affected=result.get("rows_affected", 0),
+            columns_affected=result.get("columns_affected", []),
+            data=result.get("data"),
+            memory_usage_mb=result.get("memory_usage_mb"),
+        )
 
     @mcp.tool
     async def load_csv_from_content(
@@ -147,9 +174,18 @@ def register_io_tools(mcp: FastMCP) -> None:
         session_id: str | None = None,
         has_header: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load CSV data from string content."""
-        return await _load_csv_from_content(content, delimiter, session_id, has_header, ctx)
+        result = await _load_csv_from_content(content, delimiter, session_id, has_header, ctx)
+
+        # Convert dict response to Pydantic model
+        return LoadResult(
+            session_id=result.get("session_id", ""),
+            rows_affected=result.get("rows_affected", 0),
+            columns_affected=result.get("columns_affected", []),
+            data=result.get("data"),
+            memory_usage_mb=result.get("memory_usage_mb"),
+        )
 
     @mcp.tool
     async def export_csv(
@@ -174,16 +210,42 @@ def register_io_tools(mcp: FastMCP) -> None:
         )
 
     @mcp.tool
-    async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
         """Get information about a specific session."""
-        return await _get_session_info(session_id, ctx)
+        result = await _get_session_info(session_id, ctx)
+
+        # Convert dict response to Pydantic model
+        return SessionInfoResult(
+            session_id=session_id,
+            created_at=result.get("created_at", ""),
+            last_modified=result.get("last_modified", ""),
+            data_loaded=result.get("data_loaded", False),
+            row_count=result.get("row_count"),
+            column_count=result.get("column_count"),
+            auto_save_enabled=result.get("auto_save_enabled", False),
+        )
 
     @mcp.tool
-    async def list_sessions(ctx: Context | None = None) -> dict[str, Any]:
+    async def list_sessions(ctx: Context | None = None) -> SessionListResult:
         """List all active sessions."""
-        return await _list_sessions(ctx)
+        result = await _list_sessions(ctx)
+
+        # Convert dict response to Pydantic model
+        sessions_data = result.get("sessions", [])
+        return SessionListResult(
+            sessions=sessions_data,
+            total_sessions=len(sessions_data),
+            active_sessions=result.get("active_sessions", len(sessions_data)),
+        )
 
     @mcp.tool
-    async def close_session(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
         """Close and clean up a session."""
-        return await _close_session(session_id, ctx)
+        result = await _close_session(session_id, ctx)
+
+        # Convert dict response to Pydantic model
+        return CloseSessionResult(
+            session_id=session_id,
+            message=result.get("message", "Session closed successfully"),
+            data_preserved=result.get("data_preserved", False),
+        )

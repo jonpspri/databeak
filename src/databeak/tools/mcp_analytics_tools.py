@@ -90,6 +90,49 @@ class DataSummaryResult(BaseModel):
     preview: dict[str, Any]
 
 
+class ColumnStatisticsResult(BaseModel):
+    """Response model for column-specific statistics."""
+
+    success: bool = True
+    session_id: str
+    column: str
+    statistics: dict[str, float]
+    data_type: str
+    non_null_count: int
+
+
+class GroupAggregateResult(BaseModel):
+    """Response model for group-by aggregation operations."""
+
+    success: bool = True
+    session_id: str
+    groups: dict[str, dict[str, Any]]
+    group_columns: list[str]
+    aggregation_functions: dict[str, str | list[str]]
+    total_groups: int
+
+
+class InspectDataResult(BaseModel):
+    """Response model for data inspection around specific coordinates."""
+
+    success: bool = True
+    session_id: str
+    center_coordinates: dict[str, str | int]
+    surrounding_data: dict[str, Any]
+    radius: int
+
+
+class FindCellsResult(BaseModel):
+    """Response model for cell search operations."""
+
+    success: bool = True
+    session_id: str
+    search_value: str | int | float | bool | None
+    matches_found: int
+    coordinates: list[dict[str, str | int]]
+    search_column: str | None
+
+
 def register_analytics_tools(mcp: FastMCP) -> None:
     """Register analytics tools with FastMCP server."""
 
@@ -99,16 +142,34 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         columns: list[str] | None = None,
         include_percentiles: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> StatisticsResult:
         """Get statistical summary of numerical columns."""
-        return await _get_statistics(session_id, columns, include_percentiles, ctx)
+        result = await _get_statistics(session_id, columns, include_percentiles, ctx)
+
+        # Convert dict response to Pydantic model
+        return StatisticsResult(
+            session_id=session_id,
+            statistics=result.get("statistics", {}),
+            column_count=result.get("column_count", 0),
+            numeric_columns=result.get("numeric_columns", []),
+            total_rows=result.get("total_rows", 0),
+        )
 
     @mcp.tool
     async def get_column_statistics(
         session_id: str, column: str, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> ColumnStatisticsResult:
         """Get detailed statistics for a specific column."""
-        return await _get_column_statistics(session_id, column, ctx)
+        result = await _get_column_statistics(session_id, column, ctx)
+
+        # Convert dict response to Pydantic model
+        return ColumnStatisticsResult(
+            session_id=session_id,
+            column=column,
+            statistics=result.get("statistics", {}),
+            data_type=result.get("data_type", "unknown"),
+            non_null_count=result.get("non_null_count", 0),
+        )
 
     @mcp.tool
     async def get_correlation_matrix(
@@ -117,9 +178,17 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         columns: list[str] | None = None,
         min_correlation: float | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> CorrelationResult:
         """Calculate correlation matrix for numeric columns."""
-        return await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
+        result = await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
+
+        # Convert dict response to Pydantic model
+        return CorrelationResult(
+            session_id=session_id,
+            correlation_matrix=result.get("correlation_matrix", {}),
+            method=method,
+            columns_analyzed=result.get("columns_analyzed", []),
+        )
 
     @mcp.tool
     async def group_by_aggregate(
@@ -127,9 +196,18 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         group_by: list[str],
         aggregations: dict[str, str | list[str]],
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> GroupAggregateResult:
         """Group data and apply aggregation functions."""
-        return await _group_by_aggregate(session_id, group_by, aggregations, ctx)
+        result = await _group_by_aggregate(session_id, group_by, aggregations, ctx)
+
+        # Convert dict response to Pydantic model
+        return GroupAggregateResult(
+            session_id=session_id,
+            groups=result.get("groups", {}),
+            group_columns=group_by,
+            aggregation_functions=aggregations,
+            total_groups=result.get("total_groups", 0),
+        )
 
     @mcp.tool
     async def get_value_counts(
@@ -200,7 +278,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         column: str | int,
         radius: int = 2,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> InspectDataResult:
         """Get data around a specific cell for context inspection.
 
         Args:
@@ -215,7 +293,15 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         Example:
             inspect_data_around("session123", 5, "name", 2) -> Get 5x5 grid centered on (5, "name")
         """
-        return await _inspect_data_around(session_id, row, column, radius, ctx)
+        result = await _inspect_data_around(session_id, row, column, radius, ctx)
+
+        # Convert dict response to Pydantic model
+        return InspectDataResult(
+            session_id=session_id,
+            center_coordinates={"row": row, "column": column},
+            surrounding_data=result.get("surrounding_data", {}),
+            radius=radius,
+        )
 
     @mcp.tool
     async def find_cells_with_value(
@@ -224,7 +310,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         column: str | None = None,
         exact_match: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> FindCellsResult:
         """Find all cells containing a specific value.
 
         Args:
@@ -241,7 +327,16 @@ def register_analytics_tools(mcp: FastMCP) -> None:
             find_cells_with_value("session123", 25, "age") -> Find all age cells with value 25
             find_cells_with_value("session123", "john", None, False) -> Substring search across all columns
         """
-        return await _find_cells_with_value(session_id, value, column, exact_match, ctx)
+        result = await _find_cells_with_value(session_id, value, column, exact_match, ctx)
+
+        # Convert dict response to Pydantic model
+        return FindCellsResult(
+            session_id=session_id,
+            search_value=value,
+            matches_found=result.get("matches_found", 0),
+            coordinates=result.get("coordinates", []),
+            search_column=column,
+        )
 
     @mcp.tool
     async def get_data_summary(
