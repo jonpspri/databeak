@@ -4,7 +4,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from src.databeak.server import _load_instructions, mcp
+from src.databeak.tools.mcp_system_tools import HealthResult, ServerInfoResult
 
 
 class TestInstructionsLoading:
@@ -139,3 +142,67 @@ class TestServerTools:
         from fastmcp import FastMCP
 
         assert isinstance(mcp, FastMCP)
+
+
+class TestSystemToolFunctions:
+    """Test the actual system tool functions and Pydantic models."""
+
+    @pytest.mark.asyncio
+    async def test_health_check_result_structure(self) -> None:
+        """Test health check returns properly structured HealthResult."""
+        # Test that we can create a valid HealthResult
+        result = HealthResult(
+            status="healthy",
+            version="1.0.0",
+            active_sessions=2,
+            max_sessions=10,
+            session_ttl_minutes=60,
+        )
+        assert result.success is True  # Default value
+        assert result.status == "healthy"
+        assert result.active_sessions == 2
+
+    @pytest.mark.asyncio
+    async def test_server_info_result_structure(self) -> None:
+        """Test server info returns properly structured ServerInfoResult."""
+        result = ServerInfoResult(
+            name="DataBeak",
+            version="1.0.0",
+            description="Test server",
+            capabilities={"test": ["tool1", "tool2"]},
+            supported_formats=["csv", "json"],
+            max_file_size_mb=1024,
+            session_timeout_minutes=60,
+        )
+        assert result.name == "DataBeak"
+        assert "test" in result.capabilities
+        assert len(result.supported_formats) == 2
+
+    def test_pydantic_model_imports(self) -> None:
+        """Test that Pydantic models can be imported and have correct structure."""
+        # Test HealthResult model
+        assert hasattr(HealthResult, "model_fields")
+        assert "success" in HealthResult.model_fields
+        assert "status" in HealthResult.model_fields
+        assert "version" in HealthResult.model_fields
+        assert "active_sessions" in HealthResult.model_fields
+
+        # Test ServerInfoResult model
+        assert hasattr(ServerInfoResult, "model_fields")
+        assert "name" in ServerInfoResult.model_fields
+        assert "capabilities" in ServerInfoResult.model_fields
+        assert "supported_formats" in ServerInfoResult.model_fields
+
+    def test_pydantic_model_validation(self) -> None:
+        """Test Pydantic model validation catches errors."""
+        # Test that invalid data raises validation errors
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
+            HealthResult(
+                status="healthy",
+                version="1.0.0",
+                active_sessions="invalid",  # Should be int, not str
+                max_sessions=10,
+                session_ttl_minutes=60,
+            )
