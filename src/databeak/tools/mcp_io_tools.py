@@ -155,7 +155,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         return ExportResult(
             session_id=session_id,
             file_path=result.get("file_path", file_path or ""),
-            format=format,
+            format=format.lower(),  # type: ignore[arg-type]
             rows_exported=result.get("rows_exported", 0),
             file_size_mb=result.get("file_size_mb"),
         )

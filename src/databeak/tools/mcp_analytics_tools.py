@@ -147,7 +147,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
             session_id=session_id,
             outliers_found=result.get("outliers_found", 0),
             outliers_by_column=result.get("outliers_by_column", {}),
-            method=method,
+            method=method,  # type: ignore[arg-type]
             threshold=threshold,
         )
 

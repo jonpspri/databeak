@@ -6,9 +6,109 @@ structured responses across DataBeak's MCP interface.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# =============================================================================
+# NESTED PYDANTIC MODELS FOR STRUCTURED DATA
+# =============================================================================
+
+
+class SessionInfo(BaseModel):
+    """Session information in list results."""
+
+    session_id: str
+    created_at: str
+    last_accessed: str
+    row_count: int
+    column_count: int
+    columns: list[str]
+    memory_usage_mb: float
+    file_path: str | None = None
+
+
+class OutlierInfo(BaseModel):
+    """Outlier information for analytics results."""
+
+    row_index: int
+    value: float
+    z_score: float | None = None
+    iqr_score: float | None = None
+
+
+class StatisticsSummary(BaseModel):
+    """Column statistics summary."""
+
+    count: int
+    mean: float
+    std: float
+    min: float
+    percentile_25: float = Field(alias="25%")
+    percentile_50: float = Field(alias="50%")
+    percentile_75: float = Field(alias="75%")
+    max: float
+
+    class Config:
+        populate_by_name = True
+
+
+class DataTypeInfo(BaseModel):
+    """Data type information for columns."""
+
+    type: Literal["int64", "float64", "object", "bool", "datetime64", "category"]
+    nullable: bool
+    unique_count: int
+    null_count: int
+
+
+class MissingDataInfo(BaseModel):
+    """Missing data summary."""
+
+    total_missing: int
+    missing_by_column: dict[str, int]
+    missing_percentage: float
+
+
+class DataPreview(BaseModel):
+    """Data preview with row samples."""
+
+    rows: list[dict[str, Any]]  # Row data can vary by dataset
+    row_count: int
+    column_count: int
+    truncated: bool = False
+
+
+class GroupStatistics(BaseModel):
+    """Grouped aggregation statistics."""
+
+    count: int
+    mean: float | None = None
+    sum: float | None = None
+    min: float | None = None
+    max: float | None = None
+    std: float | None = None
+
+
+class CellLocation(BaseModel):
+    """Cell location and value information."""
+
+    row: int
+    column: str
+    value: Any  # Cell values can be any type
+
+
+class ProfileInfo(BaseModel):
+    """Data profiling information."""
+
+    column_name: str
+    data_type: str
+    null_count: int
+    null_percentage: float
+    unique_count: int
+    unique_percentage: float
+    most_frequent: Any | None = None
+    frequency: int | None = None
 
 
 class BaseToolResponse(BaseModel):
@@ -32,7 +132,7 @@ class HealthResult(BaseToolResponse):
     session_ttl_minutes: int
 
 
-class ServerInfoResult(BaseModel):
+class ServerInfoResult(BaseToolResponse):
     """Response model for server information and capabilities."""
 
     name: str
@@ -55,7 +155,7 @@ class LoadResult(BaseToolResponse):
     session_id: str
     rows_affected: int
     columns_affected: list[str]
-    data: dict[str, Any] | None = None
+    data: DataPreview | None = None
     memory_usage_mb: float | None = None
 
 
@@ -64,7 +164,7 @@ class ExportResult(BaseToolResponse):
 
     session_id: str
     file_path: str
-    format: str
+    format: Literal["csv", "json", "excel", "html", "markdown"]
     rows_exported: int
     file_size_mb: float | None = None
 
@@ -84,7 +184,7 @@ class SessionInfoResult(BaseToolResponse):
 class SessionListResult(BaseToolResponse):
     """Response model for listing all sessions."""
 
-    sessions: list[dict[str, Any]]
+    sessions: list[SessionInfo]
     total_sessions: int
     active_sessions: int
 
@@ -106,7 +206,7 @@ class StatisticsResult(BaseToolResponse):
     """Response model for statistical analysis operations."""
 
     session_id: str
-    statistics: dict[str, dict[str, float]]
+    statistics: dict[str, StatisticsSummary]
     column_count: int
     numeric_columns: list[str]
     total_rows: int
@@ -117,7 +217,7 @@ class CorrelationResult(BaseToolResponse):
 
     session_id: str
     correlation_matrix: dict[str, dict[str, float]]
-    method: str
+    method: Literal["pearson", "spearman", "kendall"]
     columns_analyzed: list[str]
 
 
@@ -136,8 +236,8 @@ class OutliersResult(BaseToolResponse):
 
     session_id: str
     outliers_found: int
-    outliers_by_column: dict[str, list[dict[str, Any]]]
-    method: str
+    outliers_by_column: dict[str, list[OutlierInfo]]
+    method: Literal["z-score", "iqr", "isolation_forest"]
     threshold: float
 
 
@@ -145,7 +245,7 @@ class ProfileResult(BaseToolResponse):
     """Response model for comprehensive data profiling."""
 
     session_id: str
-    profile: dict[str, Any]
+    profile: dict[str, ProfileInfo]
     total_rows: int
     total_columns: int
     memory_usage_mb: float
@@ -157,11 +257,11 @@ class DataSummaryResult(BaseToolResponse):
     session_id: str
     coordinate_system: dict[str, str]
     shape: dict[str, int]
-    columns: dict[str, Any]
+    columns: dict[str, DataTypeInfo]
     data_types: dict[str, list[str]]
-    missing_data: dict[str, Any]
+    missing_data: MissingDataInfo
     memory_usage_mb: float
-    preview: dict[str, Any]
+    preview: DataPreview
 
 
 class ColumnStatisticsResult(BaseToolResponse):
@@ -169,8 +269,8 @@ class ColumnStatisticsResult(BaseToolResponse):
 
     session_id: str
     column: str
-    statistics: dict[str, float]
-    data_type: str
+    statistics: StatisticsSummary
+    data_type: Literal["int64", "float64", "object", "bool", "datetime64", "category"]
     non_null_count: int
 
 
@@ -178,7 +278,7 @@ class GroupAggregateResult(BaseToolResponse):
     """Response model for group-by aggregation operations."""
 
     session_id: str
-    groups: dict[str, dict[str, Any]]
+    groups: dict[str, GroupStatistics]
     group_columns: list[str]
     aggregation_functions: dict[str, str | list[str]]
     total_groups: int
@@ -189,7 +289,7 @@ class InspectDataResult(BaseToolResponse):
 
     session_id: str
     center_coordinates: dict[str, str | int]
-    surrounding_data: dict[str, Any]
+    surrounding_data: DataPreview
     radius: int
 
 
@@ -199,7 +299,7 @@ class FindCellsResult(BaseToolResponse):
     session_id: str
     search_value: str | int | float | bool | None
     matches_found: int
-    coordinates: list[dict[str, str | int]]
+    coordinates: list[CellLocation]
     search_column: str | None
 
 
@@ -306,7 +406,7 @@ class ColumnOperationResult(BaseToolResponse):
 # =============================================================================
 
 
-class ErrorResult(BaseModel):
+class ErrorResult(BaseToolResponse):
     """Standardized error response format."""
 
     success: bool = False
