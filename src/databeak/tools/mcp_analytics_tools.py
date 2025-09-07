@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
+from pydantic import BaseModel
 
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
@@ -19,6 +20,49 @@ from .transformations import CellValue
 from .transformations import find_cells_with_value as _find_cells_with_value
 from .transformations import get_data_summary as _get_data_summary
 from .transformations import inspect_data_around as _inspect_data_around
+
+
+class StatisticsResult(BaseModel):
+    """Response model for statistical analysis operations."""
+
+    success: bool = True
+    session_id: str
+    statistics: dict[str, dict[str, float]]
+    column_count: int
+    numeric_columns: list[str]
+    total_rows: int
+
+
+class CorrelationResult(BaseModel):
+    """Response model for correlation matrix operations."""
+
+    success: bool = True
+    session_id: str
+    correlation_matrix: dict[str, dict[str, float]]
+    method: str
+    columns_analyzed: list[str]
+
+
+class ValueCountsResult(BaseModel):
+    """Response model for value counts operations."""
+
+    success: bool = True
+    session_id: str
+    column: str
+    value_counts: dict[str, int | float]
+    total_values: int
+    unique_values: int
+
+
+class OutliersResult(BaseModel):
+    """Response model for outlier detection operations."""
+
+    success: bool = True
+    session_id: str
+    outliers_found: int
+    outliers_by_column: dict[str, list[dict[str, Any]]]
+    method: str
+    threshold: float
 
 
 def register_analytics_tools(mcp: FastMCP) -> None:
@@ -71,9 +115,18 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ascending: bool = False,
         top_n: int | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ValueCountsResult:
         """Get value counts for a column."""
-        return await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
+        result = await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
+
+        # Convert dict response to Pydantic model
+        return ValueCountsResult(
+            session_id=session_id,
+            column=column,
+            value_counts=result.get("value_counts", {}),
+            total_values=result.get("total_values", 0),
+            unique_values=result.get("unique_values", 0),
+        )
 
     @mcp.tool
     async def detect_outliers(
@@ -82,9 +135,18 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         method: str = "iqr",
         threshold: float = 1.5,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> OutliersResult:
         """Detect outliers in numeric columns."""
-        return await _detect_outliers(session_id, columns, method, threshold, ctx)
+        result = await _detect_outliers(session_id, columns, method, threshold, ctx)
+
+        # Convert dict response to Pydantic model
+        return OutliersResult(
+            session_id=session_id,
+            outliers_found=result.get("outliers_found", 0),
+            outliers_by_column=result.get("outliers_by_column", {}),
+            method=method,
+            threshold=threshold,
+        )
 
     @mcp.tool
     async def profile_data(
