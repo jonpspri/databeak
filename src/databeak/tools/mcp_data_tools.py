@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
+from pydantic import BaseModel
 
 # Import type aliases
 from .transformations import CellValue, FilterCondition, OperationResult
@@ -26,6 +27,27 @@ from .transformations import transform_column_case as _transform_column_case
 from .transformations import update_column as _update_column
 
 
+class FilterResult(BaseModel):
+    """Response model for row filtering operations."""
+
+    success: bool = True
+    session_id: str
+    rows_before: int
+    rows_after: int
+    rows_filtered: int
+    conditions_applied: int
+
+
+class ColumnOperationResult(BaseModel):
+    """Response model for column operations (add, remove, rename, etc.)."""
+
+    success: bool = True
+    session_id: str
+    operation: str
+    rows_affected: int
+    columns_affected: list[str]
+
+
 def register_data_tools(mcp: FastMCP) -> None:
     """Register data manipulation tools with FastMCP server."""
 
@@ -35,7 +57,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         conditions: list[FilterCondition],
         mode: str = "and",
         ctx: Context | None = None,
-    ) -> OperationResult:
+    ) -> FilterResult:
         """Filter rows using flexible conditions with comprehensive null value and text matching
         support.
 
@@ -93,7 +115,16 @@ def register_data_tools(mcp: FastMCP) -> None:
             3. Combine with sort_data for ordered results
             4. Use get_data_summary after filtering to verify results
         """
-        return await _filter_rows(session_id, conditions, mode, ctx)
+        result = await _filter_rows(session_id, conditions, mode, ctx)
+
+        # Convert dict response to Pydantic model
+        return FilterResult(
+            session_id=session_id,
+            rows_before=result.get("rows_before", 0),
+            rows_after=result.get("rows_after", 0),
+            rows_filtered=result.get("rows_filtered", 0),
+            conditions_applied=len(conditions),
+        )
 
     @mcp.tool
     async def sort_data(

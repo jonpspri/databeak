@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastmcp import Context, FastMCP
+from pydantic import BaseModel
 
 from ..models import ExportFormat
 from .io_operations import close_session as _close_session
@@ -14,6 +15,41 @@ from .io_operations import list_sessions as _list_sessions
 from .io_operations import load_csv as _load_csv
 from .io_operations import load_csv_from_content as _load_csv_from_content
 from .io_operations import load_csv_from_url as _load_csv_from_url
+
+
+class LoadResult(BaseModel):
+    """Response model for data loading operations."""
+
+    success: bool = True
+    session_id: str
+    rows_affected: int
+    columns_affected: list[str]
+    data: dict[str, Any] | None = None
+    memory_usage_mb: float | None = None
+
+
+class ExportResult(BaseModel):
+    """Response model for data export operations."""
+
+    success: bool = True
+    session_id: str
+    file_path: str
+    format: str
+    rows_exported: int
+    file_size_mb: float | None = None
+
+
+class SessionInfoResult(BaseModel):
+    """Response model for session information."""
+
+    success: bool = True
+    session_id: str
+    created_at: str
+    last_modified: str
+    data_loaded: bool
+    row_count: int | None = None
+    column_count: int | None = None
+    auto_save_enabled: bool
 
 
 def register_io_tools(mcp: FastMCP) -> None:
@@ -26,7 +62,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         delimiter: str = ",",
         session_id: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load a CSV file into a session with robust parsing and AI-optimized data preview.
 
         Provides comprehensive CSV loading with support for various encodings, delimiters, and
@@ -82,7 +118,16 @@ def register_io_tools(mcp: FastMCP) -> None:
             3. Inspect with get_cell_value/get_row_data for details
             4. Apply transformations based on data understanding
         """
-        return await _load_csv(file_path, encoding, delimiter, session_id, ctx=ctx)
+        result = await _load_csv(file_path, encoding, delimiter, session_id, ctx=ctx)
+
+        # Convert dict response to Pydantic model
+        return LoadResult(
+            session_id=result.get("session_id", ""),
+            rows_affected=result.get("rows_affected", 0),
+            columns_affected=result.get("columns_affected", []),
+            data=result.get("data"),
+            memory_usage_mb=result.get("memory_usage_mb"),
+        )
 
     @mcp.tool
     async def load_csv_from_url(
@@ -114,10 +159,19 @@ def register_io_tools(mcp: FastMCP) -> None:
         encoding: str = "utf-8",
         index: bool = False,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ExportResult:
         """Export session data to various formats."""
         format_enum = ExportFormat(format)
-        return await _export_csv(session_id, file_path, format_enum, encoding, index, ctx)
+        result = await _export_csv(session_id, file_path, format_enum, encoding, index, ctx)
+
+        # Convert dict response to Pydantic model
+        return ExportResult(
+            session_id=session_id,
+            file_path=result.get("file_path", file_path or ""),
+            format=format,
+            rows_exported=result.get("rows_exported", 0),
+            file_size_mb=result.get("file_size_mb"),
+        )
 
     @mcp.tool
     async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[str, Any]:

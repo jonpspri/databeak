@@ -65,6 +65,31 @@ class OutliersResult(BaseModel):
     threshold: float
 
 
+class ProfileResult(BaseModel):
+    """Response model for comprehensive data profiling."""
+
+    success: bool = True
+    session_id: str
+    profile: dict[str, Any]
+    total_rows: int
+    total_columns: int
+    memory_usage_mb: float
+
+
+class DataSummaryResult(BaseModel):
+    """Response model for comprehensive data summary."""
+
+    success: bool = True
+    session_id: str
+    coordinate_system: dict[str, str]
+    shape: dict[str, int]
+    columns: dict[str, Any]
+    data_types: dict[str, list[str]]
+    missing_data: dict[str, Any]
+    memory_usage_mb: float
+    preview: dict[str, Any]
+
+
 def register_analytics_tools(mcp: FastMCP) -> None:
     """Register analytics tools with FastMCP server."""
 
@@ -154,9 +179,18 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         include_correlations: bool = True,
         include_outliers: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ProfileResult:
         """Generate comprehensive data profile."""
-        return await _profile_data(session_id, include_correlations, include_outliers, ctx)
+        result = await _profile_data(session_id, include_correlations, include_outliers, ctx)
+
+        # Convert dict response to Pydantic model
+        return ProfileResult(
+            session_id=session_id,
+            profile=result.get("profile", {}),
+            total_rows=result.get("total_rows", 0),
+            total_columns=result.get("total_columns", 0),
+            memory_usage_mb=result.get("memory_usage_mb", 0.0),
+        )
 
     # AI-Friendly convenience tools
     @mcp.tool
@@ -215,7 +249,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         include_preview: bool = True,
         max_preview_rows: int = 10,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> DataSummaryResult:
         """Get comprehensive data summary optimized for AI understanding and workflow planning.
 
         This is the primary tool for AI assistants to understand CSV data structure, content patterns,
@@ -267,4 +301,16 @@ def register_analytics_tools(mcp: FastMCP) -> None:
             → get_cell_value(): Individual cell access
             → get_column_data(): Column-specific analysis
         """
-        return await _get_data_summary(session_id, include_preview, max_preview_rows, ctx)
+        result = await _get_data_summary(session_id, include_preview, max_preview_rows, ctx)
+
+        # Convert dict response to Pydantic model
+        return DataSummaryResult(
+            session_id=session_id,
+            coordinate_system=result.get("coordinate_system", {}),
+            shape=result.get("shape", {}),
+            columns=result.get("columns", {}),
+            data_types=result.get("data_types", {}),
+            missing_data=result.get("missing_data", {}),
+            memory_usage_mb=result.get("memory_usage_mb", 0.0),
+            preview=result.get("preview", {}),
+        )

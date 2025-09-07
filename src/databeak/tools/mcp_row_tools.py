@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastmcp import Context, FastMCP
+from pydantic import BaseModel
 
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
@@ -15,13 +16,32 @@ from .transformations import set_cell_value as _set_cell_value
 from .transformations import update_row as _update_row
 
 
+class CellValueResult(BaseModel):
+    """Response model for cell value operations."""
+
+    success: bool = True
+    value: str | int | float | bool | None
+    coordinates: dict[str, str | int]
+    data_type: str
+
+
+class RowDataResult(BaseModel):
+    """Response model for row data operations."""
+
+    success: bool = True
+    session_id: str
+    row_index: int
+    data: dict[str, str | int | float | bool | None]
+    columns: list[str]
+
+
 def register_row_tools(mcp: FastMCP) -> None:
     """Register row manipulation tools with FastMCP server."""
 
     @mcp.tool
     async def get_cell_value(
         session_id: str, row_index: int, column: str | int, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> CellValueResult:
         """Get the value of a specific cell with precise coordinate targeting and comprehensive
         metadata.
 
@@ -65,7 +85,14 @@ def register_row_tools(mcp: FastMCP) -> None:
             → set_cell_value(): Update this cell value
             → inspect_data_around(): Get surrounding data context
         """
-        return await _get_cell_value(session_id, row_index, column, ctx)
+        result = await _get_cell_value(session_id, row_index, column, ctx)
+
+        # Convert dict response to Pydantic model
+        return CellValueResult(
+            value=result.get("value"),
+            coordinates=result.get("coordinates", {}),
+            data_type=result.get("data_type", "unknown"),
+        )
 
     @mcp.tool
     async def set_cell_value(
