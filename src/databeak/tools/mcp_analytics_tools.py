@@ -6,7 +6,7 @@ from typing import Literal
 
 from fastmcp import Context, FastMCP
 
-from ..models.tool_responses import (  # noqa: TCH001
+from ..models.tool_responses import (  # noqa: TC001
     ColumnStatisticsResult,
     CorrelationResult,
     DataSummaryResult,

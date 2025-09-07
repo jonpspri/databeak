@@ -1,6 +1,7 @@
 """Additional tests for analytics module to improve coverage."""
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from src.databeak.tools.analytics import (
     detect_outliers,
@@ -36,45 +37,38 @@ class TestAnalyticsErrorHandling:
 
     async def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session."""
-        result = await get_statistics("invalid-session")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(ToolError):
+            await get_statistics("invalid-session")
 
     async def test_get_statistics_invalid_columns(self, analytics_test_session):
         """Test statistics with invalid column names."""
-        result = await get_statistics(analytics_test_session, ["nonexistent_column"])
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_statistics(analytics_test_session, ["nonexistent_column"])
 
     async def test_get_column_statistics_invalid_session(self):
         """Test column statistics with invalid session."""
-        result = await get_column_statistics("invalid-session", "price")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(ToolError):
+            await get_column_statistics("invalid-session", "price")
 
     async def test_get_column_statistics_invalid_column(self, analytics_test_session):
         """Test column statistics with invalid column."""
-        result = await get_column_statistics(analytics_test_session, "nonexistent")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_column_statistics(analytics_test_session, "nonexistent")
 
     async def test_detect_outliers_invalid_session(self):
         """Test outlier detection with invalid session."""
-        result = await detect_outliers("invalid-session", ["price"])
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(ToolError):
+            await detect_outliers("invalid-session", ["price"])
 
     async def test_detect_outliers_invalid_columns(self, analytics_test_session):
         """Test outlier detection with invalid columns."""
-        result = await detect_outliers(analytics_test_session, ["nonexistent"])
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await detect_outliers(analytics_test_session, ["nonexistent"])
 
     async def test_detect_outliers_non_numeric(self, analytics_test_session):
         """Test outlier detection on non-numeric columns."""
-        result = await detect_outliers(analytics_test_session, ["category"])
-        assert result.success is False
-        assert "numeric" in result.error
+        with pytest.raises(ToolError, match="numeric"):
+            await detect_outliers(analytics_test_session, ["category"])
 
 
 @pytest.mark.asyncio
@@ -92,9 +86,8 @@ class TestAnalyticsAdvancedFeatures:
 
     async def test_get_correlation_matrix_insufficient_columns(self, analytics_test_session):
         """Test correlation matrix with insufficient numeric columns."""
-        result = await get_correlation_matrix(analytics_test_session, columns=["category"])
-        assert result.success is False
-        assert "numeric columns" in result.error
+        with pytest.raises(ToolError, match="numeric columns"):
+            await get_correlation_matrix(analytics_test_session, columns=["category"])
 
     async def test_group_by_aggregate_success(self, analytics_test_session):
         """Test group by aggregation."""
@@ -110,13 +103,12 @@ class TestAnalyticsAdvancedFeatures:
 
     async def test_group_by_aggregate_invalid_columns(self, analytics_test_session):
         """Test group by with invalid columns."""
-        result = await group_by_aggregate(
-            analytics_test_session,
-            group_by=["nonexistent"],
-            aggregations={"price": ["mean"]},
-        )
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await group_by_aggregate(
+                analytics_test_session,
+                group_by=["nonexistent"],
+                aggregations={"price": ["mean"]},
+            )
 
     async def test_get_value_counts_success(self, analytics_test_session):
         """Test value counts functionality."""
@@ -128,9 +120,8 @@ class TestAnalyticsAdvancedFeatures:
 
     async def test_get_value_counts_invalid_column(self, analytics_test_session):
         """Test value counts with invalid column."""
-        result = await get_value_counts(analytics_test_session, "nonexistent")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_value_counts(analytics_test_session, "nonexistent")
 
     async def test_profile_data_success(self, analytics_test_session):
         """Test data profiling functionality."""
@@ -143,9 +134,8 @@ class TestAnalyticsAdvancedFeatures:
 
     async def test_profile_data_invalid_session(self):
         """Test data profiling with invalid session."""
-        result = await profile_data("invalid-session")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(ToolError):
+            await profile_data("invalid-session")
 
 
 @pytest.mark.asyncio
@@ -219,6 +209,5 @@ class TestAnalyticsDataTypes:
         assert result_zscore.success is True
 
         # Test invalid method
-        result_invalid = await detect_outliers(analytics_test_session, ["price"], method="invalid")
-        assert result_invalid.success is False
-        assert "method" in result_invalid.error
+        with pytest.raises(ToolError, match="method"):
+            await detect_outliers(analytics_test_session, ["price"], method="invalid")

@@ -1,6 +1,7 @@
 """Tests for AI accessibility features in CSV Editor."""
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from src.databeak.models import get_session_manager
 from src.databeak.tools.io_operations import load_csv_from_content
@@ -66,19 +67,16 @@ class TestCellLevelAccess:
     async def test_get_cell_value_invalid_coordinates(self, ai_test_session) -> None:
         """Test error handling for invalid coordinates."""
         # Invalid row
-        result = await get_cell_value(ai_test_session, 999, "name")
-        assert not result.success
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_cell_value(ai_test_session, 999, "name")
 
         # Invalid column name
-        result = await get_cell_value(ai_test_session, 0, "nonexistent")
-        assert not result.success
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_cell_value(ai_test_session, 0, "nonexistent")
 
         # Invalid column index
-        result = await get_cell_value(ai_test_session, 0, 999)
-        assert not result.success
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_cell_value(ai_test_session, 0, 999)
 
     async def test_set_cell_value_success(self, ai_test_session) -> None:
         """Test setting cell values successfully."""
@@ -330,10 +328,8 @@ class TestRowManipulation:
         """Test insert_row with invalid JSON string returns clear error."""
         invalid_json = '{"name": "test", invalid json here}'
 
-        result = await insert_row(ai_test_session, -1, invalid_json)
-
-        assert not result.success
-        assert "Invalid JSON string" in result.error
+        with pytest.raises(ToolError, match="Invalid JSON string"):
+            await insert_row(ai_test_session, -1, invalid_json)
 
     async def test_delete_row(self, ai_test_session) -> None:
         """Test deleting a row."""
@@ -459,18 +455,18 @@ class TestCoordinateSystemValidation:
     async def test_coordinate_bounds_validation(self, ai_test_session) -> None:
         """Test that coordinate bounds are properly validated."""
         # Test row bounds
-        result = await get_cell_value(ai_test_session, -1, "name")
-        assert not result.success
+        with pytest.raises(ToolError):
+            await get_cell_value(ai_test_session, -1, "name")
 
-        result = await get_cell_value(ai_test_session, 999, "name")
-        assert not result.success
+        with pytest.raises(ToolError):
+            await get_cell_value(ai_test_session, 999, "name")
 
         # Test column bounds
-        result = await get_cell_value(ai_test_session, 0, -1)
-        assert not result.success
+        with pytest.raises(ToolError):
+            await get_cell_value(ai_test_session, 0, -1)
 
-        result = await get_cell_value(ai_test_session, 0, 999)
-        assert not result.success
+        with pytest.raises(ToolError):
+            await get_cell_value(ai_test_session, 0, 999)
 
     async def test_coordinate_information_in_responses(self, ai_test_session) -> None:
         """Test that responses include proper coordinate information."""
@@ -529,12 +525,12 @@ class TestMethodDiscoverabilityAndDocumentation:
     async def test_comprehensive_error_messages(self, ai_test_session) -> None:
         """Test that error messages include helpful coordinate information."""
         # Row out of range should specify valid range
-        result = await get_cell_value(ai_test_session, 999, "name")
-        assert "0-3" in result.error  # Valid range for 4 rows
+        with pytest.raises(ToolError, match="0-3"):
+            await get_cell_value(ai_test_session, 999, "name")
 
         # Column not found should be clear
-        result = await get_cell_value(ai_test_session, 0, "invalid_col")
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_cell_value(ai_test_session, 0, "invalid_col")
 
 
 @pytest.mark.asyncio

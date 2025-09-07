@@ -6,9 +6,12 @@ structured responses across DataBeak's MCP interface.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
+
+# Type alias for CSV cell values - more specific than Any while still flexible
+CsvCellValue = str | int | float | bool | None
 
 # =============================================================================
 # NESTED PYDANTIC MODELS FOR STRUCTURED DATA
@@ -73,7 +76,7 @@ class MissingDataInfo(BaseModel):
 class DataPreview(BaseModel):
     """Data preview with row samples."""
 
-    rows: list[dict[str, Any]]  # Row data can vary by dataset
+    rows: list[dict[str, CsvCellValue]]  # Row data structure varies by dataset but values are typed
     row_count: int
     column_count: int
     truncated: bool = False
@@ -95,7 +98,7 @@ class CellLocation(BaseModel):
 
     row: int
     column: str
-    value: Any  # Cell values can be any type
+    value: CsvCellValue  # CSV cells can contain str, int, float, bool, or None
 
 
 class ProfileInfo(BaseModel):
@@ -107,7 +110,7 @@ class ProfileInfo(BaseModel):
     null_percentage: float
     unique_count: int
     unique_percentage: float
-    most_frequent: Any | None = None
+    most_frequent: CsvCellValue = None  # Most frequent value can be any CSV data type
     frequency: int | None = None
 
 
@@ -366,7 +369,9 @@ class DeleteRowResult(BaseToolResponse):
     row_index: int
     rows_before: int
     rows_after: int
-    deleted_data: dict[str, Any]
+    deleted_data: dict[
+        str, CsvCellValue
+    ]  # Deleted row data structure varies by dataset but values are typed
 
 
 class UpdateRowResult(BaseToolResponse):
@@ -402,8 +407,12 @@ class ColumnOperationResult(BaseToolResponse):
     operation: str
     rows_affected: int
     columns_affected: list[str]
-    original_sample: list[Any] | None = None
-    updated_sample: list[Any] | None = None
+    original_sample: list[CsvCellValue] | None = (
+        None  # Column samples can contain mixed CSV data types
+    )
+    updated_sample: list[CsvCellValue] | None = (
+        None  # Column samples can contain mixed CSV data types
+    )
     # Additional fields for specific operations
     part_index: int | None = None
     transform: str | None = None

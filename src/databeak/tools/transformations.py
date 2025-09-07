@@ -24,6 +24,7 @@ from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
     ColumnOperationResult,
+    CsvCellValue,
     DataPreview,
     DataSummaryResult,
     DataTypeInfo,
@@ -1689,8 +1690,8 @@ async def inspect_data_around(
         records = []
         for _, (orig_idx, row_data) in enumerate(data_slice.iterrows()):
             # Handle different index types from iterrows safely
-            row_index_val = orig_idx if isinstance(orig_idx, int) else 0
-            record = {"__row_index__": row_index_val}
+            row_index_val = int(orig_idx) if isinstance(orig_idx, int) else 0
+            record: dict[str, CsvCellValue] = {"__row_index__": row_index_val}
             record.update(row_data.to_dict())
 
             # Handle pandas/numpy types
@@ -1786,16 +1787,27 @@ async def find_cells_with_value(
 
             for row_idx in matching_rows:
                 cell_value = df.at[row_idx, col]
+                # Convert to CsvCellValue compatible type
+                processed_value: CsvCellValue
                 if pd.isna(cell_value):
-                    cell_value = None
+                    processed_value = None
                 elif hasattr(cell_value, "item"):
-                    cell_value = cell_value.item()  # type: ignore[assignment]
+                    item_value = cell_value.item()
+                    if isinstance(item_value, str | int | float | bool):
+                        processed_value = item_value
+                    else:
+                        processed_value = str(item_value)
+                elif isinstance(cell_value, str | int | float | bool):
+                    processed_value = cell_value
+                else:
+                    # Fallback for complex types - convert to string
+                    processed_value = str(cell_value)
 
                 matches.append(
                     CellLocation(
                         row=int(row_idx),
                         column=col,
-                        value=cell_value,
+                        value=processed_value,
                     )
                 )
 

@@ -1,6 +1,7 @@
 """Additional tests for transformations module to improve coverage."""
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from src.databeak.tools.io_operations import load_csv_from_content
 from src.databeak.tools.transformations import (
@@ -45,59 +46,51 @@ class TestTransformationErrorHandling:
 
     async def test_filter_rows_invalid_operator(self, transform_test_session):
         """Test filtering with invalid operator."""
-        result = await filter_rows(
-            transform_test_session,
-            [{"column": "age", "operator": "invalid_op", "value": 25}],
-        )
-        assert result.success is False
-        assert "operator" in result.error
+        with pytest.raises(ToolError, match="operator"):
+            await filter_rows(
+                transform_test_session,
+                [{"column": "age", "operator": "invalid_op", "value": 25}],
+            )
 
     async def test_filter_rows_missing_column(self, transform_test_session):
         """Test filtering with missing column."""
-        result = await filter_rows(
-            transform_test_session,
-            [{"column": "nonexistent", "operator": "==", "value": "test"}],
-        )
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await filter_rows(
+                transform_test_session,
+                [{"column": "nonexistent", "operator": "==", "value": "test"}],
+            )
 
     async def test_add_column_duplicate_name(self, transform_test_session):
         """Test adding column with existing name."""
-        result = await add_column(transform_test_session, "name", "duplicate")
-        assert result.success is False
-        assert "already exists" in result.error
+        with pytest.raises(ToolError, match="already exists"):
+            await add_column(transform_test_session, "name", "duplicate")
 
     async def test_add_column_invalid_formula(self, transform_test_session):
         """Test adding column with invalid formula."""
-        result = await add_column(transform_test_session, "calculated", formula="invalid_syntax + ")
-        assert result.success is False
-        assert "Formula evaluation failed" in result.error
+        with pytest.raises(ToolError, match="Formula evaluation failed"):
+            await add_column(transform_test_session, "calculated", formula="invalid_syntax + ")
 
     async def test_add_column_list_length_mismatch(self, transform_test_session):
         """Test adding column with mismatched list length."""
-        result = await add_column(
-            transform_test_session, "new_col", value=[1, 2]
-        )  # Only 2 values for 4 rows
-        assert result.success is False
-        assert "doesn't match row count" in result.error
+        with pytest.raises(ToolError, match="doesn't match row count"):
+            await add_column(
+                transform_test_session, "new_col", value=[1, 2]
+            )  # Only 2 values for 4 rows
 
     async def test_remove_columns_missing(self, transform_test_session):
         """Test removing non-existent columns."""
-        result = await remove_columns(transform_test_session, ["nonexistent", "alsofake"])
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await remove_columns(transform_test_session, ["nonexistent", "alsofake"])
 
     async def test_change_column_type_invalid_type(self, transform_test_session):
         """Test changing to invalid data type."""
-        result = await change_column_type(transform_test_session, "age", "invalid_type")
-        assert result.success is False
-        assert "Unsupported dtype" in result.error
+        with pytest.raises(ToolError, match="Unsupported dtype"):
+            await change_column_type(transform_test_session, "age", "invalid_type")
 
     async def test_change_column_type_missing_column(self, transform_test_session):
         """Test changing type of missing column."""
-        result = await change_column_type(transform_test_session, "nonexistent", "int")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await change_column_type(transform_test_session, "nonexistent", "int")
 
 
 @pytest.mark.asyncio
@@ -107,70 +100,57 @@ class TestCellAndRowOperations:
     async def test_get_cell_value_out_of_bounds(self, transform_test_session):
         """Test getting cell value with out of bounds indices."""
         # Test row out of bounds
-        result = await get_cell_value(transform_test_session, 100, "name")
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_cell_value(transform_test_session, 100, "name")
 
         # Test column out of bounds with index
-        result = await get_cell_value(transform_test_session, 0, 100)
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_cell_value(transform_test_session, 0, 100)
 
     async def test_set_cell_value_out_of_bounds(self, transform_test_session):
         """Test setting cell value with out of bounds indices."""
-        result = await set_cell_value(transform_test_session, 100, "name", "New Value")
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await set_cell_value(transform_test_session, 100, "name", "New Value")
 
     async def test_get_row_data_out_of_bounds(self, transform_test_session):
         """Test getting row data with invalid index."""
-        result = await get_row_data(transform_test_session, 100)
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_row_data(transform_test_session, 100)
 
     async def test_get_row_data_invalid_columns(self, transform_test_session):
         """Test getting row data with invalid columns."""
-        result = await get_row_data(transform_test_session, 0, ["nonexistent", "alsofake"])
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_row_data(transform_test_session, 0, ["nonexistent", "alsofake"])
 
     async def test_insert_row_out_of_bounds(self, transform_test_session):
         """Test inserting row at invalid index."""
-        result = await insert_row(transform_test_session, 100, {"name": "Test", "age": 25})
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await insert_row(transform_test_session, 100, {"name": "Test", "age": 25})
 
     async def test_insert_row_invalid_json(self, transform_test_session):
         """Test inserting row with invalid JSON string."""
-        result = await insert_row(transform_test_session, 0, '{"invalid": json}')
-        assert result.success is False
-        assert "Invalid JSON" in result.error
+        with pytest.raises(ToolError, match="Invalid JSON"):
+            await insert_row(transform_test_session, 0, '{"invalid": json}')
 
     async def test_insert_row_wrong_data_type(self, transform_test_session):
         """Test inserting row with wrong data type."""
-        result = await insert_row(
-            transform_test_session, 0, 123
-        )  # Integer instead of dict/list/string
-        assert result.success is False
-        assert "must be a dict or list" in result.error
+        with pytest.raises(ToolError, match="must be a dict or list"):
+            await insert_row(transform_test_session, 0, 123)  # Integer instead of dict/list/string
 
     async def test_delete_row_out_of_bounds(self, transform_test_session):
         """Test deleting row with invalid index."""
-        result = await delete_row(transform_test_session, 100)
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await delete_row(transform_test_session, 100)
 
     async def test_update_row_invalid_json(self, transform_test_session):
         """Test updating row with invalid JSON."""
-        result = await update_row(transform_test_session, 0, '{"invalid": json}')
-        assert result.success is False
-        assert "Invalid JSON" in result.error
+        with pytest.raises(ToolError, match="Invalid JSON"):
+            await update_row(transform_test_session, 0, '{"invalid": json}')
 
     async def test_update_row_invalid_columns(self, transform_test_session):
         """Test updating row with invalid columns."""
-        result = await update_row(transform_test_session, 0, {"nonexistent": "value"})
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await update_row(transform_test_session, 0, {"nonexistent": "value"})
 
 
 @pytest.mark.asyncio
@@ -179,53 +159,43 @@ class TestColumnOperations:
 
     async def test_get_column_data_invalid_column(self, transform_test_session):
         """Test getting column data for invalid column."""
-        result = await get_column_data(transform_test_session, "nonexistent")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await get_column_data(transform_test_session, "nonexistent")
 
     async def test_get_column_data_invalid_range(self, transform_test_session):
         """Test getting column data with invalid row range."""
         # Test invalid start row
-        result = await get_column_data(transform_test_session, "name", start_row=100)
-        assert result.success is False
-        assert "out of range" in result.error
+        with pytest.raises(ToolError, match="out of range"):
+            await get_column_data(transform_test_session, "name", start_row=100)
 
         # Test invalid end row
-        result = await get_column_data(transform_test_session, "name", start_row=0, end_row=100)
-        assert result.success is False
-        assert "invalid" in result.error
+        with pytest.raises(ToolError, match="invalid"):
+            await get_column_data(transform_test_session, "name", start_row=0, end_row=100)
 
     async def test_replace_in_column_missing_column(self, transform_test_session):
         """Test replacing in missing column."""
-        result = await replace_in_column(
-            transform_test_session, "nonexistent", "pattern", "replacement"
-        )
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await replace_in_column(transform_test_session, "nonexistent", "pattern", "replacement")
 
     async def test_extract_from_column_missing_column(self, transform_test_session):
         """Test extracting from missing column."""
-        result = await extract_from_column(transform_test_session, "nonexistent", r"(\w+)")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await extract_from_column(transform_test_session, "nonexistent", r"(\w+)")
 
     async def test_split_column_missing_column(self, transform_test_session):
         """Test splitting missing column."""
-        result = await split_column(transform_test_session, "nonexistent", " ")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await split_column(transform_test_session, "nonexistent", " ")
 
     async def test_transform_column_case_invalid_transform(self, transform_test_session):
         """Test case transformation with invalid transform type."""
-        result = await transform_column_case(transform_test_session, "name", "invalid")
-        assert result.success is False
-        assert "Unknown transform" in result.error
+        with pytest.raises(ToolError, match="Unknown transform"):
+            await transform_column_case(transform_test_session, "name", "invalid")
 
     async def test_fill_column_nulls_missing_column(self, transform_test_session):
         """Test filling nulls in missing column."""
-        result = await fill_column_nulls(transform_test_session, "nonexistent", "value")
-        assert result.success is False
-        assert "not found" in result.error
+        with pytest.raises(ToolError, match="not found"):
+            await fill_column_nulls(transform_test_session, "nonexistent", "value")
 
 
 @pytest.mark.asyncio
@@ -264,9 +234,8 @@ class TestAdvancedTransformations:
 
     async def test_fill_missing_values_invalid_strategy(self, transform_test_session):
         """Test fill missing values with invalid strategy."""
-        result = await fill_missing_values(transform_test_session, strategy="invalid")
-        assert result.success is False
-        assert "Unknown strategy" in result.error
+        with pytest.raises(ToolError, match="Unknown strategy"):
+            await fill_missing_values(transform_test_session, strategy="invalid")
 
     async def test_remove_duplicates_different_options(self, transform_test_session):
         """Test duplicate removal with different options."""
