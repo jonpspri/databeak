@@ -419,6 +419,170 @@ class ColumnOperationResult(BaseToolResponse):
     nulls_filled: int | None = None
 
 
+class SortDataResult(BaseToolResponse):
+    """Response model for data sorting operations."""
+
+    session_id: str
+    sorted_by: list[str]
+    ascending: list[bool]
+
+
+class SelectColumnsResult(BaseToolResponse):
+    """Response model for column selection operations."""
+
+    session_id: str
+    selected_columns: list[str]
+    columns_before: int
+    columns_after: int
+
+
+class RenameColumnsResult(BaseToolResponse):
+    """Response model for column rename operations."""
+
+    session_id: str
+    renamed: dict[str, str]
+    columns: list[str]
+
+
+# =============================================================================
+# VALIDATION TOOL RESPONSES
+# =============================================================================
+
+
+class ValidationError(BaseModel):
+    """Individual validation error information."""
+
+    error: str
+    message: str
+    actual_type: str | None = None
+    null_count: int | None = None
+    null_indices: list[int] | None = None
+    violation_count: int | None = None
+    min_found: float | None = None
+    max_found: float | None = None
+    sample_violations: list[str] | None = None
+    invalid_values: list[str] | None = None
+    duplicate_count: int | None = None
+
+
+class ValidationSummary(BaseModel):
+    """Summary of schema validation results."""
+
+    total_columns: int
+    valid_columns: int
+    invalid_columns: int
+    missing_columns: list[str]
+    extra_columns: list[str]
+
+
+class ValidateSchemaResult(BaseToolResponse):
+    """Response model for schema validation operations."""
+
+    session_id: str
+    valid: bool
+    errors: list[ValidationError]
+    summary: ValidationSummary
+    validation_errors: dict[str, list[ValidationError]]
+
+
+class QualityIssue(BaseModel):
+    """Individual data quality issue."""
+
+    type: str
+    severity: str
+    column: str | None = None
+    message: str
+    affected_rows: int | None = None
+    metric_value: float | None = None
+    threshold: float | None = None
+
+
+class QualityRuleResult(BaseModel):
+    """Result of a single quality rule check."""
+
+    rule_type: str
+    passed: bool
+    score: float
+    issues: list[QualityIssue]
+    column: str | None = None
+
+
+class QualityResults(BaseModel):
+    """Comprehensive quality check results."""
+
+    overall_score: float
+    passed_rules: int
+    failed_rules: int
+    total_issues: int
+    rule_results: list[QualityRuleResult]
+    issues: list[QualityIssue]
+    recommendations: list[str]
+
+
+class DataQualityResult(BaseToolResponse):
+    """Response model for data quality check operations."""
+
+    session_id: str
+    quality_results: QualityResults
+
+
+class StatisticalAnomaly(BaseModel):
+    """Statistical anomaly information for a column."""
+
+    anomaly_count: int
+    anomaly_indices: list[int]
+    anomaly_values: list[float]
+    mean: float
+    std: float
+    lower_bound: float
+    upper_bound: float
+
+
+class PatternAnomaly(BaseModel):
+    """Pattern anomaly information for a column."""
+
+    anomaly_count: int
+    anomaly_indices: list[int]
+    sample_values: list[str]
+    expected_patterns: list[str]
+
+
+class MissingAnomaly(BaseModel):
+    """Missing value anomaly information for a column."""
+
+    missing_count: int
+    missing_ratio: float
+    missing_indices: list[int]
+    sequential_clusters: int
+    pattern: str
+
+
+class AnomalySummary(BaseModel):
+    """Summary of anomaly detection results."""
+
+    total_anomalies: int
+    affected_rows: int
+    affected_columns: list[str]
+
+
+class AnomalyResults(BaseModel):
+    """Comprehensive anomaly detection results."""
+
+    summary: AnomalySummary
+    by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]
+    by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]]
+
+
+class FindAnomaliesResult(BaseToolResponse):
+    """Response model for anomaly detection operations."""
+
+    session_id: str
+    anomalies: AnomalyResults
+    columns_analyzed: list[str]
+    methods_used: list[str]
+    sensitivity: float
+
+
 # =============================================================================
 # ERROR RESPONSES
 # =============================================================================
@@ -459,4 +623,10 @@ ToolResponse = (
     | UpdateRowResult
     | FilterOperationResult
     | ColumnOperationResult
+    | SortDataResult
+    | SelectColumnsResult
+    | RenameColumnsResult
+    | ValidateSchemaResult
+    | DataQualityResult
+    | FindAnomaliesResult
 )

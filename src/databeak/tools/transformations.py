@@ -34,8 +34,11 @@ from ..models.tool_responses import (
     InsertRowResult,
     InspectDataResult,
     MissingDataInfo,
+    RenameColumnsResult,
     RowDataResult,
+    SelectColumnsResult,
     SetCellResult,
+    SortDataResult,
     UpdateRowResult,
 )
 from .data_operations import create_data_preview_with_indices
@@ -179,7 +182,7 @@ async def sort_data(
     session_id: str,
     columns: list[str | dict[str, str]],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> SortDataResult:
     """Sort data by one or more columns.
 
     Args:
@@ -205,15 +208,12 @@ async def sort_data(
                 sort_columns.append(col["column"])
                 ascending.append(bool(col.get("ascending", True)))
             else:
-                return {
-                    "success": False,
-                    "error": f"Invalid column specification: {col}",
-                }
+                raise ToolError(f"Invalid column specification: {col}")
 
         # Validate columns exist
         for col in sort_columns:
             if col not in df.columns:
-                return {"success": False, "error": f"Column '{col}' not found"}
+                raise ToolError(f"Column '{col}' not found")
 
         session.data_session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
             drop=True
@@ -222,18 +222,22 @@ async def sort_data(
             OperationType.SORT, {"columns": sort_columns, "ascending": ascending}
         )
 
-        return {"success": True, "sorted_by": sort_columns, "ascending": ascending}
+        return SortDataResult(
+            session_id=session_id,
+            sorted_by=sort_columns,
+            ascending=ascending
+        )
 
     except Exception as e:
         logger.error(f"Error sorting data: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Failed to sort data: {e}") from e
 
 
 async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> SelectColumnsResult:
     """Select specific columns from the dataframe.
 
     Args:
@@ -250,8 +254,11 @@ async def select_columns(
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
-            return {"success": False, "error": f"Columns not found: {missing_cols}"}
+            raise ToolError(f"Columns not found: {missing_cols}")
 
+        # Track counts before modification
+        columns_before = len(df.columns)
+        
         session.data_session.df = df[columns].copy()
         session.record_operation(
             OperationType.SELECT,
@@ -262,22 +269,23 @@ async def select_columns(
             },
         )
 
-        return {
-            "success": True,
-            "selected_columns": columns,
-            "columns_removed": [col for col in df.columns if col not in columns],
-        }
+        return SelectColumnsResult(
+            session_id=session_id,
+            selected_columns=columns,
+            columns_before=columns_before,
+            columns_after=len(columns)
+        )
 
     except Exception as e:
         logger.error(f"Error selecting columns: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Failed to select columns: {e}") from e
 
 
 async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
     Args:
@@ -294,20 +302,20 @@ async def rename_columns(
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
         if missing_cols:
-            return {"success": False, "error": f"Columns not found: {missing_cols}"}
+            raise ToolError(f"Columns not found: {missing_cols}")
 
         session.data_session.df = df.rename(columns=mapping)
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
-        return {
-            "success": True,
-            "renamed": mapping,
-            "columns": session.data_session.df.columns.tolist(),
-        }
+        return RenameColumnsResult(
+            session_id=session_id,
+            renamed=mapping,
+            columns=session.data_session.df.columns.tolist()
+        )
 
     except Exception as e:
         logger.error(f"Error renaming columns: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Failed to rename columns: {e}") from e
 
 
 async def add_column(
