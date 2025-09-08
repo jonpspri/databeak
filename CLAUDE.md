@@ -10,36 +10,16 @@ Python tooling.
 
 ### Git Workflow Requirements
 
-**IMPORTANT**: All development must follow a branch-based workflow:
+**IMPORTANT**: All development must follow a branch-based workflow. 
 
-- **NEVER commit directly to `main` branch**
-- **Always create feature branches** for any changes (use
-  `git checkout -b feature/description`)
-- **All changes to `main` must go through Pull Requests**
-- **Pre-commit hooks enforce this policy** and will reject direct commits to
-  main
-- **Branch naming**: Use descriptive prefixes like `feature/`, `fix/`, `docs/`,
-  `test/`
+**Use the `git-repository-manager` agent** for all Git and GitHub repository management tasks including:
+- Synchronizing main branch after PR merges
+- Creating and managing feature branches  
+- Cleaning up merged branches (local and remote)
+- Validating Git workflow compliance
+- Repository maintenance and hygiene
 
-#### Typical Development Flow
-
-```bash
-# Create feature branch
-git checkout -b feature/add-new-tool
-
-# Make changes and commit to branch
-git add .
-git commit -m "Add new MCP tool for data filtering"
-
-# Push branch and create PR
-git push -u origin feature/add-new-tool
-gh pr create --title "Add data filtering tool" --body "Description..."
-
-# After PR approval, merge via GitHub UI
-# Delete local branch after merge
-git checkout main && git pull origin main
-git branch -D feature/add-new-tool
-```
+See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub repository management guidance.
 
 ### Package Management
 
