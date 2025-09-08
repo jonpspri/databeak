@@ -246,7 +246,7 @@ async def load_csv_from_content(
 async def export_csv(
     session_id: str,
     file_path: str | None = None,
-    format: ExportFormat = ExportFormat.CSV,
+    format: ExportFormat | str = ExportFormat.CSV,
     encoding: str = "utf-8",
     index: bool = False,
     ctx: Context | None = None,
@@ -265,6 +265,12 @@ async def export_csv(
         Operation result with file path
     """
     try:
+        # Normalize format to ExportFormat enum
+        if isinstance(format, str):
+            format_enum = ExportFormat(format)
+        else:
+            format_enum = format
+
         # Get session
         session_manager = get_session_manager()
         session = session_manager.get_session(session_id)
@@ -273,7 +279,7 @@ async def export_csv(
             raise ToolError(f"Session not found or no data loaded: {session_id}")
 
         if ctx:
-            await ctx.info(f"Exporting data in {format.value} format")
+            await ctx.info(f"Exporting data in {format_enum} format")
             await ctx.report_progress(0.1)
 
         # Generate file path if not provided
@@ -292,7 +298,7 @@ async def export_csv(
                 ExportFormat.MARKDOWN: ".md",
             }
 
-            file_path = tempfile.gettempdir() + "/" + filename + extensions[format]
+            file_path = tempfile.gettempdir() + "/" + filename + extensions[format_enum]
 
         path_obj = Path(file_path)
         df = session.data_session.df
@@ -301,26 +307,26 @@ async def export_csv(
             await ctx.report_progress(0.5)
 
         # Export based on format
-        if format == ExportFormat.CSV:
+        if format_enum == ExportFormat.CSV:
             df.to_csv(path_obj, encoding=encoding, index=index)
-        elif format == ExportFormat.TSV:
+        elif format_enum == ExportFormat.TSV:
             df.to_csv(path_obj, sep="\t", encoding=encoding, index=index)
-        elif format == ExportFormat.JSON:
+        elif format_enum == ExportFormat.JSON:
             df.to_json(path_obj, orient="records", indent=2)
-        elif format == ExportFormat.EXCEL:
+        elif format_enum == ExportFormat.EXCEL:
             df.to_excel(path_obj, index=index, engine="openpyxl")
-        elif format == ExportFormat.PARQUET:
+        elif format_enum == ExportFormat.PARQUET:
             df.to_parquet(path_obj, index=index)
-        elif format == ExportFormat.HTML:
+        elif format_enum == ExportFormat.HTML:
             df.to_html(path_obj, index=index)
-        elif format == ExportFormat.MARKDOWN:
+        elif format_enum == ExportFormat.MARKDOWN:
             df.to_markdown(path_obj, index=index)
         else:
-            raise ToolError(f"Unsupported format: {format}")
+            raise ToolError(f"Unsupported format: {format_enum}")
 
         # Record operation
         session.record_operation(
-            OperationType.EXPORT, {"format": format.value, "file_path": str(file_path)}
+            OperationType.EXPORT, {"format": format_enum, "file_path": str(file_path)}
         )
 
         if ctx:
@@ -330,7 +336,7 @@ async def export_csv(
         return ExportResult(
             session_id=session_id,
             file_path=str(file_path),
-            format=format.value,  # type: ignore
+            format=format_enum.value,
             rows_exported=len(df),
             file_size_mb=path_obj.stat().st_size / (1024 * 1024),
         )

@@ -167,7 +167,7 @@ class ExportResult(BaseToolResponse):
 
     session_id: str
     file_path: str
-    format: Literal["csv", "json", "excel", "html", "markdown"]
+    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"]
     rows_exported: int
     file_size_mb: float | None = None
 

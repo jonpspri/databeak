@@ -145,23 +145,28 @@ async def get_column_statistics(
             raise ToolError(f"Column '{column}' not found")
 
         col_data = df[column]
-        # Map pandas dtypes to Pydantic model literals
+        # Map pandas dtypes to Pydantic model literals using type-safe mapping
         col_dtype = str(col_data.dtype)
-        if "int" in col_dtype:
-            mapped_dtype = "int64"
-        elif "float" in col_dtype:
-            mapped_dtype = "float64"
-        elif "bool" in col_dtype:
-            mapped_dtype = "bool"
-        elif "datetime" in col_dtype:
+        
+        # Direct mapping for exact matches, with type-safe fallback for partial matches
+        dtype_mapping: dict[str, Literal["int64", "float64", "object", "bool", "datetime64", "category"]] = {
+            "int64": "int64",
+            "float64": "float64",
+            "bool": "bool", 
+            "object": "object",
+            "category": "category",
+        }
+        
+        # Handle exact matches first
+        if col_dtype in dtype_mapping:
+            mapped_dtype = dtype_mapping[col_dtype]
+        elif col_dtype.startswith("datetime64"):  # Handle datetime64[ns] variants
             mapped_dtype = "datetime64"
-        elif "category" in col_dtype:
-            mapped_dtype = "category"
         else:
-            mapped_dtype = "object"
+            mapped_dtype = "object"  # Safe fallback
 
-        # Create statistics - only meaningful for numeric columns
-        if pd.api.types.is_numeric_dtype(col_data):
+        # Create statistics - only meaningful for numeric columns (excluding boolean)
+        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
             non_null = col_data.dropna()
             if len(non_null) > 0:
                 statistics = StatisticsSummary(
@@ -205,10 +210,7 @@ async def get_column_statistics(
             session_id=session_id,
             column=column,
             statistics=statistics,
-            data_type=cast(
-                "Literal['int64', 'float64', 'object', 'bool', 'datetime64', 'category']",
-                mapped_dtype,
-            ),
+            data_type=mapped_dtype,
             non_null_count=int(col_data.notna().sum()),
         )
 
