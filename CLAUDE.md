@@ -30,12 +30,9 @@ See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub 
 
 ### Code Quality Standards
 
-- Run `uv run all-checks` before committing (includes lint, format, type-check,
-  test)
-- Use `uv run ruff check` for linting
-- Use `uv run ruff format` for formatting
-- Use `uv run mypy src/` for type checking
-- Maintain test coverage above 80%
+**Use the `quality-gate-runner` agent** for comprehensive quality pipeline execution including linting, formatting, type checking, testing, and coverage analysis.
+
+See `.claude/agents/quality-gate-runner.md` for detailed quality assurance guidance.
 
 ### Markdown Standards
 
@@ -51,11 +48,9 @@ See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub 
 
 ### Testing Approach
 
-- Write comprehensive tests for all new MCP tools
-- Use pytest fixtures for session management
-- Test both success and error cases
-- Include integration tests for tool workflows
-- Run `uv run test-cov` to check coverage
+**Use the `test-coverage-analyzer` agent** for systematic test coverage analysis and gap identification to achieve the 80%+ coverage requirement.
+
+See `.claude/agents/test-coverage-analyzer.md` for comprehensive testing guidance.
 
 ### Version Management
 
@@ -65,20 +60,15 @@ See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub 
 
 ### MCP Tool Development
 
-- Place new tools in appropriate `tools/` modules
-- Follow existing patterns for error handling and response structure
-- Include comprehensive docstrings with examples
-- Use type hints for all parameters and return values
-- Handle null values correctly (JSON null → Python None → pandas NaN)
+**Use the `mcp-tool-generator` agent** for creating new MCP tools following established DataBeak patterns with proper error handling, type annotations, docstrings, and test files.
+
+See `.claude/agents/mcp-tool-generator.md` for comprehensive MCP tool development guidance.
 
 ### Type Checking Guidelines
 
-- Avoid using `Any` when a more specific type can be declared
-- Be especially sparing in using `Any` as a function return type or dict
-  datatype
-- Prefer specific types like `dict[str, str]` over `dict[str, Any]`
-- Use union types when multiple specific types are acceptable
-- Consider using TypedDict for structured dictionary returns
+**Use the `python-type-optimizer` agent** for systematic type safety improvements including reducing `Any` usage and implementing specific TypedDict definitions.
+
+See `.claude/agents/python-type-optimizer.md` for comprehensive type annotation guidance.
 
 ### Environment Configuration
 
