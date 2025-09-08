@@ -99,26 +99,34 @@ git status
 
 **Purpose**: Remove merged branches and maintain repository hygiene
 
+**⚠️ CRITICAL SAFETY RULE**: Only perform cleanup AFTER confirming PR has been merged via GitHub UI or user confirmation. NEVER cleanup branches with open/pending PRs.
+
+**Pre-cleanup Validation**:
+- Verify PR status before any branch deletion
+- Confirm merge completion via GitHub UI or user acknowledgment  
+- Check that changes are safely in main branch
+- Ensure no work will be lost
+
 **Actions**:
 - Identify merged feature branches (local and remote)
-- Safely delete local merged branches
-- Remove corresponding remote branches
+- Safely delete local merged branches ONLY after PR merge confirmation
+- Remove corresponding remote branches ONLY after merge verification
 - Clean up stale remote tracking references
 - Prune obsolete remote references
 
-**Cleanup Commands**:
+**Cleanup Commands** (USE ONLY AFTER MERGE CONFIRMATION):
 ```bash
-# List merged branches
-git branch --merged main
-git branch -r --merged main
+# FIRST: Verify PR is merged before cleanup
+git fetch origin
+git branch --merged main  # Verify branch is merged
 
-# Clean local merged branches
+# THEN: Clean local merged branches
 git branch -d feature/merged-branch
 
-# Clean remote branches
+# THEN: Clean remote branches  
 git push origin --delete feature/merged-branch
 
-# Prune stale references  
+# FINALLY: Prune stale references
 git remote prune origin
 ```
 
@@ -213,5 +221,14 @@ This agent should be invoked:
 - **During repository maintenance** to remove stale branches
 - **When Git workflow violations are detected**
 - **Periodically** to maintain repository hygiene
+
+## Critical Safety Guidelines
+
+**⚠️ NEVER perform cleanup operations without user confirmation that PRs are merged**
+
+- Always wait for explicit user confirmation before deleting any branches
+- Verify PR merge status via GitHub UI or user statement
+- When in doubt, ask the user to confirm merge status
+- Err on the side of caution - preserving work is more important than cleanup
 
 The agent prioritizes repository safety and DataBeak's strict workflow compliance while maintaining development efficiency.
