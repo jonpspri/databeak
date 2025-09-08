@@ -46,10 +46,12 @@ compliance and real-world operational correctness.
 ```python
 # Server lifecycle management
 class LiveServerManager:
+    """
     - Start/stop FastMCP server in background processes
     - Manage different transport protocols
     - Handle server health checks and readiness
     - Clean resource management and teardown
+    """
 ```
 
 #### 2. MCP Client Test Framework
@@ -57,10 +59,12 @@ class LiveServerManager:
 ```python
 # Protocol interaction testing
 class MCPClientTestHarness:
+    """
     - FastMCP Client integration for protocol testing
     - Transport-specific client configurations
     - Protocol message validation
     - Response parsing and verification
+    """
 ```
 
 #### 3. Test Infrastructure Tools
@@ -161,10 +165,10 @@ async def test_mcp_tool_discovery():
 **Complete CSV Analysis Pipeline:**
 
 1. Load CSV data via MCP protocol
-1. Perform transformations through tool calls
-1. Execute analytics operations
-1. Export results via resource endpoints
-1. Validate session state consistency
+2. Perform transformations through tool calls
+3. Execute analytics operations
+4. Export results via resource endpoints
+5. Validate session state consistency
 
 **Multi-Session Management:**
 
@@ -288,7 +292,7 @@ test-live-server:
 **Quality Targets:**
 
 - Zero test flakiness in CI environment
-- Fast feedback cycles (\<3 minutes for full suite)
+- Fast feedback cycles (<3 minutes for full suite)
 - Clear failure diagnostics and reporting
 - Automated regression detection
 
