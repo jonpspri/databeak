@@ -71,7 +71,23 @@ bug fixes.
 - Immediate Benefits: Simplified CI builds, consistent Python toolchain, faster
   local development
 
-#### 1.5 Performance Baseline
+#### 1.5 Live Server Testing Infrastructure (NEW PRIORITY)
+
+- Live FastMCP Server Testing Framework: Implement comprehensive testing
+  strategy that validates MCP protocol compliance through actual client-server
+  interactions
+  - Server lifecycle management (startup/shutdown across all transports)
+  - Transport protocol validation (stdio, HTTP, SSE)
+  - MCP specification compliance testing
+  - End-to-end tool workflow validation through live protocol
+  - Performance benchmarks under realistic load conditions
+- Integration with CI/CD pipeline for continuous validation
+- Documentation: See `planning/live-server-testing-strategy.md` for detailed
+  implementation plan
+- Benefits: Ensures production readiness, catches protocol-level issues,
+  validates real-world performance characteristics
+
+#### 1.6 Performance Baseline
 
 - Benchmark suite development
 - Memory usage profiling
@@ -81,6 +97,7 @@ bug fixes.
 ### Deliverables
 
 - Comprehensive test suite with 80%+ coverage
+- Live server testing framework with MCP protocol validation
 - Security audit report with remediation
 - Performance benchmark baseline
 - Production deployment guide
