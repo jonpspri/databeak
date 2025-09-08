@@ -82,13 +82,13 @@ class TestDataOperations:
 
         result = await load_csv_from_content(content=csv_content, delimiter=",")
 
-        assert result["success"]
-        assert result["rows_affected"] == 2
-        assert len(result["columns_affected"]) == 3
+        assert result.success
+        assert result.rows_affected == 2
+        assert len(result.columns_affected) == 3
 
         # Cleanup
         manager = get_session_manager()
-        await manager.remove_session(result["session_id"])
+        await manager.remove_session(result.session_id)
 
     async def test_filter_rows(self, test_session):
         """Test filtering rows."""
@@ -100,5 +100,5 @@ class TestDataOperations:
             mode="and",
         )
 
-        assert result["success"]
-        assert result["rows_after"] < result["rows_before"]
+        assert result.success
+        assert result.rows_after < result.rows_before

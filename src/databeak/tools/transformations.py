@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 import pandas as pd
+from fastmcp.exceptions import ToolError
 
 from ..exceptions import (
     ColumnNotFoundError,
@@ -15,13 +19,33 @@ from ..exceptions import (
 )
 from ..models.csv_session import get_session_manager
 from ..models.data_models import OperationType
+from ..models.tool_responses import (
+    CellLocation,
+    CellValueResult,
+    ColumnDataResult,
+    ColumnOperationResult,
+    CsvCellValue,
+    DataPreview,
+    DataSummaryResult,
+    DataTypeInfo,
+    DeleteRowResult,
+    FilterOperationResult,
+    FindCellsResult,
+    InsertRowResult,
+    InspectDataResult,
+    MissingDataInfo,
+    RowDataResult,
+    SetCellResult,
+    UpdateRowResult,
+)
 from .data_operations import create_data_preview_with_indices
 
-# Type aliases for better type safety
+# Type aliases for better type safety (non-conflicting)
 CellValue = str | int | float | bool | None
 RowData = dict[str, CellValue] | list[CellValue]
-OperationResult = dict[str, Any]  # Operation results have complex mixed types
-FilterCondition = dict[str, str | CellValue]  # For filter condition dicts
+
+# Note: FilterCondition and OperationResult are imported from data_models.py when needed
+# To avoid conflicts with tool response models, use them as dict types in function signatures
 
 if TYPE_CHECKING:
     from fastmcp import Context
@@ -46,10 +70,10 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 async def filter_rows(
     session_id: str,
-    conditions: list[FilterCondition],
+    conditions: list[dict[str, str | CellValue]],
     mode: str = "and",
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> FilterOperationResult:
     """Filter rows based on conditions.
 
     Args:
@@ -124,12 +148,13 @@ async def filter_rows(
             },
         )
 
-        return {
-            "success": True,
-            "rows_before": len(df),
-            "rows_after": len(session.data_session.df),
-            "rows_filtered": len(df) - len(session.data_session.df),
-        }
+        return FilterOperationResult(
+            session_id=session_id,
+            rows_before=len(df),
+            rows_after=len(session.data_session.df),
+            rows_filtered=len(df) - len(session.data_session.df),
+            conditions_applied=len(conditions),
+        )
 
     except (
         SessionNotFoundError,
@@ -138,19 +163,16 @@ async def filter_rows(
         InvalidParameterError,
     ) as e:
         logger.error(f"Filter operation failed: {e.message}")
-        return {"success": False, "error": e.to_dict()}
+        raise ToolError(e.message) from e
     except (ValueError, TypeError) as e:
         logger.error(f"Data type error in filter operation: {e!s}")
-        return {"success": False, "error": {"type": "DataTypeError", "message": str(e)}}
+        raise ToolError(f"Data type error: {e}") from e
     except pd.errors.ParserError as e:
         logger.error(f"Pandas parsing error: {e!s}")
-        return {"success": False, "error": {"type": "ParsingError", "message": str(e)}}
+        raise ToolError(f"Parsing error: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error in filter operation: {e!s}")
-        return {
-            "success": False,
-            "error": {"type": "UnexpectedError", "message": str(e)},
-        }
+        raise ToolError(f"Unexpected error: {e}") from e
 
 
 async def sort_data(
@@ -294,7 +316,7 @@ async def add_column(
     value: CellValue | list[CellValue] = None,
     formula: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> ColumnOperationResult:
     """Add a new column to the dataframe.
 
     Args:
@@ -311,20 +333,19 @@ async def add_column(
         session, df = _get_session_data(session_id)
 
         if name in df.columns:
-            return {"success": False, "error": f"Column '{name}' already exists"}
+            raise ToolError(f"Column '{name}' already exists")
 
         if formula:
             # Evaluate formula in the context of the dataframe
             try:
                 session.data_session.df[name] = df.eval(formula)
             except Exception as e:
-                return {"success": False, "error": f"Formula evaluation failed: {e!s}"}
+                raise ToolError(f"Formula evaluation failed: {e}") from e
         elif isinstance(value, list):
             if len(value) != len(df):
-                return {
-                    "success": False,
-                    "error": f"Value list length ({len(value)}) doesn't match row count ({len(df)})",
-                }
+                raise ToolError(
+                    f"Value list length ({len(value)}) doesn't match row count ({len(df)})"
+                )
             session.data_session.df[name] = value
         else:
             # Scalar value or None
@@ -339,22 +360,23 @@ async def add_column(
             },
         )
 
-        return {
-            "success": True,
-            "column_added": name,
-            "columns": session.data_session.df.columns.tolist(),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="add_column",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[name],
+        )
 
     except Exception as e:
         logger.error(f"Error adding column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def remove_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
     Args:
@@ -371,20 +393,21 @@ async def remove_columns(
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
-            return {"success": False, "error": f"Columns not found: {missing_cols}"}
+            raise ToolError(f"Columns not found: {missing_cols}")
 
         session.data_session.df = df.drop(columns=columns)
         session.record_operation(OperationType.REMOVE_COLUMN, {"columns": columns})
 
-        return {
-            "success": True,
-            "removed_columns": columns,
-            "remaining_columns": session.data_session.df.columns.tolist(),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="remove_columns",
+            rows_affected=len(session.data_session.df),
+            columns_affected=columns,
+        )
 
     except Exception as e:
         logger.error(f"Error removing columns: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def change_column_type(
@@ -393,7 +416,7 @@ async def change_column_type(
     dtype: str,
     errors: Literal["raise", "coerce"] = "coerce",
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Change the data type of a column.
 
     Args:
@@ -410,10 +433,9 @@ async def change_column_type(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
         original_dtype = str(df[column].dtype)
-        null_count_before = df[column].isna().sum()
 
         # Convert based on target dtype
         if dtype == "int":
@@ -431,9 +453,7 @@ async def change_column_type(
         elif dtype == "category":
             session.data_session.df[column] = df[column].astype("category")
         else:
-            return {"success": False, "error": f"Unsupported dtype: {dtype}"}
-
-        null_count_after = session.data_session.df[column].isna().sum()
+            raise ToolError(f"Unsupported dtype: {dtype}")
 
         session.record_operation(
             OperationType.CHANGE_TYPE,
@@ -445,19 +465,16 @@ async def change_column_type(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "original_type": original_dtype,
-            "new_type": str(session.data_session.df[column].dtype),
-            "null_count_before": int(null_count_before),
-            "null_count_after": int(null_count_after),
-            "conversion_errors": int(null_count_after - null_count_before),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="change_column_type",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+        )
 
     except Exception as e:
         logger.error(f"Error changing column type: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def fill_missing_values(
@@ -466,7 +483,7 @@ async def fill_missing_values(
     value: CellValue = None,
     columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> ColumnOperationResult:
     """Fill or remove missing values.
 
     Args:
@@ -481,12 +498,11 @@ async def fill_missing_values(
     """
     try:
         session, df = _get_session_data(session_id)
-        null_counts_before = df.isnull().sum().to_dict()
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                return {"success": False, "error": f"Columns not found: {missing_cols}"}
+                raise ToolError(f"Columns not found: {missing_cols}")
             target_cols = columns
         else:
             target_cols = df.columns.tolist()
@@ -495,7 +511,7 @@ async def fill_missing_values(
             session.data_session.df = df.dropna(subset=target_cols)
         elif strategy == "fill":
             if value is None:
-                return {"success": False, "error": "Value required for 'fill' strategy"}
+                raise ToolError("Value required for 'fill' strategy")
             session.data_session.df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
             session.data_session.df[target_cols] = df[target_cols].ffill()
@@ -515,9 +531,7 @@ async def fill_missing_values(
                 if len(mode_val) > 0:
                     session.data_session.df[col] = df[col].fillna(mode_val[0])
         else:
-            return {"success": False, "error": f"Unknown strategy: {strategy}"}
-
-        null_counts_after = session.data_session.df.isnull().sum().to_dict()
+            raise ToolError(f"Unknown strategy: {strategy}")
 
         session.record_operation(
             OperationType.FILL_MISSING,
@@ -528,18 +542,16 @@ async def fill_missing_values(
             },
         )
 
-        return {
-            "success": True,
-            "strategy": strategy,
-            "rows_before": len(df),
-            "rows_after": len(session.data_session.df),
-            "null_counts_before": null_counts_before,
-            "null_counts_after": null_counts_after,
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="fill_missing_values",
+            rows_affected=len(session.data_session.df),
+            columns_affected=target_cols,
+        )
 
     except Exception as e:
         logger.error(f"Error filling missing values: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def update_column(
@@ -550,7 +562,7 @@ async def update_column(
     pattern: str | None = None,
     replacement: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Update values in a specific column with simple operations.
 
     Args:
@@ -569,26 +581,20 @@ async def update_column(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
         original_values_sample = df[column].head(5).tolist()
 
         if operation == "replace":
             if pattern is None or replacement is None:
-                return {
-                    "success": False,
-                    "error": "Pattern and replacement required for replace operation",
-                }
+                raise ToolError("Pattern and replacement required for replace operation")
             session.data_session.df[column] = (
                 df[column].astype(str).str.replace(pattern, replacement, regex=True)
             )
 
         elif operation == "extract":
             if pattern is None:
-                return {
-                    "success": False,
-                    "error": "Pattern required for extract operation",
-                }
+                raise ToolError("Pattern required for extract operation")
             session.data_session.df[column] = (
                 df[column].astype(str).str.extract(pattern, expand=False)
             )
@@ -616,11 +622,11 @@ async def update_column(
 
         elif operation == "fill":
             if value is None:
-                return {"success": False, "error": "Value required for fill operation"}
+                raise ToolError("Value required for fill operation")
             session.data_session.df[column] = df[column].fillna(value)
 
         else:
-            return {"success": False, "error": f"Unknown operation: {operation}"}
+            raise ToolError(f"Unknown operation: {operation}")
 
         updated_values_sample = session.data_session.df[column].head(5).tolist()
 
@@ -635,18 +641,19 @@ async def update_column(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": operation,
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            success=True,
+            session_id=session_id,
+            operation=f"update_column_{operation}",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+            original_sample=original_values_sample[:5] if original_values_sample else [],
+            updated_sample=updated_values_sample[:5] if updated_values_sample else [],
+        )
 
     except Exception as e:
         logger.error(f"Error updating column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error updating column: {e}") from e
 
 
 async def remove_duplicates(
@@ -654,7 +661,7 @@ async def remove_duplicates(
     subset: list[str] | None = None,
     keep: Literal["first", "last", "none"] = "first",
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Remove duplicate rows.
 
     Args:
@@ -673,7 +680,7 @@ async def remove_duplicates(
         if subset:
             missing_cols = [col for col in subset if col not in df.columns]
             if missing_cols:
-                return {"success": False, "error": f"Columns not found: {missing_cols}"}
+                raise ToolError(f"Columns not found: {missing_cols}")
 
         # Convert keep parameter
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
@@ -688,18 +695,16 @@ async def remove_duplicates(
             {"subset": subset, "keep": keep, "rows_removed": rows_before - rows_after},
         )
 
-        return {
-            "success": True,
-            "rows_before": rows_before,
-            "rows_after": rows_after,
-            "duplicates_removed": rows_before - rows_after,
-            "subset": subset,
-            "keep": keep,
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="remove_duplicates",
+            rows_affected=rows_after,
+            columns_affected=subset if subset else df.columns.tolist(),
+        )
 
     except Exception as e:
         logger.error(f"Error removing duplicates: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 # ============================================================================
@@ -712,7 +717,7 @@ async def get_cell_value(
     row_index: int,
     column: str | int,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> CellValueResult:
     """Get the value of a specific cell.
 
     Args:
@@ -733,24 +738,18 @@ async def get_cell_value(
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df) - 1})",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Handle column specification
         if isinstance(column, int):
             # Column index
             if column < 0 or column >= len(df.columns):
-                return {
-                    "success": False,
-                    "error": f"Column index {column} out of range (0-{len(df.columns) - 1})",
-                }
+                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
             column_name = df.columns[column]
         else:
             # Column name
             if column not in df.columns:
-                return {"success": False, "error": f"Column '{column}' not found"}
+                raise ToolError(f"Column '{column}' not found")
             column_name = column
 
         # Get the cell value
@@ -762,16 +761,15 @@ async def get_cell_value(
         elif hasattr(cell_value, "item"):
             cell_value = cell_value.item()
 
-        return {
-            "success": True,
-            "value": cell_value,
-            "coordinates": {"row": row_index, "column": column_name},
-            "data_type": str(df.dtypes[column_name]),
-        }
+        return CellValueResult(
+            value=cell_value,
+            coordinates={"row": row_index, "column": column_name},
+            data_type=str(df.dtypes[column_name]),
+        )
 
     except Exception as e:
         logger.error(f"Error getting cell value: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def set_cell_value(
@@ -780,7 +778,7 @@ async def set_cell_value(
     column: str | int,
     value: CellValue,
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> SetCellResult:
     """Set the value of a specific cell.
 
     Args:
@@ -801,24 +799,18 @@ async def set_cell_value(
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df) - 1})",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Handle column specification
         if isinstance(column, int):
             # Column index
             if column < 0 or column >= len(df.columns):
-                return {
-                    "success": False,
-                    "error": f"Column index {column} out of range (0-{len(df.columns) - 1})",
-                }
+                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
             column_name = df.columns[column]
         else:
             # Column name
             if column not in df.columns:
-                return {"success": False, "error": f"Column '{column}' not found"}
+                raise ToolError(f"Column '{column}' not found")
             column_name = column
 
         # Get old value
@@ -844,17 +836,16 @@ async def set_cell_value(
             },
         )
 
-        return {
-            "success": True,
-            "coordinates": {"row": row_index, "column": column_name},
-            "old_value": old_value,
-            "new_value": value,
-            "data_type": str(df.dtypes[column_name]),
-        }
+        return SetCellResult(
+            coordinates={"row": row_index, "column": column_name},
+            old_value=old_value,
+            new_value=value,
+            data_type=str(df.dtypes[column_name]),
+        )
 
     except Exception as e:
         logger.error(f"Error setting cell value: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def get_row_data(
@@ -862,7 +853,7 @@ async def get_row_data(
     row_index: int,
     columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> RowDataResult:
     """Get data from a specific row.
 
     Args:
@@ -883,10 +874,7 @@ async def get_row_data(
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df) - 1})",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Get row data
         if columns is None:
@@ -895,7 +883,7 @@ async def get_row_data(
             # Validate columns exist
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                return {"success": False, "error": f"Columns not found: {missing_cols}"}
+                raise ToolError(f"Columns not found: {missing_cols}")
 
             row_data = df.iloc[row_index][columns].to_dict()
 
@@ -906,16 +894,16 @@ async def get_row_data(
             elif hasattr(value, "item"):
                 row_data[key] = value.item()
 
-        return {
-            "success": True,
-            "row_index": row_index,
-            "data": row_data,
-            "columns_included": list(row_data.keys()),
-        }
+        return RowDataResult(
+            session_id=session_id,
+            row_index=row_index,
+            data=row_data,
+            columns=list(row_data.keys()),
+        )
 
     except Exception as e:
         logger.error(f"Error getting row data: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def get_column_data(
@@ -924,7 +912,7 @@ async def get_column_data(
     start_row: int | None = None,
     end_row: int | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnDataResult:
     """Get data from a specific column, optionally sliced by row range.
 
     Args:
@@ -946,7 +934,7 @@ async def get_column_data(
 
         # Validate column exists
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
         # Validate and set row range
         total_rows = len(df)
@@ -956,16 +944,10 @@ async def get_column_data(
             end_row = total_rows
 
         if start_row < 0 or start_row >= total_rows:
-            return {
-                "success": False,
-                "error": f"Start row {start_row} out of range (0-{total_rows - 1})",
-            }
+            raise ToolError(f"Start row {start_row} out of range (0-{total_rows - 1})")
 
         if end_row < start_row or end_row > total_rows:
-            return {
-                "success": False,
-                "error": f"End row {end_row} invalid (must be > start_row and <= {total_rows})",
-            }
+            raise ToolError(f"End row {end_row} invalid (must be > start_row and <= {total_rows})")
 
         # Get column data slice
         column_data = df[column].iloc[start_row:end_row].tolist()
@@ -977,19 +959,18 @@ async def get_column_data(
             elif hasattr(value, "item"):
                 column_data[i] = value.item()
 
-        return {
-            "success": True,
-            "column": column,
-            "data": column_data,
-            "start_row": start_row,
-            "end_row": end_row,
-            "count": len(column_data),
-            "data_type": str(df.dtypes[column]),
-        }
+        return ColumnDataResult(
+            session_id=session_id,
+            column=column,
+            values=column_data,
+            total_values=len(column_data),
+            start_row=start_row,
+            end_row=end_row,
+        )
 
     except Exception as e:
         logger.error(f"Error getting column data: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 # ============================================================================
@@ -1004,7 +985,7 @@ async def replace_in_column(
     replacement: str,
     regex: bool = True,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Replace patterns in a column with replacement text.
 
     Args:
@@ -1025,16 +1006,18 @@ async def replace_in_column(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
-        original_values_sample = df[column].head(5).tolist()
+        # Get original sample
+        original_sample = df[column].head(5).tolist()
 
         # Perform replacement
         session.data_session.df[column] = (
             df[column].astype(str).str.replace(pattern, replacement, regex=regex)
         )
 
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
+        # Get updated sample
+        updated_sample = session.data_session.df[column].head(5).tolist()
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1047,20 +1030,18 @@ async def replace_in_column(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": "replace",
-            "pattern": pattern,
-            "replacement": replacement,
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="replace_in_column",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+            original_sample=original_sample,
+            updated_sample=updated_sample,
+        )
 
     except Exception as e:
         logger.error(f"Error replacing in column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def extract_from_column(
@@ -1069,7 +1050,7 @@ async def extract_from_column(
     pattern: str,
     expand: bool = False,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Extract patterns from a column using regex.
 
     Args:
@@ -1089,14 +1070,10 @@ async def extract_from_column(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
-
-        original_values_sample = df[column].head(5).tolist()
+            raise ToolError(f"Column '{column}' not found")
 
         # Perform extraction
         session.data_session.df[column] = df[column].astype(str).str.extract(pattern, expand=False)
-
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1108,19 +1085,16 @@ async def extract_from_column(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": "extract",
-            "pattern": pattern,
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="extract_from_column",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+        )
 
     except Exception as e:
         logger.error(f"Error extracting from column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def split_column(
@@ -1130,7 +1104,7 @@ async def split_column(
     part_index: int | None = None,
     expand_to_columns: bool = False,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Split column values by delimiter.
 
     Args:
@@ -1152,20 +1126,21 @@ async def split_column(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
-
-        original_values_sample = df[column].head(5).tolist()
+            raise ToolError(f"Column '{column}' not found")
 
         # Perform split
         if expand_to_columns:
             # Split into multiple columns
             split_data = df[column].astype(str).str.split(delimiter, expand=True)
             # Replace original column with split columns
+            new_columns = []
             for i, col_data in enumerate(split_data.columns):
-                session.data_session.df[f"{column}_{i}"] = split_data[col_data]
+                new_col_name = f"{column}_{i}"
+                session.data_session.df[new_col_name] = split_data[col_data]
+                new_columns.append(new_col_name)
             # Drop original column
             session.data_session.df = session.data_session.df.drop(columns=[column])
-            updated_info = f"Expanded to {len(split_data.columns)} columns"
+            columns_affected = new_columns
         else:
             # Keep specific part
             if part_index is not None:
@@ -1175,7 +1150,7 @@ async def split_column(
             else:
                 # Keep first part by default
                 session.data_session.df[column] = df[column].astype(str).str.split(delimiter).str[0]
-            updated_info = session.data_session.df[column].head(5).tolist()
+            columns_affected = [column]
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1188,27 +1163,17 @@ async def split_column(
             },
         )
 
-        result = {
-            "success": True,
-            "column": column,
-            "operation": "split",
-            "delimiter": delimiter,
-            "original_sample": original_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
-
-        if expand_to_columns:
-            result["expanded_columns"] = [f"{column}_{i}" for i in range(len(split_data.columns))]
-            result["info"] = updated_info
-        else:
-            result["part_index"] = part_index if part_index is not None else 0
-            result["updated_sample"] = updated_info
-
-        return result
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="split_column",
+            rows_affected=len(session.data_session.df),
+            columns_affected=columns_affected,
+            part_index=part_index,
+        )
 
     except Exception as e:
         logger.error(f"Error splitting column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def transform_column_case(
@@ -1216,7 +1181,7 @@ async def transform_column_case(
     column: str,
     transform: Literal["upper", "lower", "title", "capitalize"],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
     Args:
@@ -1235,9 +1200,7 @@ async def transform_column_case(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
-
-        original_values_sample = df[column].head(5).tolist()
+            raise ToolError(f"Column '{column}' not found")
 
         # Perform case transformation
         if transform == "upper":
@@ -1249,9 +1212,7 @@ async def transform_column_case(
         elif transform == "capitalize":
             session.data_session.df[column] = df[column].astype(str).str.capitalize()
         else:
-            return {"success": False, "error": f"Unknown transform: {transform}"}
-
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
+            raise ToolError(f"Unknown transform: {transform}")
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1262,19 +1223,17 @@ async def transform_column_case(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": "transform_case",
-            "transform": transform,
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="transform_column_case",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+            transform=transform,
+        )
 
     except Exception as e:
         logger.error(f"Error transforming column case: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def strip_column(
@@ -1282,7 +1241,7 @@ async def strip_column(
     column: str,
     chars: str | None = None,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Strip whitespace or specified characters from column values.
 
     Args:
@@ -1302,7 +1261,7 @@ async def strip_column(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
         original_values_sample = df[column].head(5).tolist()
 
@@ -1323,19 +1282,18 @@ async def strip_column(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": "strip",
-            "chars": chars,
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="strip_column",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+            original_sample=original_values_sample,
+            updated_sample=updated_values_sample,
+        )
 
     except Exception as e:
         logger.error(f"Error stripping column: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def fill_column_nulls(
@@ -1343,7 +1301,7 @@ async def fill_column_nulls(
     column: str,
     value: CellValue,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnOperationResult:
     """Fill null/NaN values in a column with a specified value.
 
     Args:
@@ -1363,18 +1321,16 @@ async def fill_column_nulls(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            return {"success": False, "error": f"Column '{column}' not found"}
+            raise ToolError(f"Column '{column}' not found")
 
         # Count null values before
         nulls_before = df[column].isna().sum()
-        original_values_sample = df[column].head(5).tolist()
 
         # Fill nulls
         session.data_session.df[column] = df[column].fillna(value)
 
         # Count nulls after
         nulls_after = session.data_session.df[column].isna().sum()
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1386,22 +1342,17 @@ async def fill_column_nulls(
             },
         )
 
-        return {
-            "success": True,
-            "column": column,
-            "operation": "fill_nulls",
-            "value": value,
-            "nulls_before": int(nulls_before),
-            "nulls_after": int(nulls_after),
-            "nulls_filled": int(nulls_before - nulls_after),
-            "original_sample": original_values_sample,
-            "updated_sample": updated_values_sample,
-            "rows_updated": len(session.data_session.df),
-        }
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="fill_column_nulls",
+            rows_affected=len(session.data_session.df),
+            columns_affected=[column],
+            nulls_filled=int(nulls_before - nulls_after),
+        )
 
     except Exception as e:
         logger.error(f"Error filling column nulls: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 # ============================================================================
@@ -1414,7 +1365,7 @@ async def insert_row(
     row_index: int,
     data: RowData | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> InsertRowResult:
     """Insert a new row at the specified index.
 
     Args:
@@ -1440,10 +1391,7 @@ async def insert_row(
             try:
                 data = json.loads(data)
             except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Invalid JSON string in data parameter: {e}",
-                }
+                raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)
         rows_before = len(df)
@@ -1454,10 +1402,7 @@ async def insert_row(
 
         # Validate row index
         if row_index < 0 or row_index > len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df)} for insertion)",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df)} for insertion)")
 
         # Prepare row data
         if isinstance(data, dict):
@@ -1472,13 +1417,12 @@ async def insert_row(
             row_data = [data.get(col, None) for col in df.columns]
         elif isinstance(data, list):
             if len(data) != len(df.columns):
-                return {
-                    "success": False,
-                    "error": f"Row data length ({len(data)}) must match number of columns ({len(df.columns)})",
-                }
+                raise ToolError(
+                    f"Row data length ({len(data)}) must match number of columns ({len(df.columns)})"
+                )
             row_data = data
         else:
-            return {"success": False, "error": "Data must be a dict or list"}
+            raise ToolError("Data must be a dict or list")
 
         # Create new row as DataFrame
         new_row_df = pd.DataFrame([row_data], columns=df.columns)
@@ -1505,26 +1449,31 @@ async def insert_row(
             },
         )
 
-        return {
-            "success": True,
-            "operation": "insert_row",
-            "row_index": row_index,
-            "data_inserted": row_data,
-            "rows_before": rows_before,
-            "rows_after": len(session.data_session.df),
-            "columns": df.columns.tolist(),
-        }
+        # Convert row_data to dict format expected by InsertRowResult
+        if isinstance(row_data, list):
+            data_inserted = dict(zip(df.columns, row_data))
+        else:
+            data_inserted = row_data
+
+        return InsertRowResult(
+            session_id=session_id,
+            row_index=row_index,
+            rows_before=rows_before,
+            rows_after=len(session.data_session.df),
+            data_inserted=data_inserted,
+            columns=df.columns.tolist(),
+        )
 
     except Exception as e:
         logger.error(f"Error inserting row: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def delete_row(
     session_id: str,
     row_index: int,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> DeleteRowResult:
     """Delete a row at the specified index.
 
     Args:
@@ -1544,10 +1493,7 @@ async def delete_row(
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df) - 1})",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Get the data that will be deleted for tracking
         deleted_data = df.iloc[row_index].to_dict()
@@ -1573,18 +1519,17 @@ async def delete_row(
             },
         )
 
-        return {
-            "success": True,
-            "operation": "delete_row",
-            "row_index": row_index,
-            "deleted_data": deleted_data,
-            "rows_before": rows_before,
-            "rows_after": len(session.data_session.df),
-        }
+        return DeleteRowResult(
+            session_id=session_id,
+            row_index=row_index,
+            rows_before=rows_before,
+            rows_after=len(session.data_session.df),
+            deleted_data=deleted_data,
+        )
 
     except Exception as e:
         logger.error(f"Error deleting row: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def update_row(
@@ -1592,7 +1537,7 @@ async def update_row(
     row_index: int,
     data: dict[str, CellValue] | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
-) -> OperationResult:
+) -> UpdateRowResult:
     """Update specific columns in a row with new values.
 
     Args:
@@ -1617,31 +1562,22 @@ async def update_row(
             try:
                 data = json.loads(data)
             except json.JSONDecodeError as e:
-                return {
-                    "success": False,
-                    "error": f"Invalid JSON string in data parameter: {e}",
-                }
+                raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            return {
-                "success": False,
-                "error": f"Row index {row_index} out of range (0-{len(df) - 1})",
-            }
+            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Ensure data is a dict at this point
         if not isinstance(data, dict):
-            return {
-                "success": False,
-                "error": "Data must be a dictionary after JSON parsing",
-            }
+            raise ToolError("Data must be a dictionary after JSON parsing")
 
         # Validate columns exist
         invalid_cols = [col for col in data if col not in df.columns]
         if invalid_cols:
-            return {"success": False, "error": f"Columns not found: {invalid_cols}"}
+            raise ToolError(f"Columns not found: {invalid_cols}")
 
         # Get old values for tracking
         old_values: dict[str, Any] = {}
@@ -1682,19 +1618,17 @@ async def update_row(
             },
         )
 
-        return {
-            "success": True,
-            "operation": "update_row",
-            "row_index": row_index,
-            "columns_updated": list(data.keys()),
-            "old_values": old_values,
-            "new_values": new_values,
-            "changes_made": len(data),
-        }
+        return UpdateRowResult(
+            row_index=row_index,
+            columns_updated=list(data.keys()),
+            old_values=old_values,
+            new_values=new_values,
+            changes_made=len(data),
+        )
 
     except Exception as e:
         logger.error(f"Error updating row: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 # ============================================================================
@@ -1708,7 +1642,7 @@ async def inspect_data_around(
     column: str | int,
     radius: int = 2,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> InspectDataResult:
     """Get data around a specific cell for context inspection.
 
     Args:
@@ -1730,15 +1664,12 @@ async def inspect_data_around(
         # Handle column specification
         if isinstance(column, int):
             if column < 0 or column >= len(df.columns):
-                return {
-                    "success": False,
-                    "error": f"Column index {column} out of range (0-{len(df.columns) - 1})",
-                }
+                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
             column_name = df.columns[column]
             col_index = column
         else:
             if column not in df.columns:
-                return {"success": False, "error": f"Column '{column}' not found"}
+                raise ToolError(f"Column '{column}' not found")
             column_name = column
             col_index_result = df.columns.get_loc(column)
             col_index = col_index_result if isinstance(col_index_result, int) else 0
@@ -1759,8 +1690,8 @@ async def inspect_data_around(
         records = []
         for _, (orig_idx, row_data) in enumerate(data_slice.iterrows()):
             # Handle different index types from iterrows safely
-            row_index_val = orig_idx if isinstance(orig_idx, int) else 0
-            record = {"__row_index__": row_index_val}
+            row_index_val = int(orig_idx) if isinstance(orig_idx, int) else 0
+            record: dict[str, CsvCellValue] = {"__row_index__": row_index_val}
             record.update(row_data.to_dict())
 
             # Handle pandas/numpy types
@@ -1774,21 +1705,29 @@ async def inspect_data_around(
 
             records.append(record)
 
-        return {
-            "success": True,
-            "center_coordinates": {"row": row, "column": column_name},
-            "inspection_area": {
-                "row_range": [row_start, row_end - 1],
-                "column_range": cols_slice,
-                "dimensions": f"{row_end - row_start}x{len(cols_slice)}",
-            },
-            "data": records,
-            "total_data_shape": df.shape,
-        }
+        # Create DataPreview from the records
+        surrounding_data = DataPreview(
+            rows=records, row_count=len(records), column_count=len(cols_slice), truncated=False
+        )
 
+        return InspectDataResult(
+            session_id=session_id,
+            center_coordinates={"row": row, "column": column_name},
+            surrounding_data=surrounding_data,
+            radius=radius,
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Error inspecting data around cell: {e!s}")
+        raise ToolError(f"Error: {e}") from e
     except Exception as e:
         logger.error(f"Error inspecting data around cell: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def find_cells_with_value(
@@ -1797,7 +1736,7 @@ async def find_cells_with_value(
     column: str | None = None,
     exact_match: bool = True,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> FindCellsResult:
     """Find all cells containing a specific value.
 
     Args:
@@ -1821,7 +1760,7 @@ async def find_cells_with_value(
         # Determine columns to search
         if column is not None:
             if column not in df.columns:
-                return {"success": False, "error": f"Column '{column}' not found"}
+                raise ToolError(f"Column '{column}' not found")
             columns_to_search = [column]
         else:
             columns_to_search = df.columns.tolist()
@@ -1848,32 +1787,50 @@ async def find_cells_with_value(
 
             for row_idx in matching_rows:
                 cell_value = df.at[row_idx, col]
+                # Convert to CsvCellValue compatible type
+                processed_value: CsvCellValue
                 if pd.isna(cell_value):
-                    cell_value = None
+                    processed_value = None
                 elif hasattr(cell_value, "item"):
-                    cell_value = cell_value.item()  # type: ignore[assignment]
+                    item_value = cell_value.item()
+                    if isinstance(item_value, str | int | float | bool):
+                        processed_value = item_value
+                    else:
+                        processed_value = str(item_value)
+                elif isinstance(cell_value, str | int | float | bool):
+                    processed_value = cell_value
+                else:
+                    # Fallback for complex types - convert to string
+                    processed_value = str(cell_value)
 
                 matches.append(
-                    {
-                        "coordinates": {"row": int(row_idx), "column": col},
-                        "value": cell_value,
-                        "data_type": str(df.dtypes[col]),
-                    }
+                    CellLocation(
+                        row=int(row_idx),
+                        column=col,
+                        value=processed_value,
+                    )
                 )
 
-        return {
-            "success": True,
-            "search_value": value,
-            "search_column": column,
-            "exact_match": exact_match,
-            "matches_found": len(matches),
-            "matches": matches,
-            "total_data_shape": df.shape,
-        }
+        return FindCellsResult(
+            session_id=session_id,
+            search_value=value,
+            matches_found=len(matches),
+            coordinates=matches,
+            search_column=column,
+            exact_match=exact_match,
+        )
 
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Error finding cells with value: {e!s}")
+        raise ToolError(f"Error: {e}") from e
     except Exception as e:
         logger.error(f"Error finding cells with value: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e
 
 
 async def get_data_summary(
@@ -1881,7 +1838,7 @@ async def get_data_summary(
     include_preview: bool = True,
     max_preview_rows: int = 10,
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> DataSummaryResult:
     """Get comprehensive data summary optimized for AI understanding.
 
     Args:
@@ -1899,42 +1856,98 @@ async def get_data_summary(
     try:
         session, df = _get_session_data(session_id)
 
-        # Basic information
-        summary = {
-            "success": True,
-            "session_id": session_id,
-            "coordinate_system": {
-                "row_indexing": f"0 to {len(df) - 1} (0-based)",
-                "column_indexing": "Use column names or 0-based indices",
-                "total_cells": len(df) * len(df.columns),
-            },
-            "shape": {"rows": len(df), "columns": len(df.columns)},
-            "columns": {
-                "names": df.columns.tolist(),
-                "types": {col: str(dtype) for col, dtype in df.dtypes.items()},
-                "count": len(df.columns),
-            },
-            "data_types": {
-                "numeric_columns": df.select_dtypes(include=["number"]).columns.tolist(),
-                "text_columns": df.select_dtypes(include=["object"]).columns.tolist(),
-                "datetime_columns": df.select_dtypes(include=["datetime"]).columns.tolist(),
-            },
-            "missing_data": {
-                "total_nulls": int(df.isnull().sum().sum()),
-                "null_by_column": {col: int(df[col].isnull().sum()) for col in df.columns},
-                "null_percentage": {
-                    col: round(df[col].isnull().sum() / len(df) * 100, 2) for col in df.columns
-                },
-            },
-            "memory_usage_mb": round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
+        # Create coordinate system
+        coordinate_system = {
+            "row_indexing": f"0 to {len(df) - 1} (0-based)",
+            "column_indexing": "Use column names or 0-based indices",
         }
 
-        # Add preview if requested
+        # Create shape info
+        shape = {"rows": len(df), "columns": len(df.columns)}
+
+        # Create DataTypeInfo objects for each column
+        columns_info = {}
+
+        for col in df.columns:
+            col_dtype = str(df[col].dtype)
+            # Map pandas dtypes to Pydantic model literals
+            if "int" in col_dtype:
+                mapped_dtype = "int64"
+            elif "float" in col_dtype:
+                mapped_dtype = "float64"
+            elif "bool" in col_dtype:
+                mapped_dtype = "bool"
+            elif "datetime" in col_dtype:
+                mapped_dtype = "datetime64"
+            elif "category" in col_dtype:
+                mapped_dtype = "category"
+            else:
+                mapped_dtype = "object"
+
+            columns_info[col] = DataTypeInfo(
+                type=cast(
+                    "Literal['int64', 'float64', 'object', 'bool', 'datetime64', 'category']",
+                    mapped_dtype,
+                ),
+                nullable=bool(df[col].isnull().any()),
+                unique_count=int(df[col].nunique()),
+                null_count=int(df[col].isnull().sum()),
+            )
+
+        # Create data types categorization
+        data_types = {
+            "numeric": df.select_dtypes(include=["number"]).columns.tolist(),
+            "text": df.select_dtypes(include=["object"]).columns.tolist(),
+            "datetime": df.select_dtypes(include=["datetime"]).columns.tolist(),
+            "boolean": df.select_dtypes(include=["bool"]).columns.tolist(),
+        }
+
+        # Create missing data info
+        total_missing = int(df.isnull().sum().sum())
+        missing_by_column = {col: int(df[col].isnull().sum()) for col in df.columns}
+        missing_percentage = round(total_missing / (len(df) * len(df.columns)) * 100, 2)
+
+        missing_data = MissingDataInfo(
+            total_missing=total_missing,
+            missing_by_column=missing_by_column,
+            missing_percentage=missing_percentage,
+        )
+
+        # Create preview
         if include_preview:
-            summary["preview"] = create_data_preview_with_indices(df, max_preview_rows)
+            preview_data = create_data_preview_with_indices(df, max_preview_rows)
+            # Convert to DataPreview object
+            preview = DataPreview(
+                rows=preview_data.get("records", []),
+                row_count=preview_data.get("total_rows", 0),
+                column_count=preview_data.get("total_columns", 0),
+                truncated=preview_data.get("preview_rows", 0) < preview_data.get("total_rows", 0),
+            )
+        else:
+            preview = None
 
-        return summary
+        # Calculate memory usage
+        memory_usage_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
 
+        return DataSummaryResult(
+            session_id=session_id,
+            coordinate_system=coordinate_system,
+            shape=shape,
+            columns=columns_info,
+            data_types=data_types,
+            missing_data=missing_data,
+            memory_usage_mb=memory_usage_mb,
+            preview=preview,
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Error getting data summary: {e!s}")
+        raise ToolError(f"Error: {e}") from e
     except Exception as e:
         logger.error(f"Error getting data summary: {e!s}")
-        return {"success": False, "error": str(e)}
+        raise ToolError(f"Error: {e}") from e

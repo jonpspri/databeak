@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 
 # Local imports
 from .models import get_session_manager
@@ -122,9 +123,12 @@ async def get_csv_cell(session_id: str, row_index: str, column: str) -> dict[str
             col_param = column
 
         result = await _get_cell_value(session_id, row_idx, col_param)
-        return result
+        # Convert Pydantic model to dict for resource response
+        return result.model_dump()
     except ValueError:
         return {"error": "Invalid row index - must be an integer"}
+    except ToolError as e:
+        return {"error": str(e)}
 
 
 @mcp.resource("csv://{session_id}/row/{row_index}")
@@ -133,9 +137,12 @@ async def get_csv_row(session_id: str, row_index: str) -> dict[str, Any]:
     try:
         row_idx = int(row_index)
         result = await _get_row_data(session_id, row_idx)
-        return result
+        # Convert Pydantic model to dict for resource response
+        return result.model_dump()
     except ValueError:
         return {"error": "Invalid row index - must be an integer"}
+    except ToolError as e:
+        return {"error": str(e)}
 
 
 @mcp.resource("csv://{session_id}/preview")

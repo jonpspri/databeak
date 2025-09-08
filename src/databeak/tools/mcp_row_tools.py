@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastmcp import Context, FastMCP
 
+from ..models.tool_responses import (  # noqa: TC001
+    CellValueResult,
+    ColumnDataResult,
+    DeleteRowResult,
+    InsertRowResult,
+    RowDataResult,
+    SetCellResult,
+    UpdateRowResult,
+)
 from .transformations import delete_row as _delete_row
 from .transformations import get_cell_value as _get_cell_value
 from .transformations import get_column_data as _get_column_data
@@ -21,7 +28,7 @@ def register_row_tools(mcp: FastMCP) -> None:
     @mcp.tool
     async def get_cell_value(
         session_id: str, row_index: int, column: str | int, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> CellValueResult:
         """Get the value of a specific cell with precise coordinate targeting and comprehensive
         metadata.
 
@@ -74,7 +81,7 @@ def register_row_tools(mcp: FastMCP) -> None:
         column: str | int,
         value: str | int | float | bool | None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> SetCellResult:
         """Set the value of a specific cell with precise coordinate targeting and null value
         support.
 
@@ -136,7 +143,7 @@ def register_row_tools(mcp: FastMCP) -> None:
         row_index: int,
         columns: list[str] | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> RowDataResult:
         """Get data from a specific row, optionally filtered by columns.
 
         Args:
@@ -160,7 +167,7 @@ def register_row_tools(mcp: FastMCP) -> None:
         start_row: int | None = None,
         end_row: int | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnDataResult:
         """Get data from a specific column, optionally sliced by row range.
 
         Args:
@@ -186,7 +193,7 @@ def register_row_tools(mcp: FastMCP) -> None:
             dict[str, str | int | float | bool | None] | list[str | int | float | bool | None] | str
         ),  # Accept string for Claude Code compatibility
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> InsertRowResult:
         """Insert a new row at the specified index with comprehensive null value and JSON string
         support.
 
@@ -249,7 +256,7 @@ def register_row_tools(mcp: FastMCP) -> None:
     @mcp.tool
     async def delete_row(
         session_id: str, row_index: int, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> DeleteRowResult:
         """Delete a row at the specified index.
 
         Args:
@@ -270,7 +277,7 @@ def register_row_tools(mcp: FastMCP) -> None:
         row_index: int,
         data: dict[str, str | int | float | bool | None] | str,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> UpdateRowResult:
         """Update specific columns in a row with comprehensive null value and Claude Code JSON
         string support.
 

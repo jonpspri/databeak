@@ -6,8 +6,7 @@ from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
 
-# Import type aliases
-from .transformations import CellValue, FilterCondition, OperationResult
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult  # noqa: TC001
 from .transformations import add_column as _add_column
 from .transformations import change_column_type as _change_column_type
 from .transformations import extract_from_column as _extract_from_column
@@ -25,6 +24,12 @@ from .transformations import strip_column as _strip_column
 from .transformations import transform_column_case as _transform_column_case
 from .transformations import update_column as _update_column
 
+# Type aliases - define locally to avoid import issues
+CellValue = str | int | float | bool | None
+
+# For transformations.py compatibility, use the dict-based types
+FilterConditionDict = dict[str, str | CellValue]
+
 
 def register_data_tools(mcp: FastMCP) -> None:
     """Register data manipulation tools with FastMCP server."""
@@ -32,10 +37,10 @@ def register_data_tools(mcp: FastMCP) -> None:
     @mcp.tool
     async def filter_rows(
         session_id: str,
-        conditions: list[FilterCondition],
+        conditions: list[FilterConditionDict],
         mode: str = "and",
         ctx: Context | None = None,
-    ) -> OperationResult:
+    ) -> FilterOperationResult:
         """Filter rows using flexible conditions with comprehensive null value and text matching
         support.
 
@@ -123,14 +128,14 @@ def register_data_tools(mcp: FastMCP) -> None:
         value: CellValue | list[CellValue] = None,
         formula: str | None = None,
         ctx: Context | None = None,
-    ) -> OperationResult:
+    ) -> ColumnOperationResult:
         """Add a new column to the dataframe."""
         return await _add_column(session_id, name, value, formula, ctx)
 
     @mcp.tool
     async def remove_columns(
         session_id: str, columns: list[str], ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Remove columns from the dataframe."""
         return await _remove_columns(session_id, columns, ctx)
 
@@ -141,7 +146,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         dtype: str,
         errors: Literal["raise", "coerce"] = "coerce",
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Change the data type of a column."""
         return await _change_column_type(session_id, column, dtype, errors, ctx)
 
@@ -152,7 +157,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         value: Any = None,
         columns: list[str] | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Fill or remove missing values."""
         return await _fill_missing_values(session_id, strategy, value, columns, ctx)
 
@@ -162,7 +167,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         subset: list[str] | None = None,
         keep: Literal["first", "last", "none"] = "first",
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Remove duplicate rows."""
         return await _remove_duplicates(session_id, subset, keep, ctx)
 
@@ -175,7 +180,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         pattern: str | None = None,
         replacement: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Update values in a specific column with simple operations like replace, extract, split,
         etc."""
         return await _update_column(session_id, column, operation, value, pattern, replacement, ctx)
@@ -189,7 +194,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         replacement: str,
         regex: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Replace patterns in a column with replacement text.
 
         Args:
@@ -215,7 +220,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         pattern: str,
         expand: bool = False,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Extract patterns from a column using regex.
 
         Args:
@@ -241,7 +246,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         part_index: int | None = None,
         expand_to_columns: bool = False,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Split column values by delimiter.
 
         Args:
@@ -268,7 +273,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         column: str,
         transform: Literal["upper", "lower", "title", "capitalize"],
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Transform the case of text in a column.
 
         Args:
@@ -291,7 +296,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         column: str,
         chars: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Strip whitespace or specified characters from column values.
 
         Args:
@@ -311,7 +316,7 @@ def register_data_tools(mcp: FastMCP) -> None:
     @mcp.tool
     async def fill_column_nulls(
         session_id: str, column: str, value: Any, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> ColumnOperationResult:
         """Fill null/NaN values in a column with a specified value.
 
         Args:

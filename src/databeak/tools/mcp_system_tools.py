@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastmcp import Context, FastMCP
 
 from .._version import __version__
 from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
+from ..models.tool_responses import HealthResult, ServerInfoResult
 
 
 def register_system_tools(mcp: FastMCP) -> None:
     """Register system tools with FastMCP server."""
 
     @mcp.tool
-    async def health_check(ctx: Context) -> dict[str, Any]:
+    async def health_check(ctx: Context) -> HealthResult:
         """Check the health status of DataBeak."""
         session_manager = get_session_manager()
 
@@ -24,26 +23,25 @@ def register_system_tools(mcp: FastMCP) -> None:
         if ctx:
             await ctx.info("Health check performed successfully")
 
-        return {
-            "success": True,
-            "status": "healthy",
-            "version": __version__,
-            "active_sessions": active_sessions,
-            "max_sessions": session_manager.max_sessions,
-            "session_ttl_minutes": session_manager.ttl_minutes,
-        }
+        return HealthResult(
+            status="healthy",
+            version=__version__,
+            active_sessions=active_sessions,
+            max_sessions=session_manager.max_sessions,
+            session_ttl_minutes=session_manager.ttl_minutes,
+        )
 
     @mcp.tool
-    async def get_server_info(ctx: Context) -> dict[str, Any]:
+    async def get_server_info(ctx: Context) -> ServerInfoResult:
         """Get information about DataBeak capabilities."""
         if ctx:
             await ctx.info("Server information requested")
 
-        return {
-            "name": "DataBeak",
-            "version": __version__,
-            "description": "A comprehensive MCP server for CSV file operations and data analysis",
-            "capabilities": {
+        return ServerInfoResult(
+            name="DataBeak",
+            version=__version__,
+            description="A comprehensive MCP server for CSV file operations and data analysis",
+            capabilities={
                 "data_io": [
                     "load_csv",
                     "load_csv_from_url",
@@ -89,7 +87,7 @@ def register_system_tools(mcp: FastMCP) -> None:
                     "null_value_updates",
                 ],
             },
-            "supported_formats": [
+            supported_formats=[
                 "csv",
                 "tsv",
                 "json",
@@ -98,6 +96,6 @@ def register_system_tools(mcp: FastMCP) -> None:
                 "html",
                 "markdown",
             ],
-            "max_file_size_mb": get_csv_settings().max_file_size_mb,
-            "session_timeout_minutes": get_csv_settings().session_timeout // 60,
-        }
+            max_file_size_mb=get_csv_settings().max_file_size_mb,
+            session_timeout_minutes=get_csv_settings().session_timeout // 60,
+        )

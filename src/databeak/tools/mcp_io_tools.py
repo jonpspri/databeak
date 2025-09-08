@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from fastmcp import Context, FastMCP
 
 from ..models import ExportFormat
+from ..models.tool_responses import (  # noqa: TC001
+    CloseSessionResult,
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
+    SessionListResult,
+)
 from .io_operations import close_session as _close_session
 from .io_operations import export_csv as _export_csv
 from .io_operations import get_session_info as _get_session_info
@@ -26,7 +31,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         delimiter: str = ",",
         session_id: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load a CSV file into a session with robust parsing and AI-optimized data preview.
 
         Provides comprehensive CSV loading with support for various encodings, delimiters, and
@@ -91,7 +96,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         delimiter: str = ",",
         session_id: str | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load a CSV file from a URL."""
         return await _load_csv_from_url(url, encoding, delimiter, session_id, ctx)
 
@@ -102,7 +107,7 @@ def register_io_tools(mcp: FastMCP) -> None:
         session_id: str | None = None,
         has_header: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> LoadResult:
         """Load CSV data from string content."""
         return await _load_csv_from_content(content, delimiter, session_id, has_header, ctx)
 
@@ -114,22 +119,22 @@ def register_io_tools(mcp: FastMCP) -> None:
         encoding: str = "utf-8",
         index: bool = False,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ExportResult:
         """Export session data to various formats."""
         format_enum = ExportFormat(format)
         return await _export_csv(session_id, file_path, format_enum, encoding, index, ctx)
 
     @mcp.tool
-    async def get_session_info(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
         """Get information about a specific session."""
         return await _get_session_info(session_id, ctx)
 
     @mcp.tool
-    async def list_sessions(ctx: Context | None = None) -> dict[str, Any]:
+    async def list_sessions(ctx: Context | None = None) -> SessionListResult:
         """List all active sessions."""
         return await _list_sessions(ctx)
 
     @mcp.tool
-    async def close_session(session_id: str, ctx: Context | None = None) -> dict[str, Any]:
+    async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
         """Close and clean up a session."""
         return await _close_session(session_id, ctx)

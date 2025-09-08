@@ -7,11 +7,12 @@ This script tests the core functionality of the CSV MCP Server without requiring
 import asyncio
 import sys
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.databeak.models.csv_session import get_session_manager
 from src.databeak.tools.analytics import (
@@ -94,7 +95,15 @@ def print_info(msg: str):
     print(f"{Colors.CYAN}ℹ {msg}{Colors.ENDC}")  # noqa: RUF001
 
 
-def print_data(data: any, indent: int = 2):
+def get_attr(obj: Any, attr: str, default: Any | None = None):
+    """Get attribute from object, works with both dict and Pydantic models."""
+    if isinstance(obj, dict):
+        return obj.get(attr, default)
+    else:
+        return getattr(obj, attr, default)
+
+
+def print_data(data: Any, indent: int = 2):
     """Print data with indentation."""
     indent_str = " " * indent
     if isinstance(data, dict):
@@ -119,25 +128,27 @@ async def test_io_operations():
     # Load CSV from content
     result = await load_csv_from_content(content=TEST_CSV_CONTENT, delimiter=",")
 
-    if result["success"]:
-        session_id = result["session_id"]
+    if get_attr(result, "success"):
+        session_id = get_attr(result, "session_id")
         print_success(f"Loaded CSV with session ID: {session_id}")
-        print_info(f"Rows: {result['rows_affected']}, Columns: {len(result['columns_affected'])}")
-        print_info(f"Column names: {', '.join(result['columns_affected'])}")
+        print_info(
+            f"Rows: {get_attr(result, 'rows_affected')}, Columns: {len(get_attr(result, 'columns_affected', []))}"
+        )
+        print_info(f"Column names: {', '.join(get_attr(result, 'columns_affected', []))}")
     else:
         print_error("Failed to load CSV")
         return None
 
     # Get session info
     info = await get_session_info(session_id=session_id)
-    if info["success"]:
+    if get_attr(info, "success"):
         print_success("Retrieved session info")
-        print_data(info.get("data", info))
+        print_data(get_attr(info, "data", info))
 
     # List sessions
     sessions = await list_sessions()
-    if sessions["success"]:
-        print_success(f"Listed {len(sessions.get('sessions', []))} active session(s)")
+    if get_attr(sessions, "success"):
+        print_success(f"Listed {len(get_attr(sessions, 'sessions', []))} active session(s)")
 
     return session_id
 
@@ -161,8 +172,10 @@ async def test_transformations(test_session):
         ],
         mode="and",
     )
-    if result["success"]:
-        print_success(f"Filtered rows: {result['rows_before']} → {result['rows_after']}")
+    if get_attr(result, "success"):
+        print_success(
+            f"Filtered rows: {get_attr(result, 'rows_before')} → {get_attr(result, 'rows_after')}"
+        )
 
     # Sort data
     result = await sort_data(
@@ -172,13 +185,13 @@ async def test_transformations(test_session):
             {"column": "salary", "ascending": False},
         ],
     )
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Sorted data by department and salary")
 
     # Select columns
     result = await select_columns(session_id=session_id, columns=["name", "department", "salary"])
-    if result["success"]:
-        print_success(f"Selected columns: {', '.join(result['selected_columns'])}")
+    if get_attr(result, "success"):
+        print_success(f"Selected columns: {', '.join(get_attr(result, 'selected_columns', []))}")
 
     # Add calculated column
     result = await add_column(
@@ -187,13 +200,13 @@ async def test_transformations(test_session):
         value=None,
         formula="lambda row: 'High' if row['salary'] > 65000 else 'Medium' if row['salary'] > 55000 else 'Low' if pd.notna(row['salary']) else 'Unknown'",
     )
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Added column 'salary_level'")
 
     # Fill missing values
     result = await fill_missing_values(session_id=session_id, strategy="mean", columns=["salary"])
-    if result["success"]:
-        print_success(f"Filled {result['values_filled']} missing value(s)")
+    if get_attr(result, "success"):
+        print_success(f"Filled {get_attr(result, 'values_filled', 0)} missing value(s)")
 
 
 async def test_analytics(test_session):
@@ -204,20 +217,23 @@ async def test_analytics(test_session):
 
     # Get statistics
     result = await get_statistics(session_id=session_id, columns=["salary"])
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Got statistics for salary column")
-        print_data(result["statistics"])
+        print_data(get_attr(result, "statistics", {}))
 
     # Get correlation matrix
     result = await get_correlation_matrix(
         session_id=session_id, method="pearson", min_correlation=0.3
     )
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Got correlation matrix")
-        if result["significant_correlations"]:
+        sig_corrs = get_attr(result, "significant_correlations", [])
+        if sig_corrs:
             print_info("Significant correlations found:")
-            for corr in result["significant_correlations"]:
-                print(f"    {corr['column1']} ↔ {corr['column2']}: {corr['correlation']:.3f}")
+            for corr in sig_corrs:
+                print(
+                    f"    {get_attr(corr, 'column1', corr['column1'])} ↔ {get_attr(corr, 'column2', corr['column2'])}: {get_attr(corr, 'correlation', corr['correlation']):.3f}"
+                )
 
     # Group by and aggregate
     result = await group_by_aggregate(
@@ -225,34 +241,46 @@ async def test_analytics(test_session):
         group_by=["department"],
         aggregations={"salary": ["mean", "min", "max", "count"]},
     )
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Grouped by department with aggregations")
         print_info("Department salary statistics:")
         manager = get_session_manager()
         session = manager.get_session(session_id)
-        if session and session.df is not None:
-            print(session.df.head(10).to_string())
+        if session and hasattr(session, "data_session") and session.data_session.df is not None:
+            print(session.data_session.df.head(10).to_string())
 
     # Detect outliers
     result = await detect_outliers(
         session_id=session_id, columns=["salary"], method="iqr", threshold=1.5
     )
-    if result["success"]:
-        print_success(f"Detected {result['total_outliers']} outlier(s)")
-        if result["outliers"]:
+    if get_attr(result, "success"):
+        print_success(f"Detected {get_attr(result, 'total_outliers', 0)} outlier(s)")
+        outliers = get_attr(result, "outliers", {})
+        if outliers:
             print_info("Outlier details:")
-            for col, details in result["outliers"].items():
-                print(f"    {col}: {details['count']} outliers")
+            for col, details in outliers.items():
+                count = (
+                    details.get("count")
+                    if isinstance(details, dict)
+                    else get_attr(details, "count", 0)
+                )
+                print(f"    {col}: {count} outliers")
 
     # Profile data
     result = await profile_data(
         session_id=session_id, include_correlations=True, include_outliers=True
     )
-    if result["success"]:
+    if get_attr(result, "success"):
         print_success("Generated data profile")
+        profile = get_attr(result, "profile", {})
+        summary = (
+            profile.get("summary", {})
+            if isinstance(profile, dict)
+            else get_attr(profile, "summary", {})
+        )
         print_info(
-            f"Profile summary: {result['profile']['summary']['total_rows']} rows, "
-            f"{result['profile']['summary']['total_columns']} columns"
+            f"Profile summary: {summary.get('total_rows', 0)} rows, "
+            f"{summary.get('total_columns', 0)} columns"
         )
 
 
@@ -273,30 +301,35 @@ async def test_validation(test_session):
     }
 
     result = await validate_schema(session_id=session_id, schema=schema)
-    if result["success"]:
-        if result["valid"]:
+    if get_attr(result, "success"):
+        if get_attr(result, "valid"):
             print_success("Data validates against schema")
         else:
-            print_info(f"Schema validation found {len(result['errors'])} error(s)")
+            errors = get_attr(result, "errors", [])
+            print_info(f"Schema validation found {len(errors)} error(s)")
 
     # Check data quality
     result = await check_data_quality(session_id=session_id)
-    if result["success"]:
-        quality_score = result["quality_results"]["overall_score"]
+    if get_attr(result, "success"):
+        quality_results = get_attr(result, "quality_results", {})
+        quality_score = quality_results.get("overall_score", 0)
         print_success(f"Data quality score: {quality_score:.1f}%")
         print_info("Quality metrics:")
-        for metric, score in result["quality_results"]["metrics"].items():
+        metrics = quality_results.get("metrics", {})
+        for metric, score in metrics.items():
             status = "✓" if score == 100 else "⚠" if score >= 80 else "✗"
             print(f"    {status} {metric}: {score:.1f}%")
 
     # Find anomalies
     result = await find_anomalies(session_id=session_id, columns=["salary"])
-    if result["success"]:
-        total_anomalies = result["summary"]["total_anomalies"]
+    if get_attr(result, "success"):
+        summary = get_attr(result, "summary", {})
+        total_anomalies = summary.get("total_anomalies", 0)
         print_success(f"Found {total_anomalies} anomaly(ies)")
         if total_anomalies > 0:
             print_info("Anomaly types:")
-            for atype, count in result["summary"]["by_type"].items():
+            by_type = summary.get("by_type", {})
+            for atype, count in by_type.items():
                 print(f"    {atype}: {count}")
 
 
@@ -316,7 +349,7 @@ async def test_export(test_session):
     for fmt in formats:
         output_file = output_dir / f"test_export.{fmt if fmt != 'markdown' else 'md'}"
         result = await export_csv(session_id=session_id, file_path=str(output_file), format=fmt)
-        if result["success"]:
+        if get_attr(result, "success"):
             print_success(f"Exported to {fmt.upper()}: {output_file}")
         else:
             print_error(f"Failed to export to {fmt.upper()}")

@@ -2,10 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from fastmcp import Context, FastMCP
 
+from ..models.tool_responses import (  # noqa: TC001
+    ColumnStatisticsResult,
+    CorrelationResult,
+    DataSummaryResult,
+    FindCellsResult,
+    GroupAggregateResult,
+    InspectDataResult,
+    OutliersResult,
+    ProfileResult,
+    StatisticsResult,
+    ValueCountsResult,
+)
 from .analytics import detect_outliers as _detect_outliers
 from .analytics import get_column_statistics as _get_column_statistics
 from .analytics import get_correlation_matrix as _get_correlation_matrix
@@ -30,14 +42,14 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         columns: list[str] | None = None,
         include_percentiles: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> StatisticsResult:
         """Get statistical summary of numerical columns."""
         return await _get_statistics(session_id, columns, include_percentiles, ctx)
 
     @mcp.tool
     async def get_column_statistics(
         session_id: str, column: str, ctx: Context | None = None
-    ) -> dict[str, Any]:
+    ) -> ColumnStatisticsResult:
         """Get detailed statistics for a specific column."""
         return await _get_column_statistics(session_id, column, ctx)
 
@@ -48,7 +60,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         columns: list[str] | None = None,
         min_correlation: float | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> CorrelationResult:
         """Calculate correlation matrix for numeric columns."""
         return await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
 
@@ -58,7 +70,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         group_by: list[str],
         aggregations: dict[str, str | list[str]],
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> GroupAggregateResult:
         """Group data and apply aggregation functions."""
         return await _group_by_aggregate(session_id, group_by, aggregations, ctx)
 
@@ -71,7 +83,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         ascending: bool = False,
         top_n: int | None = None,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ValueCountsResult:
         """Get value counts for a column."""
         return await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
 
@@ -82,7 +94,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         method: str = "iqr",
         threshold: float = 1.5,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> OutliersResult:
         """Detect outliers in numeric columns."""
         return await _detect_outliers(session_id, columns, method, threshold, ctx)
 
@@ -92,7 +104,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         include_correlations: bool = True,
         include_outliers: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> ProfileResult:
         """Generate comprehensive data profile."""
         return await _profile_data(session_id, include_correlations, include_outliers, ctx)
 
@@ -104,7 +116,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         column: str | int,
         radius: int = 2,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> InspectDataResult:
         """Get data around a specific cell for context inspection.
 
         Args:
@@ -128,7 +140,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         column: str | None = None,
         exact_match: bool = True,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> FindCellsResult:
         """Find all cells containing a specific value.
 
         Args:
@@ -153,7 +165,7 @@ def register_analytics_tools(mcp: FastMCP) -> None:
         include_preview: bool = True,
         max_preview_rows: int = 10,
         ctx: Context | None = None,
-    ) -> dict[str, Any]:
+    ) -> DataSummaryResult:
         """Get comprehensive data summary optimized for AI understanding and workflow planning.
 
         This is the primary tool for AI assistants to understand CSV data structure, content patterns,
