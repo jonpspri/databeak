@@ -147,16 +147,18 @@ async def get_column_statistics(
         col_data = df[column]
         # Map pandas dtypes to Pydantic model literals using type-safe mapping
         col_dtype = str(col_data.dtype)
-        
+
         # Direct mapping for exact matches, with type-safe fallback for partial matches
-        dtype_mapping: dict[str, Literal["int64", "float64", "object", "bool", "datetime64", "category"]] = {
+        dtype_mapping: dict[
+            str, Literal["int64", "float64", "object", "bool", "datetime64", "category"]
+        ] = {
             "int64": "int64",
             "float64": "float64",
-            "bool": "bool", 
+            "bool": "bool",
             "object": "object",
             "category": "category",
         }
-        
+
         # Handle exact matches first
         if col_dtype in dtype_mapping:
             mapped_dtype = dtype_mapping[col_dtype]

@@ -222,11 +222,7 @@ async def sort_data(
             OperationType.SORT, {"columns": sort_columns, "ascending": ascending}
         )
 
-        return SortDataResult(
-            session_id=session_id,
-            sorted_by=sort_columns,
-            ascending=ascending
-        )
+        return SortDataResult(session_id=session_id, sorted_by=sort_columns, ascending=ascending)
 
     except Exception as e:
         logger.error(f"Error sorting data: {e!s}")
@@ -258,7 +254,7 @@ async def select_columns(
 
         # Track counts before modification
         columns_before = len(df.columns)
-        
+
         session.data_session.df = df[columns].copy()
         session.record_operation(
             OperationType.SELECT,
@@ -273,7 +269,7 @@ async def select_columns(
             session_id=session_id,
             selected_columns=columns,
             columns_before=columns_before,
-            columns_after=len(columns)
+            columns_after=len(columns),
         )
 
     except Exception as e:
@@ -308,9 +304,7 @@ async def rename_columns(
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
         return RenameColumnsResult(
-            session_id=session_id,
-            renamed=mapping,
-            columns=session.data_session.df.columns.tolist()
+            session_id=session_id, renamed=mapping, columns=session.data_session.df.columns.tolist()
         )
 
     except Exception as e:

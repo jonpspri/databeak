@@ -165,10 +165,10 @@ async def test_mcp_tool_discovery():
 **Complete CSV Analysis Pipeline:**
 
 1. Load CSV data via MCP protocol
-2. Perform transformations through tool calls
-3. Execute analytics operations
-4. Export results via resource endpoints
-5. Validate session state consistency
+1. Perform transformations through tool calls
+1. Execute analytics operations
+1. Export results via resource endpoints
+1. Validate session state consistency
 
 **Multi-Session Management:**
 
@@ -292,7 +292,7 @@ test-live-server:
 **Quality Targets:**
 
 - Zero test flakiness in CI environment
-- Fast feedback cycles (<3 minutes for full suite)
+- Fast feedback cycles (\<3 minutes for full suite)
 - Clear failure diagnostics and reporting
 - Automated regression detection
 

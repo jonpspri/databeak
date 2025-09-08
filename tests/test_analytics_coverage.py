@@ -82,15 +82,19 @@ class TestGetColumnStatistics:
         assert result.session_id == analytics_test_session
         assert result.column == "price"
         assert result.data_type == "float64"
-        
+
         # Verify statistics structure
         assert hasattr(result, "statistics")
         assert result.statistics.count > 0
         assert result.statistics.mean > 0
         assert result.statistics.std >= 0
         assert result.statistics.min <= result.statistics.max
-        assert result.statistics.percentile_25 <= result.statistics.percentile_50 <= result.statistics.percentile_75
-        
+        assert (
+            result.statistics.percentile_25
+            <= result.statistics.percentile_50
+            <= result.statistics.percentile_75
+        )
+
         # Verify non_null_count makes sense
         assert result.non_null_count > 0
         assert result.non_null_count == result.statistics.count
@@ -101,7 +105,7 @@ class TestGetColumnStatistics:
         assert result.success is True
         assert result.column == "quantity"
         assert result.data_type == "int64"
-        
+
         # Verify statistics are numeric and reasonable
         assert result.statistics.count > 0
         assert isinstance(result.statistics.mean, float)
@@ -114,7 +118,7 @@ class TestGetColumnStatistics:
         assert result.success is True
         assert result.column == "category"
         assert result.data_type == "object"
-        
+
         # For non-numeric columns, statistics should be placeholder values
         assert result.statistics.count > 0  # Should count non-null values
         assert result.statistics.mean == 0.0
@@ -127,12 +131,12 @@ class TestGetColumnStatistics:
         csv_content = "values\n10\n20\n\n30\n40\n"  # One null value
         result = await load_csv_from_content(csv_content)
         session_id = result.session_id
-        
+
         stats_result = await get_column_statistics(session_id, "values")
         assert stats_result.success is True
         assert stats_result.statistics.count == 4  # Should exclude null
         assert stats_result.non_null_count == 4
-        
+
         # Verify statistics are calculated correctly for non-null values
         assert stats_result.statistics.mean == 25.0  # (10+20+30+40)/4
         assert stats_result.statistics.min == 10.0
@@ -143,7 +147,7 @@ class TestGetColumnStatistics:
         csv_content = "single\n42"
         result = await load_csv_from_content(csv_content)
         session_id = result.session_id
-        
+
         stats_result = await get_column_statistics(session_id, "single")
         assert stats_result.success is True
         assert stats_result.statistics.count == 1
@@ -152,6 +156,7 @@ class TestGetColumnStatistics:
         assert stats_result.statistics.max == 42.0
         # Single value std is NaN in pandas, which is mathematically correct
         import math
+
         assert math.isnan(stats_result.statistics.std)
 
     async def test_get_column_statistics_empty_numeric_column(self):
@@ -159,7 +164,7 @@ class TestGetColumnStatistics:
         csv_content = "empty\n\n\n\n"  # All null values
         result = await load_csv_from_content(csv_content)
         session_id = result.session_id
-        
+
         stats_result = await get_column_statistics(session_id, "empty")
         assert stats_result.success is True
         assert stats_result.statistics.count == 0
@@ -171,7 +176,7 @@ class TestGetColumnStatistics:
         # Use 'rating' column which should have known values: [4.5, 4.2, 4.0, 3.8, 4.1, 4.7, 3.9]
         result = await get_column_statistics(analytics_test_session, "rating")
         assert result.success is True
-        
+
         # Verify basic statistical properties
         assert result.statistics.count == 7
         assert 3.8 <= result.statistics.min <= 4.0  # Should be around 3.8
@@ -184,12 +189,12 @@ class TestGetColumnStatistics:
         csv_content = "flag\nTrue\nFalse\nTrue\nFalse"
         result = await load_csv_from_content(csv_content)
         session_id = result.session_id
-        
+
         stats_result = await get_column_statistics(session_id, "flag")
         assert stats_result.success is True
         assert stats_result.column == "flag"
         assert stats_result.data_type == "bool"
-        
+
         # Boolean columns should get placeholder statistics (not numeric calculations)
         assert stats_result.statistics.count > 0  # Should count non-null values
         assert stats_result.statistics.mean == 0.0

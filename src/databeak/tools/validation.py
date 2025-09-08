@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
+from pydantic import BaseModel, Field, RootModel
 
 from ..models.csv_session import get_session_manager
 from ..models.data_models import OperationType
@@ -33,9 +34,110 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+class ColumnValidationRules(BaseModel):
+    """Validation rules for a single column."""
+    
+    type: str | None = Field(None, description="Expected data type: int, float, str, bool, datetime")
+    nullable: bool = Field(True, description="Whether null values are allowed")
+    min: int | float | None = Field(None, description="Minimum value for numeric columns")
+    max: int | float | None = Field(None, description="Maximum value for numeric columns")
+    pattern: str | None = Field(None, description="Regex pattern for string validation")
+    values: list[str] | None = Field(None, description="List of allowed values")
+    unique: bool = Field(False, description="Whether values must be unique")
+    min_length: int | None = Field(None, description="Minimum string length")
+    max_length: int | None = Field(None, description="Maximum string length")
+
+
+class ValidationSchema(RootModel[dict[str, ColumnValidationRules]]):
+    """Schema definition for data validation.
+    
+    Example:
+        {
+            "column_name": {
+                "type": "int",
+                "nullable": False,
+                "min": 0,
+                "max": 100,
+                "pattern": "^[A-Z]+$",
+                "values": ["A", "B", "C"],
+                "unique": True
+            }
+        }
+    """
+
+
+class QualityRule(BaseModel):
+    """Base class for quality rules."""
+    
+    type: str
+
+
+class CompletenessRule(QualityRule):
+    """Rule for checking data completeness."""
+    
+    type: Literal["completeness"] = "completeness"
+    threshold: float = Field(0.95, ge=0.0, le=1.0)
+    columns: list[str] | None = None
+
+
+class DuplicatesRule(QualityRule):
+    """Rule for checking duplicate rows."""
+    
+    type: Literal["duplicates"] = "duplicates"
+    threshold: float = Field(0.01, ge=0.0, le=1.0)
+    columns: list[str] | None = None
+
+
+class UniquenessRule(QualityRule):
+    """Rule for checking column uniqueness."""
+    
+    type: Literal["uniqueness"] = "uniqueness"
+    column: str
+    expected_unique: bool = True
+
+
+class DataTypesRule(QualityRule):
+    """Rule for checking data type consistency."""
+    
+    type: Literal["data_types"] = "data_types"
+
+
+class OutliersRule(QualityRule):
+    """Rule for checking outliers in numeric columns."""
+    
+    type: Literal["outliers"] = "outliers"
+    threshold: float = Field(0.05, ge=0.0, le=1.0)
+
+
+class ConsistencyRule(QualityRule):
+    """Rule for checking data consistency between columns."""
+    
+    type: Literal["consistency"] = "consistency"
+    columns: list[str] = Field(default_factory=list)
+
+
+# Union type for all quality rules
+QualityRuleType = CompletenessRule | DuplicatesRule | UniquenessRule | DataTypesRule | OutliersRule | ConsistencyRule
+
+
+def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missing"]]:
+    """Default methods for anomaly detection."""
+    return ["statistical", "pattern", "missing"]
+
+
+class AnomalyDetectionParams(BaseModel):
+    """Parameters for anomaly detection."""
+    
+    columns: list[str] | None = None
+    sensitivity: float = Field(0.95, ge=0.0, le=1.0)
+    methods: list[Literal["statistical", "pattern", "missing"]] = Field(
+        default_factory=_default_anomaly_methods
+    )
+
+
 async def validate_schema(
     session_id: str,
-    schema: dict[str, dict[str, str | int | float | bool | list[str] | None]],
+    schema: ValidationSchema,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition.
@@ -68,10 +170,20 @@ async def validate_schema(
 
         df = session.data_session.df
         validation_errors: dict[str, list[ValidationError]] = {}
-        
+
+        # Parse and validate schema structure using Pydantic
+        try:
+            if isinstance(schema, ValidationSchema):
+                parsed_schema = schema.root
+            else:
+                schema_model = ValidationSchema(schema)
+                parsed_schema = schema_model.root
+        except Exception as e:
+            raise ToolError(f"Invalid schema format: {e}") from e
+
         # Convert validation_summary to ValidationSummary
         validation_summary = ValidationSummary(
-            total_columns=len(schema),
+            total_columns=len(parsed_schema),
             valid_columns=0,
             invalid_columns=0,
             missing_columns=[],
@@ -79,14 +191,15 @@ async def validate_schema(
         )
 
         # Check for missing and extra columns
-        schema_columns = set(schema.keys())
+        schema_columns = set(parsed_schema.keys())
         df_columns = set(df.columns)
 
         validation_summary.missing_columns = list(schema_columns - df_columns)
         validation_summary.extra_columns = list(df_columns - schema_columns)
 
         # Validate each column in schema
-        for col_name, rules in schema.items():
+        for col_name, rules_model in parsed_schema.items():
+            rules = rules_model.model_dump(exclude_none=True)
             if col_name not in df.columns:
                 validation_errors[col_name] = [
                     ValidationError(
@@ -170,44 +283,45 @@ async def validate_schema(
                 col_data.dtype == object or pd.api.types.is_string_dtype(col_data)
             ):
                 pattern = rules["pattern"]
-                if isinstance(pattern, str):
-                    try:
-                        non_null = col_data.dropna()
-                        if len(non_null) > 0:
-                            matches = non_null.astype(str).str.match(pattern)
-                            violations = non_null[~matches]
-                            if len(violations) > 0:
-                                col_errors.append(
-                                    ValidationError(
-                                        error="pattern_violation",
-                                        message=f"{len(violations)} values don't match pattern '{pattern}'",
-                                        violation_count=len(violations),
-                                        sample_violations=[str(v) for v in violations.head(10).tolist()],
-                                    )
+                try:
+                    non_null = col_data.dropna()
+                    if len(non_null) > 0:
+                        matches = non_null.astype(str).str.match(pattern)
+                        violations = non_null[~matches]
+                        if len(violations) > 0:
+                            col_errors.append(
+                                ValidationError(
+                                    error="pattern_violation",
+                                    message=f"{len(violations)} values don't match pattern '{pattern}'",
+                                    violation_count=len(violations),
+                                    sample_violations=[
+                                        str(v) for v in violations.head(10).tolist()
+                                    ],
                                 )
-                    except Exception as e:
-                        col_errors.append(
-                            ValidationError(
-                                error="pattern_error",
-                                message=f"Invalid regex pattern: {e!s}",
                             )
+                except Exception as e:
+                    col_errors.append(
+                        ValidationError(
+                            error="pattern_error",
+                            message=f"Invalid regex pattern: {e!s}",
                         )
+                    )
 
             # Allowed values validation
             if "values" in rules:
                 values = rules["values"]
-                if isinstance(values, list):
-                    allowed = set(values)
-                    actual = set(col_data.dropna().unique())
-                    invalid = actual - allowed
-                    if invalid:
-                        col_errors.append(
-                            ValidationError(
-                                error="invalid_values",
-                                message=f"Found {len(invalid)} invalid values",
-                                invalid_values=[str(v) for v in list(invalid)[:50]],
-                            )
+                # Schema validation already ensures values is a list
+                allowed = set(values)
+                actual = set(col_data.dropna().unique())
+                invalid = actual - allowed
+                if invalid:
+                    col_errors.append(
+                        ValidationError(
+                            error="invalid_values",
+                            message=f"Found {len(invalid)} invalid values",
+                            invalid_values=[str(v) for v in list(invalid)[:50]],
                         )
+                    )
 
             # Uniqueness validation
             if rules.get("unique", False):
@@ -225,31 +339,31 @@ async def validate_schema(
             if col_data.dtype == object or pd.api.types.is_string_dtype(col_data):
                 if "min_length" in rules:
                     min_len = rules["min_length"]
-                    if isinstance(min_len, (int, float)):
-                        str_data = col_data.dropna().astype(str)
-                        short = str_data[str_data.str.len() < int(min_len)]
-                        if len(short) > 0:
-                            col_errors.append(
-                                ValidationError(
-                                    error="min_length_violation",
-                                    message=f"{len(short)} values shorter than {min_len} characters",
-                                    violation_count=len(short),
-                                )
+                    # Schema validation already ensures min_len is numeric
+                    str_data = col_data.dropna().astype(str)
+                    short = str_data[str_data.str.len() < int(min_len)]
+                    if len(short) > 0:
+                        col_errors.append(
+                            ValidationError(
+                                error="min_length_violation",
+                                message=f"{len(short)} values shorter than {min_len} characters",
+                                violation_count=len(short),
                             )
+                        )
 
                 if "max_length" in rules:
                     max_len = rules["max_length"]
-                    if isinstance(max_len, (int, float)):
-                        str_data = col_data.dropna().astype(str)
-                        long = str_data[str_data.str.len() > int(max_len)]
-                        if len(long) > 0:
-                            col_errors.append(
-                                ValidationError(
-                                    error="max_length_violation",
-                                    message=f"{len(long)} values longer than {max_len} characters",
-                                    violation_count=len(long),
-                                )
+                    # Schema validation already ensures max_len is numeric
+                    str_data = col_data.dropna().astype(str)
+                    long = str_data[str_data.str.len() > int(max_len)]
+                    if len(long) > 0:
+                        col_errors.append(
+                            ValidationError(
+                                error="max_length_violation",
+                                message=f"{len(long)} values longer than {max_len} characters",
+                                violation_count=len(long),
                             )
+                        )
 
             if col_errors:
                 validation_errors[col_name] = col_errors
@@ -272,7 +386,7 @@ async def validate_schema(
         all_errors = []
         for error_list in validation_errors.values():
             all_errors.extend(error_list)
-        
+
         return ValidateSchemaResult(
             session_id=session_id,
             valid=is_valid,
@@ -283,12 +397,12 @@ async def validate_schema(
 
     except Exception as e:
         logger.error(f"Error validating schema: {e!s}")
-        raise ToolError(f"Error validating schema: {e!s}")
+        raise ToolError(f"Error validating schema: {e!s}") from e
 
 
 async def check_data_quality(
     session_id: str,
-    rules: list[dict[str, str | int | float | bool | list[str] | None]] | None = None,
+    rules: list[QualityRuleType] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules.
@@ -321,27 +435,21 @@ async def check_data_quality(
         # Default rules if none provided
         if not rules:
             rules = [
-                {"type": "completeness", "threshold": 0.95},
-                {"type": "duplicates", "threshold": 0.01},
-                {"type": "data_types"},
-                {"type": "outliers", "threshold": 0.05},
-                {"type": "consistency"},
+                CompletenessRule(threshold=0.95),
+                DuplicatesRule(threshold=0.01),
+                DataTypesRule(),
+                OutliersRule(threshold=0.05),
+                ConsistencyRule(),
             ]
 
         total_score: float = 0
         score_count = 0
 
         for rule in rules:
-            rule_type = rule.get("type")
-
-            if rule_type == "completeness":
+            if isinstance(rule, CompletenessRule):
                 # Check data completeness
-                threshold = rule.get("threshold", 0.95)
-                if not isinstance(threshold, (int, float)):
-                    threshold = 0.95
-                columns = rule.get("columns", df.columns.tolist())
-                if not isinstance(columns, list):
-                    columns = df.columns.tolist()
+                threshold = rule.threshold
+                columns = rule.columns if rule.columns is not None else df.columns.tolist()
 
                 for col in columns:
                     if col in df.columns:
@@ -363,7 +471,7 @@ async def check_data_quality(
                             )
                             rule_issues.append(issue)
                             quality_issues.append(issue)
-                        
+
                         # Add rule result
                         rule_results.append(
                             QualityRuleResult(
@@ -378,14 +486,10 @@ async def check_data_quality(
                         total_score += score
                         score_count += 1
 
-            elif rule_type == "duplicates":
+            elif isinstance(rule, DuplicatesRule):
                 # Check for duplicate rows
-                threshold = rule.get("threshold", 0.01)
-                if not isinstance(threshold, (int, float)):
-                    threshold = 0.01
-                subset = rule.get("columns")
-                if subset is not None and not isinstance(subset, list):
-                    subset = None
+                threshold = rule.threshold
+                subset = rule.columns
 
                 duplicates = df.duplicated(subset=subset)
                 duplicate_ratio = duplicates.sum() / len(df)
@@ -408,7 +512,7 @@ async def check_data_quality(
                     recommendations.append(
                         "Consider removing duplicate rows using the remove_duplicates tool"
                     )
-                
+
                 # Add rule result
                 rule_results.append(
                     QualityRuleResult(
@@ -422,12 +526,12 @@ async def check_data_quality(
                 total_score += score
                 score_count += 1
 
-            elif rule_type == "uniqueness":
+            elif isinstance(rule, UniquenessRule):
                 # Check column uniqueness
-                column = rule.get("column")
-                if isinstance(column, str) and column in df.columns:
+                column = rule.column
+                if column in df.columns:
                     unique_ratio = df[column].nunique() / len(df)
-                    expected_unique = rule.get("expected_unique", True)
+                    expected_unique = rule.expected_unique
 
                     if expected_unique:
                         passed = unique_ratio >= 0.99
@@ -449,7 +553,7 @@ async def check_data_quality(
                         )
                         rule_issues.append(issue)
                         quality_issues.append(issue)
-                    
+
                     # Add rule result
                     rule_results.append(
                         QualityRuleResult(
@@ -464,7 +568,7 @@ async def check_data_quality(
                     total_score += score
                     score_count += 1
 
-            elif rule_type == "data_types":
+            elif isinstance(rule, DataTypesRule):
                 # Check data type consistency
                 for col in df.columns:
                     col_data = df[col].dropna()
@@ -488,7 +592,7 @@ async def check_data_quality(
                                 f"Column '{col}' appears to contain numeric data stored as strings. "
                                 f"Consider converting to numeric type using change_column_type tool"
                             )
-                        
+
                         # Add rule result
                         rule_results.append(
                             QualityRuleResult(
@@ -503,11 +607,9 @@ async def check_data_quality(
                         total_score += score
                         score_count += 1
 
-            elif rule_type == "outliers":
+            elif isinstance(rule, OutliersRule):
                 # Check for outliers in numeric columns
-                threshold = rule.get("threshold", 0.05)
-                if not isinstance(threshold, (int, float)):
-                    threshold = 0.05
+                threshold = rule.threshold
                 numeric_cols = df.select_dtypes(include=[np.number]).columns
 
                 for col in numeric_cols:
@@ -537,7 +639,7 @@ async def check_data_quality(
                         )
                         rule_issues.append(issue)
                         quality_issues.append(issue)
-                    
+
                     # Add rule result
                     rule_results.append(
                         QualityRuleResult(
@@ -552,18 +654,16 @@ async def check_data_quality(
                     total_score += score
                     score_count += 1
 
-            elif rule_type == "consistency":
+            elif isinstance(rule, ConsistencyRule):
                 # Check data consistency
-                columns = rule.get("columns", [])
-                if not isinstance(columns, list):
-                    columns = []
+                columns = rule.columns
 
                 # Date consistency check
                 date_cols = df.select_dtypes(include=["datetime64"]).columns
                 if len(date_cols) >= 2 and not columns:
                     columns = date_cols.tolist()
 
-                if isinstance(columns, list) and len(columns) >= 2:
+                if len(columns) >= 2:
                     col1, col2 = str(columns[0]), str(columns[1])
                     if (
                         col1 in df.columns
@@ -589,7 +689,7 @@ async def check_data_quality(
                             )
                             rule_issues.append(issue)
                             quality_issues.append(issue)
-                        
+
                         # Add rule result
                         rule_results.append(
                             QualityRuleResult(
@@ -605,17 +705,17 @@ async def check_data_quality(
 
         # Calculate overall score
         overall_score = round(total_score / score_count, 2) if score_count > 0 else 100.0
-        
+
         # Add general recommendations
         if not recommendations and overall_score < 85:
             recommendations.append(
                 "Consider running profile_data to get a comprehensive overview of data issues"
             )
-        
+
         # Count passed/failed rules
         passed_rules = sum(1 for rule in rule_results if rule.passed)
         failed_rules = len(rule_results) - passed_rules
-        
+
         # Create QualityResults
         quality_results = QualityResults(
             overall_score=overall_score,
@@ -643,14 +743,14 @@ async def check_data_quality(
 
     except Exception as e:
         logger.error(f"Error checking data quality: {e!s}")
-        raise ToolError(f"Error checking data quality: {e!s}")
+        raise ToolError(f"Error checking data quality: {e!s}") from e
 
 
 async def find_anomalies(
     session_id: str,
     columns: list[str] | None = None,
     sensitivity: float = 0.95,
-    methods: list[str] | None = None,
+    methods: list[Literal["statistical", "pattern", "missing"]] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods.
@@ -723,7 +823,9 @@ async def find_anomalies(
                         statistical_anomaly = StatisticalAnomaly(
                             anomaly_count=len(combined_anomalies),
                             anomaly_indices=combined_anomalies[:100],
-                            anomaly_values=[float(v) for v in df.loc[combined_anomalies[:10], col].tolist()],
+                            anomaly_values=[
+                                float(v) for v in df.loc[combined_anomalies[:10], col].tolist()
+                            ],
                             mean=float(col_data.mean()),
                             std=float(col_data.std()),
                             lower_bound=float(lower),
@@ -737,7 +839,7 @@ async def find_anomalies(
 
             if statistical_anomalies:
                 # Type cast for mypy
-                by_method["statistical"] = {k: v for k, v in statistical_anomalies.items()}
+                by_method["statistical"] = dict(statistical_anomalies.items())
 
         # Pattern anomalies
         if "pattern" in methods:
@@ -787,7 +889,9 @@ async def find_anomalies(
                                 pattern_anomaly = PatternAnomaly(
                                     anomaly_count=len(all_pattern_anomalies),
                                     anomaly_indices=all_pattern_anomalies[:100],
-                                    sample_values=[str(v) for v in rare_values.head(10).index.tolist()],
+                                    sample_values=[
+                                        str(v) for v in rare_values.head(10).index.tolist()
+                                    ],
                                     expected_patterns=[common_pattern] if common_pattern else [],
                                 )
                                 pattern_anomalies[col] = pattern_anomaly
@@ -799,7 +903,7 @@ async def find_anomalies(
 
             if pattern_anomalies:
                 # Type cast for mypy
-                by_method["pattern"] = {k: v for k, v in pattern_anomalies.items()}
+                by_method["pattern"] = dict(pattern_anomalies.items())
 
         # Missing value anomalies
         if "missing" in methods:
@@ -853,10 +957,10 @@ async def find_anomalies(
 
             if missing_anomalies:
                 # Type cast for mypy
-                by_method["missing"] = {k: v for k, v in missing_anomalies.items()}
+                by_method["missing"] = dict(missing_anomalies.items())
 
         # Organize anomalies by column
-        for method_name, method_anomalies in by_method.items():
+        for _method_name, method_anomalies in by_method.items():
             for col, col_anomalies in method_anomalies.items():
                 if col not in by_column:
                     by_column[col] = col_anomalies
@@ -866,13 +970,13 @@ async def find_anomalies(
         # Create summary
         affected_rows_list = list(affected_rows)[:1000]  # Limit for performance
         unique_affected_columns = list(set(affected_columns))
-        
+
         summary = AnomalySummary(
             total_anomalies=total_anomalies,
             affected_rows=len(affected_rows_list),
             affected_columns=unique_affected_columns,
         )
-        
+
         # Create final results
         anomaly_results = AnomalyResults(
             summary=summary,
@@ -893,10 +997,10 @@ async def find_anomalies(
             session_id=session_id,
             anomalies=anomaly_results,
             columns_analyzed=target_cols,
-            methods_used=methods,
+            methods_used=[str(m) for m in methods],  # Convert to list[str] for compatibility
             sensitivity=sensitivity,
         )
 
     except Exception as e:
         logger.error(f"Error finding anomalies: {e!s}")
-        raise ToolError(f"Error finding anomalies: {e!s}")
+        raise ToolError(f"Error finding anomalies: {e!s}") from e

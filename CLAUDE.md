@@ -10,16 +10,19 @@ Python tooling.
 
 ### Git Workflow Requirements
 
-**IMPORTANT**: All development must follow a branch-based workflow. 
+**IMPORTANT**: All development must follow a branch-based workflow.
 
-**Use the `git-repository-manager` agent** for all Git and GitHub repository management tasks including:
+**Use the `git-repository-manager` agent** for all Git and GitHub repository
+management tasks including:
+
 - Synchronizing main branch after PR merges
-- Creating and managing feature branches  
+- Creating and managing feature branches
 - Cleaning up merged branches (local and remote)
 - Validating Git workflow compliance
 - Repository maintenance and hygiene
 
-See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub repository management guidance.
+See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub
+repository management guidance.
 
 ### Package Management
 
@@ -30,9 +33,12 @@ See `.claude/agents/git-repository-manager.md` for comprehensive Git and GitHub 
 
 ### Code Quality Standards
 
-**Use the `quality-gate-runner` agent** for comprehensive quality pipeline execution including linting, formatting, type checking, testing, and coverage analysis.
+**Use the `quality-gate-runner` agent** for comprehensive quality pipeline
+execution including linting, formatting, type checking, testing, and coverage
+analysis.
 
-See `.claude/agents/quality-gate-runner.md` for detailed quality assurance guidance.
+See `.claude/agents/quality-gate-runner.md` for detailed quality assurance
+guidance.
 
 ### Markdown Standards
 
@@ -48,9 +54,11 @@ See `.claude/agents/quality-gate-runner.md` for detailed quality assurance guida
 
 ### Testing Approach
 
-**Use the `test-coverage-analyzer` agent** for systematic test coverage analysis and gap identification to achieve the 80%+ coverage requirement.
+**Use the `test-coverage-analyzer` agent** for systematic test coverage analysis
+and gap identification to achieve the 80%+ coverage requirement.
 
-See `.claude/agents/test-coverage-analyzer.md` for comprehensive testing guidance.
+See `.claude/agents/test-coverage-analyzer.md` for comprehensive testing
+guidance.
 
 ### Version Management
 
@@ -60,15 +68,21 @@ See `.claude/agents/test-coverage-analyzer.md` for comprehensive testing guidanc
 
 ### MCP Tool Development
 
-**Use the `mcp-tool-generator` agent** for creating new MCP tools following established DataBeak patterns with proper error handling, type annotations, docstrings, and test files.
+**Use the `mcp-tool-generator` agent** for creating new MCP tools following
+established DataBeak patterns with proper error handling, type annotations,
+docstrings, and test files.
 
-See `.claude/agents/mcp-tool-generator.md` for comprehensive MCP tool development guidance.
+See `.claude/agents/mcp-tool-generator.md` for comprehensive MCP tool
+development guidance.
 
 ### Type Checking Guidelines
 
-**Use the `python-type-optimizer` agent** for systematic type safety improvements including reducing `Any` usage and implementing specific TypedDict definitions.
+**Use the `python-type-optimizer` agent** for systematic type safety
+improvements including reducing `Any` usage and implementing specific TypedDict
+definitions.
 
-See `.claude/agents/python-type-optimizer.md` for comprehensive type annotation guidance.
+See `.claude/agents/python-type-optimizer.md` for comprehensive type annotation
+guidance.
 
 ### Environment Configuration
 
