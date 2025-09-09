@@ -50,7 +50,7 @@ class TestBackwardCompatibilityThroughModules:
     def test_core_functions_available_in_modules(self) -> None:
         """Test that core functions are available in their respective modules."""
         # Test core I/O functions
-        from src.databeak.tools.io_operations import export_csv, load_csv
+        from src.databeak.servers.io_server import export_csv, load_csv
 
         assert callable(load_csv)
         assert callable(export_csv)

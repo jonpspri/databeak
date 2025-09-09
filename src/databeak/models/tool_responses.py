@@ -147,59 +147,6 @@ class ServerInfoResult(BaseToolResponse):
 
 
 # =============================================================================
-# IO TOOL RESPONSES
-# =============================================================================
-
-
-class LoadResult(BaseToolResponse):
-    """Response model for data loading operations."""
-
-    session_id: str
-    rows_affected: int
-    columns_affected: list[str]
-    data: DataPreview | None = None
-    memory_usage_mb: float | None = None
-
-
-class ExportResult(BaseToolResponse):
-    """Response model for data export operations."""
-
-    session_id: str
-    file_path: str
-    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"]
-    rows_exported: int
-    file_size_mb: float | None = None
-
-
-class SessionInfoResult(BaseToolResponse):
-    """Response model for session information."""
-
-    session_id: str
-    created_at: str
-    last_modified: str
-    data_loaded: bool
-    row_count: int | None = None
-    column_count: int | None = None
-    auto_save_enabled: bool
-
-
-class SessionListResult(BaseToolResponse):
-    """Response model for listing all sessions."""
-
-    sessions: list[SessionInfo]
-    total_sessions: int
-    active_sessions: int
-
-
-class CloseSessionResult(BaseToolResponse):
-    """Response model for session closure operations."""
-
-    session_id: str
-    message: str
-    data_preserved: bool
-
-
-# =============================================================================
 # ANALYTICS TOOL RESPONSES
 # =============================================================================
 
@@ -443,8 +390,6 @@ class RenameColumnsResult(BaseToolResponse):
     columns: list[str]
 
 
-
-
 # =============================================================================
 # TYPE UNIONS FOR FLEXIBILITY
 # =============================================================================
@@ -453,11 +398,6 @@ class RenameColumnsResult(BaseToolResponse):
 ToolResponse = (
     HealthResult
     | ServerInfoResult
-    | LoadResult
-    | ExportResult
-    | SessionInfoResult
-    | SessionListResult
-    | CloseSessionResult
     | StatisticsResult
     | CorrelationResult
     | ValueCountsResult

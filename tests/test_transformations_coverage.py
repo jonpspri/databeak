@@ -3,7 +3,7 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.tools.transformations import (
     add_column,
     change_column_type,

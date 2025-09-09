@@ -4,14 +4,23 @@ Tests the core functionality across multiple tool domains using proper TestCase
 structure with isolated sessions for each test.
 """
 
-import asyncio
 import unittest
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
-from src.databeak.models.csv_session import get_session_manager
+from src.databeak.servers.io_server import (
+    close_session,
+    export_csv,
+    get_session_info,
+    list_sessions,
+    load_csv_from_content,
+)
+from src.databeak.servers.validation_server import (
+    ValidationSchema,
+    check_data_quality,
+    find_anomalies,
+    validate_schema,
+)
 from src.databeak.tools.analytics import (
     detect_outliers,
     get_correlation_matrix,
@@ -19,21 +28,12 @@ from src.databeak.tools.analytics import (
     group_by_aggregate,
     profile_data,
 )
-from src.databeak.tools.io_operations import (
-    export_csv,
-    get_session_info,
-    list_sessions,
-    load_csv_from_content,
-    close_session,
-)
 from src.databeak.tools.transformations import (
     add_column,
     fill_missing_values,
     filter_rows,
-    select_columns,
     sort_data,
 )
-from src.databeak.validation_server import check_data_quality, find_anomalies, validate_schema, ValidationSchema
 
 # Test data
 TEST_CSV_CONTENT = """name,age,salary,department,hire_date
@@ -70,21 +70,21 @@ def get_attr(obj: Any, attr: str, default: Any | None = None):
 
 class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
     """Base test case for integration tests with session management.
-    
+
     Provides a fresh session with test data for each test method.
     Handles session creation in setUp and cleanup in tearDown.
     """
-    
+
     def setUp(self):
         """Create a fresh session with test data for each test."""
         self.session_id = None
-        
+
     async def asyncSetUp(self):
         """Async setup - create session with test data."""
         result = await load_csv_from_content(content=TEST_CSV_CONTENT, delimiter=",")
         self.session_id = get_attr(result, "session_id")
         self.assertIsNotNone(self.session_id, "Failed to create test session")
-        
+
     async def asyncTearDown(self):
         """Async cleanup - close the test session."""
         if self.session_id:
@@ -124,7 +124,7 @@ class TestTransformations(IntegrationTestCase):
                 {"column": "salary", "operator": ">", "value": 60000},
                 {
                     "column": "department",
-                    "operator": "in", 
+                    "operator": "in",
                     "value": ["Engineering", "Management"],
                 },
             ],

@@ -151,15 +151,14 @@ class TestModularToolRegistration:
         from src.databeak.tools.mcp_analytics_tools import register_analytics_tools
         from src.databeak.tools.mcp_data_tools import register_data_tools
         from src.databeak.tools.mcp_history_tools import register_history_tools
-        from src.databeak.tools.mcp_io_tools import register_io_tools
+        from src.databeak.servers.io_server import io_server
         from src.databeak.tools.mcp_row_tools import register_row_tools
         from src.databeak.tools.mcp_system_tools import register_system_tools
-# Validation tools moved to validation_server.py for server composition
+        # Validation tools moved to validation_server.py for server composition
 
         # Verify all registration functions are callable
         registration_funcs = [
             register_system_tools,
-            register_io_tools,
             register_data_tools,
             register_row_tools,
             register_analytics_tools,
@@ -168,6 +167,9 @@ class TestModularToolRegistration:
 
         for reg_func in registration_funcs:
             assert callable(reg_func)
+            
+        # Verify server instances are accessible
+        assert io_server is not None
 
     def test_tool_modules_import_successfully(self) -> None:
         """Test that all tool modules import without errors."""
@@ -215,7 +217,7 @@ class TestServerIntegration:
     def test_core_functionality_preserved(self) -> None:
         """Test that core functionality is preserved through modular architecture."""
         # Test that core functions are accessible through their modules
-        from src.databeak.tools.io_operations import load_csv
+        from src.databeak.servers.io_server import load_csv
         from src.databeak.tools.transformations import filter_rows, insert_row
 
         # These should be the actual implementation functions

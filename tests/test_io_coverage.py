@@ -1,11 +1,11 @@
-"""Additional tests for I/O operations to improve coverage."""
+"""Additional tests for I/O server operations to improve coverage."""
 
 import tempfile
 from pathlib import Path
 
 import pytest
 
-from src.databeak.tools.io_operations import (
+from src.databeak.servers.io_server import (
     close_session,
     export_csv,
     get_session_info,
@@ -17,14 +17,16 @@ from src.databeak.tools.io_operations import (
 
 
 @pytest.mark.asyncio
-class TestIOErrorHandling:
-    """Test I/O operations error handling."""
+class TestIOServerErrorHandling:
+    """Test I/O server operations error handling."""
 
     async def test_load_csv_invalid_file_path(self):
         """Test loading CSV with invalid file path."""
-        result = await load_csv("/nonexistent/path/to/file.csv")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await load_csv("/nonexistent/path/to/file.csv")
+        assert "Invalid file path" in str(exc_info.value) or "Failed to load CSV" in str(
+            exc_info.value
+        )
 
     async def test_load_csv_permission_denied(self):
         """Test loading CSV with permission issues."""
@@ -37,9 +39,12 @@ class TestIOErrorHandling:
             # Make file unreadable
             Path(temp_path).chmod(0o000)
 
-            result = await load_csv(temp_path)
-            assert result.success is False
-            assert hasattr(result, "error")
+            with pytest.raises(Exception) as exc_info:
+                await load_csv(temp_path)
+            assert (
+                "permission" in str(exc_info.value).lower()
+                or "failed to load" in str(exc_info.value).lower()
+            )
         finally:
             # Clean up
             Path(temp_path).chmod(0o644)
@@ -53,39 +58,43 @@ class TestIOErrorHandling:
             temp_path = f.name
 
         try:
-            result = await load_csv(temp_path)
-            # Should still succeed but might have issues
-            # Pandas is quite forgiving with malformed CSV
-            assert hasattr(result, "session_id") or hasattr(result, "error")
+            # Pandas may raise an error for malformed CSV with inconsistent columns
+            with pytest.raises(Exception) as exc_info:
+                await load_csv(temp_path)
+            assert (
+                "Error tokenizing data" in str(exc_info.value)
+                or "Expected" in str(exc_info.value)
+                or "Failed to load CSV" in str(exc_info.value)
+            )
         finally:
             Path(temp_path).unlink()
 
     async def test_load_csv_from_url_invalid_url(self):
         """Test loading from invalid URL."""
-        result = await load_csv_from_url("not-a-valid-url")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await load_csv_from_url("not-a-valid-url")
+        assert "Invalid URL" in str(exc_info.value) or "Failed to load CSV" in str(exc_info.value)
 
     async def test_load_csv_from_url_network_error(self):
         """Test loading from URL with network issues."""
         # Use a URL that will definitely fail
-        result = await load_csv_from_url("https://nonexistent-domain-12345.com/data.csv")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await load_csv_from_url("https://nonexistent-domain-12345.com/data.csv")
+        assert "Failed to load CSV" in str(exc_info.value) or "error" in str(exc_info.value).lower()
 
     async def test_load_csv_from_content_empty(self):
         """Test loading empty CSV content."""
-        result = await load_csv_from_content("")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await load_csv_from_content("")
+        assert "empty" in str(exc_info.value).lower() or "cannot be empty" in str(exc_info.value)
 
     async def test_export_csv_invalid_session(self):
         """Test exporting with invalid session."""
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = str(Path(temp_dir) / "output.csv")
-            result = await export_csv("invalid-session", file_path)
-            assert result.success is False
-            assert hasattr(result, "error")
+            with pytest.raises(Exception) as exc_info:
+                await export_csv("invalid-session", file_path)
+            assert "Session not found" in str(exc_info.value) or "not found" in str(exc_info.value)
 
     async def test_export_csv_invalid_format(self):
         """Test exporting with invalid format."""
@@ -95,9 +104,12 @@ class TestIOErrorHandling:
 
         with tempfile.TemporaryDirectory() as temp_dir:
             file_path = str(Path(temp_dir) / "output.invalid")
-            result = await export_csv(session_id, file_path, format="invalid_format")
-            assert result.success is False
-            assert "format" in result.error
+            with pytest.raises(Exception) as exc_info:
+                await export_csv(session_id, file_path, format="invalid_format")
+            assert (
+                "format" in str(exc_info.value).lower()
+                or "unsupported" in str(exc_info.value).lower()
+            )
 
     async def test_export_csv_permission_denied(self):
         """Test exporting to protected directory."""
@@ -106,14 +118,18 @@ class TestIOErrorHandling:
         session_id = load_result.session_id
 
         # Try to export to a protected location
-        result = await export_csv(session_id, "/root/protected.csv")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await export_csv(session_id, "/root/protected.csv")
+        assert (
+            "Failed to export" in str(exc_info.value)
+            or "permission" in str(exc_info.value).lower()
+            or "denied" in str(exc_info.value).lower()
+        )
 
 
 @pytest.mark.asyncio
-class TestIOSessionManagement:
-    """Test I/O session management functions."""
+class TestIOServerSessionManagement:
+    """Test I/O server session management functions."""
 
     async def test_get_session_info_success(self):
         """Test getting session info successfully."""
@@ -122,16 +138,16 @@ class TestIOSessionManagement:
         session_id = result.session_id
 
         info_result = await get_session_info(session_id)
-        assert info_result.success is True
         assert info_result.session_id == session_id
         assert info_result.row_count == 2
         assert info_result.column_count == 3
+        assert info_result.data_loaded is True
 
     async def test_get_session_info_invalid_session(self):
         """Test getting info for invalid session."""
-        result = await get_session_info("invalid-session")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await get_session_info("invalid-session")
+        assert "Session not found" in str(exc_info.value) or "not found" in str(exc_info.value)
 
     async def test_list_sessions_structure(self):
         """Test list sessions returns proper structure."""
@@ -140,9 +156,9 @@ class TestIOSessionManagement:
         await load_csv_from_content("product,price\nLaptop,999")
 
         sessions_result = await list_sessions()
-        assert sessions_result.success is True
         assert hasattr(sessions_result, "sessions")
         assert len(sessions_result.sessions) >= 2
+        assert sessions_result.total_sessions >= 2
 
     async def test_close_session_success(self):
         """Test closing session successfully."""
@@ -152,19 +168,19 @@ class TestIOSessionManagement:
 
         # Close session
         close_result = await close_session(session_id)
-        assert close_result.success is True
         assert close_result.session_id == session_id
+        assert "closed successfully" in close_result.message
 
     async def test_close_session_invalid(self):
         """Test closing invalid session."""
-        result = await close_session("invalid-session")
-        assert result.success is False
-        assert hasattr(result, "error")
+        with pytest.raises(Exception) as exc_info:
+            await close_session("invalid-session")
+        assert "Session not found" in str(exc_info.value) or "not found" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
-class TestIOEdgeCases:
-    """Test I/O edge cases and boundary conditions."""
+class TestIOServerEdgeCases:
+    """Test I/O server edge cases and boundary conditions."""
 
     async def test_load_csv_with_custom_parameters(self):
         """Test CSV loading with custom parameters."""
@@ -172,16 +188,18 @@ class TestIOEdgeCases:
         csv_content = "name|age|city\nJohn|30|NYC\nJane|25|LA"
 
         result = await load_csv_from_content(csv_content, delimiter="|")
-        assert result.success is True
+        assert result.session_id is not None
         assert result.data.row_count == 2
         assert result.data.column_count == 3
+        assert result.rows_affected == 2
 
     async def test_load_csv_with_null_values(self):
         """Test CSV loading with various null representations."""
         csv_content = "name,age,city\nJohn,,NYC\n,25,\nJane,30,LA"
 
         result = await load_csv_from_content(csv_content)
-        assert result.success is True
+        assert result.session_id is not None
+        assert result.rows_affected == 3  # Should load 3 rows
         # Should handle empty cells as null values
 
     async def test_export_all_formats(self):
@@ -195,14 +213,18 @@ class TestIOEdgeCases:
         with tempfile.TemporaryDirectory() as temp_dir:
             for fmt in formats_to_test:
                 file_path = str(Path(temp_dir) / f"output.{fmt}")
-                export_result = await export_csv(session_id, file_path, format=fmt)
-
                 # Most should succeed, some might fail due to missing dependencies
-                if export_result.success:
+                try:
+                    export_result = await export_csv(session_id, file_path, format=fmt)
                     assert Path(file_path).exists()
-                else:
-                    # If it fails, it should have an error message
-                    assert hasattr(export_result, "error")
+                    assert export_result.rows_exported > 0
+                except Exception as e:
+                    # If it fails, it should be due to missing dependencies or unsupported format
+                    assert (
+                        "package" in str(e).lower()
+                        or "unsupported" in str(e).lower()
+                        or "failed to export" in str(e).lower()
+                    )
 
     @pytest.mark.skip(reason="Progress reporting not implemented yet")
     async def test_load_csv_progress_reporting(self):
@@ -233,8 +255,8 @@ class TestIOEdgeCases:
 
 
 @pytest.mark.asyncio
-class TestIOFileHandling:
-    """Test file handling edge cases."""
+class TestIOServerFileHandling:
+    """Test I/O server file handling edge cases."""
 
     async def test_load_csv_large_file_simulation(self):
         """Test loading a simulated large CSV file."""
@@ -247,7 +269,7 @@ class TestIOFileHandling:
         csv_content = "\n".join(rows)
 
         result = await load_csv_from_content(csv_content)
-        assert result.success is True
+        assert result.session_id is not None
         assert result.data.row_count == 1000
         assert result.data.column_count == 5
         assert result.rows_affected == 1000
@@ -267,7 +289,8 @@ class TestIOFileHandling:
 
             # Export should overwrite
             export_result = await export_csv(session_id, file_path)
-            assert export_result.success is True
+            assert export_result.session_id == session_id
+            assert export_result.rows_exported > 0
 
             # File should contain new content
             new_content = Path(file_path).read_text()

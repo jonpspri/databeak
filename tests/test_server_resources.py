@@ -6,7 +6,7 @@ import pytest
 
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp
-from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.servers.io_server import load_csv_from_content
 
 
 class TestServerInstructions:

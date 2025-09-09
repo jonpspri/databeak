@@ -212,3 +212,35 @@ def sanitize_filename(filename: str) -> str:
         name = name[:100]
 
     return name + ext
+
+
+def convert_pandas_na_to_none(value: Any) -> Any:
+    """Convert pandas NA values to Python None for Pydantic serialization.
+    
+    This function handles the conversion of pandas nullable data types' NA values
+    to Python None, which is compatible with Pydantic models.
+    
+    Args:
+        value: Any value that might be a pandas NA
+        
+    Returns:
+        The original value if not pandas NA, otherwise None
+    """
+    import pandas as pd
+    
+    # Handle pandas NA values (from nullable dtypes)
+    if pd.isna(value):
+        return None
+    return value
+
+
+def convert_pandas_na_list(values: list[Any]) -> list[Any]:
+    """Convert a list of values that may contain pandas NA values to Python None.
+    
+    Args:
+        values: List of values that may contain pandas NA
+        
+    Returns:
+        List with pandas NA values converted to None
+    """
+    return [convert_pandas_na_to_none(val) for val in values]

@@ -105,21 +105,24 @@ def register_data_tools(mcp: FastMCP) -> None:
         session_id: str, columns: list[Any], ctx: Context | None = None
     ) -> dict[str, Any]:
         """Sort data by columns."""
-        return await _sort_data(session_id, columns, ctx)
+        result = await _sort_data(session_id, columns, ctx)
+        return result.model_dump()
 
     @mcp.tool
     async def select_columns(
         session_id: str, columns: list[str], ctx: Context | None = None
     ) -> dict[str, Any]:
         """Select specific columns from the dataframe."""
-        return await _select_columns(session_id, columns, ctx)
+        result = await _select_columns(session_id, columns, ctx)
+        return result.model_dump()
 
     @mcp.tool
     async def rename_columns(
         session_id: str, mapping: dict[str, str], ctx: Context | None = None
     ) -> dict[str, Any]:
         """Rename columns in the dataframe."""
-        return await _rename_columns(session_id, mapping, ctx)
+        result = await _rename_columns(session_id, mapping, ctx)
+        return result.model_dump()
 
     @mcp.tool
     async def add_column(

@@ -28,10 +28,6 @@ from src.databeak.models.tool_responses import (
     ExportResult,
     FilterOperationResult,
     GroupStatistics,
-    # Data operation results
-    RenameColumnsResult,
-    SelectColumnsResult,
-    SortDataResult,
     # System tool responses
     HealthResult,
     InsertRowResult,
@@ -40,10 +36,14 @@ from src.databeak.models.tool_responses import (
     OutlierInfo,
     OutliersResult,
     ProfileInfo,
+    # Data operation results
+    RenameColumnsResult,
+    SelectColumnsResult,
     ServerInfoResult,
     SessionInfo,
     SessionInfoResult,
     SessionListResult,
+    SortDataResult,
     StatisticsResult,
     StatisticsSummary,
     UpdateRowResult,
@@ -1195,7 +1195,7 @@ class TestSortDataResult:
     def test_multiple_column_sort(self):
         """Test sorting by multiple columns."""
         result = SortDataResult(
-            session_id="multi-sort", 
+            session_id="multi-sort",
             sorted_by=["dept", "salary", "age"],
             ascending=[True, False, True],
         )

@@ -74,7 +74,7 @@ class TestDataOperations:
 
     async def test_load_csv_from_content(self):
         """Test loading CSV from string content."""
-        from src.databeak.tools.io_operations import load_csv_from_content
+        from src.databeak.servers.io_server import load_csv_from_content
 
         csv_content = """a,b,c
 1,2,3
@@ -82,7 +82,7 @@ class TestDataOperations:
 
         result = await load_csv_from_content(content=csv_content, delimiter=",")
 
-        assert result.success
+        assert result.session_id is not None
         assert result.rows_affected == 2
         assert len(result.columns_affected) == 3
 

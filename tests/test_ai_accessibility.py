@@ -4,7 +4,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src.databeak.models import get_session_manager
-from src.databeak.tools.io_operations import load_csv_from_content
+from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.tools.transformations import (
     delete_row,
     extract_from_column,
@@ -219,9 +219,9 @@ class TestRowManipulation:
         }
         result = await insert_row(ai_test_session, 1, new_data)
 
-        assert (
-            result.success
-        ), f"insert_row with null dict failed: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"insert_row with null dict failed: {getattr(result, 'error', 'unknown error')}"
+        )
         assert result.operation == "insert_row"
         assert result.row_index == 1
         assert result.rows_after == 5  # Original 4 + 1 new
@@ -240,9 +240,9 @@ class TestRowManipulation:
         new_data = ["Bob Null", None, "Seattle", None]
         result = await insert_row(ai_test_session, -1, new_data)  # Append
 
-        assert (
-            result.success
-        ), f"insert_row with null list failed: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"insert_row with null list failed: {getattr(result, 'error', 'unknown error')}"
+        )
         assert result.operation == "insert_row"
         assert result.rows_after == 5
 
@@ -260,9 +260,9 @@ class TestRowManipulation:
         new_data = {"name": "Charlie Partial", "city": "Miami"}  # Missing age and email
         result = await insert_row(ai_test_session, 2, new_data)
 
-        assert (
-            result.success
-        ), f"insert_row with partial data failed: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"insert_row with partial data failed: {getattr(result, 'error', 'unknown error')}"
+        )
         assert result.operation == "insert_row"
 
         # Verify missing columns were filled with None
@@ -288,9 +288,9 @@ class TestRowManipulation:
 
         result = await insert_row(ai_test_session, 1, json_string)
 
-        assert (
-            result.success
-        ), f"insert_row with JSON string failed: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"insert_row with JSON string failed: {getattr(result, 'error', 'unknown error')}"
+        )
         assert result.operation == "insert_row"
         assert result.row_index == 1
         assert result.rows_after == 5
@@ -313,9 +313,9 @@ class TestRowManipulation:
 
         result = await update_row(ai_test_session, 0, json_string)
 
-        assert (
-            result.success
-        ), f"update_row with JSON string failed: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"update_row with JSON string failed: {getattr(result, 'error', 'unknown error')}"
+        )
         assert result.operation == "update_row"
         assert result.columns_updated == ["age", "city", "email"]
 
@@ -628,9 +628,9 @@ class TestCSVQuotingAndSpecialCharacters:
 "Wilson, Bob","Product Manager, B2B Solutions",90000"""
 
         result = await load_csv_from_content(csv_content)
-        assert (
-            result.success
-        ), f"Failed to load CSV with quoted commas: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"Failed to load CSV with quoted commas: {getattr(result, 'error', 'unknown error')}"
+        )
 
         session_id = result.session_id
 
@@ -654,9 +654,9 @@ Widget A,"High-quality widget, ""premium"" grade","Requires ""special"" handling
 Widget B,"Standard grade","No special requirements"'''
 
         result = await load_csv_from_content(csv_content)
-        assert (
-            result.success
-        ), f"Failed to load CSV with escaped quotes: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"Failed to load CSV with escaped quotes: {getattr(result, 'error', 'unknown error')}"
+        )
 
         session_id = result.session_id
         summary = await get_data_summary(session_id, include_preview=True)
@@ -675,9 +675,9 @@ Bob Wilson,,"555-0199","Phone contact only"
 Alice Johnson,"789 Pine St, Building C",555-0156,"""
 
         result = await load_csv_from_content(csv_content)
-        assert (
-            result.success
-        ), f"Failed to load mixed quoting CSV: {getattr(result, 'error', 'unknown error')}"
+        assert result.success, (
+            f"Failed to load mixed quoting CSV: {getattr(result, 'error', 'unknown error')}"
+        )
 
         session_id = result.session_id
         summary = await get_data_summary(session_id, include_preview=True)
