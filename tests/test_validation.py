@@ -4,16 +4,16 @@ import pytest
 
 from src.databeak.tools.io_operations import load_csv_from_content
 from src.databeak.validation_server import (
-    check_data_quality, 
-    find_anomalies, 
-    validate_schema,
-    ValidationSchema,
     CompletenessRule,
-    DuplicatesRule,
-    UniquenessRule,
+    ConsistencyRule,
     DataTypesRule,
+    DuplicatesRule,
     OutliersRule,
-    ConsistencyRule
+    UniquenessRule,
+    ValidationSchema,
+    check_data_quality,
+    find_anomalies,
+    validate_schema,
 )
 
 
@@ -105,7 +105,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
         assert "email" in result.validation_errors
 
@@ -117,7 +116,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
         # Should catch negative age and zero salary
 
@@ -129,7 +127,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
 
     async def test_validate_schema_allowed_values(self, validation_test_session):
@@ -139,7 +136,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
         assert "status" in result.validation_errors
 
@@ -150,7 +146,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(problematic_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
         assert "id" in result.validation_errors
 
@@ -162,8 +157,8 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
-        # Some names might be too short
+        # Some names might be too short - should have validation errors
+        assert isinstance(result.valid, bool)
 
     async def test_validate_schema_missing_columns(self, clean_test_session):
         """Test schema validation with missing columns."""
@@ -173,7 +168,6 @@ class TestSchemaValidation:
         }
 
         result = validate_schema(clean_test_session, ValidationSchema(schema))
-        assert True
         assert result.valid is False
         assert "nonexistent" in result.validation_errors
         assert len(result.summary.missing_columns) > 0
@@ -181,7 +175,7 @@ class TestSchemaValidation:
     async def test_validate_schema_invalid_regex(self, clean_test_session):
         """Test schema validation with invalid regex pattern."""
         from pydantic import ValidationError as PydanticValidationError
-        
+
         schema = {
             "email": {"pattern": "[invalid regex"},  # Invalid regex
         }
@@ -193,7 +187,7 @@ class TestSchemaValidation:
     async def test_validate_schema_invalid_session(self):
         """Test schema validation with invalid session."""
         from fastmcp.exceptions import ToolError
-        
+
         schema = {"id": {"type": "int"}}
 
         with pytest.raises(ToolError):
@@ -202,7 +196,6 @@ class TestSchemaValidation:
     async def test_validate_schema_empty_schema(self, clean_test_session):
         """Test schema validation with empty schema."""
         result = validate_schema(clean_test_session, ValidationSchema({}))
-        assert True
         assert result.valid is True
 
 
@@ -213,7 +206,6 @@ class TestDataQualityChecking:
     async def test_check_data_quality_default_rules(self, problematic_test_session):
         """Test data quality check with default rules."""
         result = check_data_quality(problematic_test_session)
-        assert True
         assert hasattr(result, "quality_results")
         assert hasattr(result.quality_results, "overall_score")
         assert hasattr(result.quality_results, "rule_results")
@@ -224,7 +216,6 @@ class TestDataQualityChecking:
         rules = [CompletenessRule(threshold=0.8)]
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         # Should find completeness issues in problematic data
@@ -236,7 +227,6 @@ class TestDataQualityChecking:
         rules = [DuplicatesRule(threshold=0.0)]  # No duplicates allowed
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         # Should find duplicate rows
@@ -249,7 +239,6 @@ class TestDataQualityChecking:
         rules = [UniquenessRule(column="id", expected_unique=True)]
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         uniqueness_checks = [c for c in quality.rule_results if c.rule_type == "uniqueness"]
@@ -260,7 +249,6 @@ class TestDataQualityChecking:
         rules = [DataTypesRule()]
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         type_checks = [c for c in quality.rule_results if c.rule_type == "data_type_consistency"]
@@ -271,7 +259,6 @@ class TestDataQualityChecking:
         rules = [OutliersRule(threshold=0.1)]
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         outlier_checks = [c for c in quality.rule_results if c.rule_type == "outliers"]
@@ -282,19 +269,19 @@ class TestDataQualityChecking:
         rules = [ConsistencyRule(columns=["join_date"])]
 
         result = check_data_quality(validation_test_session, rules)
-        assert True
+        # Consistency rules may not generate results for all datasets
+        assert hasattr(result, "quality_results")
 
     async def test_check_data_quality_invalid_session(self):
         """Test data quality check with invalid session."""
         from fastmcp.exceptions import ToolError
-        
+
         with pytest.raises(ToolError):
             check_data_quality("invalid-session")
 
     async def test_check_data_quality_clean_data(self, clean_test_session):
         """Test data quality check on clean data."""
         result = check_data_quality(clean_test_session)
-        assert True
         quality = result.quality_results
 
         # Clean data should have high quality score
@@ -303,7 +290,6 @@ class TestDataQualityChecking:
     async def test_check_data_quality_score_calculation(self, problematic_test_session):
         """Test quality score calculation."""
         result = check_data_quality(problematic_test_session)
-        assert True
         quality = result.quality_results
 
         # Should have issues and lower score
@@ -320,7 +306,6 @@ class TestAnomalyDetection:
         result = find_anomalies(
             problematic_test_session, methods=["statistical"], sensitivity=0.95
         )
-        assert True
         assert hasattr(result, "anomalies")
         assert hasattr(result.anomalies, "by_method")
 
@@ -334,7 +319,6 @@ class TestAnomalyDetection:
         result = find_anomalies(
             problematic_test_session, methods=["pattern"], sensitivity=0.8
         )
-        assert True
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_missing(self, problematic_test_session):
@@ -342,13 +326,11 @@ class TestAnomalyDetection:
         result = find_anomalies(
             problematic_test_session, methods=["missing"], sensitivity=0.9
         )
-        assert True
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_all_methods(self, problematic_test_session):
         """Test anomaly detection with all methods."""
         result = find_anomalies(problematic_test_session)
-        assert True
         anomalies = result.anomalies
 
         assert hasattr(anomalies, "summary")
@@ -359,7 +341,6 @@ class TestAnomalyDetection:
     async def test_find_anomalies_specific_columns(self, problematic_test_session):
         """Test anomaly detection on specific columns."""
         result = find_anomalies(problematic_test_session, columns=["age", "score"])
-        assert True
         assert result.columns_analyzed == ["age", "score"]
 
     async def test_find_anomalies_sensitivity_levels(self, problematic_test_session):
@@ -378,7 +359,6 @@ class TestAnomalyDetection:
     async def test_find_anomalies_clean_data(self, clean_test_session):
         """Test anomaly detection on clean data."""
         result = find_anomalies(clean_test_session)
-        assert True
 
         # Clean data should have few or no anomalies
         anomalies = result.anomalies
@@ -387,22 +367,22 @@ class TestAnomalyDetection:
     async def test_find_anomalies_missing_columns(self, clean_test_session):
         """Test anomaly detection with missing columns."""
         from fastmcp.exceptions import ToolError
-        
+
         with pytest.raises(ToolError):
             find_anomalies(clean_test_session, columns=["nonexistent"])
 
     async def test_find_anomalies_invalid_session(self):
         """Test anomaly detection with invalid session."""
         from fastmcp.exceptions import ToolError
-        
+
         with pytest.raises(ToolError):
             find_anomalies("invalid-session")
 
     async def test_find_anomalies_empty_methods(self, clean_test_session):
         """Test anomaly detection with empty methods list."""
         result = find_anomalies(clean_test_session, methods=[])
-        assert True
         # Should still work but find no anomalies
+        assert result.anomalies.summary.total_anomalies == 0
 
 
 @pytest.mark.asyncio
@@ -417,7 +397,6 @@ class TestValidationEdgeCases:
         # Empty dataframes have object dtype, so use compatible schema
         schema = {"id": {"type": "str"}, "name": {"type": "str"}}
         result = validate_schema(session_id, ValidationSchema(schema))
-        assert True
         assert result.valid is True  # Empty data with compatible types should pass
 
     async def test_schema_validation_all_types(self, validation_test_session):
@@ -431,12 +410,14 @@ class TestValidationEdgeCases:
         }
 
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
+        # Should complete validation
+        assert hasattr(result, "valid")
 
     async def test_data_quality_empty_rules(self, clean_test_session):
         """Test data quality check with empty rules."""
         result = check_data_quality(clean_test_session, [])
-        assert True
+        assert hasattr(result, "quality_results")
+        assert result.quality_results.overall_score > 0
         # Should use default rules
 
     async def test_data_quality_custom_threshold(self, problematic_test_session):
@@ -447,7 +428,6 @@ class TestValidationEdgeCases:
         ]
 
         result = check_data_quality(problematic_test_session, rules)
-        assert True
         quality = result.quality_results
 
         # With lenient thresholds, score should be higher
@@ -466,7 +446,8 @@ class TestValidationEdgeCases:
         session_id = result.session_id
 
         anomaly_result = find_anomalies(session_id, methods=["statistical"])
-        assert True
+        # Should complete without errors
+        assert hasattr(anomaly_result, "anomalies")
 
     async def test_find_anomalies_string_only(self):
         """Test anomaly detection on string-only data."""
@@ -481,7 +462,8 @@ D,Another normal,active"""
         session_id = result.session_id
 
         anomaly_result = find_anomalies(session_id, methods=["pattern"])
-        assert True
+        # Should complete without errors
+        assert hasattr(anomaly_result, "anomalies")
 
 
 @pytest.mark.asyncio
@@ -499,13 +481,12 @@ class TestValidationIntegration:
         # Then validate
         schema = {"email": {"nullable": False}}
         result = validate_schema(validation_test_session, ValidationSchema(schema))
-        assert True
         # After dropping nulls, email should be non-null
+        assert hasattr(result, "valid")
 
     async def test_quality_check_recommendations(self, problematic_test_session):
         """Test that quality check provides useful recommendations."""
         result = check_data_quality(problematic_test_session)
-        assert True
 
         quality = result.quality_results
         if quality.overall_score < 85:
@@ -516,7 +497,8 @@ class TestValidationIntegration:
         # Perform validation
         schema = {"id": {"type": "int"}}
         result = validate_schema(clean_test_session, ValidationSchema(schema))
-        assert True
+        # Should complete validation
+        assert hasattr(result, "valid")
 
         # Check if session info can be retrieved (verifies session still exists)
         from src.databeak.tools.io_operations import get_session_info

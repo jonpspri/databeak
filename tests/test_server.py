@@ -174,7 +174,6 @@ class TestModularToolRegistration:
         # Import all tool modules to ensure no import errors
 
         # If we reach this point, all imports succeeded
-        assert True
 
     def test_enhanced_resources_available(self) -> None:
         """Test that enhanced resources for AI accessibility are available."""

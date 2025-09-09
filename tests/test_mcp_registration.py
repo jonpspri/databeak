@@ -42,7 +42,6 @@ class TestToolRegistration:
         # This test ensures all modules have correct imports and dependencies
 
         # If we get here without ImportError, all modules imported successfully
-        assert True
 
 
 class TestBackwardCompatibilityThroughModules:

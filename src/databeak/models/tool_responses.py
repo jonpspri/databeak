@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Type alias for CSV cell values - more specific than Any while still flexible
 CsvCellValue = str | int | float | bool | None
@@ -52,8 +52,7 @@ class StatisticsSummary(BaseModel):
     percentile_75: float = Field(alias="75%")
     max: float
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DataTypeInfo(BaseModel):
