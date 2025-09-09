@@ -90,12 +90,10 @@ and handles everything pip does plus more.
 
 ```bash
 # All commands use uv
-uv run server --help
-uv run test
-uv run lint
-
-# Or use the shortcuts defined in uv.toml
-uv run all-checks  # Runs all quality checks
+uv run databeak --help
+uv run -m pytest
+uv run ruff check
+uv run mypy
 ```
 
 ## Development Workflow
@@ -131,20 +129,19 @@ Follow these guidelines:
 ```bash
 # All commands use uv for speed and consistency
 uv run ruff format # Format code with Ruff
-uv run lint        # Lint with Ruff
-uv run type-check  # Type check with MyPy
-uv run all-checks  # Run everything at once
+uv run ruff check  # Lint with Ruff
+uv run mypy        # Type check with MyPy
 ```
 
 ### 4. Test Your Changes
 
 ```bash
 # Testing with uv
-uv run test                              # Run all tests
-uv run test-cov                          # Run with coverage report
-uv run pytest tests/test_transformations.py  # Run specific file
-uv run pytest -k "test_filter"          # Run tests matching pattern
-uv run pytest -x                         # Stop on first failure
+uv run -m pytest                        # Run all tests
+uv run -m pytest --cov                  # Run with coverage report
+uv run -m pytest tests/test_transformations.py  # Run specific file
+uv run -m pytest -k "test_filter"       # Run tests matching pattern
+uv run -m pytest -x                     # Stop on first failure
 ```
 
 ### 5. Create Pull Request
@@ -320,7 +317,7 @@ tests/
 
 - Minimum coverage: 80%
 - New features must have >90% coverage
-- Run coverage: `hatch run test-cov`
+- Run coverage: `uv run -m pytest --cov`
 
 ## Documentation
 

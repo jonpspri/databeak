@@ -13,17 +13,17 @@ regression tests that verify existing functionality remains intact.
 
 ```bash
 # MUST pass before any refactoring work:
-uv run pytest --cov=src/databeak --cov-fail-under=90
-uv run pytest tests/ -v --tb=short
-uv run pytest tests/integration/ -v
-uv run all-checks
+uv run -m pytest --cov=src/databeak --cov-fail-under=90
+uv run -m pytest tests/ -v --tb=short
+uv run -m pytest tests/integration/ -v
+uv run ruff check src/ tests/ && uv run mypy src/ && uv run -m pytest
 ```
 
 #### **2. Performance Baseline Establishment**
 
 ```bash
 # Document current performance metrics:
-uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=baseline.json
+uv run -m pytest tests/benchmarks/ --benchmark-only --benchmark-json=baseline.json
 # Store baseline metrics for comparison during refactoring
 ```
 
@@ -31,7 +31,7 @@ uv run pytest tests/benchmarks/ --benchmark-only --benchmark-json=baseline.json
 
 ```bash
 # Create comprehensive behavior tests:
-uv run pytest tests/regression/ -v --capture=no
+uv run -m pytest tests/regression/ -v --capture=no
 # Must cover all tool interfaces and session behaviors
 ```
 
@@ -315,7 +315,7 @@ class TestMemoryRegression:
 
 ### **Before Starting Each Week**
 
-- [ ] **Current tests passing**: `uv run pytest` shows all green
+- [ ] **Current tests passing**: `uv run -m pytest` shows all green
 - [ ] **Coverage sufficient**: Target areas have >90% coverage
 - [ ] **Performance baseline**: Benchmark metrics documented
 - [ ] **Integration tests**: End-to-end workflows validated
@@ -323,7 +323,7 @@ class TestMemoryRegression:
 
 ### **During Refactoring Work**
 
-- [ ] **Continuous testing**: Run `uv run pytest --lf` after each change
+- [ ] **Continuous testing**: Run `uv run -m pytest --lf` after each change
 - [ ] **Incremental commits**: Small, testable changes with clear commit
   messages
 - [ ] **Feature flags**: New functionality behind configuration flags
@@ -521,8 +521,8 @@ jobs:
     steps:
       - name: Run Regression Test Suite
         run: |
-          uv run pytest tests/regression/ --baseline=master
-          uv run pytest tests/benchmarks/ --benchmark-compare=baseline
+          uv run -m pytest tests/regression/ --baseline=master
+          uv run -m pytest tests/benchmarks/ --benchmark-compare=baseline
 
       - name: Generate Regression Report
         run: |
@@ -546,7 +546,7 @@ jobs:
   hooks:
     - id: regression-check
       name: Run regression tests before commit
-      entry: uv run pytest tests/regression/ --tb=short
+      entry: uv run -m pytest tests/regression/ --tb=short
       language: system
       pass_filenames: false
       stages: [commit]

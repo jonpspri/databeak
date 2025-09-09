@@ -256,10 +256,10 @@ After generating new tests:
 uv run pytest tests/test_new_coverage.py -v
 
 # Check coverage improvement
-uv run test-cov
+uv run -m pytest --cov=src/databeak --cov-report=term-missing
 
 # Verify no regressions
-uv run all-checks
+uv run ruff check src/ tests/ && uv run mypy src/ && uv run -m pytest
 
 # Analyze coverage delta
 uv run pytest --cov=src/databeak --cov-report=term-missing

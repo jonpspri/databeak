@@ -343,7 +343,7 @@ uv run rg "Any" src/databeak/ --type py | wc -l
 uv run -m pytest tests/ -v
 
 # Full quality check
-uv run all-checks
+uv run ruff check src/ tests/ && uv run ruff format --check src/ tests/ && uv run mypy src/ && uv run -m pytest
 ```
 
 ### Analysis Commands

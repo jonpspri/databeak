@@ -84,7 +84,7 @@ We welcome contributions! Please:
 1. Fork the repository
 1. Create a feature branch (`git checkout -b feature/amazing-feature`)
 1. Make your changes with tests
-1. Run quality checks: `uv run all-checks`
+1. Run quality checks: `uv run -m pytest`
 1. Submit a pull request
 
 **Note**: All changes must go through pull requests. Direct commits to `main`
@@ -102,8 +102,9 @@ uv sync
 uv run databeak
 
 # Run tests and quality checks
-uv run test
-uv run all-checks
+uv run -m pytest
+uv run ruff check
+uv run mypy
 ```
 
 ## License

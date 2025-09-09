@@ -426,9 +426,9 @@ tests to ensure existing functionality remains intact.**
 
 ```bash
 # Must achieve before starting any refactoring work:
-uv run pytest --cov=src/databeak --cov-fail-under=90
-uv run pytest tests/ -v --tb=short  # All tests passing
-uv run pytest tests/integration/ -v # End-to-end workflows verified
+uv run -m pytest --cov=src/databeak --cov-fail-under=90
+uv run -m pytest tests/ -v --tb=short  # All tests passing
+uv run -m pytest tests/integration/ -v # End-to-end workflows verified
 ```
 
 #### **Specific Test Requirements by Component**
@@ -523,11 +523,11 @@ class PerformanceBaseline:
 
 ```bash
 # Required validation pipeline:
-uv run pytest                    # All functionality tests
-uv run pytest --benchmark-only  # Performance regression detection
-uv run pytest tests/integration/ # End-to-end workflow validation
+uv run -m pytest                    # All functionality tests
+uv run -m pytest --benchmark-only  # Performance regression detection
+uv run -m pytest tests/integration/ # End-to-end workflow validation
 uv run mypy src/                 # Type safety maintained
-uv run all-checks               # Code quality standards
+uv run ruff check src/ tests/ && uv run mypy src/ && uv run -m pytest  # Code quality standards
 ```
 
 ## Next Steps

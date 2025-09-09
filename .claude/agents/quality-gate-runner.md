@@ -47,7 +47,7 @@ uv run pre-commit run --all-files
 uv run -m pytest tests/ --cov=src --cov-report=term-missing
 
 # 4. Coverage validation (80% threshold)
-uv run test-cov
+uv run -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 
 #### Option 2: Individual Tool Execution (For Targeted Analysis)
@@ -69,7 +69,7 @@ uv run mypy src/
 uv run -m pytest tests/ --cov=src --cov-report=term-missing
 
 # 6. Coverage validation (80% threshold)
-uv run test-cov
+uv run -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 
 ### Auto-fix Commands
