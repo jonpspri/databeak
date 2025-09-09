@@ -154,7 +154,7 @@ class TestModularToolRegistration:
         from src.databeak.tools.mcp_io_tools import register_io_tools
         from src.databeak.tools.mcp_row_tools import register_row_tools
         from src.databeak.tools.mcp_system_tools import register_system_tools
-        from src.databeak.tools.mcp_validation_tools import register_validation_tools
+# Validation tools moved to validation_server.py for server composition
 
         # Verify all registration functions are callable
         registration_funcs = [
@@ -163,7 +163,6 @@ class TestModularToolRegistration:
             register_data_tools,
             register_row_tools,
             register_analytics_tools,
-            register_validation_tools,
             register_history_tools,
         ]
 

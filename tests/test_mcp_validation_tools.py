@@ -1,6 +1,6 @@
 """Tests for validation MCP tools."""
 
-from src.databeak.tools.validation import check_data_quality, find_anomalies, validate_schema
+from src.databeak.validation_server import check_data_quality, find_anomalies, validate_schema
 
 
 class TestValidationTools:

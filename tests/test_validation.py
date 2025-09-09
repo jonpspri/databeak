@@ -180,13 +180,15 @@ class TestSchemaValidation:
 
     async def test_validate_schema_invalid_regex(self, clean_test_session):
         """Test schema validation with invalid regex pattern."""
+        from pydantic import ValidationError as PydanticValidationError
+        
         schema = {
             "email": {"pattern": "[invalid regex"},  # Invalid regex
         }
 
-        result = validate_schema(clean_test_session, ValidationSchema(schema))
-        assert True
-        assert result.valid is False
+        # Should fail when creating ValidationSchema due to invalid regex
+        with pytest.raises(PydanticValidationError):
+            ValidationSchema(schema)
 
     async def test_validate_schema_invalid_session(self):
         """Test schema validation with invalid session."""
