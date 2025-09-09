@@ -100,7 +100,7 @@ repos:
     rev: v0.9.32
     hooks:
       - id: pymarkdown
-        args: [--config=.pymarkdownlnt, scan]
+        args: [ "--config" , ".pymarkdownlnt" , "scan" ]
         # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
 
