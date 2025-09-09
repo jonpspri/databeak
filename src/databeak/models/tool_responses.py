@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Type alias for CSV cell values - more specific than Any while still flexible
 CsvCellValue = str | int | float | bool | None
@@ -52,8 +52,7 @@ class StatisticsSummary(BaseModel):
     percentile_75: float = Field(alias="75%")
     max: float
 
-    class Config:
-        populate_by_name = True
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DataTypeInfo(BaseModel):
@@ -419,12 +418,31 @@ class ColumnOperationResult(BaseToolResponse):
     nulls_filled: int | None = None
 
 
-# =============================================================================
-# ERROR RESPONSES
-# =============================================================================
+class SortDataResult(BaseToolResponse):
+    """Response model for data sorting operations."""
+
+    session_id: str
+    sorted_by: list[str]
+    ascending: list[bool]
 
 
-# ErrorResult class removed - now using ToolError exceptions instead
+class SelectColumnsResult(BaseToolResponse):
+    """Response model for column selection operations."""
+
+    session_id: str
+    selected_columns: list[str]
+    columns_before: int
+    columns_after: int
+
+
+class RenameColumnsResult(BaseToolResponse):
+    """Response model for column rename operations."""
+
+    session_id: str
+    renamed: dict[str, str]
+    columns: list[str]
+
+
 
 
 # =============================================================================
@@ -459,4 +477,7 @@ ToolResponse = (
     | UpdateRowResult
     | FilterOperationResult
     | ColumnOperationResult
+    | SortDataResult
+    | SelectColumnsResult
+    | RenameColumnsResult
 )

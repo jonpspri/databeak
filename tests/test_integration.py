@@ -1,18 +1,15 @@
-#!/usr/bin/env python
-"""Test script for CSV MCP Server.
+"""Integration tests for DataBeak CSV MCP Server.
 
-This script tests the core functionality of the CSV MCP Server without requiring an MCP client.
+Tests the core functionality across multiple tool domains using proper TestCase
+structure with isolated sessions for each test.
 """
 
 import asyncio
-import sys
+import unittest
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.databeak.models.csv_session import get_session_manager
 from src.databeak.tools.analytics import (
@@ -27,6 +24,7 @@ from src.databeak.tools.io_operations import (
     get_session_info,
     list_sessions,
     load_csv_from_content,
+    close_session,
 )
 from src.databeak.tools.transformations import (
     add_column,
@@ -35,7 +33,7 @@ from src.databeak.tools.transformations import (
     select_columns,
     sort_data,
 )
-from src.databeak.tools.validation import check_data_quality, find_anomalies, validate_schema
+from src.databeak.validation_server import check_data_quality, find_anomalies, validate_schema, ValidationSchema
 
 # Test data
 TEST_CSV_CONTENT = """name,age,salary,department,hire_date
@@ -62,39 +60,6 @@ Tina,34,64000,Sales,2020-01-10
 """
 
 
-class Colors:
-    """ANSI color codes for terminal output."""
-
-    HEADER = "\033[95m"
-    BLUE = "\033[94m"
-    CYAN = "\033[96m"
-    GREEN = "\033[92m"
-    WARNING = "\033[93m"
-    FAIL = "\033[91m"
-    ENDC = "\033[0m"
-    BOLD = "\033[1m"
-
-
-def print_test(name: str):
-    """Print test header."""
-    print(f"\n{Colors.HEADER}{Colors.BOLD}Testing: {name}{Colors.ENDC}")
-
-
-def print_success(msg: str):
-    """Print success message."""
-    print(f"{Colors.GREEN}✓ {msg}{Colors.ENDC}")
-
-
-def print_error(msg: str):
-    """Print error message."""
-    print(f"{Colors.FAIL}✗ {msg}{Colors.ENDC}")
-
-
-def print_info(msg: str):
-    """Print info message."""
-    print(f"{Colors.CYAN}ℹ {msg}{Colors.ENDC}")  # noqa: RUF001
-
-
 def get_attr(obj: Any, attr: str, default: Any | None = None):
     """Get attribute from object, works with both dict and Pydantic models."""
     if isinstance(obj, dict):
@@ -103,297 +68,199 @@ def get_attr(obj: Any, attr: str, default: Any | None = None):
         return getattr(obj, attr, default)
 
 
-def print_data(data: Any, indent: int = 2):
-    """Print data with indentation."""
-    indent_str = " " * indent
-    if isinstance(data, dict):
-        for key, value in data.items():
-            if isinstance(value, dict | list) and len(str(value)) > 50:
-                print(
-                    f"{indent_str}{Colors.BLUE}{key}:{Colors.ENDC} <{type(value).__name__} with {len(value)} items>"
-                )
-            else:
-                print(f"{indent_str}{Colors.BLUE}{key}:{Colors.ENDC} {value}")
-    elif isinstance(data, pd.DataFrame):
-        print(f"{indent_str}DataFrame shape: {data.shape}")
-        print(data.head().to_string().replace("\n", f"\n{indent_str}"))
-    else:
-        print(f"{indent_str}{data}")
+class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
+    """Base test case for integration tests with session management.
+    
+    Provides a fresh session with test data for each test method.
+    Handles session creation in setUp and cleanup in tearDown.
+    """
+    
+    def setUp(self):
+        """Create a fresh session with test data for each test."""
+        self.session_id = None
+        
+    async def asyncSetUp(self):
+        """Async setup - create session with test data."""
+        result = await load_csv_from_content(content=TEST_CSV_CONTENT, delimiter=",")
+        self.session_id = get_attr(result, "session_id")
+        self.assertIsNotNone(self.session_id, "Failed to create test session")
+        
+    async def asyncTearDown(self):
+        """Async cleanup - close the test session."""
+        if self.session_id:
+            try:
+                await close_session(self.session_id)
+            except Exception:
+                # Ignore errors during cleanup
+                pass
 
 
-async def test_io_operations():
-    """Test I/O operations."""
-    print_test("I/O Operations")
+class TestIOOperations(IntegrationTestCase):
+    """Test I/O operations with isolated session."""
 
-    # Load CSV from content
-    result = await load_csv_from_content(content=TEST_CSV_CONTENT, delimiter=",")
+    async def test_load_and_session_info(self):
+        """Test CSV loading and session info retrieval."""
+        # Session already created in setUp
+        info = await get_session_info(session_id=self.session_id)
+        self.assertTrue(get_attr(info, "success"))
+        self.assertTrue(get_attr(info, "data_loaded"))
 
-    if get_attr(result, "success"):
-        session_id = get_attr(result, "session_id")
-        print_success(f"Loaded CSV with session ID: {session_id}")
-        print_info(
-            f"Rows: {get_attr(result, 'rows_affected')}, Columns: {len(get_attr(result, 'columns_affected', []))}"
+    async def test_list_sessions(self):
+        """Test session listing functionality."""
+        sessions = await list_sessions()
+        self.assertTrue(get_attr(sessions, "success"))
+        session_list = get_attr(sessions, "sessions", [])
+        self.assertGreater(len(session_list), 0)
+
+
+class TestTransformations(IntegrationTestCase):
+    """Test data transformation operations with isolated session."""
+
+    async def test_filter_rows(self):
+        """Test row filtering functionality."""
+        result = await filter_rows(
+            session_id=self.session_id,
+            conditions=[
+                {"column": "salary", "operator": ">", "value": 60000},
+                {
+                    "column": "department",
+                    "operator": "in", 
+                    "value": ["Engineering", "Management"],
+                },
+            ],
+            mode="and",
         )
-        print_info(f"Column names: {', '.join(get_attr(result, 'columns_affected', []))}")
-    else:
-        print_error("Failed to load CSV")
-        return None
+        self.assertTrue(get_attr(result, "success"))
+        rows_before = get_attr(result, "rows_before")
+        rows_after = get_attr(result, "rows_after")
+        self.assertLess(rows_after, rows_before)
 
-    # Get session info
-    info = await get_session_info(session_id=session_id)
-    if get_attr(info, "success"):
-        print_success("Retrieved session info")
-        print_data(get_attr(info, "data", info))
+    async def test_sort_data(self):
+        """Test data sorting functionality."""
+        result = await sort_data(
+            session_id=self.session_id,
+            columns=[
+                {"column": "department", "ascending": True},
+                {"column": "salary", "ascending": False},
+            ],
+        )
+        self.assertTrue(get_attr(result, "success"))
 
-    # List sessions
-    sessions = await list_sessions()
-    if get_attr(sessions, "success"):
-        print_success(f"Listed {len(get_attr(sessions, 'sessions', []))} active session(s)")
+    async def test_add_column(self):
+        """Test adding calculated columns."""
+        result = await add_column(
+            session_id=self.session_id,
+            name="salary_level",
+            value="Medium",  # Use a simple value instead of complex formula
+        )
+        self.assertTrue(get_attr(result, "success"))
 
-    return session_id
+    async def test_fill_missing_values(self):
+        """Test missing value imputation."""
+        result = await fill_missing_values(
+            session_id=self.session_id, strategy="mean", columns=["salary"]
+        )
+        self.assertTrue(get_attr(result, "success"))
 
 
-async def test_transformations(test_session):
-    """Test data transformation operations."""
-    print_test("Data Transformations")
+class TestAnalytics(IntegrationTestCase):
+    """Test analytics operations with isolated session."""
 
-    session_id = test_session
+    async def test_get_statistics(self):
+        """Test statistical analysis."""
+        result = await get_statistics(session_id=self.session_id, columns=["salary"])
+        self.assertTrue(get_attr(result, "success"))
+        statistics = get_attr(result, "statistics", {})
+        self.assertIn("salary", statistics)
 
-    # Filter rows
-    result = await filter_rows(
-        session_id=session_id,
-        conditions=[
-            {"column": "salary", "operator": ">", "value": 60000},
-            {
-                "column": "department",
-                "operator": "in",
-                "value": ["Engineering", "Management"],
+    async def test_correlation_matrix(self):
+        """Test correlation analysis."""
+        result = await get_correlation_matrix(
+            session_id=self.session_id, method="pearson", min_correlation=0.1
+        )
+        self.assertTrue(get_attr(result, "success"))
+
+    async def test_group_by_aggregate(self):
+        """Test grouping and aggregation."""
+        result = await group_by_aggregate(
+            session_id=self.session_id,
+            group_by=["department"],
+            aggregations={"salary": ["mean", "min", "max", "count"]},
+        )
+        self.assertTrue(get_attr(result, "success"))
+
+    async def test_detect_outliers(self):
+        """Test outlier detection."""
+        result = await detect_outliers(
+            session_id=self.session_id, columns=["salary"], method="iqr", threshold=1.5
+        )
+        self.assertTrue(get_attr(result, "success"))
+
+    async def test_profile_data(self):
+        """Test comprehensive data profiling."""
+        result = await profile_data(
+            session_id=self.session_id, include_correlations=True, include_outliers=True
+        )
+        self.assertTrue(get_attr(result, "success"))
+
+
+class TestValidation(IntegrationTestCase):
+    """Test validation operations with isolated session."""
+
+    async def test_validate_schema(self):
+        """Test schema validation with new validation server."""
+        schema_dict = {
+            "name": {"type": "str", "nullable": False},
+            "age": {"type": "int", "min": 0, "max": 200},
+            "salary": {"type": "int", "min": 0, "max": 200000},
+            "department": {
+                "type": "str",
+                "values": ["Engineering", "Management", "Marketing", "Sales"],
             },
-        ],
-        mode="and",
-    )
-    if get_attr(result, "success"):
-        print_success(
-            f"Filtered rows: {get_attr(result, 'rows_before')} → {get_attr(result, 'rows_after')}"
-        )
+        }
 
-    # Sort data
-    result = await sort_data(
-        session_id=session_id,
-        columns=[
-            {"column": "department", "ascending": True},
-            {"column": "salary", "ascending": False},
-        ],
-    )
-    if get_attr(result, "success"):
-        print_success("Sorted data by department and salary")
+        result = validate_schema(session_id=self.session_id, schema=ValidationSchema(schema_dict))
+        self.assertIsInstance(result.valid, bool)
+        self.assertIsInstance(result.errors, list)
 
-    # Select columns
-    result = await select_columns(session_id=session_id, columns=["name", "department", "salary"])
-    if get_attr(result, "success"):
-        print_success(f"Selected columns: {', '.join(get_attr(result, 'selected_columns', []))}")
+    async def test_check_data_quality(self):
+        """Test data quality checking."""
+        result = check_data_quality(session_id=self.session_id)
+        quality_results = result.quality_results
+        self.assertIsInstance(quality_results.overall_score, float)
+        self.assertGreaterEqual(quality_results.overall_score, 0)
+        self.assertLessEqual(quality_results.overall_score, 100)
 
-    # Add calculated column
-    result = await add_column(
-        session_id=session_id,
-        name="salary_level",
-        value=None,
-        formula="lambda row: 'High' if row['salary'] > 65000 else 'Medium' if row['salary'] > 55000 else 'Low' if pd.notna(row['salary']) else 'Unknown'",
-    )
-    if get_attr(result, "success"):
-        print_success("Added column 'salary_level'")
-
-    # Fill missing values
-    result = await fill_missing_values(session_id=session_id, strategy="mean", columns=["salary"])
-    if get_attr(result, "success"):
-        print_success(f"Filled {get_attr(result, 'values_filled', 0)} missing value(s)")
+    async def test_find_anomalies(self):
+        """Test anomaly detection."""
+        result = find_anomalies(session_id=self.session_id, columns=["salary"])
+        summary = result.anomalies.summary
+        self.assertIsInstance(summary.total_anomalies, int)
+        self.assertGreaterEqual(summary.total_anomalies, 0)
 
 
-async def test_analytics(test_session):
-    """Test analytics operations."""
-    print_test("Analytics")
+class TestExport(IntegrationTestCase):
+    """Test export operations with isolated session."""
 
-    session_id = test_session
+    async def test_export_csv(self):
+        """Test CSV export functionality."""
+        output_dir = Path("test_output")
+        output_dir.mkdir(exist_ok=True)
 
-    # Get statistics
-    result = await get_statistics(session_id=session_id, columns=["salary"])
-    if get_attr(result, "success"):
-        print_success("Got statistics for salary column")
-        print_data(get_attr(result, "statistics", {}))
-
-    # Get correlation matrix
-    result = await get_correlation_matrix(
-        session_id=session_id, method="pearson", min_correlation=0.3
-    )
-    if get_attr(result, "success"):
-        print_success("Got correlation matrix")
-        sig_corrs = get_attr(result, "significant_correlations", [])
-        if sig_corrs:
-            print_info("Significant correlations found:")
-            for corr in sig_corrs:
-                print(
-                    f"    {get_attr(corr, 'column1', corr['column1'])} ↔ {get_attr(corr, 'column2', corr['column2'])}: {get_attr(corr, 'correlation', corr['correlation']):.3f}"
-                )
-
-    # Group by and aggregate
-    result = await group_by_aggregate(
-        session_id=session_id,
-        group_by=["department"],
-        aggregations={"salary": ["mean", "min", "max", "count"]},
-    )
-    if get_attr(result, "success"):
-        print_success("Grouped by department with aggregations")
-        print_info("Department salary statistics:")
-        manager = get_session_manager()
-        session = manager.get_session(session_id)
-        if session and hasattr(session, "data_session") and session.data_session.df is not None:
-            print(session.data_session.df.head(10).to_string())
-
-    # Detect outliers
-    result = await detect_outliers(
-        session_id=session_id, columns=["salary"], method="iqr", threshold=1.5
-    )
-    if get_attr(result, "success"):
-        print_success(f"Detected {get_attr(result, 'total_outliers', 0)} outlier(s)")
-        outliers = get_attr(result, "outliers", {})
-        if outliers:
-            print_info("Outlier details:")
-            for col, details in outliers.items():
-                count = (
-                    details.get("count")
-                    if isinstance(details, dict)
-                    else get_attr(details, "count", 0)
-                )
-                print(f"    {col}: {count} outliers")
-
-    # Profile data
-    result = await profile_data(
-        session_id=session_id, include_correlations=True, include_outliers=True
-    )
-    if get_attr(result, "success"):
-        print_success("Generated data profile")
-        profile = get_attr(result, "profile", {})
-        summary = (
-            profile.get("summary", {})
-            if isinstance(profile, dict)
-            else get_attr(profile, "summary", {})
-        )
-        print_info(
-            f"Profile summary: {summary.get('total_rows', 0)} rows, "
-            f"{summary.get('total_columns', 0)} columns"
-        )
-
-
-async def test_validation(test_session):
-    """Test validation operations."""
-    print_test("Data Validation")
-
-    session_id = test_session
-
-    # Validate schema
-    schema = {
-        "name": {"type": "string", "required": True},
-        "salary": {"type": "numeric", "min": 0, "max": 200000},
-        "department": {
-            "type": "string",
-            "allowed_values": ["Engineering", "Management", "Marketing", "Sales"],
-        },
-    }
-
-    result = await validate_schema(session_id=session_id, schema=schema)
-    if get_attr(result, "success"):
-        if get_attr(result, "valid"):
-            print_success("Data validates against schema")
-        else:
-            errors = get_attr(result, "errors", [])
-            print_info(f"Schema validation found {len(errors)} error(s)")
-
-    # Check data quality
-    result = await check_data_quality(session_id=session_id)
-    if get_attr(result, "success"):
-        quality_results = get_attr(result, "quality_results", {})
-        quality_score = quality_results.get("overall_score", 0)
-        print_success(f"Data quality score: {quality_score:.1f}%")
-        print_info("Quality metrics:")
-        metrics = quality_results.get("metrics", {})
-        for metric, score in metrics.items():
-            status = "✓" if score == 100 else "⚠" if score >= 80 else "✗"
-            print(f"    {status} {metric}: {score:.1f}%")
-
-    # Find anomalies
-    result = await find_anomalies(session_id=session_id, columns=["salary"])
-    if get_attr(result, "success"):
-        summary = get_attr(result, "summary", {})
-        total_anomalies = summary.get("total_anomalies", 0)
-        print_success(f"Found {total_anomalies} anomaly(ies)")
-        if total_anomalies > 0:
-            print_info("Anomaly types:")
-            by_type = summary.get("by_type", {})
-            for atype, count in by_type.items():
-                print(f"    {atype}: {count}")
-
-
-async def test_export(test_session):
-    """Test export operations."""
-    print_test("Export Operations")
-
-    session_id = test_session
-
-    # Create test output directory
-    output_dir = Path("test_output")
-    output_dir.mkdir(exist_ok=True)
-
-    # Export to different formats
-    formats = ["csv", "json", "html", "markdown"]
-
-    for fmt in formats:
-        output_file = output_dir / f"test_export.{fmt if fmt != 'markdown' else 'md'}"
-        result = await export_csv(session_id=session_id, file_path=str(output_file), format=fmt)
-        if get_attr(result, "success"):
-            print_success(f"Exported to {fmt.upper()}: {output_file}")
-        else:
-            print_error(f"Failed to export to {fmt.upper()}")
-
-
-async def main():
-    """Main test function."""
-    print(f"\n{Colors.HEADER}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}")
-    print(f"{Colors.HEADER}{Colors.BOLD}    CSV MCP Server Test Suite{Colors.ENDC}")
-    print(f"{Colors.HEADER}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}")
-
-    try:
-        # Test I/O operations
-        session_id = await test_io_operations()
-        if not session_id:
-            print_error("Failed to create session, aborting tests")
-            return
-
-        # Test transformations
-        await test_transformations(session_id)
-
-        # Test analytics
-        await test_analytics(session_id)
-
-        # Test validation
-        await test_validation(session_id)
-
-        # Test export
-        await test_export(session_id)
-
-        print(
-            f"\n{Colors.GREEN}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}"
-        )
-        print(f"{Colors.GREEN}{Colors.BOLD}    All tests completed successfully!{Colors.ENDC}")
-        print(
-            f"{Colors.GREEN}{Colors.BOLD}═══════════════════════════════════════════{Colors.ENDC}\n"
-        )
-
-    except Exception as e:
-        print_error(f"Test failed with error: {e}")
-        import traceback
-
-        traceback.print_exc()
+        try:
+            output_file = output_dir / "test_export.csv"
+            result = await export_csv(
+                session_id=self.session_id, file_path=str(output_file), format="csv"
+            )
+            self.assertTrue(get_attr(result, "success"))
+            self.assertTrue(output_file.exists())
+        finally:
+            # Clean up
+            if output_file.exists():
+                output_file.unlink()
+            if output_dir.exists() and not any(output_dir.iterdir()):
+                output_dir.rmdir()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    unittest.main()

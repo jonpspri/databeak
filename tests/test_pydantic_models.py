@@ -28,6 +28,10 @@ from src.databeak.models.tool_responses import (
     ExportResult,
     FilterOperationResult,
     GroupStatistics,
+    # Data operation results
+    RenameColumnsResult,
+    SelectColumnsResult,
+    SortDataResult,
     # System tool responses
     HealthResult,
     InsertRowResult,
@@ -1162,3 +1166,161 @@ class TestComprehensiveEdgeCases:
             columns_affected=[],
         )
         assert result_with_failure.success is False
+
+
+class TestSortDataResult:
+    """Test SortDataResult model."""
+
+    def test_valid_creation(self):
+        """Test valid SortDataResult creation."""
+        result = SortDataResult(
+            session_id="sort-123",
+            sorted_by=["department", "salary"],
+            ascending=[True, False],
+        )
+        assert result.session_id == "sort-123"
+        assert result.sorted_by == ["department", "salary"]
+        assert result.ascending == [True, False]
+
+    def test_single_column_sort(self):
+        """Test sorting by single column."""
+        result = SortDataResult(
+            session_id="single-sort",
+            sorted_by=["name"],
+            ascending=[True],
+        )
+        assert len(result.sorted_by) == 1
+        assert len(result.ascending) == 1
+
+    def test_multiple_column_sort(self):
+        """Test sorting by multiple columns."""
+        result = SortDataResult(
+            session_id="multi-sort", 
+            sorted_by=["dept", "salary", "age"],
+            ascending=[True, False, True],
+        )
+        assert len(result.sorted_by) == 3
+        assert len(result.ascending) == 3
+
+    def test_serialization_roundtrip(self):
+        """Test serialization and deserialization."""
+        original = SortDataResult(
+            session_id="serialize-test",
+            sorted_by=["col1", "col2"],
+            ascending=[False, True],
+        )
+        data = original.model_dump()
+        restored = SortDataResult(**data)
+        assert restored == original
+
+
+class TestSelectColumnsResult:
+    """Test SelectColumnsResult model."""
+
+    def test_valid_creation(self):
+        """Test valid SelectColumnsResult creation."""
+        result = SelectColumnsResult(
+            session_id="select-123",
+            selected_columns=["name", "age", "salary"],
+            columns_before=10,
+            columns_after=3,
+        )
+        assert result.session_id == "select-123"
+        assert result.selected_columns == ["name", "age", "salary"]
+        assert result.columns_before == 10
+        assert result.columns_after == 3
+
+    def test_column_reduction(self):
+        """Test column selection that reduces column count."""
+        result = SelectColumnsResult(
+            session_id="reduction-test",
+            selected_columns=["id"],
+            columns_before=5,
+            columns_after=1,
+        )
+        # Should reflect reduction
+        assert result.columns_after < result.columns_before
+
+    def test_empty_selection(self):
+        """Test selection resulting in no columns."""
+        result = SelectColumnsResult(
+            session_id="empty-select",
+            selected_columns=[],
+            columns_before=3,
+            columns_after=0,
+        )
+        assert len(result.selected_columns) == 0
+        assert result.columns_after == 0
+
+    def test_serialization_roundtrip(self):
+        """Test serialization and deserialization."""
+        original = SelectColumnsResult(
+            session_id="serialize-test",
+            selected_columns=["a", "b"],
+            columns_before=5,
+            columns_after=2,
+        )
+        data = original.model_dump()
+        restored = SelectColumnsResult(**data)
+        assert restored == original
+
+
+class TestRenameColumnsResult:
+    """Test RenameColumnsResult model."""
+
+    def test_valid_creation(self):
+        """Test valid RenameColumnsResult creation."""
+        result = RenameColumnsResult(
+            session_id="rename-123",
+            renamed={"old_name": "new_name", "old_age": "new_age"},
+            columns=["new_name", "new_age", "unchanged"],
+        )
+        assert result.session_id == "rename-123"
+        assert result.renamed["old_name"] == "new_name"
+        assert "new_name" in result.columns
+
+    def test_single_rename(self):
+        """Test renaming single column."""
+        result = RenameColumnsResult(
+            session_id="single-rename",
+            renamed={"old_col": "new_col"},
+            columns=["new_col", "other_col"],
+        )
+        assert len(result.renamed) == 1
+        assert result.renamed["old_col"] == "new_col"
+
+    def test_multiple_renames(self):
+        """Test renaming multiple columns."""
+        renames = {
+            "first_name": "fname",
+            "last_name": "lname",
+            "email_address": "email",
+        }
+        result = RenameColumnsResult(
+            session_id="multi-rename",
+            renamed=renames,
+            columns=["fname", "lname", "email", "id"],
+        )
+        assert len(result.renamed) == 3
+        assert all(new_name in result.columns for new_name in renames.values())
+
+    def test_empty_rename_map(self):
+        """Test with no columns renamed."""
+        result = RenameColumnsResult(
+            session_id="no-renames",
+            renamed={},
+            columns=["col1", "col2", "col3"],
+        )
+        assert len(result.renamed) == 0
+        assert len(result.columns) == 3
+
+    def test_serialization_roundtrip(self):
+        """Test serialization and deserialization."""
+        original = RenameColumnsResult(
+            session_id="serialize-test",
+            renamed={"old": "new"},
+            columns=["new", "other"],
+        )
+        data = original.model_dump()
+        restored = RenameColumnsResult(**data)
+        assert restored == original
