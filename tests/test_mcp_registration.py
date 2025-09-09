@@ -8,7 +8,6 @@ from src.databeak.tools import (
     mcp_io_tools,
     mcp_row_tools,
     mcp_system_tools,
-    mcp_validation_tools,
 )
 
 
@@ -23,7 +22,6 @@ class TestToolRegistration:
             mcp_data_tools.register_data_tools,
             mcp_row_tools.register_row_tools,
             mcp_analytics_tools.register_analytics_tools,
-            mcp_validation_tools.register_validation_tools,
             mcp_history_tools.register_history_tools,
         ]
 

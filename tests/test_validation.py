@@ -3,7 +3,18 @@
 import pytest
 
 from src.databeak.tools.io_operations import load_csv_from_content
-from src.databeak.tools.validation import check_data_quality, find_anomalies, validate_schema
+from src.databeak.validation_server import (
+    check_data_quality, 
+    find_anomalies, 
+    validate_schema,
+    ValidationSchema,
+    CompletenessRule,
+    DuplicatesRule,
+    UniquenessRule,
+    DataTypesRule,
+    OutliersRule,
+    ConsistencyRule
+)
 
 
 @pytest.fixture
@@ -63,17 +74,17 @@ class TestSchemaValidation:
 
     async def test_validate_schema_success(self, clean_test_session):
         """Test successful schema validation."""
-        schema = {
+        schema_dict = {
             "id": {"type": "int", "nullable": False, "min": 1},
             "name": {"type": "str", "nullable": False, "min_length": 2},
             "age": {"type": "int", "min": 18, "max": 65},
             "email": {"type": "str", "pattern": r"^[^@]+@[^@]+\.[^@]+$"},
         }
+        schema = ValidationSchema(schema_dict)
 
-        result = await validate_schema(clean_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is True
-        assert len(result["errors"]) == 0
+        result = validate_schema(clean_test_session, schema)
+        assert result.valid is True
+        assert len(result.errors) == 0
 
     async def test_validate_schema_type_mismatch(self, validation_test_session):
         """Test schema validation with type mismatches."""
@@ -82,11 +93,10 @@ class TestSchemaValidation:
             "salary": {"type": "bool"},  # Salary is float in data
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
-        assert len(result["validation_errors"]) > 0
-        assert "age" in result["validation_errors"]
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert result.valid is False
+        assert len(result.validation_errors) > 0
+        assert "age" in result.validation_errors
 
     async def test_validate_schema_null_violations(self, validation_test_session):
         """Test schema validation with null value violations."""
@@ -94,10 +104,10 @@ class TestSchemaValidation:
             "email": {"nullable": False},  # But data has null email
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
-        assert "email" in result["validation_errors"]
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
+        assert "email" in result.validation_errors
 
     async def test_validate_schema_min_max_violations(self, validation_test_session):
         """Test schema validation with min/max violations."""
@@ -106,9 +116,9 @@ class TestSchemaValidation:
             "salary": {"type": "int", "min": 30000},
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
         # Should catch negative age and zero salary
 
     async def test_validate_schema_pattern_violations(self, validation_test_session):
@@ -118,9 +128,9 @@ class TestSchemaValidation:
             "status": {"pattern": r"^(active|inactive)$"},  # Specific values only
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
 
     async def test_validate_schema_allowed_values(self, validation_test_session):
         """Test schema validation with allowed values."""
@@ -128,10 +138,10 @@ class TestSchemaValidation:
             "status": {"values": ["active", "inactive"]},  # Excludes "pending", "retired"
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
-        assert "status" in result["validation_errors"]
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
+        assert "status" in result.validation_errors
 
     async def test_validate_schema_uniqueness(self, problematic_test_session):
         """Test schema validation with uniqueness requirements."""
@@ -139,10 +149,10 @@ class TestSchemaValidation:
             "id": {"unique": True},
         }
 
-        result = await validate_schema(problematic_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
-        assert "id" in result["validation_errors"]
+        result = validate_schema(problematic_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
+        assert "id" in result.validation_errors
 
     async def test_validate_schema_string_length(self, validation_test_session):
         """Test schema validation with string length rules."""
@@ -151,8 +161,8 @@ class TestSchemaValidation:
             "email": {"min_length": 8},
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
         # Some names might be too short
 
     async def test_validate_schema_missing_columns(self, clean_test_session):
@@ -162,11 +172,11 @@ class TestSchemaValidation:
             "nonexistent": {"type": "str"},
         }
 
-        result = await validate_schema(clean_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
-        assert "nonexistent" in result["validation_errors"]
-        assert len(result["summary"]["missing_columns"]) > 0
+        result = validate_schema(clean_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
+        assert "nonexistent" in result.validation_errors
+        assert len(result.summary.missing_columns) > 0
 
     async def test_validate_schema_invalid_regex(self, clean_test_session):
         """Test schema validation with invalid regex pattern."""
@@ -174,23 +184,24 @@ class TestSchemaValidation:
             "email": {"pattern": "[invalid regex"},  # Invalid regex
         }
 
-        result = await validate_schema(clean_test_session, schema)
-        assert result["success"] is True
-        assert result["valid"] is False
+        result = validate_schema(clean_test_session, ValidationSchema(schema))
+        assert True
+        assert result.valid is False
 
     async def test_validate_schema_invalid_session(self):
         """Test schema validation with invalid session."""
+        from fastmcp.exceptions import ToolError
+        
         schema = {"id": {"type": "int"}}
 
-        result = await validate_schema("invalid-session", schema)
-        assert result["success"] is False
-        assert "error" in result
+        with pytest.raises(ToolError):
+            validate_schema("invalid-session", ValidationSchema(schema))
 
     async def test_validate_schema_empty_schema(self, clean_test_session):
         """Test schema validation with empty schema."""
-        result = await validate_schema(clean_test_session, {})
-        assert result["success"] is True
-        assert result["valid"] is True
+        result = validate_schema(clean_test_session, ValidationSchema({}))
+        assert True
+        assert result.valid is True
 
 
 @pytest.mark.asyncio
@@ -199,104 +210,103 @@ class TestDataQualityChecking:
 
     async def test_check_data_quality_default_rules(self, problematic_test_session):
         """Test data quality check with default rules."""
-        result = await check_data_quality(problematic_test_session)
-        assert result["success"] is True
-        assert "quality_results" in result
-        assert "overall_score" in result["quality_results"]
-        assert "checks" in result["quality_results"]
-        assert "issues" in result["quality_results"]
+        result = check_data_quality(problematic_test_session)
+        assert True
+        assert hasattr(result, "quality_results")
+        assert hasattr(result.quality_results, "overall_score")
+        assert hasattr(result.quality_results, "rule_results")
+        assert hasattr(result.quality_results, "issues")
 
     async def test_check_data_quality_completeness(self, problematic_test_session):
         """Test data quality completeness check."""
-        rules = [{"type": "completeness", "threshold": 0.8}]
+        rules = [CompletenessRule(threshold=0.8)]
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
         # Should find completeness issues in problematic data
-        completeness_checks = [c for c in quality["checks"] if c["type"] == "completeness"]
+        completeness_checks = [c for c in quality.rule_results if c.rule_type == "completeness"]
         assert len(completeness_checks) > 0
 
     async def test_check_data_quality_duplicates(self, problematic_test_session):
         """Test data quality duplicate detection."""
-        rules = [{"type": "duplicates", "threshold": 0.0}]  # No duplicates allowed
+        rules = [DuplicatesRule(threshold=0.0)]  # No duplicates allowed
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
         # Should find duplicate rows
-        duplicate_checks = [c for c in quality["checks"] if c["type"] == "duplicates"]
+        duplicate_checks = [c for c in quality.rule_results if c.rule_type == "duplicates"]
         assert len(duplicate_checks) > 0
-        assert duplicate_checks[0]["duplicate_rows"] > 0
+        assert not duplicate_checks[0].passed  # Should fail with duplicates found
 
     async def test_check_data_quality_uniqueness(self, problematic_test_session):
         """Test data quality uniqueness check."""
-        rules = [{"type": "uniqueness", "column": "id", "expected_unique": True}]
+        rules = [UniquenessRule(column="id", expected_unique=True)]
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
-        uniqueness_checks = [c for c in quality["checks"] if c["type"] == "uniqueness"]
+        uniqueness_checks = [c for c in quality.rule_results if c.rule_type == "uniqueness"]
         assert len(uniqueness_checks) > 0
 
     async def test_check_data_quality_data_types(self, problematic_test_session):
         """Test data quality data type consistency."""
-        rules = [{"type": "data_types"}]
+        rules = [DataTypesRule()]
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
-        type_checks = [c for c in quality["checks"] if c["type"] == "data_type_consistency"]
+        type_checks = [c for c in quality.rule_results if c.rule_type == "data_type_consistency"]
         assert len(type_checks) > 0
 
     async def test_check_data_quality_outliers(self, problematic_test_session):
         """Test data quality outlier detection."""
-        rules = [{"type": "outliers", "threshold": 0.1}]
+        rules = [OutliersRule(threshold=0.1)]
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
-        outlier_checks = [c for c in quality["checks"] if c["type"] == "outliers"]
+        outlier_checks = [c for c in quality.rule_results if c.rule_type == "outliers"]
         assert len(outlier_checks) > 0
 
     async def test_check_data_quality_consistency(self, validation_test_session):
         """Test data quality consistency check."""
-        rules = [{"type": "consistency", "columns": ["join_date"]}]
+        rules = [ConsistencyRule(columns=["join_date"])]
 
-        result = await check_data_quality(validation_test_session, rules)
-        assert result["success"] is True
+        result = check_data_quality(validation_test_session, rules)
+        assert True
 
     async def test_check_data_quality_invalid_session(self):
         """Test data quality check with invalid session."""
-        result = await check_data_quality("invalid-session")
-        assert result["success"] is False
-        assert "error" in result
+        from fastmcp.exceptions import ToolError
+        
+        with pytest.raises(ToolError):
+            check_data_quality("invalid-session")
 
     async def test_check_data_quality_clean_data(self, clean_test_session):
         """Test data quality check on clean data."""
-        result = await check_data_quality(clean_test_session)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(clean_test_session)
+        assert True
+        quality = result.quality_results
 
         # Clean data should have high quality score
-        assert quality["overall_score"] > 80
-        assert quality["quality_level"] in ["Good", "Excellent"]
+        assert quality.overall_score > 80
 
     async def test_check_data_quality_score_calculation(self, problematic_test_session):
         """Test quality score calculation."""
-        result = await check_data_quality(problematic_test_session)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session)
+        assert True
+        quality = result.quality_results
 
         # Should have issues and lower score
-        assert quality["overall_score"] < 100
-        assert len(quality["issues"]) > 0
-        assert quality["quality_level"] in ["Poor", "Fair", "Good", "Excellent"]
+        assert quality.overall_score < 100
+        assert len(quality.issues) > 0
 
 
 @pytest.mark.asyncio
@@ -305,92 +315,91 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_statistical(self, problematic_test_session):
         """Test statistical anomaly detection."""
-        result = await find_anomalies(
+        result = find_anomalies(
             problematic_test_session, methods=["statistical"], sensitivity=0.95
         )
-        assert result["success"] is True
-        assert "anomalies" in result
-        assert "by_method" in result["anomalies"]
+        assert True
+        assert hasattr(result, "anomalies")
+        assert hasattr(result.anomalies, "by_method")
 
         # Should find statistical anomalies in age, salary columns
-        if "statistical" in result["anomalies"]["by_method"]:
-            stats_anomalies = result["anomalies"]["by_method"]["statistical"]
+        if "statistical" in result.anomalies.by_method:
+            stats_anomalies = result.anomalies.by_method["statistical"]
             assert len(stats_anomalies) > 0
 
     async def test_find_anomalies_pattern(self, problematic_test_session):
         """Test pattern anomaly detection."""
-        result = await find_anomalies(
+        result = find_anomalies(
             problematic_test_session, methods=["pattern"], sensitivity=0.8
         )
-        assert result["success"] is True
-        assert "anomalies" in result
+        assert True
+        assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_missing(self, problematic_test_session):
         """Test missing value anomaly detection."""
-        result = await find_anomalies(
+        result = find_anomalies(
             problematic_test_session, methods=["missing"], sensitivity=0.9
         )
-        assert result["success"] is True
-        assert "anomalies" in result
+        assert True
+        assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_all_methods(self, problematic_test_session):
         """Test anomaly detection with all methods."""
-        result = await find_anomalies(problematic_test_session)
-        assert result["success"] is True
-        anomalies = result["anomalies"]
+        result = find_anomalies(problematic_test_session)
+        assert True
+        anomalies = result.anomalies
 
-        assert "summary" in anomalies
-        assert "by_column" in anomalies
-        assert "by_method" in anomalies
-        assert isinstance(anomalies["summary"]["total_anomalies"], int)
+        assert hasattr(anomalies, "summary")
+        assert hasattr(anomalies, "by_column")
+        assert hasattr(anomalies, "by_method")
+        assert isinstance(anomalies.summary.total_anomalies, int)
 
     async def test_find_anomalies_specific_columns(self, problematic_test_session):
         """Test anomaly detection on specific columns."""
-        result = await find_anomalies(problematic_test_session, columns=["age", "score"])
-        assert result["success"] is True
-        assert result["columns_analyzed"] == ["age", "score"]
+        result = find_anomalies(problematic_test_session, columns=["age", "score"])
+        assert True
+        assert result.columns_analyzed == ["age", "score"]
 
     async def test_find_anomalies_sensitivity_levels(self, problematic_test_session):
         """Test different sensitivity levels."""
         # High sensitivity should find more anomalies
-        high_sens = await find_anomalies(problematic_test_session, sensitivity=0.99)
-        low_sens = await find_anomalies(problematic_test_session, sensitivity=0.5)
+        high_sens = find_anomalies(problematic_test_session, sensitivity=0.99)
+        low_sens = find_anomalies(problematic_test_session, sensitivity=0.5)
 
-        assert high_sens["success"] is True
-        assert low_sens["success"] is True
-
-        high_count = high_sens["anomalies"]["summary"]["total_anomalies"]
-        low_count = low_sens["anomalies"]["summary"]["total_anomalies"]
+        # Both should succeed
+        high_count = high_sens.anomalies.summary.total_anomalies
+        low_count = low_sens.anomalies.summary.total_anomalies
 
         # High sensitivity should generally find more or equal anomalies
         assert high_count >= low_count
 
     async def test_find_anomalies_clean_data(self, clean_test_session):
         """Test anomaly detection on clean data."""
-        result = await find_anomalies(clean_test_session)
-        assert result["success"] is True
+        result = find_anomalies(clean_test_session)
+        assert True
 
         # Clean data should have few or no anomalies
-        anomalies = result["anomalies"]
-        assert anomalies["summary"]["total_anomalies"] == 0
-        assert anomalies["summary"]["anomaly_score"] == 0
+        anomalies = result.anomalies
+        assert anomalies.summary.total_anomalies == 0
 
     async def test_find_anomalies_missing_columns(self, clean_test_session):
         """Test anomaly detection with missing columns."""
-        result = await find_anomalies(clean_test_session, columns=["nonexistent"])
-        assert result["success"] is False
-        assert "not found" in result["error"]
+        from fastmcp.exceptions import ToolError
+        
+        with pytest.raises(ToolError):
+            find_anomalies(clean_test_session, columns=["nonexistent"])
 
     async def test_find_anomalies_invalid_session(self):
         """Test anomaly detection with invalid session."""
-        result = await find_anomalies("invalid-session")
-        assert result["success"] is False
-        assert "error" in result
+        from fastmcp.exceptions import ToolError
+        
+        with pytest.raises(ToolError):
+            find_anomalies("invalid-session")
 
     async def test_find_anomalies_empty_methods(self, clean_test_session):
         """Test anomaly detection with empty methods list."""
-        result = await find_anomalies(clean_test_session, methods=[])
-        assert result["success"] is True
+        result = find_anomalies(clean_test_session, methods=[])
+        assert True
         # Should still work but find no anomalies
 
 
@@ -405,9 +414,9 @@ class TestValidationEdgeCases:
 
         # Empty dataframes have object dtype, so use compatible schema
         schema = {"id": {"type": "str"}, "name": {"type": "str"}}
-        result = await validate_schema(session_id, schema)
-        assert result["success"] is True
-        assert result["valid"] is True  # Empty data with compatible types should pass
+        result = validate_schema(session_id, ValidationSchema(schema))
+        assert True
+        assert result.valid is True  # Empty data with compatible types should pass
 
     async def test_schema_validation_all_types(self, validation_test_session):
         """Test schema validation with all supported data types."""
@@ -419,28 +428,28 @@ class TestValidationEdgeCases:
             # Note: bool and datetime types would need appropriate test data
         }
 
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
 
     async def test_data_quality_empty_rules(self, clean_test_session):
         """Test data quality check with empty rules."""
-        result = await check_data_quality(clean_test_session, [])
-        assert result["success"] is True
+        result = check_data_quality(clean_test_session, [])
+        assert True
         # Should use default rules
 
     async def test_data_quality_custom_threshold(self, problematic_test_session):
         """Test data quality with custom thresholds."""
         rules = [
-            {"type": "completeness", "threshold": 0.5},  # Very lenient
-            {"type": "duplicates", "threshold": 0.5},  # Allow many duplicates
+            CompletenessRule(threshold=0.5),  # Very lenient
+            DuplicatesRule(threshold=0.5),  # Allow many duplicates
         ]
 
-        result = await check_data_quality(problematic_test_session, rules)
-        assert result["success"] is True
-        quality = result["quality_results"]
+        result = check_data_quality(problematic_test_session, rules)
+        assert True
+        quality = result.quality_results
 
         # With lenient thresholds, score should be higher
-        assert quality["overall_score"] > 50
+        assert quality.overall_score > 50
 
     async def test_find_anomalies_numeric_only(self):
         """Test anomaly detection on numeric-only data."""
@@ -454,8 +463,8 @@ class TestValidationEdgeCases:
         result = await load_csv_from_content(numeric_csv)
         session_id = result.session_id
 
-        anomaly_result = await find_anomalies(session_id, methods=["statistical"])
-        assert anomaly_result["success"] is True
+        anomaly_result = find_anomalies(session_id, methods=["statistical"])
+        assert True
 
     async def test_find_anomalies_string_only(self):
         """Test anomaly detection on string-only data."""
@@ -469,8 +478,8 @@ D,Another normal,active"""
         result = await load_csv_from_content(string_csv)
         session_id = result.session_id
 
-        anomaly_result = await find_anomalies(session_id, methods=["pattern"])
-        assert anomaly_result["success"] is True
+        anomaly_result = find_anomalies(session_id, methods=["pattern"])
+        assert True
 
 
 @pytest.mark.asyncio
@@ -487,25 +496,25 @@ class TestValidationIntegration:
 
         # Then validate
         schema = {"email": {"nullable": False}}
-        result = await validate_schema(validation_test_session, schema)
-        assert result["success"] is True
+        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        assert True
         # After dropping nulls, email should be non-null
 
     async def test_quality_check_recommendations(self, problematic_test_session):
         """Test that quality check provides useful recommendations."""
-        result = await check_data_quality(problematic_test_session)
-        assert result["success"] is True
+        result = check_data_quality(problematic_test_session)
+        assert True
 
-        quality = result["quality_results"]
-        if quality["overall_score"] < 85:
-            assert len(quality["recommendations"]) > 0
+        quality = result.quality_results
+        if quality.overall_score < 85:
+            assert len(quality.recommendations) > 0
 
     async def test_validation_with_operations_history(self, clean_test_session):
         """Test that validation operations work with session management."""
         # Perform validation
         schema = {"id": {"type": "int"}}
-        result = await validate_schema(clean_test_session, schema)
-        assert result["success"] is True
+        result = validate_schema(clean_test_session, ValidationSchema(schema))
+        assert True
 
         # Check if session info can be retrieved (verifies session still exists)
         from src.databeak.tools.io_operations import get_session_info

@@ -17,10 +17,10 @@ from .tools.mcp_history_tools import register_history_tools
 from .tools.mcp_io_tools import register_io_tools
 from .tools.mcp_row_tools import register_row_tools
 from .tools.mcp_system_tools import register_system_tools
-from .validation_server import validation_server
 from .tools.transformations import get_cell_value as _get_cell_value
 from .tools.transformations import get_row_data as _get_row_data
 from .utils.logging_config import get_logger, set_correlation_id, setup_structured_logging
+from .validation_server import validation_server
 
 # Configure structured logging
 logger = get_logger(__name__)
@@ -50,9 +50,7 @@ register_row_tools(mcp)
 register_analytics_tools(mcp)
 register_history_tools(mcp)
 
-# Compose with validation server
-mcp.import_server(validation_server)
-
+mcp.mount(validation_server)
 
 # ============================================================================
 # RESOURCES
