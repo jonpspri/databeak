@@ -1,3 +1,4 @@
+---
 # Pre-commit hooks for code quality and consistency
 # Install: uv add --dev pre-commit && uv run pre-commit install
 # Run manually: uv run pre-commit run --all-files
@@ -13,7 +14,8 @@ repos:
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
-        args: [optional, feat, fix, docs, test, refactor, chore, ci, build]
+        args: [optional, feat, fix, docs, test, refactor, chore, ci,
+               build]
 
   # Prevent direct commits to main branch
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -53,7 +55,7 @@ repos:
         args: ['--pytest-test-first']
       - id: trailing-whitespace
 
-  # Python linting and formatting with Ruff (replaces Black, isort, autoflake, pyupgrade)
+  # Python linting and formatting with Ruff (replaces Black, isort, etc.)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.7.4
     hooks:
@@ -85,6 +87,13 @@ repos:
         args: ['-r', 'src/', '-ll', '-x', 'tests/']
         pass_filenames: false
 
+  # YAML linting with yamllint
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: [--format, parsable, --strict]
+
   # Markdown formatting and linting (Python-based)
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
@@ -100,7 +109,7 @@ repos:
     rev: v0.9.32
     hooks:
       - id: pymarkdown
-        args: [--config=.pymarkdownlnt, scan]
+        args: ["--config", ".pymarkdownlnt", "scan"]
         # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
 
@@ -113,8 +122,6 @@ repos:
           - --in-place
           - --wrap-summaries=100
           - --wrap-descriptions=100
-
-
 
 ci:
   autofix_prs: true
