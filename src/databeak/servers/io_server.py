@@ -1,14 +1,15 @@
 """Standalone I/O server for DataBeak using FastMCP server composition.
 
-This module provides a complete I/O server implementation following DataBeak's modular
-server architecture pattern. It includes comprehensive CSV loading, export, and session
-management capabilities with robust error handling and AI-optimized documentation.
+This module provides a complete I/O server implementation following DataBeak's modular server
+architecture pattern. It includes comprehensive CSV loading, export, and session management
+capabilities with robust error handling and AI-optimized documentation.
 """
 
 from __future__ import annotations
 
 import logging
 import tempfile
+import uuid
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
@@ -26,6 +27,11 @@ from ..tools.data_operations import create_data_preview_with_indices
 from ..utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
+
+# Configuration constants
+MAX_FILE_SIZE_MB = 500  # Maximum file size in MB
+MAX_MEMORY_USAGE_MB = 1000  # Maximum memory usage in MB for DataFrames
+MAX_ROWS = 1_000_000  # Maximum number of rows to prevent memory issues
 
 # ============================================================================
 # PYDANTIC MODELS FOR I/O OPERATIONS
@@ -257,6 +263,7 @@ async def load_csv(
             await ctx.report_progress(0.3)
 
         # Build pandas read_csv parameters
+        # Using dict[str, Any] due to pandas read_csv's complex overloaded signature
         read_params: dict[str, Any] = {
             "filepath_or_buffer": validated_path,
             "encoding": encoding,
@@ -272,14 +279,44 @@ async def load_csv(
 
         # Load CSV with comprehensive error handling
         try:
-            df = pd.read_csv(**read_params)
+            # Add memory-conscious parameters for large files
+            df = pd.read_csv(
+                **read_params, chunksize=None
+            )  # Keep as None for now but ready for streaming
+
+            # Check memory usage and row count limits
+            if len(df) > MAX_ROWS:
+                raise ToolError(
+                    f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+                )
+
+            memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+            if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                raise ToolError(
+                    f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                )
         except UnicodeDecodeError as e:
-            # Try alternative encodings
+            # Try alternative encodings with proper error logging
+            df = None
+            last_error = e
             for alt_encoding in ["latin1", "cp1252", "iso-8859-1"]:
                 if alt_encoding != encoding:
                     try:
                         read_params["encoding"] = alt_encoding
                         df = pd.read_csv(**read_params)
+
+                        # Apply same memory checks to fallback encoding
+                        if len(df) > MAX_ROWS:
+                            raise ToolError(
+                                f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+                            )
+
+                        memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+                        if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                            raise ToolError(
+                                f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                            )
+
                         logger.warning(
                             f"Used fallback encoding {alt_encoding} instead of {encoding}"
                         )
@@ -288,10 +325,24 @@ async def load_csv(
                                 f"Used fallback encoding {alt_encoding} due to encoding error"
                             )
                         break
-                    except Exception:
+                    except UnicodeDecodeError as fallback_error:
+                        last_error = fallback_error
+                        continue
+                    except Exception as other_error:
+                        # Log specific error but continue trying other encodings
+                        logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
                         continue
             else:
-                raise ToolError(f"Encoding error: {e}. Try 'latin1' or 'cp1252' encoding.") from e
+                # All encodings failed
+                raise ToolError(
+                    f"Encoding error with all attempted encodings: {last_error}. "
+                    "Try specifying a different encoding or check file format."
+                ) from last_error
+
+            if df is None:
+                raise ToolError(
+                    f"Failed to load CSV with any encoding: {last_error}"
+                ) from last_error
 
         if ctx:
             await ctx.report_progress(0.8)
@@ -320,10 +371,26 @@ async def load_csv(
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
 
-    except Exception as e:
-        logger.error(f"Failed to load CSV: {e}")
+    except OSError as e:
+        logger.error(f"File I/O error while loading CSV: {e}")
         if ctx:
-            await ctx.error(f"Failed to load CSV: {e!s}")
+            await ctx.error(f"File access error: {e!s}")
+        raise ToolError(f"File access error: {e}") from e
+    except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
+        logger.error(f"CSV parsing error: {e}")
+        if ctx:
+            await ctx.error(f"CSV format error: {e!s}")
+        raise ToolError(f"CSV format error: {e}") from e
+    except MemoryError as e:
+        logger.error(f"Insufficient memory to load CSV: {e}")
+        if ctx:
+            await ctx.error("File too large - insufficient memory")
+        raise ToolError("File too large - insufficient memory") from e
+    except Exception as e:
+        # Fallback for unexpected errors - more specific logging
+        logger.error(f"Unexpected error while loading CSV: {type(e).__name__}: {e}")
+        if ctx:
+            await ctx.error(f"Unexpected error: {e!s}")
         raise ToolError(f"Failed to load CSV: {e}") from e
 
 
@@ -436,10 +503,25 @@ async def load_csv_from_url(
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
 
-    except Exception as e:
-        logger.error(f"Failed to load CSV from URL: {e}")
+    except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
+        logger.error(f"CSV parsing error from URL: {e}")
         if ctx:
-            await ctx.error(f"Failed to load CSV from URL: {e!s}")
+            await ctx.error(f"CSV format error from URL: {e!s}")
+        raise ToolError(f"CSV format error from URL: {e}") from e
+    except OSError as e:
+        logger.error(f"Network/file error while loading from URL: {e}")
+        if ctx:
+            await ctx.error(f"Network error: {e!s}")
+        raise ToolError(f"Network error: {e}") from e
+    except MemoryError as e:
+        logger.error(f"Insufficient memory to load CSV from URL: {e}")
+        if ctx:
+            await ctx.error("Downloaded file too large - insufficient memory")
+        raise ToolError("Downloaded file too large - insufficient memory") from e
+    except Exception as e:
+        logger.error(f"Unexpected error while loading CSV from URL: {type(e).__name__}: {e}")
+        if ctx:
+            await ctx.error(f"Unexpected error: {e!s}")
         raise ToolError(f"Failed to load CSV from URL: {e}") from e
 
 
@@ -618,10 +700,12 @@ async def export_csv(
             await ctx.info(f"Exporting data in {format_enum.value} format")
             await ctx.report_progress(0.1)
 
-        # Generate file path if not provided
+        # Generate file path if not provided with collision prevention
         if not file_path:
             timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            filename = f"export_{session_id[:8]}_{timestamp}"
+            # Add UUID suffix to prevent collisions in high-concurrency scenarios
+            uuid_suffix = uuid.uuid4().hex[:6]
+            filename = f"export_{session_id[:8]}_{timestamp}_{uuid_suffix}"
 
             # Determine extension based on format
             extensions = {
@@ -634,7 +718,17 @@ async def export_csv(
                 ExportFormat.MARKDOWN: ".md",
             }
 
-            file_path = str(Path(tempfile.gettempdir()) / (filename + extensions[format_enum]))
+            temp_dir = Path(tempfile.gettempdir())
+            file_path = str(temp_dir / (filename + extensions[format_enum]))
+
+            # Final collision check and retry if needed
+            counter = 1
+            original_path = file_path
+            while Path(file_path).exists() and counter < 10:
+                base_name = Path(original_path).stem
+                extension = Path(original_path).suffix
+                file_path = str(temp_dir / f"{base_name}_{counter}{extension}")
+                counter += 1
 
         path_obj = Path(file_path)
         df = session.data_session.df
