@@ -1,37 +1,154 @@
-"""Data validation tools for CSV data quality checks."""
+"""Standalone validation server for DataBeak using FastMCP server composition."""
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import pandas as pd
+from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field, RootModel, field_validator
 
-from ..models.csv_session import get_session_manager
-from ..models.data_models import OperationType
-from ..models.tool_responses import (
-    AnomalyResults,
-    AnomalySummary,
-    DataQualityResult,
-    FindAnomaliesResult,
-    MissingAnomaly,
-    PatternAnomaly,
-    QualityIssue,
-    QualityResults,
-    QualityRuleResult,
-    StatisticalAnomaly,
-    ValidateSchemaResult,
-    ValidationError,
-    ValidationSummary,
-)
+# Import session management from the main package
+from .models.csv_session import get_session_manager
+from .models.data_models import OperationType
 
 if TYPE_CHECKING:
-    from fastmcp import Context
+    pass
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# PYDANTIC MODELS
+# ============================================================================
+
+
+class ValidationError(BaseModel):
+    """Individual validation error details."""
+    error: str
+    message: str
+    actual_type: str | None = None
+    null_count: int | None = None
+    null_indices: list[int] | None = None
+    violation_count: int | None = None
+    min_found: float | None = None
+    max_found: float | None = None
+    sample_violations: list[str] | None = None
+    invalid_values: list[str] | None = None
+    duplicate_count: int | None = None
+
+
+class ValidationSummary(BaseModel):
+    """Summary of validation results."""
+    total_columns: int
+    valid_columns: int
+    invalid_columns: int
+    missing_columns: list[str]
+    extra_columns: list[str]
+
+
+class ValidateSchemaResult(BaseModel):
+    """Response model for schema validation operations."""
+    session_id: str
+    valid: bool
+    errors: list[ValidationError]
+    summary: ValidationSummary
+    validation_errors: dict[str, list[ValidationError]]
+
+
+class QualityIssue(BaseModel):
+    """Individual quality issue details."""
+    type: str
+    severity: str
+    column: str | None = None
+    message: str
+    affected_rows: int
+    metric_value: float
+    threshold: float
+
+
+class QualityRuleResult(BaseModel):
+    """Result of a single quality rule check."""
+    rule_type: str
+    passed: bool
+    score: float
+    issues: list[QualityIssue]
+    column: str | None = None
+
+
+class QualityResults(BaseModel):
+    """Comprehensive quality check results."""
+    overall_score: float
+    passed_rules: int
+    failed_rules: int
+    total_issues: int
+    rule_results: list[QualityRuleResult]
+    issues: list[QualityIssue]
+    recommendations: list[str]
+
+
+class DataQualityResult(BaseModel):
+    """Response model for data quality check operations."""
+    session_id: str
+    quality_results: QualityResults
+
+
+class StatisticalAnomaly(BaseModel):
+    """Statistical anomaly detection result."""
+    anomaly_count: int
+    anomaly_indices: list[int]
+    anomaly_values: list[float]
+    mean: float
+    std: float
+    lower_bound: float
+    upper_bound: float
+
+
+class PatternAnomaly(BaseModel):
+    """Pattern-based anomaly detection result."""
+    anomaly_count: int
+    anomaly_indices: list[int]
+    sample_values: list[str]
+    expected_patterns: list[str]
+
+
+class MissingAnomaly(BaseModel):
+    """Missing value anomaly detection result."""
+    missing_count: int
+    missing_ratio: float
+    missing_indices: list[int]
+    sequential_clusters: int
+    pattern: str
+
+
+class AnomalySummary(BaseModel):
+    """Summary of anomaly detection results."""
+    total_anomalies: int
+    affected_rows: int
+    affected_columns: list[str]
+
+
+class AnomalyResults(BaseModel):
+    """Comprehensive anomaly detection results."""
+    summary: AnomalySummary
+    by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]
+    by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]]
+
+
+class FindAnomaliesResult(BaseModel):
+    """Response model for anomaly detection operations."""
+    session_id: str
+    anomalies: AnomalyResults
+    columns_analyzed: list[str]
+    methods_used: list[str]
+    sensitivity: float
+
+
+# ============================================================================
+# VALIDATION RULE MODELS
+# ============================================================================
 
 
 class ColumnValidationRules(BaseModel):
@@ -64,32 +181,16 @@ class ColumnValidationRules(BaseModel):
 
 
 class ValidationSchema(RootModel[dict[str, ColumnValidationRules]]):
-    """Schema definition for data validation.
-    
-    Example:
-        {
-            "column_name": {
-                "type": "int",
-                "nullable": False,
-                "min": 0,
-                "max": 100,
-                "pattern": "^[A-Z]+$",
-                "values": ["A", "B", "C"],
-                "unique": True
-            }
-        }
-    """
+    """Schema definition for data validation."""
 
 
 class QualityRule(BaseModel):
     """Base class for quality rules."""
-    
     type: str
 
 
 class CompletenessRule(QualityRule):
     """Rule for checking data completeness."""
-    
     type: Literal["completeness"] = "completeness"
     threshold: float = Field(0.95, ge=0.0, le=1.0)
     columns: list[str] | None = None
@@ -97,7 +198,6 @@ class CompletenessRule(QualityRule):
 
 class DuplicatesRule(QualityRule):
     """Rule for checking duplicate rows."""
-    
     type: Literal["duplicates"] = "duplicates"
     threshold: float = Field(0.01, ge=0.0, le=1.0)
     columns: list[str] | None = None
@@ -105,7 +205,6 @@ class DuplicatesRule(QualityRule):
 
 class UniquenessRule(QualityRule):
     """Rule for checking column uniqueness."""
-    
     type: Literal["uniqueness"] = "uniqueness"
     column: str
     expected_unique: bool = True
@@ -113,20 +212,17 @@ class UniquenessRule(QualityRule):
 
 class DataTypesRule(QualityRule):
     """Rule for checking data type consistency."""
-    
     type: Literal["data_types"] = "data_types"
 
 
 class OutliersRule(QualityRule):
     """Rule for checking outliers in numeric columns."""
-    
     type: Literal["outliers"] = "outliers"
     threshold: float = Field(0.05, ge=0.0, le=1.0)
 
 
 class ConsistencyRule(QualityRule):
     """Rule for checking data consistency between columns."""
-    
     type: Literal["consistency"] = "consistency"
     columns: list[str] = Field(default_factory=list)
 
@@ -142,7 +238,6 @@ def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missin
 
 class AnomalyDetectionParams(BaseModel):
     """Parameters for anomaly detection."""
-    
     columns: list[str] | None = None
     sensitivity: float = Field(0.95, ge=0.0, le=1.0)
     methods: list[Literal["statistical", "pattern", "missing"]] = Field(
@@ -150,32 +245,17 @@ class AnomalyDetectionParams(BaseModel):
     )
 
 
+# ============================================================================
+# VALIDATION LOGIC
+# ============================================================================
+
+
 async def validate_schema(
     session_id: str,
     schema: ValidationSchema,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ValidateSchemaResult:
-    """Validate data against a schema definition.
-
-    Args:
-        session_id: Session identifier
-        schema: Schema definition with column rules
-                Example: {
-                    "column_name": {
-                        "type": "int",  # int, float, str, bool, datetime
-                        "nullable": False,
-                        "min": 0,
-                        "max": 100,
-                        "pattern": "^[A-Z]+$",
-                        "values": ["A", "B", "C"],  # allowed values
-                        "unique": True
-                    }
-                }
-        ctx: FastMCP context
-
-    Returns:
-        ValidateSchemaResult with validation results
-    """
+    """Validate data against a schema definition."""
     try:
         manager = get_session_manager()
         session = manager.get_session(session_id)
@@ -420,21 +500,7 @@ async def check_data_quality(
     rules: list[QualityRuleType] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> DataQualityResult:
-    """Check data quality based on predefined or custom rules.
-
-    Args:
-        session_id: Session identifier
-        rules: Custom quality rules to check. If None, uses default rules.
-               Example: [
-                   {"type": "completeness", "threshold": 0.95},
-                   {"type": "uniqueness", "column": "id"},
-                   {"type": "consistency", "columns": ["start_date", "end_date"]}
-               ]
-        ctx: FastMCP context
-
-    Returns:
-        DataQualityResult with quality check results
-    """
+    """Check data quality based on predefined or custom rules."""
     try:
         manager = get_session_manager()
         session = manager.get_session(session_id)
@@ -768,18 +834,7 @@ async def find_anomalies(
     methods: list[Literal["statistical", "pattern", "missing"]] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> FindAnomaliesResult:
-    """Find anomalies in the data using multiple detection methods.
-
-    Args:
-        session_id: Session identifier
-        columns: Columns to check (None for all)
-        sensitivity: Detection sensitivity (0.0 to 1.0, higher = more sensitive)
-        methods: Detection methods to use (default: ["statistical", "pattern"])
-        ctx: FastMCP context
-
-    Returns:
-        FindAnomaliesResult with anomaly detection results
-    """
+    """Find anomalies in the data using multiple detection methods."""
     try:
         manager = get_session_manager()
         session = manager.get_session(session_id)
@@ -1019,3 +1074,106 @@ async def find_anomalies(
     except Exception as e:
         logger.error(f"Error finding anomalies: {e!s}")
         raise ToolError(f"Error finding anomalies: {e!s}") from e
+
+
+# ============================================================================
+# FASTMCP SERVER SETUP
+# ============================================================================
+
+
+# Create validation server
+validation_server = FastMCP("DataBeak-Validation", instructions="Data validation server for DataBeak")
+
+
+@validation_server.tool
+async def validate_schema_tool(
+    session_id: str, 
+    schema: dict[str, dict[str, Any]], 
+    ctx: Context | None = None
+) -> ValidateSchemaResult:
+    """Validate data against a schema definition.
+    
+    Args:
+        session_id: Session identifier
+        schema: Schema definition with column rules
+        ctx: FastMCP context
+        
+    Returns:
+        ValidateSchemaResult with validation results
+    """
+    # Convert dict to ValidationSchema for proper type validation
+    schema_model = ValidationSchema(schema)
+    return await validate_schema(session_id, schema_model, ctx)
+
+
+@validation_server.tool
+async def check_data_quality_tool(
+    session_id: str,
+    rules: list[dict[str, Any]] | None = None,
+    ctx: Context | None = None,
+) -> DataQualityResult:
+    """Check data quality based on predefined or custom rules.
+    
+    Args:
+        session_id: Session identifier
+        rules: Custom quality rules to check. If None, uses default rules.
+        ctx: FastMCP context
+        
+    Returns:
+        DataQualityResult with quality check results
+    """
+    if rules is None:
+        parsed_rules = None
+    else:
+        parsed_rules: list[QualityRuleType] = []
+        for rule_dict in rules:
+            rule_type = rule_dict.get("type")
+            if rule_type == "completeness":
+                parsed_rules.append(CompletenessRule(**rule_dict))
+            elif rule_type == "duplicates":
+                parsed_rules.append(DuplicatesRule(**rule_dict))
+            elif rule_type == "uniqueness":
+                parsed_rules.append(UniquenessRule(**rule_dict))
+            elif rule_type == "data_types":
+                parsed_rules.append(DataTypesRule(**rule_dict))
+            elif rule_type == "outliers":
+                parsed_rules.append(OutliersRule(**rule_dict))
+            elif rule_type == "consistency":
+                parsed_rules.append(ConsistencyRule(**rule_dict))
+            else:
+                raise ValueError(f"Unknown rule type: {rule_type}")
+    return await check_data_quality(session_id, parsed_rules, ctx)
+
+
+@validation_server.tool
+async def find_anomalies_tool(
+    session_id: str,
+    columns: list[str] | None = None,
+    sensitivity: float = 0.95,
+    methods: list[str] | None = None,
+    ctx: Context | None = None,
+) -> FindAnomaliesResult:
+    """Find anomalies in the data using multiple detection methods.
+    
+    Args:
+        session_id: Session identifier
+        columns: Columns to check (None for all)
+        sensitivity: Detection sensitivity (0.0 to 1.0, higher = more sensitive)
+        methods: Detection methods to use (default: ["statistical", "pattern", "missing"])
+        ctx: FastMCP context
+        
+    Returns:
+        FindAnomaliesResult with anomaly detection results
+    """
+    # Convert and validate method strings
+    if methods is not None:
+        valid_methods = []
+        for method in methods:
+            if method in ["statistical", "pattern", "missing"]:
+                valid_methods.append(method)  # type: ignore[arg-type]
+            else:
+                raise ValueError(f"Invalid method: {method}")
+        typed_methods = valid_methods  # type: ignore[assignment]
+    else:
+        typed_methods = None
+    return await find_anomalies(session_id, columns, sensitivity, typed_methods, ctx)
