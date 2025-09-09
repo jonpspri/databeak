@@ -85,6 +85,13 @@ repos:
         args: ['-r', 'src/', '-ll', '-x', 'tests/']
         pass_filenames: false
 
+  # YAML linting with yamllint
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+        args: [--format, parsable, --strict]
+
   # Markdown formatting and linting (Python-based)
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
