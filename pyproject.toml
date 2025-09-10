@@ -65,6 +65,8 @@ dependencies = [
     "pytz>=2024.2",
     "pydantic-settings>=2.10.1",
     "psutil>=7.0.0",
+    "chardet>=5.2.0",
+    "types-chardet>=5.0.4.6",
 ]
 
 [project.optional-dependencies]

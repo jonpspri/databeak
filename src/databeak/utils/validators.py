@@ -35,8 +35,10 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
         if path.suffix.lower() not in valid_extensions:
             return False, f"Invalid file extension. Supported: {valid_extensions}"
 
-        # Check file size (max 1GB)
+        # Check file size (configurable in io_server.py)
         if must_exist:
+            # Use a conservative 1GB limit here since this is a utility function
+            # Specific modules can implement their own lower limits
             max_size = 1024 * 1024 * 1024  # 1GB
             if path.stat().st_size > max_size:
                 return False, "File too large. Maximum size: 1GB"

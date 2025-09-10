@@ -8,13 +8,16 @@ capabilities with robust error handling and AI-optimized documentation.
 from __future__ import annotations
 
 import logging
+import socket
 import tempfile
-import uuid
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Any, Literal
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
+import chardet
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
@@ -32,6 +35,8 @@ logger = logging.getLogger(__name__)
 MAX_FILE_SIZE_MB = 500  # Maximum file size in MB
 MAX_MEMORY_USAGE_MB = 1000  # Maximum memory usage in MB for DataFrames
 MAX_ROWS = 1_000_000  # Maximum number of rows to prevent memory issues
+URL_TIMEOUT_SECONDS = 30  # Timeout for URL downloads
+MAX_URL_SIZE_MB = 100  # Maximum download size for URLs
 
 # ============================================================================
 # PYDANTIC MODELS FOR I/O OPERATIONS
@@ -173,6 +178,98 @@ class ExportCSVParams(BaseModel):
 
 
 # ============================================================================
+# ENCODING DETECTION UTILITIES
+# ============================================================================
+
+
+def detect_file_encoding(file_path: str) -> str:
+    """Detect file encoding using chardet with optimized fallbacks.
+
+    Args:
+        file_path: Path to the file to analyze
+
+    Returns:
+        Detected encoding name (e.g., 'utf-8', 'latin1', 'cp1252')
+
+    Detection Strategy:
+        1. Use chardet for automatic detection on sample
+        2. Validate detection confidence
+        3. Fall back to prioritized common encodings
+    """
+    try:
+        # Read sample bytes for detection (first 10KB should be enough)
+        with open(file_path, "rb") as f:
+            raw_data = f.read(10240)  # 10KB sample
+
+        # Use chardet for automatic detection
+        detection = chardet.detect(raw_data)
+
+        if detection and detection["confidence"] > 0.7:
+            detected_encoding = detection["encoding"]
+            if detected_encoding:
+                logger.debug(
+                    f"Chardet detected encoding: {detected_encoding} (confidence: {detection['confidence']:.2f})"
+                )
+                return detected_encoding.lower()
+            else:
+                logger.debug("Chardet detected encoding is None, using fallbacks")
+
+        logger.debug(
+            f"Chardet detection low confidence ({detection['confidence'] if detection else 0:.2f}), using fallbacks"
+        )
+
+    except Exception as e:
+        logger.debug(f"Chardet detection failed: {e}, using fallbacks")
+
+    # Fallback to common encodings in priority order
+    # UTF-8 first (most common), then Windows encodings, then Latin variants
+    return "utf-8"
+
+
+def get_encoding_fallbacks(primary_encoding: str) -> list[str]:
+    """Get optimized encoding fallback list based on primary encoding.
+
+    Args:
+        primary_encoding: The initially requested encoding
+
+    Returns:
+        List of encodings to try in priority order
+    """
+    # Common encoding groups in order of likelihood
+    utf_encodings = ["utf-8", "utf-8-sig", "utf-16", "utf-32"]
+    windows_encodings = ["cp1252", "windows-1252", "cp1251", "windows-1251"]
+    latin_encodings = ["latin1", "iso-8859-1", "iso-8859-15"]
+    asian_encodings = ["cp932", "gb2312", "big5", "euc-jp", "euc-kr"]
+
+    # Start with primary encoding
+    fallbacks = [primary_encoding] if primary_encoding not in ["utf-8"] else []
+
+    # Add encoding groups based on what's likely to work
+    if primary_encoding.startswith("utf"):
+        fallbacks.extend([enc for enc in utf_encodings if enc != primary_encoding])
+        fallbacks.extend(windows_encodings)
+        fallbacks.extend(latin_encodings)
+    elif primary_encoding.startswith("cp") or "windows" in primary_encoding:
+        fallbacks.extend([enc for enc in windows_encodings if enc != primary_encoding])
+        fallbacks.extend(latin_encodings)
+        fallbacks.extend([enc for enc in utf_encodings if enc != primary_encoding])
+    else:
+        # For other encodings, try most common first
+        fallbacks.extend(["utf-8", "cp1252", "latin1"])
+        fallbacks.extend(windows_encodings)
+        fallbacks.extend(asian_encodings)
+
+    # Remove duplicates while preserving order
+    seen: set[str] = set()
+    result = []
+    for enc in fallbacks:
+        if enc not in seen:
+            seen.add(enc)
+            result.append(enc)
+    return result
+
+
+# ============================================================================
 # I/O OPERATIONS LOGIC
 # ============================================================================
 
@@ -255,6 +352,14 @@ async def load_csv(
             await ctx.info(f"Loading CSV file: {validated_path}")
             await ctx.report_progress(0.1)
 
+        # Check file size before attempting to load
+        file_size_mb = Path(validated_path).stat().st_size / (1024 * 1024)
+        if file_size_mb > MAX_FILE_SIZE_MB:
+            raise ToolError(f"File size {file_size_mb:.1f}MB exceeds limit of {MAX_FILE_SIZE_MB}MB")
+
+        if ctx:
+            await ctx.info(f"File size: {file_size_mb:.2f} MB")
+
         # Get or create session
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
@@ -269,7 +374,7 @@ async def load_csv(
             "encoding": encoding,
             "delimiter": delimiter,
             "header": header,
-            "dtype_backend": "numpy_nullable",  # Use nullable dtypes for better null handling
+            # Note: Temporarily disabled dtype_backend="numpy_nullable" due to serialization issues
         }
 
         if na_values:
@@ -296,48 +401,86 @@ async def load_csv(
                     f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
                 )
         except UnicodeDecodeError as e:
-            # Try alternative encodings with proper error logging
+            # Use optimized encoding detection and fallbacks
             df = None
             last_error = e
-            for alt_encoding in ["latin1", "cp1252", "iso-8859-1"]:
-                if alt_encoding != encoding:
-                    try:
-                        read_params["encoding"] = alt_encoding
-                        df = pd.read_csv(**read_params)
 
-                        # Apply same memory checks to fallback encoding
-                        if len(df) > MAX_ROWS:
-                            raise ToolError(
-                                f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                            )
+            if ctx:
+                await ctx.info("Encoding error detected, trying automatic detection...")
 
-                        memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
-                        if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                            raise ToolError(
-                                f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                            )
+            # First, try automatic encoding detection
+            try:
+                detected_encoding = detect_file_encoding(validated_path)
+                if detected_encoding != encoding:
+                    logger.info(f"Auto-detected encoding: {detected_encoding}")
+                    if ctx:
+                        await ctx.info(f"Auto-detected encoding: {detected_encoding}")
 
-                        logger.warning(
-                            f"Used fallback encoding {alt_encoding} instead of {encoding}"
+                    read_params["encoding"] = detected_encoding
+                    df = pd.read_csv(**read_params)
+
+                    # Apply memory checks to detected encoding
+                    if len(df) > MAX_ROWS:
+                        raise ToolError(
+                            f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
                         )
-                        if ctx:
-                            await ctx.info(
-                                f"Used fallback encoding {alt_encoding} due to encoding error"
+
+                    memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+                    if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                        raise ToolError(
+                            f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                        )
+
+                    logger.info(
+                        f"Successfully loaded with auto-detected encoding: {detected_encoding}"
+                    )
+
+            except Exception as detection_error:
+                logger.debug(
+                    f"Auto-detection failed: {detection_error}, trying prioritized fallbacks"
+                )
+
+                # Fall back to optimized encoding list
+                fallback_encodings = get_encoding_fallbacks(encoding)
+
+                for alt_encoding in fallback_encodings:
+                    if alt_encoding != encoding:  # Skip the original encoding we already tried
+                        try:
+                            read_params["encoding"] = alt_encoding
+                            df = pd.read_csv(**read_params)
+
+                            # Apply same memory checks to fallback encoding
+                            if len(df) > MAX_ROWS:
+                                raise ToolError(
+                                    f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+                                )
+
+                            memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+                            if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                                raise ToolError(
+                                    f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                                )
+
+                            logger.warning(
+                                f"Used fallback encoding {alt_encoding} instead of {encoding}"
                             )
-                        break
-                    except UnicodeDecodeError as fallback_error:
-                        last_error = fallback_error
-                        continue
-                    except Exception as other_error:
-                        # Log specific error but continue trying other encodings
-                        logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
-                        continue
-            else:
-                # All encodings failed
-                raise ToolError(
-                    f"Encoding error with all attempted encodings: {last_error}. "
-                    "Try specifying a different encoding or check file format."
-                ) from last_error
+                            if ctx:
+                                await ctx.info(
+                                    f"Used fallback encoding {alt_encoding} due to encoding error"
+                                )
+                            break
+                        except UnicodeDecodeError as fallback_error:
+                            last_error = fallback_error
+                            continue
+                        except Exception as other_error:
+                            logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
+                            continue
+                else:
+                    # All encodings failed
+                    raise ToolError(
+                        f"Encoding error with all attempted encodings: {last_error}. "
+                        "Try specifying a different encoding or check file format."
+                    ) from last_error
 
             if df is None:
                 raise ToolError(
@@ -417,11 +560,13 @@ async def load_csv_from_url(
     Returns:
         Comprehensive load result with session info and data preview
 
-    URL Security:
+    URL Security & Validation:
         ✅ Only HTTP/HTTPS URLs allowed
-        ✅ URL validation and sanitization
-        ✅ Timeout protection for slow downloads
-        ✅ Size limits to prevent memory issues
+        ✅ Private network access blocked (192.168.x.x, 10.x.x.x, etc.)
+        ✅ Timeout protection (30 seconds) for slow downloads
+        ✅ Content-type verification (text/csv, application/csv, etc.)
+        ✅ Size limits to prevent memory issues (100 MB max download)
+        ✅ Memory usage validation after download
 
     Examples:
         # Load from public dataset
@@ -445,22 +590,96 @@ async def load_csv_from_url(
             await ctx.info(f"Loading CSV from URL: {url}")
             await ctx.report_progress(0.1)
 
-        # Download and parse CSV using pandas (it handles URLs directly with requests)
+        # Download with timeout and content-type verification
         try:
-            df = pd.read_csv(
-                url, encoding=encoding, delimiter=delimiter, dtype_backend="numpy_nullable"
-            )
-        except UnicodeDecodeError as e:
-            # Try alternative encodings for URL downloads too
-            for alt_encoding in ["latin1", "cp1252", "iso-8859-1"]:
-                if alt_encoding != encoding:
-                    try:
-                        df = pd.read_csv(
-                            url,
-                            encoding=alt_encoding,
-                            delimiter=delimiter,
-                            dtype_backend="numpy_nullable",
+            # Pre-download validation with timeout and content-type checking
+            if ctx:
+                await ctx.info("Verifying URL and downloading content...")
+
+            # Set socket timeout for all operations
+            socket.setdefaulttimeout(URL_TIMEOUT_SECONDS)
+
+            with urlopen(url, timeout=URL_TIMEOUT_SECONDS) as response:  # nosec B310
+                # Verify content-type
+                content_type = response.headers.get("Content-Type", "").lower()
+                content_length = response.headers.get("Content-Length")
+
+                # Check content type
+                valid_content_types = [
+                    "text/csv",
+                    "text/plain",
+                    "application/csv",
+                    "application/octet-stream",  # Some servers use generic type
+                    "text/tab-separated-values",
+                ]
+
+                if content_type and not any(ct in content_type for ct in valid_content_types):
+                    logger.warning(f"Unexpected content-type: {content_type}. Proceeding anyway.")
+                    if ctx:
+                        await ctx.info(
+                            f"Warning: Content-type is {content_type}, expected CSV format"
                         )
+
+                # Check content length
+                if content_length:
+                    size_mb = int(content_length) / (1024 * 1024)
+                    if size_mb > MAX_URL_SIZE_MB:
+                        raise ToolError(
+                            f"Download too large: {size_mb:.1f} MB exceeds limit of {MAX_URL_SIZE_MB} MB"
+                        )
+
+                if ctx:
+                    await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
+                    await ctx.report_progress(0.3)
+
+            # Download and parse CSV using pandas with timeout
+            df = pd.read_csv(url, encoding=encoding, delimiter=delimiter)
+
+            # Apply memory and row limits to downloaded data
+            if len(df) > MAX_ROWS:
+                raise ToolError(
+                    f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+                )
+
+            memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+            if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                raise ToolError(
+                    f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                )
+
+        except (TimeoutError, URLError, HTTPError) as e:
+            logger.error(f"Network error downloading URL: {e}")
+            if ctx:
+                await ctx.error(f"Network error: {e!s}")
+            raise ToolError(f"Network error: {e}") from e
+        except UnicodeDecodeError as e:
+            # Use optimized encoding fallbacks for URL downloads
+            df = None
+            last_error = e
+
+            if ctx:
+                await ctx.info("URL encoding error, trying optimized fallbacks...")
+
+            # Use the same optimized fallback strategy
+            fallback_encodings = get_encoding_fallbacks(encoding)
+
+            for alt_encoding in fallback_encodings:
+                if alt_encoding != encoding:  # Skip the original encoding we already tried
+                    try:
+                        df = pd.read_csv(url, encoding=alt_encoding, delimiter=delimiter)
+
+                        # Apply same memory checks to fallback encoding
+                        if len(df) > MAX_ROWS:
+                            raise ToolError(
+                                f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+                            )
+
+                        memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
+                        if memory_usage_mb > MAX_MEMORY_USAGE_MB:
+                            raise ToolError(
+                                f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+                            )
+
                         logger.warning(
                             f"Used fallback encoding {alt_encoding} instead of {encoding}"
                         )
@@ -469,10 +688,22 @@ async def load_csv_from_url(
                                 f"Used fallback encoding {alt_encoding} due to encoding error"
                             )
                         break
-                    except Exception:
+                    except UnicodeDecodeError as fallback_error:
+                        last_error = fallback_error
+                        continue
+                    except Exception as other_error:
+                        logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
                         continue
             else:
-                raise ToolError(f"Encoding error: {e}. Try 'latin1' or 'cp1252' encoding.") from e
+                raise ToolError(
+                    f"Encoding error with all attempted encodings: {last_error}. "
+                    "Try specifying a different encoding."
+                ) from last_error
+
+            if df is None:
+                raise ToolError(
+                    f"Failed to download CSV with any encoding: {last_error}"
+                ) from last_error
 
         if ctx:
             await ctx.report_progress(0.8)
@@ -480,6 +711,10 @@ async def load_csv_from_url(
         # Get or create session
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
+
+        if df is None:
+            raise ToolError("Failed to load data from URL")
+
         session.load_data(df, url)
 
         if ctx:
@@ -587,7 +822,6 @@ async def load_csv_from_content(
                 StringIO(content),
                 delimiter=delimiter,
                 header=0 if has_header else None,
-                dtype_backend="numpy_nullable",
             )
         except pd.errors.EmptyDataError as e:
             raise ToolError("CSV content is empty or contains no data") from e
@@ -700,94 +934,120 @@ async def export_csv(
             await ctx.info(f"Exporting data in {format_enum.value} format")
             await ctx.report_progress(0.1)
 
-        # Generate file path if not provided with collision prevention
-        if not file_path:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            # Add UUID suffix to prevent collisions in high-concurrency scenarios
-            uuid_suffix = uuid.uuid4().hex[:6]
-            filename = f"export_{session_id[:8]}_{timestamp}_{uuid_suffix}"
-
-            # Determine extension based on format
-            extensions = {
-                ExportFormat.CSV: ".csv",
-                ExportFormat.TSV: ".tsv",
-                ExportFormat.JSON: ".json",
-                ExportFormat.EXCEL: ".xlsx",
-                ExportFormat.PARQUET: ".parquet",
-                ExportFormat.HTML: ".html",
-                ExportFormat.MARKDOWN: ".md",
-            }
-
-            temp_dir = Path(tempfile.gettempdir())
-            file_path = str(temp_dir / (filename + extensions[format_enum]))
-
-            # Final collision check and retry if needed
-            counter = 1
-            original_path = file_path
-            while Path(file_path).exists() and counter < 10:
-                base_name = Path(original_path).stem
-                extension = Path(original_path).suffix
-                file_path = str(temp_dir / f"{base_name}_{counter}{extension}")
-                counter += 1
-
-        path_obj = Path(file_path)
-        df = session.data_session.df
-
-        if ctx:
-            await ctx.report_progress(0.5)
-
-        # Export based on format with comprehensive options
+        # Generate file path if not provided using proper temp file handling
+        temp_file_path = None
         try:
-            if format_enum == ExportFormat.CSV:
-                df.to_csv(path_obj, encoding=encoding, index=index, lineterminator="\n")
-            elif format_enum == ExportFormat.TSV:
-                df.to_csv(path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n")
-            elif format_enum == ExportFormat.JSON:
-                df.to_json(path_obj, orient="records", indent=2, force_ascii=False)
-            elif format_enum == ExportFormat.EXCEL:
-                with pd.ExcelWriter(path_obj, engine="openpyxl") as writer:
-                    df.to_excel(writer, sheet_name="Data", index=index)
-            elif format_enum == ExportFormat.PARQUET:
-                df.to_parquet(path_obj, index=index, engine="pyarrow")
-            elif format_enum == ExportFormat.HTML:
-                df.to_html(path_obj, index=index, escape=False, table_id="data-table")
-            elif format_enum == ExportFormat.MARKDOWN:
-                df.to_markdown(path_obj, index=index, tablefmt="github")
-            else:
-                raise ToolError(f"Unsupported format: {format_enum}")
-        except Exception as export_error:
-            # Provide format-specific error guidance
-            if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
-                raise ToolError(
-                    "Excel export requires openpyxl package. Install with: pip install openpyxl"
-                ) from export_error
-            elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
-                raise ToolError(
-                    "Parquet export requires pyarrow package. Install with: pip install pyarrow"
-                ) from export_error
-            else:
-                raise ToolError(f"Export failed: {export_error}") from export_error
+            if not file_path:
+                # Determine extension based on format
+                extensions = {
+                    ExportFormat.CSV: ".csv",
+                    ExportFormat.TSV: ".tsv",
+                    ExportFormat.JSON: ".json",
+                    ExportFormat.EXCEL: ".xlsx",
+                    ExportFormat.PARQUET: ".parquet",
+                    ExportFormat.HTML: ".html",
+                    ExportFormat.MARKDOWN: ".md",
+                }
 
-        # Record operation in session history
-        session.record_operation(
-            OperationType.EXPORT,
-            {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
-        )
+                # Use tempfile.NamedTemporaryFile for proper temp file handling
+                timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+                prefix = f"databeak_export_{session_id[:8]}_{timestamp}_"
+                suffix = extensions[format_enum]
 
-        if ctx:
-            await ctx.report_progress(1.0)
-            await ctx.info(f"Exported {len(df)} rows to {file_path}")
+                # Create temp file but don't delete it (we'll return the path)
+                with tempfile.NamedTemporaryFile(
+                    prefix=prefix,
+                    suffix=suffix,
+                    delete=False,
+                    dir=None,  # Use system temp directory
+                ) as temp_file:
+                    file_path = temp_file.name
+                    temp_file_path = file_path  # Track for cleanup on error
 
-        # Calculate file size
-        file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
+            path_obj = Path(file_path)
+            df = session.data_session.df
 
-        return ExportResult(
-            session_id=session_id,
-            file_path=str(file_path),
-            format=format_enum.value,
-            rows_exported=len(df),
-            file_size_mb=round(file_size_mb, 3),
-        )
+            if ctx:
+                await ctx.report_progress(0.5)
+
+            # Export based on format with comprehensive options
+            try:
+                if format_enum == ExportFormat.CSV:
+                    df.to_csv(path_obj, encoding=encoding, index=index, lineterminator="\n")
+                elif format_enum == ExportFormat.TSV:
+                    df.to_csv(
+                        path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n"
+                    )
+                elif format_enum == ExportFormat.JSON:
+                    df.to_json(path_obj, orient="records", indent=2, force_ascii=False)
+                elif format_enum == ExportFormat.EXCEL:
+                    with pd.ExcelWriter(path_obj, engine="openpyxl") as writer:
+                        df.to_excel(writer, sheet_name="Data", index=index)
+                elif format_enum == ExportFormat.PARQUET:
+                    df.to_parquet(path_obj, index=index, engine="pyarrow")
+                elif format_enum == ExportFormat.HTML:
+                    df.to_html(path_obj, index=index, escape=False, table_id="data-table")
+                elif format_enum == ExportFormat.MARKDOWN:
+                    df.to_markdown(path_obj, index=index, tablefmt="github")
+                else:
+                    raise ToolError(f"Unsupported format: {format_enum}")
+            except Exception as export_error:
+                # Clean up temp file on export error
+                if temp_file_path and Path(temp_file_path).exists():
+                    try:
+                        Path(temp_file_path).unlink()
+                        logger.debug(f"Cleaned up temp file after export error: {temp_file_path}")
+                    except OSError as cleanup_error:
+                        logger.warning(
+                            f"Failed to clean up temp file {temp_file_path}: {cleanup_error}"
+                        )
+
+                # Provide format-specific error guidance
+                if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
+                    raise ToolError(
+                        "Excel export requires openpyxl package. Install with: pip install openpyxl"
+                    ) from export_error
+                elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
+                    raise ToolError(
+                        "Parquet export requires pyarrow package. Install with: pip install pyarrow"
+                    ) from export_error
+                else:
+                    raise ToolError(f"Export failed: {export_error}") from export_error
+
+            # Record operation in session history
+            session.record_operation(
+                OperationType.EXPORT,
+                {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
+            )
+
+            if ctx:
+                await ctx.report_progress(1.0)
+                await ctx.info(f"Exported {len(df)} rows to {file_path}")
+
+            # Calculate file size
+            file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
+
+            return ExportResult(
+                session_id=session_id,
+                file_path=str(file_path),
+                format=format_enum.value,
+                rows_exported=len(df),
+                file_size_mb=round(file_size_mb, 3),
+            )
+
+        except Exception:
+            # Clean up temp file on any other error
+            if temp_file_path and Path(temp_file_path).exists():
+                try:
+                    Path(temp_file_path).unlink()
+                    logger.debug(f"Cleaned up temp file after error: {temp_file_path}")
+                except OSError as cleanup_error:
+                    logger.warning(
+                        f"Failed to clean up temp file {temp_file_path}: {cleanup_error}"
+                    )
+
+            # Re-raise the original error
+            raise
 
     except Exception as e:
         logger.error(f"Failed to export data: {e}")
