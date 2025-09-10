@@ -14,7 +14,7 @@ from src.databeak.models.data_models import ExportFormat
 
 
 @pytest.fixture
-def sample_df():
+def sample_df() -> pd.DataFrame:
     """Create a sample DataFrame for testing."""
     return pd.DataFrame(
         {
@@ -26,7 +26,7 @@ def sample_df():
 
 
 @pytest.fixture
-def temp_dir():
+def temp_dir() -> str:
     """Create a temporary directory for test files."""
     temp_dir = tempfile.mkdtemp()
     yield temp_dir
@@ -35,7 +35,7 @@ def temp_dir():
 
 
 @pytest.mark.asyncio
-async def test_auto_save_config_creation():
+async def test_auto_save_config_creation() -> None:
     """Test creating auto-save configuration."""
     config = AutoSaveConfig(
         enabled=True,
@@ -53,7 +53,7 @@ async def test_auto_save_config_creation():
 
 
 @pytest.mark.asyncio
-async def test_auto_save_config_from_dict():
+async def test_auto_save_config_from_dict() -> None:
     """Test creating auto-save config from dictionary."""
     config_dict = {
         "enabled": True,
@@ -73,7 +73,7 @@ async def test_auto_save_config_from_dict():
 
 
 @pytest.mark.asyncio
-async def test_session_with_auto_save_disabled(sample_df):
+async def test_session_with_auto_save_disabled(sample_df) -> None:
     """Test session with auto-save disabled."""
     config = AutoSaveConfig(enabled=False)
     session = CSVSession(auto_save_config=config)
@@ -88,7 +88,7 @@ async def test_session_with_auto_save_disabled(sample_df):
 
 
 @pytest.mark.asyncio
-async def test_session_with_auto_save_after_operation(sample_df, temp_dir):
+async def test_session_with_auto_save_after_operation(sample_df, temp_dir) -> None:
     """Test auto-save after each operation."""
     config = AutoSaveConfig(
         enabled=True,
@@ -116,7 +116,7 @@ async def test_session_with_auto_save_after_operation(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_manual_save(sample_df, temp_dir):
+async def test_manual_save(sample_df, temp_dir) -> None:
     """Test manual save trigger."""
     config = AutoSaveConfig(
         enabled=True,
@@ -140,7 +140,7 @@ async def test_manual_save(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_versioned_save_strategy(sample_df, temp_dir):
+async def test_versioned_save_strategy(sample_df, temp_dir) -> None:
     """Test versioned save strategy."""
     config = AutoSaveConfig(
         enabled=True,
@@ -166,7 +166,7 @@ async def test_versioned_save_strategy(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_max_backups_cleanup(sample_df, temp_dir):
+async def test_max_backups_cleanup(sample_df, temp_dir) -> None:
     """Test that old backups are cleaned up when max_backups is exceeded."""
     config = AutoSaveConfig(
         enabled=True,
@@ -191,7 +191,7 @@ async def test_max_backups_cleanup(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_periodic_save(sample_df, temp_dir):
+async def test_periodic_save(sample_df, temp_dir) -> None:
     """Test periodic auto-save."""
     config = AutoSaveConfig(
         enabled=True,
@@ -219,7 +219,7 @@ async def test_periodic_save(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_hybrid_mode(sample_df, temp_dir):
+async def test_hybrid_mode(sample_df, temp_dir) -> None:
     """Test hybrid mode (both periodic and after-operation)."""
     config = AutoSaveConfig(
         enabled=True,
@@ -252,7 +252,7 @@ async def test_hybrid_mode(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_different_export_formats(sample_df, temp_dir):
+async def test_different_export_formats(sample_df, temp_dir) -> None:
     """Test auto-save with different export formats."""
     formats = [ExportFormat.CSV, ExportFormat.JSON, ExportFormat.TSV]
 
@@ -281,7 +281,7 @@ async def test_different_export_formats(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_enable_disable_auto_save(sample_df, temp_dir):
+async def test_enable_disable_auto_save(sample_df, temp_dir) -> None:
     """Test enabling and disabling auto-save."""
     session = CSVSession()
     session.load_data(sample_df)
@@ -317,7 +317,7 @@ async def test_enable_disable_auto_save(sample_df, temp_dir):
 
 
 @pytest.mark.asyncio
-async def test_get_auto_save_status(sample_df):
+async def test_get_auto_save_status(sample_df) -> None:
     """Test getting auto-save status."""
     config = AutoSaveConfig(
         enabled=True,
@@ -344,7 +344,7 @@ async def test_get_auto_save_status(sample_df):
 
 
 @pytest.mark.asyncio
-async def test_session_manager_cleanup(sample_df, temp_dir):
+async def test_session_manager_cleanup(sample_df, temp_dir) -> None:
     """Test that auto-save is stopped when session is removed."""
     config = AutoSaveConfig(
         enabled=True,

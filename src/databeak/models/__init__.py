@@ -17,6 +17,13 @@ from .data_models import (
     SessionInfo,
     SortSpec,
 )
+from .session_service import (
+    MockSessionManager,
+    SessionManagerProtocol,
+    SessionService,
+    SessionServiceFactory,
+    get_default_session_service_factory,
+)
 
 __all__ = [
     "AggregateFunction",
@@ -30,10 +37,15 @@ __all__ = [
     "ExportFormat",
     "FilterCondition",
     "LogicalOperator",
+    "MockSessionManager",
     "OperationResult",
     "OperationType",
     "SessionInfo",
     "SessionManager",
+    "SessionManagerProtocol",
+    "SessionService",
+    "SessionServiceFactory",
     "SortSpec",
+    "get_default_session_service_factory",
     "get_session_manager",
 ]

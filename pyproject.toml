@@ -180,6 +180,7 @@ select = [
     "I",    # isort
     "N",    # pep8-naming
     "B",    # flake8-bugbear
+    "S",    # flake8-bandit
     "C4",   # flake8-comprehensions
     "UP",   # pyupgrade
     "ARG",  # flake8-unused-arguments
@@ -197,6 +198,7 @@ ignore = [
     "B905",  # `zip()` without an explicit `strict=` parameter
     "SIM105", # contextlib.suppress is slower
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
+    "TCH001", # Move imports into type-checking block (breaks FastMCP runtime imports)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -244,6 +246,10 @@ module = [
     "fastparquet",
 ]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
 
 
 [tool.pytest.ini_options]

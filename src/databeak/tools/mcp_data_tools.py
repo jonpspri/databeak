@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
 
-from ..models.tool_responses import ColumnOperationResult, FilterOperationResult  # noqa: TC001
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult
 from .transformations import add_column as _add_column
 from .transformations import change_column_type as _change_column_type
 from .transformations import extract_from_column as _extract_from_column
@@ -248,6 +248,7 @@ def register_data_tools(mcp: FastMCP) -> None:
         delimiter: str = " ",
         part_index: int | None = None,
         expand_to_columns: bool = False,
+        new_columns: list[str] | None = None,
         ctx: Context | None = None,
     ) -> ColumnOperationResult:
         """Split column values by delimiter.
@@ -267,7 +268,7 @@ def register_data_tools(mcp: FastMCP) -> None:
             split_column("session123", "full_name", " ", expand_to_columns=True) -> Split into multiple columns
         """
         return await _split_column(
-            session_id, column, delimiter, part_index, expand_to_columns, ctx
+            session_id, column, delimiter, part_index, expand_to_columns, new_columns, ctx
         )
 
     @mcp.tool

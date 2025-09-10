@@ -1,4 +1,5 @@
 """Main FastMCP server for DataBeak."""
+# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -10,10 +11,11 @@ from fastmcp.exceptions import ToolError
 
 # Local imports
 from .models import get_session_manager
+from .servers.discovery_server import discovery_server
 from .servers.io_server import io_server
+from .servers.statistics_server import statistics_server
 from .servers.validation_server import validation_server
 from .tools.data_operations import create_data_preview_with_indices
-from .tools.mcp_analytics_tools import register_analytics_tools
 from .tools.mcp_data_tools import register_data_tools
 from .tools.mcp_history_tools import register_history_tools
 from .tools.mcp_row_tools import register_row_tools
@@ -42,15 +44,17 @@ def _load_instructions() -> str:
 # Initialize FastMCP server
 mcp = FastMCP("DataBeak", instructions=_load_instructions())
 
-# Register all tools with the FastMCP server
+# Register remaining tools with the FastMCP server
 register_system_tools(mcp)
 register_data_tools(mcp)
 register_row_tools(mcp)
-register_analytics_tools(mcp)
+# register_analytics_tools(mcp)  # Migrated to specialized analytics servers
 register_history_tools(mcp)
 
 # Mount specialized servers
 mcp.mount(io_server)
+mcp.mount(statistics_server)
+mcp.mount(discovery_server)
 mcp.mount(validation_server)
 
 # ============================================================================
@@ -221,7 +225,7 @@ def main() -> None:
         default="stdio",
         help="Transport method",
     )
-    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP/SSE transport")  # nosec B104
+    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP/SSE transport")  # nosec B104  # noqa: S104
     parser.add_argument("--port", type=int, default=8000, help="Port for HTTP/SSE transport")
     parser.add_argument(
         "--log-level",

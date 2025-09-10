@@ -56,7 +56,7 @@ async def update_consignee_example():
         "export_csv",
         {
             "session_id": session_id,
-            "file_path": "/tmp/updated_bol_method1.csv",
+            "file_path": "/tmp/updated_bol_method1.csv",  # noqa: S108
             "format": "csv",
         },
     )
@@ -99,7 +99,7 @@ async def update_consignee_example():
         "export_csv",
         {
             "session_id": session_id,
-            "file_path": "/tmp/updated_bol_method2.csv",
+            "file_path": "/tmp/updated_bol_method2.csv",  # noqa: S108
             "format": "csv",
         },
     )
@@ -153,7 +153,7 @@ async def update_consignee_example():
         "export_csv",
         {
             "session_id": session_id,
-            "file_path": "/tmp/updated_bol_method3.csv",
+            "file_path": "/tmp/updated_bol_method3.csv",  # noqa: S108
             "format": "csv",
         },
     )

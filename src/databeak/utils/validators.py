@@ -84,7 +84,7 @@ def validate_url(url: str) -> tuple[bool, str]:
 
         except ValueError:
             # Not an IP address - check for localhost/private hostnames
-            if hostname.lower() in ["localhost", "127.0.0.1", "::1", "0.0.0.0"]:  # nosec B104
+            if hostname.lower() in ["localhost", "127.0.0.1", "::1", "0.0.0.0"]:  # nosec B104  # noqa: S104
                 return False, "Local addresses not allowed"
 
             # Try to resolve hostname to check for private IPs
@@ -101,7 +101,11 @@ def validate_url(url: str) -> tuple[bool, str]:
                             return False, f"Hostname resolves to private address: {ip_addr}"
                     except ValueError:
                         # IPv6 addresses with scope might not parse cleanly - be conservative
-                        if ":" in ip_addr and ("fe80" in ip_addr.lower() or "::1" in ip_addr):
+                        if (
+                            isinstance(ip_addr, str)
+                            and ":" in ip_addr
+                            and ("fe80" in ip_addr.lower() or "::1" in ip_addr)
+                        ):
                             return False, f"Hostname resolves to local address: {ip_addr}"
             except (socket.gaierror, OSError):
                 # DNS resolution failed - allow but log warning

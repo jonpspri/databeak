@@ -54,11 +54,26 @@ guidance.
 
 ### Testing Approach
 
+DataBeak follows a three-tier testing strategy:
+
+1. **Unit Tests** (`tests/unit/`) - Fast, isolated module tests
+1. **Integration Tests** (`tests/integration/`) - Component interaction tests
+1. **E2E Tests** (`tests/e2e/`) - Complete workflow validation
+
+**Test Execution:**
+
+```bash
+uv run -m pytest tests/unit/          # Run unit tests (frequent)
+uv run -m pytest tests/integration/   # Run integration tests
+uv run -m pytest tests/e2e/           # Run E2E tests
+uv run -m pytest --cov=src/databeak   # Run all with coverage
+```
+
 **Use the `test-coverage-analyzer` agent** for systematic test coverage analysis
 and gap identification to achieve the 80%+ coverage requirement.
 
-See `.claude/agents/test-coverage-analyzer.md` for comprehensive testing
-guidance.
+See `.claude/agents/test-coverage-analyzer.md` and `tests/README.md` for
+comprehensive testing guidance.
 
 ### Version Management
 

@@ -1,9 +1,10 @@
 """Data transformation tools for CSV manipulation."""
+# ruff: noqa: S101
 
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from fastmcp import Context
@@ -20,20 +21,12 @@ from ..exceptions import (
 from ..models.csv_session import get_session_manager
 from ..models.data_models import OperationType
 from ..models.tool_responses import (
-    CellLocation,
     CellValueResult,
     ColumnDataResult,
     ColumnOperationResult,
-    CsvCellValue,
-    DataPreview,
-    DataSummaryResult,
-    DataTypeInfo,
     DeleteRowResult,
     FilterOperationResult,
-    FindCellsResult,
     InsertRowResult,
-    InspectDataResult,
-    MissingDataInfo,
     RenameColumnsResult,
     RowDataResult,
     SelectColumnsResult,
@@ -41,7 +34,6 @@ from ..models.tool_responses import (
     SortDataResult,
     UpdateRowResult,
 )
-from .data_operations import create_data_preview_with_indices
 from ..utils.validators import convert_pandas_na_list
 
 # Type aliases for better type safety (non-conflicting)
@@ -94,7 +86,8 @@ async def filter_rows(
     """
     try:
         session, df = _get_session_data(session_id)
-        mask = pd.Series([True] * len(df))
+        # Initialize mask based on mode: AND starts True, OR starts False
+        mask = pd.Series([mode == "and"] * len(df))
 
         for condition in conditions:
             column = condition.get("column")
@@ -631,7 +624,9 @@ async def update_column(
         else:
             raise ToolError(f"Unknown operation: {operation}")
 
-        updated_values_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
+        updated_values_sample = convert_pandas_na_list(
+            session.data_session.df[column].head(5).tolist()
+        )
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1106,6 +1101,7 @@ async def split_column(
     delimiter: str = " ",
     part_index: int | None = None,
     expand_to_columns: bool = False,
+    new_columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
@@ -1132,18 +1128,21 @@ async def split_column(
             raise ToolError(f"Column '{column}' not found")
 
         # Perform split
-        if expand_to_columns:
+        if expand_to_columns or new_columns:
             # Split into multiple columns
             split_data = df[column].astype(str).str.split(delimiter, expand=True)
             # Replace original column with split columns
-            new_columns = []
+            column_names = []
             for i, col_data in enumerate(split_data.columns):
-                new_col_name = f"{column}_{i}"
+                if new_columns and i < len(new_columns):
+                    new_col_name = new_columns[i]
+                else:
+                    new_col_name = f"{column}_{i}"
                 session.data_session.df[new_col_name] = split_data[col_data]
-                new_columns.append(new_col_name)
+                column_names.append(new_col_name)
             # Drop original column
             session.data_session.df = session.data_session.df.drop(columns=[column])
-            columns_affected = new_columns
+            columns_affected = column_names
         else:
             # Keep specific part
             if part_index is not None:
@@ -1274,7 +1273,9 @@ async def strip_column(
         else:
             session.data_session.df[column] = df[column].astype(str).str.strip(chars)
 
-        updated_values_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
+        updated_values_sample = convert_pandas_na_list(
+            session.data_session.df[column].head(5).tolist()
+        )
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1631,326 +1632,4 @@ async def update_row(
 
     except Exception as e:
         logger.error(f"Error updating row: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-
-
-# ============================================================================
-# AI-FRIENDLY CONVENIENCE METHODS
-# ============================================================================
-
-
-async def inspect_data_around(
-    session_id: str,
-    row: int,
-    column: str | int,
-    radius: int = 2,
-    ctx: Context | None = None,  # noqa: ARG001
-) -> InspectDataResult:
-    """Get data around a specific cell for context inspection.
-
-    Args:
-        session_id: Session identifier
-        row: Center row index (0-based)
-        column: Column name (str) or column index (int, 0-based)
-        radius: Number of rows/columns around the center to include
-        ctx: FastMCP context
-
-    Returns:
-        Dict with surrounding data and coordinate information
-
-    Example:
-        inspect_data_around("session123", 5, "name", 2) -> Get 5x5 grid centered on (5, "name")
-    """
-    try:
-        session, df = _get_session_data(session_id)
-
-        # Handle column specification
-        if isinstance(column, int):
-            if column < 0 or column >= len(df.columns):
-                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
-            column_name = df.columns[column]
-            col_index = column
-        else:
-            if column not in df.columns:
-                raise ToolError(f"Column '{column}' not found")
-            column_name = column
-            col_index_result = df.columns.get_loc(column)
-            col_index = col_index_result if isinstance(col_index_result, int) else 0
-
-        # Calculate bounds
-        row_start = max(0, row - radius)
-        row_end = min(len(df), row + radius + 1)
-        col_start = max(0, col_index - radius)
-        col_end = min(len(df.columns), col_index + radius + 1)
-
-        # Get column slice
-        cols_slice = df.columns[col_start:col_end].tolist()
-
-        # Get data slice
-        data_slice = df.iloc[row_start:row_end][cols_slice]
-
-        # Convert to records with row indices
-        records = []
-        for _, (orig_idx, row_data) in enumerate(data_slice.iterrows()):
-            # Handle different index types from iterrows safely
-            row_index_val = int(orig_idx) if isinstance(orig_idx, int) else 0
-            record: dict[str, CsvCellValue] = {"__row_index__": row_index_val}
-            record.update(row_data.to_dict())
-
-            # Handle pandas/numpy types
-            for key, value in record.items():
-                if key == "__row_index__":
-                    continue
-                if pd.isna(value):
-                    record[key] = None
-                elif hasattr(value, "item"):
-                    record[key] = value.item()
-
-            records.append(record)
-
-        # Create DataPreview from the records
-        surrounding_data = DataPreview(
-            rows=records, row_count=len(records), column_count=len(cols_slice), truncated=False
-        )
-
-        return InspectDataResult(
-            session_id=session_id,
-            center_coordinates={"row": row, "column": column_name},
-            surrounding_data=surrounding_data,
-            radius=radius,
-        )
-
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.error(f"Error inspecting data around cell: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-    except Exception as e:
-        logger.error(f"Error inspecting data around cell: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-
-
-async def find_cells_with_value(
-    session_id: str,
-    value: CellValue,
-    column: str | None = None,
-    exact_match: bool = True,
-    ctx: Context | None = None,  # noqa: ARG001
-) -> FindCellsResult:
-    """Find all cells containing a specific value.
-
-    Args:
-        session_id: Session identifier
-        value: Value to search for
-        column: Optional column name to restrict search (None for all columns)
-        exact_match: Whether to use exact matching or substring matching for strings
-        ctx: FastMCP context
-
-    Returns:
-        Dict with coordinates of matching cells
-
-    Example:
-        find_cells_with_value("session123", "John") -> Find all cells with "John"
-        find_cells_with_value("session123", 25, "age") -> Find all age cells with value 25
-    """
-    try:
-        session, df = _get_session_data(session_id)
-        matches = []
-
-        # Determine columns to search
-        if column is not None:
-            if column not in df.columns:
-                raise ToolError(f"Column '{column}' not found")
-            columns_to_search = [column]
-        else:
-            columns_to_search = df.columns.tolist()
-
-        # Search for matches
-        for col in columns_to_search:
-            if exact_match:
-                # Exact matching
-                if pd.isna(value):
-                    # Search for NaN values
-                    mask = df[col].isna()
-                else:
-                    mask = df[col] == value
-            else:
-                # Substring matching (for strings)
-                if isinstance(value, str):
-                    mask = df[col].astype(str).str.contains(str(value), na=False, case=False)
-                else:
-                    # For non-strings, fall back to exact match
-                    mask = df[col] == value
-
-            # Get matching row indices
-            matching_rows = df.index[mask].tolist()
-
-            for row_idx in matching_rows:
-                cell_value = df.at[row_idx, col]
-                # Convert to CsvCellValue compatible type
-                processed_value: CsvCellValue
-                if pd.isna(cell_value):
-                    processed_value = None
-                elif hasattr(cell_value, "item"):
-                    item_value = cell_value.item()
-                    if isinstance(item_value, str | int | float | bool):
-                        processed_value = item_value
-                    else:
-                        processed_value = str(item_value)
-                elif isinstance(cell_value, str | int | float | bool):
-                    processed_value = cell_value
-                else:
-                    # Fallback for complex types - convert to string
-                    processed_value = str(cell_value)
-
-                matches.append(
-                    CellLocation(
-                        row=int(row_idx),
-                        column=col,
-                        value=processed_value,
-                    )
-                )
-
-        return FindCellsResult(
-            session_id=session_id,
-            search_value=value,
-            matches_found=len(matches),
-            coordinates=matches,
-            search_column=column,
-            exact_match=exact_match,
-        )
-
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.error(f"Error finding cells with value: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-    except Exception as e:
-        logger.error(f"Error finding cells with value: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-
-
-async def get_data_summary(
-    session_id: str,
-    include_preview: bool = True,
-    max_preview_rows: int = 10,
-    ctx: Context | None = None,  # noqa: ARG001
-) -> DataSummaryResult:
-    """Get comprehensive data summary optimized for AI understanding.
-
-    Args:
-        session_id: Session identifier
-        include_preview: Whether to include data preview
-        max_preview_rows: Maximum number of rows in preview
-        ctx: FastMCP context
-
-    Returns:
-        Dict with comprehensive data summary and metadata
-
-    Example:
-        get_data_summary("session123", True, 5) -> Get summary with 5-row preview
-    """
-    try:
-        session, df = _get_session_data(session_id)
-
-        # Create coordinate system
-        coordinate_system = {
-            "row_indexing": f"0 to {len(df) - 1} (0-based)",
-            "column_indexing": "Use column names or 0-based indices",
-        }
-
-        # Create shape info
-        shape = {"rows": len(df), "columns": len(df.columns)}
-
-        # Create DataTypeInfo objects for each column
-        columns_info = {}
-
-        for col in df.columns:
-            col_dtype = str(df[col].dtype)
-            # Map pandas dtypes to Pydantic model literals
-            if "int" in col_dtype:
-                mapped_dtype = "int64"
-            elif "float" in col_dtype:
-                mapped_dtype = "float64"
-            elif "bool" in col_dtype:
-                mapped_dtype = "bool"
-            elif "datetime" in col_dtype:
-                mapped_dtype = "datetime64"
-            elif "category" in col_dtype:
-                mapped_dtype = "category"
-            else:
-                mapped_dtype = "object"
-
-            columns_info[col] = DataTypeInfo(
-                type=cast(
-                    "Literal['int64', 'float64', 'object', 'bool', 'datetime64', 'category']",
-                    mapped_dtype,
-                ),
-                nullable=bool(df[col].isnull().any()),
-                unique_count=int(df[col].nunique()),
-                null_count=int(df[col].isnull().sum()),
-            )
-
-        # Create data types categorization
-        data_types = {
-            "numeric": df.select_dtypes(include=["number"]).columns.tolist(),
-            "text": df.select_dtypes(include=["object"]).columns.tolist(),
-            "datetime": df.select_dtypes(include=["datetime"]).columns.tolist(),
-            "boolean": df.select_dtypes(include=["bool"]).columns.tolist(),
-        }
-
-        # Create missing data info
-        total_missing = int(df.isnull().sum().sum())
-        missing_by_column = {col: int(df[col].isnull().sum()) for col in df.columns}
-        missing_percentage = round(total_missing / (len(df) * len(df.columns)) * 100, 2)
-
-        missing_data = MissingDataInfo(
-            total_missing=total_missing,
-            missing_by_column=missing_by_column,
-            missing_percentage=missing_percentage,
-        )
-
-        # Create preview
-        if include_preview:
-            preview_data = create_data_preview_with_indices(df, max_preview_rows)
-            # Convert to DataPreview object
-            preview = DataPreview(
-                rows=preview_data.get("records", []),
-                row_count=preview_data.get("total_rows", 0),
-                column_count=preview_data.get("total_columns", 0),
-                truncated=preview_data.get("preview_rows", 0) < preview_data.get("total_rows", 0),
-            )
-        else:
-            preview = None
-
-        # Calculate memory usage
-        memory_usage_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
-
-        return DataSummaryResult(
-            session_id=session_id,
-            coordinate_system=coordinate_system,
-            shape=shape,
-            columns=columns_info,
-            data_types=data_types,
-            missing_data=missing_data,
-            memory_usage_mb=memory_usage_mb,
-            preview=preview,
-        )
-
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.error(f"Error getting data summary: {e!s}")
-        raise ToolError(f"Error: {e}") from e
-    except Exception as e:
-        logger.error(f"Error getting data summary: {e!s}")
         raise ToolError(f"Error: {e}") from e

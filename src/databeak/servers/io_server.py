@@ -198,7 +198,7 @@ def detect_file_encoding(file_path: str) -> str:
     """
     try:
         # Read sample bytes for detection (first 10KB should be enough)
-        with open(file_path, "rb") as f:
+        with open(file_path, "rb") as f:  # noqa: PTH123
             raw_data = f.read(10240)  # 10KB sample
 
         # Use chardet for automatic detection
@@ -599,7 +599,7 @@ async def load_csv_from_url(
             # Set socket timeout for all operations
             socket.setdefaulttimeout(URL_TIMEOUT_SECONDS)
 
-            with urlopen(url, timeout=URL_TIMEOUT_SECONDS) as response:  # nosec B310
+            with urlopen(url, timeout=URL_TIMEOUT_SECONDS) as response:  # nosec B310  # noqa: S310, ASYNC210
                 # Verify content-type
                 content_type = response.headers.get("Content-Type", "").lower()
                 content_length = response.headers.get("Content-Length")

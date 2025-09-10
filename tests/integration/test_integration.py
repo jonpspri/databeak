@@ -1,13 +1,18 @@
 """Integration tests for DataBeak CSV MCP Server.
 
-Tests the core functionality across multiple tool domains using proper TestCase
-structure with isolated sessions for each test.
+Tests the core functionality across multiple tool domains using proper TestCase structure with
+isolated sessions for each test.
 """
 
 import unittest
 from pathlib import Path
 from typing import Any
 
+from src.databeak.servers.discovery_server import (
+    detect_outliers,
+    group_by_aggregate,
+    profile_data,
+)
 from src.databeak.servers.io_server import (
     close_session,
     export_csv,
@@ -15,18 +20,15 @@ from src.databeak.servers.io_server import (
     list_sessions,
     load_csv_from_content,
 )
+from src.databeak.servers.statistics_server import (
+    get_correlation_matrix,
+    get_statistics,
+)
 from src.databeak.servers.validation_server import (
     ValidationSchema,
     check_data_quality,
     find_anomalies,
     validate_schema,
-)
-from src.databeak.tools.analytics import (
-    detect_outliers,
-    get_correlation_matrix,
-    get_statistics,
-    group_by_aggregate,
-    profile_data,
 )
 from src.databeak.tools.transformations import (
     add_column,
@@ -71,8 +73,8 @@ def get_attr(obj: Any, attr: str, default: Any | None = None):
 class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
     """Base test case for integration tests with session management.
 
-    Provides a fresh session with test data for each test method.
-    Handles session creation in setUp and cleanup in tearDown.
+    Provides a fresh session with test data for each test method. Handles session creation in setUp
+    and cleanup in tearDown.
     """
 
     def setUp(self):

@@ -9,7 +9,7 @@ from src.databeak.utils.validators import sanitize_filename, validate_column_nam
 class TestValidators:
     """Test validation utilities."""
 
-    def test_validate_column_name(self):
+    def test_validate_column_name(self) -> None:
         """Test column name validation."""
         # Valid names
         assert validate_column_name("age")[0]
@@ -21,13 +21,13 @@ class TestValidators:
         assert not validate_column_name("name-with-dash")[0]
         assert not validate_column_name("")[0]
 
-    def test_sanitize_filename(self):
+    def test_sanitize_filename(self) -> None:
         """Test filename sanitization."""
         assert sanitize_filename("test.csv") == "test.csv"
         assert sanitize_filename("test<>file.csv") == "test__file.csv"
         assert sanitize_filename("../../../etc/passwd") == "passwd"
 
-    def test_validate_url(self):
+    def test_validate_url(self) -> None:
         """Test URL validation with enhanced security."""
         # Valid URLs (public addresses)
         assert validate_url("https://example.com/data.csv")[0]
@@ -47,7 +47,7 @@ class TestValidators:
 class TestSessionManager:
     """Test session management."""
 
-    async def test_create_session(self):
+    async def test_create_session(self) -> None:
         """Test session creation."""
         manager = get_session_manager()
         session_id = manager.create_session()
@@ -58,7 +58,7 @@ class TestSessionManager:
         # Cleanup
         await manager.remove_session(session_id)
 
-    async def test_session_cleanup(self):
+    async def test_session_cleanup(self) -> None:
         """Test session removal."""
         manager = get_session_manager()
         session_id = manager.create_session()
@@ -77,7 +77,7 @@ class TestSessionManager:
 class TestDataOperations:
     """Test basic data operations."""
 
-    async def test_load_csv_from_content(self):
+    async def test_load_csv_from_content(self) -> None:
         """Test loading CSV from string content."""
         from src.databeak.servers.io_server import load_csv_from_content
 
@@ -95,7 +95,7 @@ class TestDataOperations:
         manager = get_session_manager()
         await manager.remove_session(result.session_id)
 
-    async def test_filter_rows(self, test_session):
+    async def test_filter_rows(self, test_session) -> None:
         """Test filtering rows."""
         from src.databeak.tools.transformations import filter_rows
 

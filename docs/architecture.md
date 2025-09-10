@@ -125,7 +125,13 @@ uv run ruff check && uv run ruff format --check && uv run mypy src/ && uv run -m
 - **Linting**: Ruff with comprehensive rule set
 - **Formatting**: Ruff with 100-character lines
 - **Type checking**: MyPy with strict configuration
-- **Testing**: pytest with asyncio support and coverage reporting
+- **Testing**: Three-tier testing strategy
+  - **Unit tests** (`tests/unit/`): Fast, isolated module testing
+  - **Integration tests** (`tests/integration/`): Component interaction
+    validation
+  - **E2E tests** (`tests/e2e/`): Complete workflow verification
+  - **Coverage target**: 80%+ with pytest-cov
+  - See [Testing Guide](testing.md) for best practices
 
 ## Future Considerations
 

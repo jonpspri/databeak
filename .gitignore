@@ -269,3 +269,4 @@ history_*.json
 *.pkl
 .private-publishing/
 dist/
+/snapshots/

@@ -135,14 +135,31 @@ uv run mypy        # Type check with MyPy
 
 ### 4. Test Your Changes
 
+DataBeak uses a three-tier testing structure. Run tests appropriate to your
+changes:
+
 ```bash
-# Testing with uv
-uv run -m pytest                        # Run all tests
-uv run -m pytest --cov                  # Run with coverage report
-uv run -m pytest tests/test_transformations.py  # Run specific file
-uv run -m pytest -k "test_filter"       # Run tests matching pattern
-uv run -m pytest -x                     # Stop on first failure
+# Run tests by category
+uv run -m pytest tests/unit/          # Fast unit tests (run frequently)
+uv run -m pytest tests/integration/   # Integration tests
+uv run -m pytest tests/e2e/           # End-to-end tests
+uv run -m pytest                      # All tests
+
+# Run with coverage
+uv run -m pytest --cov=src/databeak --cov-report=term-missing
+
+# Run specific tests
+uv run -m pytest tests/unit/servers/  # Test specific module
+uv run -m pytest -k "test_filter"     # Run tests matching pattern
+uv run -m pytest -x                   # Stop on first failure
 ```
+
+**Testing Requirements:**
+
+- New features must have unit tests in `tests/unit/`
+- Bug fixes must include regression tests
+- Maintain 80%+ code coverage
+- See [Testing Guide](tests/README.md) for details
 
 ### 5. Create Pull Request
 
