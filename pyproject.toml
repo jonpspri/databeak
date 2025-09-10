@@ -180,6 +180,7 @@ select = [
     "I",    # isort
     "N",    # pep8-naming
     "B",    # flake8-bugbear
+    "S",    # flake8-bandit
     "C4",   # flake8-comprehensions
     "UP",   # pyupgrade
     "ARG",  # flake8-unused-arguments

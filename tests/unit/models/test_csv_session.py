@@ -9,10 +9,10 @@ class TestDataBeakSettings:
     def test_default_settings(self):
         """Test default settings initialization."""
         settings = DataBeakSettings()
-        assert settings.AUTO_SAVE_ENABLED is True
-        assert settings.AUTO_SAVE_INTERVAL_SECONDS == 30
-        assert settings.SESSION_TIMEOUT_SECONDS == 3600
-        assert settings.MAX_HISTORY_SIZE == 100
+        assert settings.auto_save is True
+        assert settings.session_timeout == 3600
+        assert settings.csv_history_dir == "."
+        assert settings.max_file_size_mb == 1024
 
 
 class TestSessionManager:
