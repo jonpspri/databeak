@@ -167,18 +167,16 @@ class MockSessionManager:
 
         results = []
         for session_id, session in self.sessions.items():
+            df = session.data_session.df if session.data_session.has_data() else None
             info = SessionInfo(
                 session_id=session_id,
                 created_at=datetime.now(timezone.utc),
                 last_accessed=datetime.now(timezone.utc),
-                row_count=len(session.data_session.df) if session.data_session.has_data() else 0,
-                column_count=len(session.data_session.df.columns)
-                if session.data_session.has_data()
-                else 0,
-                columns=list(session.data_session.df.columns)
-                if session.data_session.has_data()
-                else [],
+                row_count=len(df) if df is not None else 0,
+                column_count=len(df.columns) if df is not None else 0,
+                columns=list(df.columns) if df is not None else [],
                 memory_usage_mb=0.0,
+                operations_count=0,
                 file_path=None,
             )
             results.append(info)

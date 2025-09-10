@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 # Create service factory with default session manager
 _service_factory = get_default_session_service_factory()
-_statistics_service = _service_factory.create_service(StatisticsService)
+_statistics_service: StatisticsService = _service_factory.create_service(StatisticsService)  # type: ignore[assignment]
 
 
 async def get_statistics(

@@ -60,7 +60,7 @@ class ValueCountsResult(BaseToolResponse):
 
     session_id: str
     column: str
-    value_counts: dict[str, int]
+    value_counts: dict[str, int | float]
     total_values: int
     unique_values: int
     normalize: bool = False
