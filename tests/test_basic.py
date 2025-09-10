@@ -28,14 +28,19 @@ class TestValidators:
         assert sanitize_filename("../../../etc/passwd") == "passwd"
 
     def test_validate_url(self):
-        """Test URL validation."""
-        # Valid URLs
+        """Test URL validation with enhanced security."""
+        # Valid URLs (public addresses)
         assert validate_url("https://example.com/data.csv")[0]
-        assert validate_url("http://localhost:8000/file.csv")[0]
+        assert validate_url("https://raw.githubusercontent.com/user/repo/data.csv")[0]
 
-        # Invalid URLs
+        # Invalid URLs (now includes localhost due to security enhancement)
+        assert not validate_url("http://localhost:8000/file.csv")[0]  # Now blocked
         assert not validate_url("ftp://example.com/data.csv")[0]
         assert not validate_url("not-a-url")[0]
+
+        # Additional security tests for private networks
+        assert not validate_url("http://192.168.1.1/data.csv")[0]  # Private network
+        assert not validate_url("http://10.0.0.1/data.csv")[0]  # Private network
 
 
 @pytest.mark.asyncio

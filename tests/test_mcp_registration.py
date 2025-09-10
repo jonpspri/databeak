@@ -5,7 +5,7 @@ from src.databeak.tools import (
     mcp_analytics_tools,
     mcp_data_tools,
     mcp_history_tools,
-    mcp_io_tools,
+    # mcp_io_tools,  # Moved to servers/io_server.py
     mcp_row_tools,
     mcp_system_tools,
 )
@@ -18,7 +18,7 @@ class TestToolRegistration:
         """Test that all registration functions exist and are callable."""
         registration_funcs = [
             mcp_system_tools.register_system_tools,
-            mcp_io_tools.register_io_tools,
+            # mcp_io_tools.register_io_tools,  # Moved to servers/io_server.py
             mcp_data_tools.register_data_tools,
             mcp_row_tools.register_row_tools,
             mcp_analytics_tools.register_analytics_tools,

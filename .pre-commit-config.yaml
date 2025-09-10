@@ -77,7 +77,7 @@ repos:
           - pydantic>=2.0.0
           - pydantic-settings>=2.0.0
           - fastmcp>=0.1.0
-        args: ['--config-file', 'pyproject.toml', 'src/']
+        args: ['--config-file', 'pyproject.toml', 'src/', 'tests/']
         pass_filenames: false
 
   # Security checks with Bandit

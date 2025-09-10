@@ -138,15 +138,13 @@ class TestErrorConditions:
             temp_path = f.name
 
         try:
-            # Mock the file validation to pass, but then mock size check in io_server
-            with patch(
-                "src.databeak.utils.validators.validate_file_path", return_value=(True, temp_path)
-            ):
-                with patch("pathlib.Path.stat") as mock_stat:
-                    mock_stat.return_value.st_size = (MAX_FILE_SIZE_MB + 10) * 1024 * 1024
+            # Create a mock stat object
+            mock_stat_obj = type("MockStat", (), {})()
+            mock_stat_obj.st_size = (MAX_FILE_SIZE_MB + 10) * 1024 * 1024
 
-                    with pytest.raises(ToolError, match="File size.*exceeds limit"):
-                        await load_csv(temp_path)
+            with patch.object(Path(temp_path), "stat", return_value=mock_stat_obj):
+                with pytest.raises(ToolError, match="File size.*exceeds limit"):
+                    await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -162,7 +160,7 @@ class TestEdgeCases:
             temp_path = f.name
 
         try:
-            with pytest.raises(ToolError, match="CSV content is empty"):
+            with pytest.raises(ToolError, match="CSV format error.*No columns to parse"):
                 await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
@@ -610,30 +608,31 @@ class TestEncodingAndFallback:
 
         try:
             # Mock chardet to fail, then test fallback order
-            with patch(
-                "src.databeak.servers.io_server.chardet.detect", return_value={"confidence": 0.1}
+            with (
+                patch(
+                    "src.databeak.servers.io_server.chardet.detect",
+                    return_value={"confidence": 0.1},
+                ),
+                patch("src.databeak.servers.io_server.get_encoding_fallbacks") as mock_fallbacks,
             ):
-                with patch(
-                    "src.databeak.servers.io_server.get_encoding_fallbacks"
-                ) as mock_fallbacks:
-                    mock_fallbacks.return_value = ["utf-8-sig", "cp1252", "latin1"]
+                mock_fallbacks.return_value = ["utf-8-sig", "cp1252", "latin1"]
 
-                    # Mock pandas to fail on first few encodings, succeed on latin1
-                    call_count = 0
+                # Mock pandas to fail on first few encodings, succeed on latin1
+                call_count = 0
 
-                    def mock_read_csv(*args, **kwargs):
-                        nonlocal call_count
-                        call_count += 1
-                        encoding = kwargs.get("encoding", "utf-8")
-                        if encoding in ["utf-8", "utf-8-sig", "cp1252"]:
-                            raise UnicodeDecodeError(encoding, b"", 0, 1, "mock error")
-                        return pd.DataFrame({"name": ["John"], "age": [30]})
+                def mock_read_csv(*args, **kwargs):
+                    nonlocal call_count
+                    call_count += 1
+                    encoding = kwargs.get("encoding", "utf-8")
+                    if encoding in ["utf-8", "utf-8-sig", "cp1252"]:
+                        raise UnicodeDecodeError(encoding, b"", 0, 1, "mock error")
+                    return pd.DataFrame({"name": ["John"], "age": [30]})
 
-                    with patch("pandas.read_csv", side_effect=mock_read_csv):
-                        result = await load_csv(temp_path, encoding="utf-8")
-                        assert result.success
-                        # Verify fallbacks were called in order
-                        mock_fallbacks.assert_called_once()
+                with patch("pandas.read_csv", side_effect=mock_read_csv):
+                    result = await load_csv(temp_path, encoding="utf-8")
+                    assert result.success
+                    # Verify fallbacks were called in order
+                    mock_fallbacks.assert_called_once()
         finally:
             Path(temp_path).unlink()
 

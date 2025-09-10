@@ -16,8 +16,7 @@ from src.databeak.models.tool_responses import (
     CellLocation,
     # Row tool responses
     CellValueResult,
-    # IO tool responses
-    CloseSessionResult,
+    # Data tool responses
     ColumnOperationResult,
     # Analytics tool responses
     ColumnStatisticsResult,
@@ -25,13 +24,13 @@ from src.databeak.models.tool_responses import (
     DataPreview,
     DataTypeInfo,
     DeleteRowResult,
-    ExportResult,
+    # ExportResult,  # Moved to io_server
     FilterOperationResult,
     GroupStatistics,
     # System tool responses
     HealthResult,
     InsertRowResult,
-    LoadResult,
+    # LoadResult,  # Moved to io_server
     MissingDataInfo,
     OutlierInfo,
     OutliersResult,
@@ -41,13 +40,22 @@ from src.databeak.models.tool_responses import (
     SelectColumnsResult,
     ServerInfoResult,
     SessionInfo,
-    SessionInfoResult,
-    SessionListResult,
+    # SessionInfoResult,  # Moved to io_server
+    # SessionListResult,  # Moved to io_server
     SortDataResult,
     StatisticsResult,
     StatisticsSummary,
     UpdateRowResult,
     ValueCountsResult,
+)
+
+# Import IO server models that moved to modular architecture
+from src.databeak.servers.io_server import (
+    CloseSessionResult,
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
+    SessionListResult,
 )
 
 # =============================================================================
