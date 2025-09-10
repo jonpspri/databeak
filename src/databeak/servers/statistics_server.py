@@ -193,8 +193,9 @@ async def get_column_statistics(
 
 async def get_correlation_matrix(
     session_id: str,
-    columns: list[str] | None = None,
     method: Literal["pearson", "spearman", "kendall"] = "pearson",
+    columns: list[str] | None = None,
+    min_correlation: float | None = None,
     ctx: Context | None = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
@@ -235,7 +236,7 @@ async def get_correlation_matrix(
     try:
         from ..tools.analytics import get_correlation_matrix as _get_correlation_matrix
 
-        return await _get_correlation_matrix(session_id, columns, method, ctx)
+        return await _get_correlation_matrix(session_id, method, columns, min_correlation, ctx)
 
     except Exception as e:
         logger.error(f"Correlation analysis failed: {e}")
@@ -248,8 +249,9 @@ async def get_value_counts(
     session_id: str,
     column: str,
     normalize: bool = False,
-    sort_desc: bool = True,
-    limit: int | None = None,
+    sort: bool = True,
+    ascending: bool = False,
+    top_n: int | None = None,
     ctx: Context | None = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
@@ -292,7 +294,7 @@ async def get_value_counts(
     try:
         from ..tools.analytics import get_value_counts as _get_value_counts
 
-        return await _get_value_counts(session_id, column, normalize, sort_desc, limit, ctx)
+        return await _get_value_counts(session_id, column, normalize, sort, ascending, top_n, ctx)
 
     except Exception as e:
         logger.error(f"Value counts analysis failed: {e}")
