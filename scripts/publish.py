@@ -210,7 +210,7 @@ from pathlib import Path
 def run_command(cmd, check=True):
     """Run a command and return the result."""
     print(f"Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)  # noqa: S602
     if check and result.returncode != 0:
         print(f"Error running command: {cmd}")
         print(f"stdout: {result.stdout}")

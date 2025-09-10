@@ -4,6 +4,7 @@ This module provides a complete Discovery server implementation following DataBe
 architecture pattern. It focuses on data exploration, profiling, pattern detection, and outlier
 analysis with specialized algorithms for data insights.
 """
+# ruff: noqa: S101, ARG001
 
 from __future__ import annotations
 
@@ -198,7 +199,7 @@ async def detect_outliers(
     columns: list[str] | None = None,
     method: str = "iqr",
     threshold: float = 1.5,
-    ctx: Context | None = None,  # noqa: ARG001
+    ctx: Context | None = None,
 ) -> OutliersResult:
     """Detect outliers in numerical columns using various algorithms.
 
@@ -718,6 +719,7 @@ async def find_cells_with_value(
 async def get_data_summary(
     session_id: str,
     include_preview: bool = True,
+    max_preview_rows: int = 10,
     ctx: Context | None = None,
 ) -> DataSummaryResult:
     """Get comprehensive data overview and structural summary.
@@ -756,7 +758,6 @@ async def get_data_summary(
     """
     try:
         session, df = _get_session_data(session_id)
-        max_preview_rows = 10
 
         # Create coordinate system
         coordinate_system = {

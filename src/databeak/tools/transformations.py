@@ -1,4 +1,5 @@
 """Data transformation tools for CSV manipulation."""
+# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -85,7 +86,8 @@ async def filter_rows(
     """
     try:
         session, df = _get_session_data(session_id)
-        mask = pd.Series([True] * len(df))
+        # Initialize mask based on mode: AND starts True, OR starts False
+        mask = pd.Series([mode == "and"] * len(df))
 
         for condition in conditions:
             column = condition.get("column")
@@ -1099,6 +1101,7 @@ async def split_column(
     delimiter: str = " ",
     part_index: int | None = None,
     expand_to_columns: bool = False,
+    new_columns: list[str] | None = None,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
@@ -1125,18 +1128,21 @@ async def split_column(
             raise ToolError(f"Column '{column}' not found")
 
         # Perform split
-        if expand_to_columns:
+        if expand_to_columns or new_columns:
             # Split into multiple columns
             split_data = df[column].astype(str).str.split(delimiter, expand=True)
             # Replace original column with split columns
-            new_columns = []
+            column_names = []
             for i, col_data in enumerate(split_data.columns):
-                new_col_name = f"{column}_{i}"
+                if new_columns and i < len(new_columns):
+                    new_col_name = new_columns[i]
+                else:
+                    new_col_name = f"{column}_{i}"
                 session.data_session.df[new_col_name] = split_data[col_data]
-                new_columns.append(new_col_name)
+                column_names.append(new_col_name)
             # Drop original column
             session.data_session.df = session.data_session.df.drop(columns=[column])
-            columns_affected = new_columns
+            columns_affected = column_names
         else:
             # Keep specific part
             if part_index is not None:

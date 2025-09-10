@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Test that auto-save is enabled by default and works correctly."""
+# ruff: noqa: S101
 
 import asyncio
 

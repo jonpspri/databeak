@@ -1,4 +1,5 @@
 """Main FastMCP server for DataBeak."""
+# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -224,7 +225,7 @@ def main() -> None:
         default="stdio",
         help="Transport method",
     )
-    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP/SSE transport")  # nosec B104
+    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP/SSE transport")  # nosec B104  # noqa: S104
     parser.add_argument("--port", type=int, default=8000, help="Port for HTTP/SSE transport")
     parser.add_argument(
         "--log-level",

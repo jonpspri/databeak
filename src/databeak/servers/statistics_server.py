@@ -8,30 +8,23 @@ correlation analysis with optimized mathematical processing.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from fastmcp import Context, FastMCP
 
 # Import session management and data models from the main package
 from ..models.session_service import get_default_session_service_factory
+
+# Import response models - needed at runtime for FastMCP
+from ..models.statistics_models import (  # noqa: TC001
+    ColumnStatisticsResult,
+    CorrelationResult,
+    StatisticsResult,
+    ValueCountsResult,
+)
 from ..services import StatisticsService
 
 logger = logging.getLogger(__name__)
-
-# ============================================================================
-# PYDANTIC MODELS FOR STATISTICS OPERATIONS
-# ============================================================================
-
-
-# Import response models from dedicated models module
-
-if TYPE_CHECKING:
-    from ..models.statistics_models import (
-        ColumnStatisticsResult,
-        CorrelationResult,
-        StatisticsResult,
-        ValueCountsResult,
-    )
 
 # ============================================================================
 # STATISTICAL OPERATIONS LOGIC WITH DEPENDENCY INJECTION

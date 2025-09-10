@@ -46,6 +46,6 @@ __all__ = [
     "SessionService",
     "SessionServiceFactory",
     "SortSpec",
-    "get_session_manager",
     "get_default_session_service_factory",
+    "get_session_manager",
 ]
