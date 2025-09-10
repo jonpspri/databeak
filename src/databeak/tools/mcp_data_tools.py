@@ -6,7 +6,7 @@ from typing import Any, Literal
 
 from fastmcp import Context, FastMCP
 
-from ..models.tool_responses import ColumnOperationResult, FilterOperationResult  # noqa: TC001
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult
 from .transformations import add_column as _add_column
 from .transformations import change_column_type as _change_column_type
 from .transformations import extract_from_column as _extract_from_column
