@@ -5,18 +5,28 @@ This server provides column selection, renaming, addition, removal, and type con
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
+import pandas as pd
 from fastmcp import Context, FastMCP
+from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
-from ..models.tool_responses import ColumnOperationResult
-from ..tools.transformations import add_column as _add_column
-from ..tools.transformations import change_column_type as _change_column_type
-from ..tools.transformations import remove_columns as _remove_columns
-from ..tools.transformations import rename_columns as _rename_columns
-from ..tools.transformations import select_columns as _select_columns
-from ..tools.transformations import update_column as _update_column
+from ..exceptions import (
+    ColumnNotFoundError,
+    InvalidParameterError,
+    NoDataLoadedError,
+    SessionNotFoundError,
+)
+from ..models import OperationType, get_session_manager
+from ..models.tool_responses import (
+    ColumnOperationResult,
+    RenameColumnsResult,
+    SelectColumnsResult,
+)
+
+logger = logging.getLogger(__name__)
 
 # Type aliases
 CellValue = str | int | float | bool | None
@@ -41,12 +51,35 @@ class ColumnFormula(BaseModel):
 
 
 # =============================================================================
-# TOOL DEFINITIONS (Direct implementations for testing)
+# HELPER FUNCTIONS
+# =============================================================================
+
+
+def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+    """Get session and DataFrame, raising appropriate exceptions if not found."""
+    manager = get_session_manager()
+    session = manager.get_session(session_id)
+
+    if not session:
+        raise SessionNotFoundError(session_id)
+    if not session.data_session.has_data():
+        raise NoDataLoadedError(session_id)
+
+    df = session.data_session.df
+    if df is None:  # Type guard since has_data() was checked
+        raise NoDataLoadedError(session_id)
+    return session, df
+
+
+# =============================================================================
+# TOOL DEFINITIONS (Direct implementations)
 # =============================================================================
 
 
 async def select_columns(
-    session_id: str, columns: list[str], ctx: Context | None = None
+    session_id: str,
+    columns: list[str],
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
     """Select specific columns from the dataframe, removing all others.
 
@@ -65,14 +98,44 @@ async def select_columns(
         # Reorder columns by selection order
         select_columns(session_id, ["id", "date", "amount", "status"])
     """
-    result = await _select_columns(session_id, columns, ctx)
-    return result.model_dump()
+    try:
+        session, df = _get_session_data(session_id)
+
+        # Validate columns exist
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ToolError(f"Columns not found: {missing_cols}")
+
+        # Track counts before modification
+        columns_before = len(df.columns)
+
+        session.data_session.df = df[columns].copy()
+        session.record_operation(
+            OperationType.SELECT,
+            {
+                "columns": columns,
+                "columns_before": df.columns.tolist(),
+                "columns_after": columns,
+            },
+        )
+
+        result = SelectColumnsResult(
+            session_id=session_id,
+            selected_columns=columns,
+            columns_before=columns_before,
+            columns_after=len(columns),
+        )
+        return result.model_dump()
+
+    except Exception as e:
+        logger.error(f"Error selecting columns: {e!s}")
+        raise ToolError(f"Failed to select columns: {e}") from e
 
 
 async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> dict[str, Any]:
     """Rename columns in the dataframe.
 
@@ -95,8 +158,31 @@ async def rename_columns(
             "EmailAddress": "email"
         })
     """
-    result = await _rename_columns(session_id, mapping, ctx)
-    return result.model_dump()
+    try:
+        session, df = _get_session_data(session_id)
+
+        # Validate columns exist
+        missing_cols = [col for col in mapping if col not in df.columns]
+        if missing_cols:
+            raise ToolError(f"Columns not found: {missing_cols}")
+
+        # Apply renaming
+        session.data_session.df = df.rename(columns=mapping)
+        session.record_operation(
+            OperationType.RENAME,
+            {"mapping": mapping, "renamed_count": len(mapping)},
+        )
+
+        result = RenameColumnsResult(
+            session_id=session_id,
+            renamed=mapping,
+            columns=list(mapping.values()),
+        )
+        return result.model_dump()
+
+    except Exception as e:
+        logger.error(f"Error renaming columns: {e!s}")
+        raise ToolError(f"Failed to rename columns: {e}") from e
 
 
 async def add_column(
@@ -104,7 +190,7 @@ async def add_column(
     name: str,
     value: CellValue | list[CellValue] = None,
     formula: str | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
 
@@ -131,11 +217,61 @@ async def add_column(
         # Add column with complex formula
         add_column(session_id, "full_name", formula="first_name + ' ' + last_name")
     """
-    return await _add_column(session_id, name, value, formula, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if name in df.columns:
+            raise InvalidParameterError("name", name, f"Column '{name}' already exists")
+
+        if formula:
+            try:
+                # Use pandas eval to safely evaluate formula
+                session.data_session.df[name] = df.eval(formula)
+            except Exception as e:
+                raise InvalidParameterError("formula", formula, f"Invalid formula: {e}") from e
+        elif isinstance(value, list):
+            if len(value) != len(df):
+                raise InvalidParameterError(
+                    "value",
+                    str(value),
+                    f"List length ({len(value)}) must match row count ({len(df)})",
+                )
+            session.data_session.df[name] = value
+        else:
+            # Single value for all rows
+            session.data_session.df[name] = value
+
+        session.record_operation(
+            OperationType.ADD_COLUMN,
+            {
+                "column": name,
+                "value_type": "formula"
+                if formula
+                else "list"
+                if isinstance(value, list)
+                else "scalar",
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="add",
+            rows_affected=len(df),
+            columns_affected=[name],
+        )
+
+    except (SessionNotFoundError, NoDataLoadedError, InvalidParameterError) as e:
+        logger.error(f"Add column failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Unexpected error adding column: {e!s}")
+        raise ToolError(f"Failed to add column: {e}") from e
 
 
 async def remove_columns(
-    session_id: str, columns: list[str], ctx: Context | None = None
+    session_id: str,
+    columns: list[str],
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
@@ -157,7 +293,33 @@ async def remove_columns(
         # Clean up after analysis
         remove_columns(session_id, ["_temp", "_backup", "old_value"])
     """
-    return await _remove_columns(session_id, columns, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        # Validate columns exist
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
+
+        session.data_session.df = df.drop(columns=columns)
+        session.record_operation(
+            OperationType.REMOVE_COLUMN,
+            {"columns": columns, "count": len(columns)},
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="remove",
+            rows_affected=len(df),
+            columns_affected=columns,
+        )
+
+    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
+        logger.error(f"Remove columns failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Unexpected error removing columns: {e!s}")
+        raise ToolError(f"Failed to remove columns: {e}") from e
 
 
 async def change_column_type(
@@ -165,7 +327,7 @@ async def change_column_type(
     column: str,
     dtype: Literal["int", "float", "str", "bool", "datetime"],
     errors: Literal["raise", "coerce"] = "coerce",
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Change the data type of a column.
 
@@ -194,7 +356,81 @@ async def change_column_type(
         # Convert to boolean
         change_column_type(session_id, "is_active", "bool")
     """
-    return await _change_column_type(session_id, column, dtype, errors, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Track before state
+        original_dtype = str(df[column].dtype)
+        null_count_before = df[column].isna().sum()
+
+        # Map string dtype to pandas dtype
+        type_map = {
+            "int": "int64",
+            "float": "float64",
+            "str": "string",
+            "bool": "bool",
+            "datetime": "datetime64[ns]",
+        }
+
+        target_dtype = type_map.get(dtype)
+        if not target_dtype:
+            raise InvalidParameterError("dtype", dtype, f"Unsupported type: {dtype}")
+
+        try:
+            if dtype == "datetime":
+                # Special handling for datetime conversion
+                session.data_session.df[column] = pd.to_datetime(df[column], errors=errors)
+            else:
+                # General type conversion
+                if errors == "coerce":
+                    if dtype in ["int", "float"]:
+                        session.data_session.df[column] = pd.to_numeric(df[column], errors="coerce")
+                    else:
+                        session.data_session.df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+                else:
+                    session.data_session.df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+
+        except (ValueError, TypeError) as e:
+            if errors == "raise":
+                raise InvalidParameterError(
+                    "column", column, f"Cannot convert to {dtype}: {e}"
+                ) from e
+            # If errors='coerce', the conversion has already handled invalid values
+
+        # Track after state
+        null_count_after = session.data_session.df[column].isna().sum()
+
+        session.record_operation(
+            OperationType.CHANGE_TYPE,
+            {
+                "column": column,
+                "from_type": original_dtype,
+                "to_type": dtype,
+                "nulls_created": int(null_count_after - null_count_before),
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=f"change_type_to_{dtype}",
+            rows_affected=len(df),
+            columns_affected=[column],
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Change column type failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Unexpected error changing column type: {e!s}")
+        raise ToolError(f"Failed to change column type: {e}") from e
 
 
 async def update_column(
@@ -204,7 +440,7 @@ async def update_column(
     value: Any | None = None,
     pattern: str | None = None,
     replacement: str | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Update values in a column using various operations.
 
@@ -234,7 +470,103 @@ async def update_column(
         # Fill missing values
         update_column(session_id, "score", "fillna", value=0)
     """
-    return await _update_column(session_id, column, operation, value, pattern, replacement, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Track initial state
+        null_count_before = df[column].isna().sum()
+
+        if operation == "replace":
+            if pattern is None or replacement is None:
+                raise InvalidParameterError(
+                    "pattern/replacement",
+                    f"{pattern}/{replacement}",
+                    "Both pattern and replacement required for replace operation",
+                )
+            session.data_session.df[column] = df[column].replace(pattern, replacement)
+
+        elif operation == "map":
+            if not isinstance(value, dict):
+                raise InvalidParameterError(
+                    "value",
+                    str(value),
+                    "Dictionary mapping required for map operation",
+                )
+            session.data_session.df[column] = df[column].map(value)
+
+        elif operation == "apply":
+            if value is None:
+                raise InvalidParameterError(
+                    "value",
+                    str(value),
+                    "Expression or function required for apply operation",
+                )
+            # For simple expressions, use eval safely with restricted scope
+            if isinstance(value, str):
+                import ast
+
+                # Parse and validate the expression is safe
+                try:
+                    ast.parse(value, mode="eval")
+                    # Create a safe evaluation context
+                    safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
+                    session.data_session.df[column] = df[column].apply(
+                        lambda x: eval(value, safe_dict, {"x": x})  # noqa: S307
+                    )
+                except SyntaxError as e:
+                    raise InvalidParameterError("value", value, f"Invalid expression: {e}") from e
+            else:
+                session.data_session.df[column] = df[column].apply(value)
+
+        elif operation == "fillna":
+            if value is None:
+                raise InvalidParameterError(
+                    "value",
+                    str(value),
+                    "Fill value required for fillna operation",
+                )
+            session.data_session.df[column] = df[column].fillna(value)
+
+        else:
+            raise InvalidParameterError(
+                "operation",
+                operation,
+                "Supported operations: replace, map, apply, fillna",
+            )
+
+        # Track changes
+        null_count_after = session.data_session.df[column].isna().sum()
+
+        session.record_operation(
+            OperationType.UPDATE_COLUMN,
+            {
+                "column": column,
+                "operation": operation,
+                "nulls_changed": int(null_count_after - null_count_before),
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=f"update_{operation}",
+            rows_affected=len(df),
+            columns_affected=[column],
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Update column failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Unexpected error updating column: {e!s}")
+        raise ToolError(f"Failed to update column: {e}") from e
 
 
 # =============================================================================
