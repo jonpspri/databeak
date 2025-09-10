@@ -3,6 +3,7 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
+from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.tools.analytics import (
     detect_outliers,
     get_column_statistics,
@@ -12,7 +13,6 @@ from src.databeak.tools.analytics import (
     group_by_aggregate,
     profile_data,
 )
-from src.databeak.tools.io_operations import load_csv_from_content
 
 
 @pytest.fixture
@@ -161,15 +161,11 @@ class TestGetColumnStatistics:
 
     async def test_get_column_statistics_empty_numeric_column(self):
         """Test column statistics with all null numeric values."""
-        csv_content = "empty\n\n\n\n"  # All null values
-        result = await load_csv_from_content(csv_content)
-        session_id = result.session_id
+        csv_content = "empty\n\n\n\n"  # Header with empty rows - now rejected by validation
 
-        stats_result = await get_column_statistics(session_id, "empty")
-        assert stats_result.success is True
-        assert stats_result.statistics.count == 0
-        assert stats_result.non_null_count == 0
-        assert stats_result.statistics.mean == 0.0
+        # Update test to expect validation error for truly empty data
+        with pytest.raises(ToolError, match="Parsed CSV contains no data rows"):
+            await load_csv_from_content(csv_content)
 
     async def test_get_column_statistics_data_accuracy(self, analytics_test_session):
         """Test accuracy of calculated statistics against known data."""
@@ -273,20 +269,10 @@ class TestAnalyticsEdgeCases:
     """Test analytics edge cases and boundary conditions."""
 
     async def test_statistics_empty_dataframe(self):
-        """Test statistics on empty dataframe."""
-        # Create session with empty data
-        result = await load_csv_from_content("name,age\n")  # Header only
-        session_id = result.session_id
-
-        # Test statistics
-        stats_result = await get_statistics(session_id)
-        assert stats_result.success is True
-        # Statistics for empty dataframe should have total_rows or count of 0
-        assert hasattr(stats_result, "statistics")
-        assert (
-            stats_result.statistics.get("total_rows", 0) == 0
-            or stats_result.statistics.get("count", 0) == 0
-        )
+        """Test statistics validation with empty dataframe."""
+        # Header-only CSV is now rejected by validation (as it should be)
+        with pytest.raises(ToolError, match="Parsed CSV contains no data rows"):
+            await load_csv_from_content("name,age\n")  # Header only
 
     async def test_outliers_with_identical_values(self):
         """Test outlier detection with identical values."""

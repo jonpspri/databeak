@@ -10,18 +10,18 @@ from src.databeak.models.csv_session import CSVSession, DataBeakSettings, get_cs
 class TestDataBeakSettings:
     """Test DataBeak settings configuration."""
 
-    def test_default_settings(self):
+    def test_default_settings(self) -> None:
         """Test default settings configuration."""
         settings = DataBeakSettings()
         assert settings.csv_history_dir == "."
 
-    def test_settings_with_custom_dir(self):
+    def test_settings_with_custom_dir(self) -> None:
         """Test settings with custom directory."""
         with tempfile.TemporaryDirectory() as custom_dir:
             settings = DataBeakSettings(csv_history_dir=custom_dir)
             assert settings.csv_history_dir == custom_dir
 
-    def test_environment_variable_override(self):
+    def test_environment_variable_override(self) -> None:
         """Test that environment variable overrides default."""
         with (
             tempfile.TemporaryDirectory() as test_dir,
@@ -30,7 +30,7 @@ class TestDataBeakSettings:
             settings = DataBeakSettings()
             assert settings.csv_history_dir == test_dir
 
-    def test_case_insensitive_env_var(self):
+    def test_case_insensitive_env_var(self) -> None:
         """Test that environment variable is case insensitive."""
         with (
             tempfile.TemporaryDirectory() as test_dir,
@@ -43,7 +43,7 @@ class TestDataBeakSettings:
 class TestDataBeakSettingsIntegration:
     """Test DataBeak settings integration with sessions."""
 
-    def test_get_csv_settings_singleton(self):
+    def test_get_csv_settings_singleton(self) -> None:
         """Test that get_csv_settings returns singleton instance."""
         with (  # Requires Python 3.9+
             tempfile.TemporaryDirectory() as temp_dir,

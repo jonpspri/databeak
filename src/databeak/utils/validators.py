@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ipaddress
 import re
+import socket
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -33,8 +35,10 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
         if path.suffix.lower() not in valid_extensions:
             return False, f"Invalid file extension. Supported: {valid_extensions}"
 
-        # Check file size (max 1GB)
+        # Check file size (configurable in io_server.py)
         if must_exist:
+            # Use a conservative 1GB limit here since this is a utility function
+            # Specific modules can implement their own lower limits
             max_size = 1024 * 1024 * 1024  # 1GB
             if path.stat().st_size > max_size:
                 return False, "File too large. Maximum size: 1GB"
@@ -46,7 +50,7 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
 
 
 def validate_url(url: str) -> tuple[bool, str]:
-    """Validate a URL for CSV download."""
+    """Validate a URL for CSV download with security checks against private networks."""
     try:
         parsed = urlparse(url)
 
@@ -57,6 +61,51 @@ def validate_url(url: str) -> tuple[bool, str]:
         # Check if URL is valid
         if not parsed.netloc:
             return False, "Invalid URL format"
+
+        # Extract hostname (remove port if present)
+        hostname = parsed.hostname
+        if not hostname:
+            return False, "Invalid hostname in URL"
+
+        # Check for private/local network addresses
+        try:
+            # Try to parse as IP address
+            ip = ipaddress.ip_address(hostname)
+
+            # Block private networks
+            if ip.is_private:
+                return False, "Private network addresses not allowed"
+            if ip.is_loopback:
+                return False, "Loopback addresses not allowed"
+            if ip.is_link_local:
+                return False, "Link-local addresses not allowed"
+            if ip.is_multicast:
+                return False, "Multicast addresses not allowed"
+
+        except ValueError:
+            # Not an IP address - check for localhost/private hostnames
+            if hostname.lower() in ["localhost", "127.0.0.1", "::1", "0.0.0.0"]:  # nosec B104
+                return False, "Local addresses not allowed"
+
+            # Try to resolve hostname to check for private IPs
+            try:
+                # Get IP addresses for hostname
+                addr_info = socket.getaddrinfo(
+                    hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM
+                )
+                for _, _, _, _, sockaddr in addr_info:
+                    ip_addr = sockaddr[0]
+                    try:
+                        ip = ipaddress.ip_address(ip_addr)
+                        if ip.is_private or ip.is_loopback or ip.is_link_local:
+                            return False, f"Hostname resolves to private address: {ip_addr}"
+                    except ValueError:
+                        # IPv6 addresses with scope might not parse cleanly - be conservative
+                        if ":" in ip_addr and ("fe80" in ip_addr.lower() or "::1" in ip_addr):
+                            return False, f"Hostname resolves to local address: {ip_addr}"
+            except (socket.gaierror, OSError):
+                # DNS resolution failed - allow but log warning
+                pass
 
         return True, url
 
@@ -212,3 +261,35 @@ def sanitize_filename(filename: str) -> str:
         name = name[:100]
 
     return name + ext
+
+
+def convert_pandas_na_to_none(value: Any) -> Any:
+    """Convert pandas NA values to Python None for Pydantic serialization.
+
+    This function handles the conversion of pandas nullable data types' NA values
+    to Python None, which is compatible with Pydantic models.
+
+    Args:
+        value: Any value that might be a pandas NA
+
+    Returns:
+        The original value if not pandas NA, otherwise None
+    """
+    import pandas as pd
+
+    # Handle pandas NA values (from nullable dtypes)
+    if pd.isna(value):
+        return None
+    return value
+
+
+def convert_pandas_na_list(values: list[Any]) -> list[Any]:
+    """Convert a list of values that may contain pandas NA values to Python None.
+
+    Args:
+        values: List of values that may contain pandas NA
+
+    Returns:
+        List with pandas NA values converted to None
+    """
+    return [convert_pandas_na_to_none(val) for val in values]

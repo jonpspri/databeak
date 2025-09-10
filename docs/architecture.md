@@ -110,8 +110,8 @@ The server implements the Model Context Protocol standard:
 ```bash
 uv sync              # Install dependencies
 uv run databeak      # Run server
-uv run test          # Run tests
-uv run all-checks    # Lint, format, type-check, test
+uv run -m pytest    # Run tests
+uv run ruff check && uv run ruff format --check && uv run mypy src/ && uv run -m pytest
 ```
 
 ### Version Management

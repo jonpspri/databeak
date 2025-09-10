@@ -28,14 +28,19 @@ class TestValidators:
         assert sanitize_filename("../../../etc/passwd") == "passwd"
 
     def test_validate_url(self):
-        """Test URL validation."""
-        # Valid URLs
+        """Test URL validation with enhanced security."""
+        # Valid URLs (public addresses)
         assert validate_url("https://example.com/data.csv")[0]
-        assert validate_url("http://localhost:8000/file.csv")[0]
+        assert validate_url("https://raw.githubusercontent.com/user/repo/data.csv")[0]
 
-        # Invalid URLs
+        # Invalid URLs (now includes localhost due to security enhancement)
+        assert not validate_url("http://localhost:8000/file.csv")[0]  # Now blocked
         assert not validate_url("ftp://example.com/data.csv")[0]
         assert not validate_url("not-a-url")[0]
+
+        # Additional security tests for private networks
+        assert not validate_url("http://192.168.1.1/data.csv")[0]  # Private network
+        assert not validate_url("http://10.0.0.1/data.csv")[0]  # Private network
 
 
 @pytest.mark.asyncio
@@ -74,7 +79,7 @@ class TestDataOperations:
 
     async def test_load_csv_from_content(self):
         """Test loading CSV from string content."""
-        from src.databeak.tools.io_operations import load_csv_from_content
+        from src.databeak.servers.io_server import load_csv_from_content
 
         csv_content = """a,b,c
 1,2,3
@@ -82,7 +87,7 @@ class TestDataOperations:
 
         result = await load_csv_from_content(content=csv_content, delimiter=",")
 
-        assert result.success
+        assert result.session_id is not None
         assert result.rows_affected == 2
         assert len(result.columns_affected) == 3
 

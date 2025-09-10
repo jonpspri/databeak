@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.databeak.tools.io_operations import load_csv_from_content
-from src.databeak.validation_server import (
+from src.databeak.servers.io_server import load_csv_from_content
+from src.databeak.servers.validation_server import (
     CompletenessRule,
     ConsistencyRule,
     DataTypesRule,
@@ -303,9 +303,7 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_statistical(self, problematic_test_session):
         """Test statistical anomaly detection."""
-        result = find_anomalies(
-            problematic_test_session, methods=["statistical"], sensitivity=0.95
-        )
+        result = find_anomalies(problematic_test_session, methods=["statistical"], sensitivity=0.95)
         assert hasattr(result, "anomalies")
         assert hasattr(result.anomalies, "by_method")
 
@@ -316,16 +314,12 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_pattern(self, problematic_test_session):
         """Test pattern anomaly detection."""
-        result = find_anomalies(
-            problematic_test_session, methods=["pattern"], sensitivity=0.8
-        )
+        result = find_anomalies(problematic_test_session, methods=["pattern"], sensitivity=0.8)
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_missing(self, problematic_test_session):
         """Test missing value anomaly detection."""
-        result = find_anomalies(
-            problematic_test_session, methods=["missing"], sensitivity=0.9
-        )
+        result = find_anomalies(problematic_test_session, methods=["missing"], sensitivity=0.9)
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_all_methods(self, problematic_test_session):
@@ -501,7 +495,7 @@ class TestValidationIntegration:
         assert hasattr(result, "valid")
 
         # Check if session info can be retrieved (verifies session still exists)
-        from src.databeak.tools.io_operations import get_session_info
+        from src.databeak.servers.io_server import get_session_info
 
         info_result = await get_session_info(clean_test_session)
         assert info_result.success is True

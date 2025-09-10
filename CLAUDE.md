@@ -105,8 +105,6 @@ guidance.
 # Setup and development
 uv sync                 # Install all dependencies
 uv run databeak      # Run the MCP server
-uv run test            # Run test suite
-uv run all-checks      # Full quality check pipeline
 
 # Version management
 uv run sync-versions   # Sync version numbers across files

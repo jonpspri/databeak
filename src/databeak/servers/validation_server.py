@@ -12,8 +12,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
-from .models.csv_session import get_session_manager
-from .models.data_models import OperationType
+from ..models import OperationType, get_session_manager
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ logger = logging.getLogger(__name__)
 class ValidationError(BaseModel):
     """Individual validation error details."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     error: str
     message: str
@@ -43,7 +42,7 @@ class ValidationError(BaseModel):
 class ValidationSummary(BaseModel):
     """Summary of validation results."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     total_columns: int
     valid_columns: int
@@ -87,7 +86,7 @@ class QualityRuleResult(BaseModel):
 class QualityResults(BaseModel):
     """Comprehensive quality check results."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     overall_score: float
     passed_rules: int
@@ -128,15 +127,15 @@ class PatternAnomaly(BaseModel):
 
 class MissingAnomaly(BaseModel):
     """Missing value anomaly detection result.
-    
+
     Represents anomalies found in missing value patterns within a column.
     This includes both the quantity of missing values and their distribution
     patterns (clustered vs random), which can indicate data quality issues
     or systematic collection problems.
-    
+
     Attributes:
         missing_count: Total number of missing/null values in the column
-        missing_ratio: Proportion of missing values (0.0 to 1.0) 
+        missing_ratio: Proportion of missing values (0.0 to 1.0)
         missing_indices: Row indices where missing values occur (limited to first 100)
         sequential_clusters: Number of consecutive missing value sequences found
         pattern: Distribution pattern of missing values ('clustered' or 'random')
@@ -146,16 +145,13 @@ class MissingAnomaly(BaseModel):
         description="Total number of missing/null values found in the column"
     )
     missing_ratio: float = Field(
-        description="Ratio of missing values to total values (0.0 to 1.0)",
-        ge=0.0,
-        le=1.0
+        description="Ratio of missing values to total values (0.0 to 1.0)", ge=0.0, le=1.0
     )
     missing_indices: list[int] = Field(
         description="Row indices where missing values occur (limited to first 100 for performance)"
     )
     sequential_clusters: int = Field(
-        description="Number of consecutive missing value sequences detected",
-        ge=0
+        description="Number of consecutive missing value sequences detected", ge=0
     )
     pattern: Literal["clustered", "random"] = Field(
         description="Distribution pattern of missing values ('clustered' or 'random')"
@@ -173,7 +169,7 @@ class AnomalySummary(BaseModel):
 class AnomalyResults(BaseModel):
     """Comprehensive anomaly detection results."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     summary: AnomalySummary
     by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]
@@ -216,8 +212,9 @@ class ColumnValidationRules(BaseModel):
         """Validate that pattern is a valid regular expression."""
         if v is None:
             return v
-        
+
         import re
+
         try:
             re.compile(v)
             return v
@@ -228,7 +225,7 @@ class ColumnValidationRules(BaseModel):
 class QualityRule(BaseModel):
     """Base class for quality rules."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     type: str
 

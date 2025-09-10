@@ -42,6 +42,7 @@ from ..models.tool_responses import (
     UpdateRowResult,
 )
 from .data_operations import create_data_preview_with_indices
+from ..utils.validators import convert_pandas_na_list
 
 # Type aliases for better type safety (non-conflicting)
 CellValue = str | int | float | bool | None
@@ -585,7 +586,7 @@ async def update_column(
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
 
-        original_values_sample = df[column].head(5).tolist()
+        original_values_sample = convert_pandas_na_list(df[column].head(5).tolist())
 
         if operation == "replace":
             if pattern is None or replacement is None:
@@ -630,7 +631,7 @@ async def update_column(
         else:
             raise ToolError(f"Unknown operation: {operation}")
 
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
+        updated_values_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1011,7 +1012,7 @@ async def replace_in_column(
             raise ToolError(f"Column '{column}' not found")
 
         # Get original sample
-        original_sample = df[column].head(5).tolist()
+        original_sample = convert_pandas_na_list(df[column].head(5).tolist())
 
         # Perform replacement
         session.data_session.df[column] = (
@@ -1019,7 +1020,7 @@ async def replace_in_column(
         )
 
         # Get updated sample
-        updated_sample = session.data_session.df[column].head(5).tolist()
+        updated_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1265,7 +1266,7 @@ async def strip_column(
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
 
-        original_values_sample = df[column].head(5).tolist()
+        original_values_sample = convert_pandas_na_list(df[column].head(5).tolist())
 
         # Perform strip
         if chars is None:
@@ -1273,7 +1274,7 @@ async def strip_column(
         else:
             session.data_session.df[column] = df[column].astype(str).str.strip(chars)
 
-        updated_values_sample = session.data_session.df[column].head(5).tolist()
+        updated_values_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,

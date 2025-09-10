@@ -195,14 +195,14 @@ async def test_mcp_tool_discovery():
 
 ### Local Development
 
-**Quick Smoke Tests (`uv run test-live-quick`):**
+**Quick Smoke Tests (`uv run -m pytest tests/live_server/ -m quick`):**
 
 - Server startup validation
 - Basic tool call functionality
 - ~30 seconds execution time
 - Run during active development
 
-**Full Live Testing (`uv run test-live-full`):**
+**Full Live Testing (`uv run -m pytest tests/live_server/`):**
 
 - Complete protocol compliance suite
 - Performance benchmarks
@@ -230,7 +230,7 @@ test-live-server:
     - name: Setup Python and uv
     - name: Install dependencies
     - name: Run live server tests
-      run: uv run test-live --transport=${{ matrix.transport }}
+      run: uv run -m pytest tests/live_server/ --transport=${{ matrix.transport }}
 ```
 
 **Quality Gate Requirements:**

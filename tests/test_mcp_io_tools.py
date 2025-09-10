@@ -1,6 +1,6 @@
-"""Tests for I/O MCP tools."""
+"""Tests for I/O server MCP tools."""
 
-from src.databeak.tools.io_operations import (
+from src.databeak.servers.io_server import (
     close_session,
     export_csv,
     get_session_info,
@@ -11,11 +11,11 @@ from src.databeak.tools.io_operations import (
 )
 
 
-class TestIOTools:
-    """Test I/O tools availability."""
+class TestIOServerTools:
+    """Test I/O server tools availability."""
 
-    def test_csv_loading_tools_available(self) -> None:
-        """Test that CSV loading tools are available."""
+    def test_csv_loading_server_tools_available(self) -> None:
+        """Test that CSV loading server tools are available."""
         loading_ops = [
             load_csv,
             load_csv_from_url,
@@ -25,8 +25,8 @@ class TestIOTools:
         for op_func in loading_ops:
             assert callable(op_func)
 
-    def test_session_management_tools_available(self) -> None:
-        """Test that session management tools are available."""
+    def test_session_management_server_tools_available(self) -> None:
+        """Test that session management server tools are available."""
         session_ops = [
             get_session_info,
             list_sessions,
@@ -36,16 +36,16 @@ class TestIOTools:
         for op_func in session_ops:
             assert callable(op_func)
 
-    def test_export_tools_available(self) -> None:
-        """Test that export tools are available."""
+    def test_export_server_tools_available(self) -> None:
+        """Test that export server tools are available."""
         assert callable(export_csv)
 
 
-class TestIOToolSignatures:
-    """Test that I/O tools have expected signatures."""
+class TestIOServerToolSignatures:
+    """Test that I/O server tools have expected signatures."""
 
-    def test_load_csv_signature(self) -> None:
-        """Test load_csv has correct function signature."""
+    def test_load_csv_server_signature(self) -> None:
+        """Test load_csv server function has correct signature."""
         import inspect
 
         sig = inspect.signature(load_csv)
@@ -63,8 +63,8 @@ class TestIOToolSignatures:
         ]
         assert all(param in params for param in expected_params)
 
-    def test_export_csv_signature(self) -> None:
-        """Test export_csv has correct function signature."""
+    def test_export_csv_server_signature(self) -> None:
+        """Test export_csv server function has correct signature."""
         import inspect
 
         sig = inspect.signature(export_csv)
@@ -80,8 +80,8 @@ class TestIOToolSignatures:
         ]
         assert all(param in params for param in expected_params)
 
-    def test_session_info_signature(self) -> None:
-        """Test get_session_info has correct function signature."""
+    def test_session_info_server_signature(self) -> None:
+        """Test get_session_info server function has correct signature."""
         import inspect
 
         sig = inspect.signature(get_session_info)
