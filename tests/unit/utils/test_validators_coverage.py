@@ -21,7 +21,7 @@ from src.databeak.utils.validators import (
 class TestFilePathValidation:
     """Test file path validation functionality."""
 
-    def test_validate_file_path_valid_csv(self, tmp_path):
+    def test_validate_file_path_valid_csv(self, tmp_path) -> None:
         """Test validation of valid CSV file."""
         # Create a test CSV file
         test_file = tmp_path / "test.csv"
@@ -32,7 +32,7 @@ class TestFilePathValidation:
         assert is_valid is True
         assert str(test_file) in message
 
-    def test_validate_file_path_valid_extensions(self, tmp_path):
+    def test_validate_file_path_valid_extensions(self, tmp_path) -> None:
         """Test validation with all valid file extensions."""
         valid_extensions = [".csv", ".tsv", ".txt", ".dat"]
 
@@ -43,7 +43,7 @@ class TestFilePathValidation:
             is_valid, message = validate_file_path(str(test_file))
             assert is_valid is True
 
-    def test_validate_file_path_invalid_extension(self, tmp_path):
+    def test_validate_file_path_invalid_extension(self, tmp_path) -> None:
         """Test validation with invalid file extension."""
         test_file = tmp_path / "test.xlsx"
         test_file.write_text("data")
@@ -53,7 +53,7 @@ class TestFilePathValidation:
         assert is_valid is False
         assert "Invalid file extension" in message
 
-    def test_validate_file_path_not_exist_required(self):
+    def test_validate_file_path_not_exist_required(self) -> None:
         """Test validation when file doesn't exist but is required."""
         nonexistent_file = "/nonexistent/path/file.csv"
 
@@ -62,7 +62,7 @@ class TestFilePathValidation:
         assert is_valid is False
         assert "File not found" in message
 
-    def test_validate_file_path_not_exist_optional(self):
+    def test_validate_file_path_not_exist_optional(self) -> None:
         """Test validation when file doesn't exist but is optional."""
         nonexistent_file = "/tmp/new_file.csv"
 
@@ -70,7 +70,7 @@ class TestFilePathValidation:
 
         assert is_valid is True
 
-    def test_validate_file_path_traversal_attack(self):
+    def test_validate_file_path_traversal_attack(self) -> None:
         """Test protection against path traversal attacks."""
         malicious_paths = [
             "../../../etc/passwd",
@@ -84,14 +84,14 @@ class TestFilePathValidation:
             assert is_valid is False
             assert "Path traversal not allowed" in message
 
-    def test_validate_file_path_directory_not_file(self, tmp_path):
+    def test_validate_file_path_directory_not_file(self, tmp_path) -> None:
         """Test validation when path points to directory."""
         is_valid, message = validate_file_path(str(tmp_path))
 
         assert is_valid is False
         assert "Not a file" in message
 
-    def test_validate_file_path_large_file(self, tmp_path):
+    def test_validate_file_path_large_file(self, tmp_path) -> None:
         """Test validation with file size limit."""
         # Create a large file (mock the stat result)
         test_file = tmp_path / "large.csv"
@@ -106,7 +106,7 @@ class TestFilePathValidation:
             assert is_valid is False
             assert "File too large" in message or "Error validating path" in message
 
-    def test_validate_file_path_exception_handling(self):
+    def test_validate_file_path_exception_handling(self) -> None:
         """Test exception handling in file path validation."""
         # Use invalid path that causes exception
         with patch("pathlib.Path.resolve", side_effect=OSError("Permission denied")):
@@ -119,7 +119,7 @@ class TestFilePathValidation:
 class TestURLValidation:
     """Test URL validation functionality."""
 
-    def test_validate_url_valid_http(self):
+    def test_validate_url_valid_http(self) -> None:
         """Test validation of valid HTTP URL."""
         url = "http://example.com/data.csv"
 
@@ -128,7 +128,7 @@ class TestURLValidation:
         assert is_valid is True
         assert url in message
 
-    def test_validate_url_valid_https(self):
+    def test_validate_url_valid_https(self) -> None:
         """Test validation of valid HTTPS URL."""
         url = "https://data.example.com/dataset.csv"
 
@@ -136,7 +136,7 @@ class TestURLValidation:
 
         assert is_valid is True
 
-    def test_validate_url_invalid_scheme(self):
+    def test_validate_url_invalid_scheme(self) -> None:
         """Test validation of invalid URL scheme."""
         invalid_urls = [
             "ftp://example.com/data.csv",
@@ -150,7 +150,7 @@ class TestURLValidation:
             assert is_valid is False
             assert "HTTP/HTTPS URLs are supported" in message
 
-    def test_validate_url_malformed(self):
+    def test_validate_url_malformed(self) -> None:
         """Test validation of malformed URLs."""
         malformed_urls = ["not-a-url", "http://", "https://", "", "http:///missing-domain"]
 
@@ -158,7 +158,7 @@ class TestURLValidation:
             is_valid, message = validate_url(url)
             assert is_valid is False
 
-    def test_validate_url_private_ip_addresses(self):
+    def test_validate_url_private_ip_addresses(self) -> None:
         """Test validation blocks private IP addresses."""
         private_urls = [
             "http://192.168.1.1/data.csv",
@@ -171,7 +171,7 @@ class TestURLValidation:
             assert is_valid is False
             assert "Private network addresses not allowed" in message
 
-    def test_validate_url_loopback_addresses(self):
+    def test_validate_url_loopback_addresses(self) -> None:
         """Test validation blocks loopback addresses."""
         loopback_urls = [
             "http://127.0.0.1:8000/local.csv",
@@ -184,7 +184,7 @@ class TestURLValidation:
             assert is_valid is False
 
     @patch("socket.getaddrinfo")
-    def test_validate_url_dns_resolution_to_private(self, mock_getaddrinfo):
+    def test_validate_url_dns_resolution_to_private(self, mock_getaddrinfo) -> None:
         """Test validation when DNS resolves to private IP."""
         # Mock DNS resolution to return private IP
         mock_getaddrinfo.return_value = [
@@ -197,7 +197,7 @@ class TestURLValidation:
         assert "private address" in message
 
     @patch("socket.getaddrinfo")
-    def test_validate_url_dns_resolution_error(self, mock_getaddrinfo):
+    def test_validate_url_dns_resolution_error(self, mock_getaddrinfo) -> None:
         """Test validation when DNS resolution fails."""
         mock_getaddrinfo.side_effect = socket.gaierror("Name resolution failed")
 
@@ -206,7 +206,7 @@ class TestURLValidation:
         # DNS failure should be allowed but handled gracefully
         assert isinstance(is_valid, bool)
 
-    def test_validate_url_exception_handling(self):
+    def test_validate_url_exception_handling(self) -> None:
         """Test exception handling in URL validation."""
         # Test with a malformed URL that might cause issues
         is_valid, message = validate_url("not-a-url-at-all")
@@ -218,7 +218,7 @@ class TestURLValidation:
 class TestColumnNameValidation:
     """Test column name validation."""
 
-    def test_validate_column_name_valid(self):
+    def test_validate_column_name_valid(self) -> None:
         """Test validation of valid column names."""
         valid_names = [
             "name",
@@ -235,7 +235,7 @@ class TestColumnNameValidation:
             is_valid, message = validate_column_name(name)
             assert is_valid is True, f"Failed for valid name: {name}"
 
-    def test_validate_column_name_invalid(self):
+    def test_validate_column_name_invalid(self) -> None:
         """Test validation of invalid column names."""
         invalid_names = [
             "",  # empty
@@ -251,15 +251,15 @@ class TestColumnNameValidation:
         ]
 
         for name in invalid_names:
-            is_valid, message = validate_column_name(name)
+            is_valid, message = validate_column_name(name)  # type: ignore[arg-type]
             assert is_valid is False, f"Should have failed for invalid name: {name}"
 
-    def test_validate_column_name_non_string(self):
+    def test_validate_column_name_non_string(self) -> None:
         """Test validation of non-string column names."""
         non_string_names = [123, [], {}, True, 1.5]
 
         for name in non_string_names:
-            is_valid, message = validate_column_name(name)
+            is_valid, message = validate_column_name(name)  # type: ignore[arg-type]
             assert is_valid is False
             assert "non-empty string" in message
 
@@ -267,7 +267,7 @@ class TestColumnNameValidation:
 class TestDataframeValidation:
     """Test dataframe validation functionality."""
 
-    def test_validate_dataframe_valid(self):
+    def test_validate_dataframe_valid(self) -> None:
         """Test validation of valid dataframe."""
         df = pd.DataFrame(
             {
@@ -285,7 +285,7 @@ class TestDataframeValidation:
         assert "info" in result
         assert len(result["errors"]) == 0
 
-    def test_validate_dataframe_empty(self):
+    def test_validate_dataframe_empty(self) -> None:
         """Test validation of empty dataframe."""
         df = pd.DataFrame()
 
@@ -294,7 +294,7 @@ class TestDataframeValidation:
         assert len(result["errors"]) > 0
         assert "empty" in result["errors"][0].lower()
 
-    def test_validate_dataframe_duplicate_columns(self):
+    def test_validate_dataframe_duplicate_columns(self) -> None:
         """Test validation detects duplicate columns."""
         # Create DataFrame with duplicate columns manually
         data = [[1, 2, 3]]
@@ -305,7 +305,7 @@ class TestDataframeValidation:
         assert len(result["errors"]) > 0
         assert any("Duplicate column" in error for error in result["errors"])
 
-    def test_validate_dataframe_null_columns(self):
+    def test_validate_dataframe_null_columns(self) -> None:
         """Test validation detects completely null columns."""
         df = pd.DataFrame({"good_col": [1, 2, 3], "null_col": [None, None, None]})
 
@@ -314,7 +314,7 @@ class TestDataframeValidation:
         assert len(result["warnings"]) > 0
         assert any("null columns" in warning for warning in result["warnings"])
 
-    def test_validate_dataframe_mixed_types(self):
+    def test_validate_dataframe_mixed_types(self) -> None:
         """Test validation detects mixed types in columns."""
         df = pd.DataFrame({"mixed_col": [1, "string", 3.14, True]})
 
@@ -324,7 +324,7 @@ class TestDataframeValidation:
         assert len(result["warnings"]) > 0
         assert any("mixed types" in warning for warning in result["warnings"])
 
-    def test_validate_dataframe_info_fields(self):
+    def test_validate_dataframe_info_fields(self) -> None:
         """Test validation includes info fields."""
         df = pd.DataFrame({"col1": range(100)})
 
@@ -335,7 +335,7 @@ class TestDataframeValidation:
         assert result["info"]["shape"] == (100, 1)
         assert isinstance(result["info"]["memory_usage_mb"], (int, float))
 
-    def test_validate_dataframe_high_cardinality(self):
+    def test_validate_dataframe_high_cardinality(self) -> None:
         """Test validation detects high cardinality columns."""
         # Create a column with very high cardinality (each value unique)
         df = pd.DataFrame({"high_cardinality": [f"unique_{i}" for i in range(100)]})
@@ -348,7 +348,7 @@ class TestDataframeValidation:
 class TestExpressionValidation:
     """Test expression validation functionality."""
 
-    def test_validate_expression_valid(self):
+    def test_validate_expression_valid(self) -> None:
         """Test validation of valid expressions."""
         allowed_vars = ["x", "y", "z", "data"]
 
@@ -362,7 +362,7 @@ class TestExpressionValidation:
         is_valid, message = validate_expression("data + 1", allowed_vars)
         assert is_valid is True
 
-    def test_validate_expression_invalid_variables(self):
+    def test_validate_expression_invalid_variables(self) -> None:
         """Test validation rejects invalid variables."""
         allowed_vars = ["x", "y"]
 
@@ -378,14 +378,14 @@ class TestExpressionValidation:
             is_valid, message = validate_expression(expr, allowed_vars)
             assert is_valid is False, f"Should have failed for: {expr}"
 
-    def test_validate_expression_empty(self):
+    def test_validate_expression_empty(self) -> None:
         """Test validation of empty expression."""
         is_valid, message = validate_expression("", [])
 
         # Empty expression is technically valid in this implementation
         assert is_valid is True
 
-    def test_validate_expression_dangerous_keywords(self):
+    def test_validate_expression_dangerous_keywords(self) -> None:
         """Test validation blocks dangerous keywords."""
         allowed_vars = ["x"]
 
@@ -407,7 +407,7 @@ class TestExpressionValidation:
 class TestSQLQueryValidation:
     """Test SQL query validation functionality."""
 
-    def test_validate_sql_query_safe_select(self):
+    def test_validate_sql_query_safe_select(self) -> None:
         """Test validation of safe SELECT queries."""
         safe_queries = [
             "SELECT * FROM table",
@@ -420,7 +420,7 @@ class TestSQLQueryValidation:
             is_valid, message = validate_sql_query(query)
             assert is_valid is True, f"Failed for safe query: {query}"
 
-    def test_validate_sql_query_dangerous_operations(self):
+    def test_validate_sql_query_dangerous_operations(self) -> None:
         """Test validation blocks dangerous SQL operations."""
         dangerous_queries = [
             "DROP TABLE users",
@@ -436,14 +436,14 @@ class TestSQLQueryValidation:
             is_valid, message = validate_sql_query(query)
             assert is_valid is False, f"Should have blocked dangerous query: {query}"
 
-    def test_validate_sql_query_empty(self):
+    def test_validate_sql_query_empty(self) -> None:
         """Test validation of empty query."""
         is_valid, message = validate_sql_query("")
 
         assert is_valid is False
         assert "SELECT" in message
 
-    def test_validate_sql_query_case_insensitive(self):
+    def test_validate_sql_query_case_insensitive(self) -> None:
         """Test validation is case insensitive for dangerous operations."""
         dangerous_queries = [
             "drop table users",
@@ -460,14 +460,14 @@ class TestSQLQueryValidation:
 class TestUtilityFunctions:
     """Test utility functions for data conversion and sanitization."""
 
-    def test_sanitize_filename_basic(self):
+    def test_sanitize_filename_basic(self) -> None:
         """Test basic filename sanitization."""
         filename = "test_file.csv"
         result = sanitize_filename(filename)
 
         assert result == filename  # Should be unchanged
 
-    def test_sanitize_filename_special_characters(self):
+    def test_sanitize_filename_special_characters(self) -> None:
         """Test sanitization removes special characters."""
         filename = "file<>:|?*.csv"
         result = sanitize_filename(filename)
@@ -479,7 +479,7 @@ class TestUtilityFunctions:
         assert "?" not in result
         assert "*" not in result
 
-    def test_sanitize_filename_path_separators(self):
+    def test_sanitize_filename_path_separators(self) -> None:
         """Test sanitization handles path separators."""
         filename = "folder/file\\name.csv"
         result = sanitize_filename(filename)
@@ -489,21 +489,21 @@ class TestUtilityFunctions:
         # But backslash in filename itself might remain if it's not a path separator
         # The actual behavior depends on Path() implementation
 
-    def test_sanitize_filename_empty(self):
+    def test_sanitize_filename_empty(self) -> None:
         """Test sanitization of empty filename."""
         result = sanitize_filename("")
 
         # Should handle empty filename gracefully
         assert isinstance(result, str)
 
-    def test_convert_pandas_na_to_none_basic(self):
+    def test_convert_pandas_na_to_none_basic(self) -> None:
         """Test conversion of pandas NA to None."""
         # Test with regular values
         assert convert_pandas_na_to_none("string") == "string"
         assert convert_pandas_na_to_none(123) == 123
         assert convert_pandas_na_to_none(True) is True
 
-    def test_convert_pandas_na_to_none_na_values(self):
+    def test_convert_pandas_na_to_none_na_values(self) -> None:
         """Test conversion of pandas NA values to None."""
         import numpy as np
 
@@ -512,14 +512,14 @@ class TestUtilityFunctions:
         assert convert_pandas_na_to_none(np.nan) is None
         assert convert_pandas_na_to_none(pd.NaT) is None
 
-    def test_convert_pandas_na_list_basic(self):
+    def test_convert_pandas_na_list_basic(self) -> None:
         """Test conversion of pandas NA values in list."""
         values = [1, 2, 3, "text", True]
         result = convert_pandas_na_list(values)
 
         assert result == values  # Should be unchanged
 
-    def test_convert_pandas_na_list_with_na(self):
+    def test_convert_pandas_na_list_with_na(self) -> None:
         """Test conversion of list with pandas NA values."""
         import numpy as np
 
@@ -529,13 +529,13 @@ class TestUtilityFunctions:
         expected = [1, None, 3, None, "text", None]
         assert result == expected
 
-    def test_convert_pandas_na_list_empty(self):
+    def test_convert_pandas_na_list_empty(self) -> None:
         """Test conversion of empty list."""
         result = convert_pandas_na_list([])
 
         assert result == []
 
-    def test_convert_pandas_na_list_all_na(self):
+    def test_convert_pandas_na_list_all_na(self) -> None:
         """Test conversion of list with all NA values."""
         import numpy as np
 
@@ -548,7 +548,7 @@ class TestUtilityFunctions:
 class TestValidatorEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_validators_handle_none_gracefully(self):
+    def test_validators_handle_none_gracefully(self) -> None:
         """Test that validators handle None inputs gracefully."""
         # These should not crash
         validate_file_path("", must_exist=False)
@@ -562,7 +562,7 @@ class TestValidatorEdgeCases:
         df = pd.DataFrame({"col1": [1]})
         validate_dataframe(df)
 
-    def test_unicode_handling(self):
+    def test_unicode_handling(self) -> None:
         """Test handling of unicode characters."""
         # Column names with unicode
         is_valid, message = validate_column_name("tēst_cōlumn")
@@ -572,7 +572,7 @@ class TestValidatorEdgeCases:
         result = sanitize_filename("tëst_fïlé.csv")
         assert isinstance(result, str)
 
-    def test_very_long_inputs(self):
+    def test_very_long_inputs(self) -> None:
         """Test handling of very long inputs."""
         long_string = "a" * 10000
 
@@ -581,7 +581,7 @@ class TestValidatorEdgeCases:
         validate_sql_query(f"SELECT * FROM {long_string}")
         sanitize_filename(long_string)
 
-    def test_special_dataframe_cases(self):
+    def test_special_dataframe_cases(self) -> None:
         """Test special dataframe validation cases."""
         # DataFrame with only one row
         df = pd.DataFrame({"col1": [1]})

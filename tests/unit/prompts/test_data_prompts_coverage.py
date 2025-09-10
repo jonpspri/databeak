@@ -10,7 +10,7 @@ from src.databeak.prompts.data_prompts import (
 class TestDataPromptsCoverage:
     """Test all prompt generation functions for coverage."""
 
-    def test_analyze_csv_prompt_basic(self):
+    def test_analyze_csv_prompt_basic(self) -> None:
         """Test basic CSV analysis prompt generation."""
         session_id = "test_session_123"
         analysis_type = "correlation"
@@ -22,7 +22,7 @@ class TestDataPromptsCoverage:
         assert analysis_type in result
         assert "Analyze CSV data" in result
 
-    def test_analyze_csv_prompt_various_types(self):
+    def test_analyze_csv_prompt_various_types(self) -> None:
         """Test prompt generation with different analysis types."""
         session_id = "session_456"
 
@@ -39,7 +39,7 @@ class TestDataPromptsCoverage:
             assert isinstance(result, str)
             assert session_id in result
 
-    def test_suggest_transformations_prompt_basic(self):
+    def test_suggest_transformations_prompt_basic(self) -> None:
         """Test basic transformation suggestions prompt."""
         session_id = "transform_session"
         goal = "normalize data for machine learning"
@@ -51,7 +51,7 @@ class TestDataPromptsCoverage:
         assert goal in result
         assert "Suggest transformations" in result
 
-    def test_suggest_transformations_prompt_various_goals(self):
+    def test_suggest_transformations_prompt_various_goals(self) -> None:
         """Test transformation prompt with different goals."""
         session_id = "session_789"
 
@@ -68,7 +68,7 @@ class TestDataPromptsCoverage:
             assert isinstance(result, str)
             assert session_id in result
 
-    def test_data_cleaning_prompt_basic(self):
+    def test_data_cleaning_prompt_basic(self) -> None:
         """Test basic data cleaning prompt generation."""
         session_id = "cleaning_session"
         issues = ["missing values", "duplicate rows"]
@@ -81,7 +81,7 @@ class TestDataPromptsCoverage:
         assert "duplicate rows" in result
         assert "Suggest cleaning" in result
 
-    def test_data_cleaning_prompt_single_issue(self):
+    def test_data_cleaning_prompt_single_issue(self) -> None:
         """Test data cleaning prompt with single issue."""
         session_id = "single_issue_session"
         issues = ["outliers"]
@@ -92,7 +92,7 @@ class TestDataPromptsCoverage:
         assert session_id in result
         assert "outliers" in result
 
-    def test_data_cleaning_prompt_multiple_issues(self):
+    def test_data_cleaning_prompt_multiple_issues(self) -> None:
         """Test data cleaning prompt with multiple issues."""
         session_id = "multi_issue_session"
         issues = ["null values", "data type inconsistencies", "format issues", "encoding problems"]
@@ -104,10 +104,10 @@ class TestDataPromptsCoverage:
         for issue in issues:
             assert issue in result
 
-    def test_data_cleaning_prompt_empty_issues(self):
+    def test_data_cleaning_prompt_empty_issues(self) -> None:
         """Test data cleaning prompt with empty issues list."""
         session_id = "empty_issues_session"
-        issues = []
+        issues: list[str] = []
 
         result = data_cleaning_prompt(session_id, issues)
 
@@ -115,7 +115,7 @@ class TestDataPromptsCoverage:
         assert session_id in result
         # Should handle empty list gracefully
 
-    def test_data_cleaning_prompt_special_characters(self):
+    def test_data_cleaning_prompt_special_characters(self) -> None:
         """Test data cleaning prompt with special characters in issues."""
         session_id = "special_chars_session"
         issues = ["issues with 'quotes'", "issues & symbols", "unicode: 你好"]
@@ -125,7 +125,7 @@ class TestDataPromptsCoverage:
         assert isinstance(result, str)
         assert session_id in result
 
-    def test_all_prompts_return_strings(self):
+    def test_all_prompts_return_strings(self) -> None:
         """Test that all prompt functions return string types."""
         session_id = "type_test_session"
 
@@ -141,7 +141,7 @@ class TestDataPromptsCoverage:
         result3 = data_cleaning_prompt(session_id, ["test issue"])
         assert isinstance(result3, str)
 
-    def test_prompt_consistency(self):
+    def test_prompt_consistency(self) -> None:
         """Test that prompt functions are consistent in format."""
         session_id = "consistency_test"
 

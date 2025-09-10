@@ -198,7 +198,6 @@ ignore = [
     "B905",  # `zip()` without an explicit `strict=` parameter
     "SIM105", # contextlib.suppress is slower
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
-    "TC001",  # Move imports into type-checking block (breaks FastMCP runtime imports)
     "TCH001", # Move imports into type-checking block (breaks FastMCP runtime imports)
 ]
 

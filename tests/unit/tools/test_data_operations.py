@@ -28,19 +28,19 @@ class TestDataOperations:
     """Tests for data operations functions."""
 
     @pytest.mark.asyncio
-    async def test_add_column(self, mock_session):
+    async def test_add_column(self, mock_session) -> None:
         """Test adding a new column."""
         # Test will be implemented
         pass
 
     @pytest.mark.asyncio
-    async def test_rename_columns(self, mock_session):
+    async def test_rename_columns(self, mock_session) -> None:
         """Test renaming columns."""
         # Test will be implemented
         pass
 
     @pytest.mark.asyncio
-    async def test_filter_rows(self, mock_session):
+    async def test_filter_rows(self, mock_session) -> None:
         """Test filtering rows."""
         # Test will be implemented
         pass

@@ -7,6 +7,6 @@
 class TestServer:
     """Tests for main server module."""
 
-    def test_placeholder(self):
+    def test_placeholder(self) -> None:
         """Placeholder test."""
         assert True  # Replace with actual tests

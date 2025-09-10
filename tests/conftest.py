@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_history_files():
+def cleanup_history_files() -> None:
     """Clean up history files created during testing."""
     yield  # Let all tests run first
 
@@ -25,7 +25,7 @@ def cleanup_history_files():
 
 
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> None:
     """Create an event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
@@ -33,7 +33,7 @@ def event_loop():
 
 
 @pytest.fixture
-def sample_csv_data():
+def sample_csv_data() -> str:
     """Provide sample CSV data for testing."""
     return """name,age,salary,department
 Alice,30,60000,Engineering
@@ -43,7 +43,7 @@ Diana,28,55000,Sales"""
 
 
 @pytest.fixture
-async def test_session():
+async def test_session() -> str:
     """Create a test session."""
     from src.databeak.models import get_session_manager
     from src.databeak.servers.io_server import load_csv_from_content
