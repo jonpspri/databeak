@@ -1,9 +1,10 @@
+---
 name: Publish to GitHub Packages
 
-on:
+"on":
   release:
     types: [published]
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch:  # Allow manual triggering
 
 jobs:
   publish-github:
@@ -39,7 +40,8 @@ jobs:
         run: |
           # Configure for GitHub Packages
           echo "Publishing to GitHub Packages..."
-          uv run twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+          uv run twine upload \
+            --repository-url https://upload.pypi.org/legacy/ dist/*
 
       - name: Create GitHub Release Assets
         uses: softprops/action-gh-release@v1

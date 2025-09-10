@@ -101,7 +101,11 @@ def validate_url(url: str) -> tuple[bool, str]:
                             return False, f"Hostname resolves to private address: {ip_addr}"
                     except ValueError:
                         # IPv6 addresses with scope might not parse cleanly - be conservative
-                        if isinstance(ip_addr, str) and ":" in ip_addr and ("fe80" in ip_addr.lower() or "::1" in ip_addr):
+                        if (
+                            isinstance(ip_addr, str)
+                            and ":" in ip_addr
+                            and ("fe80" in ip_addr.lower() or "::1" in ip_addr)
+                        ):
                             return False, f"Hostname resolves to local address: {ip_addr}"
             except (socket.gaierror, OSError):
                 # DNS resolution failed - allow but log warning

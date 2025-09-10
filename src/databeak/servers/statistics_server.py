@@ -16,7 +16,7 @@ from fastmcp import Context, FastMCP
 from ..models.session_service import get_default_session_service_factory
 
 # Import response models - needed at runtime for FastMCP
-from ..models.statistics_models import (  # noqa: TC001
+from ..models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,
