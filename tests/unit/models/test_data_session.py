@@ -10,26 +10,31 @@ class TestDataSession:
 
     def test_data_session_initialization(self):
         """Test DataSession initialization."""
-        session = DataSession()
+        session = DataSession(session_id="test-session-123")
         assert session.df is None
         assert session.original_df is None
         assert session.file_path is None
-        assert session.auto_save_enabled is True
+        assert session.session_id == "test-session-123"
+        assert session.metadata == {}
 
     def test_has_data(self):
         """Test has_data method."""
-        session = DataSession()
+        session = DataSession(session_id="test-session-456")
         assert session.has_data() is False
 
         session.df = pd.DataFrame({"col1": [1, 2, 3]})
         assert session.has_data() is True
 
-    def test_is_modified(self):
-        """Test is_modified property."""
-        session = DataSession()
-        session.df = pd.DataFrame({"col1": [1, 2, 3]})
-        session.original_df = session.df.copy()
-        assert session.is_modified is False
+    def test_load_data(self):
+        """Test load_data method."""
+        session = DataSession(session_id="test-session-789")
+        df = pd.DataFrame({"col1": [1, 2, 3]})
+        session.load_data(df, file_path="test.csv")
 
+        assert session.df is not None
+        assert session.original_df is not None
+        assert session.file_path == "test.csv"
+        assert len(session.df) == 3
+        # Check that df and original_df are separate copies
         session.df.loc[0, "col1"] = 999
-        assert session.is_modified is True
+        assert session.original_df.loc[0, "col1"] == 1

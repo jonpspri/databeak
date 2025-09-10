@@ -55,6 +55,12 @@ from src.databeak.servers.io_server import (
     SessionInfoResult,
     SessionListResult,
 )
+from src.databeak.servers.io_server import (
+    DataPreview as IODataPreview,  # Import io_server's DataPreview for LoadResult
+)
+from src.databeak.servers.io_server import (
+    SessionInfo as IOSessionInfo,  # Import io_server's SessionInfo for SessionListResult
+)
 
 # =============================================================================
 # NESTED MODELS TESTS
@@ -422,7 +428,7 @@ class TestLoadResult:
 
     def test_valid_creation_with_optional_fields(self):
         """Test valid LoadResult creation with all fields."""
-        preview = DataPreview(
+        preview = IODataPreview(
             rows=[{"id": 1, "name": "John"}],
             row_count=1,
             column_count=2,
@@ -558,7 +564,7 @@ class TestSessionListResult:
     def test_valid_creation(self):
         """Test valid SessionListResult creation."""
         sessions = [
-            SessionInfo(
+            IOSessionInfo(
                 session_id="s1",
                 created_at="2023-01-01T10:00:00Z",
                 last_accessed="2023-01-01T10:30:00Z",
@@ -742,7 +748,7 @@ class TestOutliersResult:
             session_id="outliers-123",
             outliers_found=2,
             outliers_by_column=outliers,
-            method="z-score",
+            method="zscore",
             threshold=3.0,
         )
         assert result.outliers_found == 2
@@ -751,7 +757,7 @@ class TestOutliersResult:
     def test_outlier_methods(self):
         """Test all valid outlier detection methods."""
         outliers = {"col": [OutlierInfo(row_index=0, value=100.0)]}
-        for method in ["z-score", "iqr", "isolation_forest"]:
+        for method in ["zscore", "iqr", "isolation_forest"]:
             result = OutliersResult(
                 session_id="test",
                 outliers_found=1,
