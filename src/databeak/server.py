@@ -11,9 +11,12 @@ from fastmcp.exceptions import ToolError
 
 # Local imports
 from .models import get_session_manager
+from .servers.column_server import column_server
+from .servers.column_text_server import column_text_server
 from .servers.discovery_server import discovery_server
 from .servers.io_server import io_server
 from .servers.statistics_server import statistics_server
+from .servers.transformation_server import transformation_server
 from .servers.validation_server import validation_server
 from .tools.data_operations import create_data_preview_with_indices
 from .tools.mcp_data_tools import register_data_tools
@@ -56,6 +59,9 @@ mcp.mount(io_server)
 mcp.mount(statistics_server)
 mcp.mount(discovery_server)
 mcp.mount(validation_server)
+mcp.mount(transformation_server)
+mcp.mount(column_server)
+mcp.mount(column_text_server)
 
 # ============================================================================
 # RESOURCES
