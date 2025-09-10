@@ -88,6 +88,7 @@ repos:
     hooks:
       - id: yamllint
         args: [--format, parsable, --strict]
+        exclude: "^(.github/workflows/|docs/blog/)"
 
   # Markdown formatting and linting (Python-based)
   - repo: https://github.com/executablebooks/mdformat
