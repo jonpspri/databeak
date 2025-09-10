@@ -101,11 +101,26 @@ uv sync
 # Run the server locally
 uv run databeak
 
-# Run tests and quality checks
-uv run -m pytest
+# Run tests by category
+uv run -m pytest tests/unit/          # Fast unit tests
+uv run -m pytest tests/integration/   # Integration tests
+uv run -m pytest tests/e2e/           # End-to-end tests
+uv run -m pytest                      # All tests
+
+# Run quality checks
 uv run ruff check
 uv run mypy
 ```
+
+### Testing Structure
+
+DataBeak uses a three-tier testing approach:
+
+- **Unit Tests** (`tests/unit/`) - Isolated tests for individual modules
+- **Integration Tests** (`tests/integration/`) - Component interaction tests
+- **E2E Tests** (`tests/e2e/`) - Full workflow validation
+
+See [Testing Guide](tests/README.md) for details.
 
 ## License
 

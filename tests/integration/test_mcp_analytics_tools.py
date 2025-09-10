@@ -1,18 +1,18 @@
 """Tests for analytics MCP tools."""
 
-from src.databeak.tools.analytics import (
+from src.databeak.servers.discovery_server import (
     detect_outliers,
+    find_cells_with_value,
+    get_data_summary,
+    group_by_aggregate,
+    inspect_data_around,
+    profile_data,
+)
+from src.databeak.servers.statistics_server import (
     get_column_statistics,
     get_correlation_matrix,
     get_statistics,
     get_value_counts,
-    group_by_aggregate,
-    profile_data,
-)
-from src.databeak.tools.transformations import (
-    find_cells_with_value,
-    get_data_summary,
-    inspect_data_around,
 )
 
 
@@ -84,5 +84,5 @@ class TestAnalyticsToolSignatures:
         sig = inspect.signature(find_cells_with_value)
         params = list(sig.parameters.keys())
 
-        expected_params = ["session_id", "value", "column", "exact_match", "ctx"]
+        expected_params = ["session_id", "value", "columns", "exact_match", "ctx"]
         assert all(param in params for param in expected_params)

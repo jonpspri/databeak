@@ -2,7 +2,7 @@
 
 from src.databeak.server import mcp
 from src.databeak.tools import (
-    mcp_analytics_tools,
+    # mcp_analytics_tools,  # Moved to servers/statistics_server.py and discovery_server.py
     mcp_data_tools,
     mcp_history_tools,
     # mcp_io_tools,  # Moved to servers/io_server.py
@@ -21,7 +21,7 @@ class TestToolRegistration:
             # mcp_io_tools.register_io_tools,  # Moved to servers/io_server.py
             mcp_data_tools.register_data_tools,
             mcp_row_tools.register_row_tools,
-            mcp_analytics_tools.register_analytics_tools,
+            # mcp_analytics_tools.register_analytics_tools,  # Moved to servers
             mcp_history_tools.register_history_tools,
         ]
 
@@ -63,7 +63,8 @@ class TestBackwardCompatibilityThroughModules:
         assert callable(add_column)
 
         # Test core analytics functions
-        from src.databeak.tools.analytics import get_statistics, profile_data
+        from src.databeak.servers.discovery_server import profile_data
+        from src.databeak.servers.statistics_server import get_statistics
 
         assert callable(get_statistics)
         assert callable(profile_data)

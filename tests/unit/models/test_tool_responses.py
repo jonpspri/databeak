@@ -12,41 +12,26 @@ import pytest
 from pydantic import ValidationError
 
 from src.databeak.models.tool_responses import (
-    # Nested models
-    CellLocation,
     # Row tool responses
     CellValueResult,
     # Data tool responses
     ColumnOperationResult,
-    # Analytics tool responses
-    ColumnStatisticsResult,
-    CorrelationResult,
     DataPreview,
-    DataTypeInfo,
     DeleteRowResult,
-    # ExportResult,  # Moved to io_server
     FilterOperationResult,
-    GroupStatistics,
     # System tool responses
     HealthResult,
     InsertRowResult,
-    # LoadResult,  # Moved to io_server
-    MissingDataInfo,
-    OutlierInfo,
-    OutliersResult,
-    ProfileInfo,
     # Data operation results
     RenameColumnsResult,
     SelectColumnsResult,
     ServerInfoResult,
     SessionInfo,
-    # SessionInfoResult,  # Moved to io_server
-    # SessionListResult,  # Moved to io_server
     SortDataResult,
-    StatisticsResult,
-    StatisticsSummary,
+    # StatisticsResult,  # Moved to statistics_server
+    # StatisticsSummary,  # Moved to statistics_server
     UpdateRowResult,
-    ValueCountsResult,
+    # ValueCountsResult,  # Moved to statistics_server
 )
 
 # Import IO server models that moved to modular architecture
