@@ -57,21 +57,13 @@ class SortColumn(BaseModel):
 
 
 # =============================================================================
-# SERVER INITIALIZATION
-# =============================================================================
-
-transformation_server = FastMCP("DataBeak Transformation Server")
-
-
-# =============================================================================
-# TOOL DEFINITIONS
+# TOOL DEFINITIONS (Direct implementations for testing)
 # =============================================================================
 
 
-@transformation_server.tool
 async def filter_rows(
     session_id: str,
-    conditions: list[FilterCondition],
+    conditions: list[FilterCondition | dict[str, Any]],
     mode: Literal["and", "or"] = "and",
     ctx: Context | None = None,
 ) -> FilterOperationResult:
@@ -91,29 +83,33 @@ async def filter_rows(
 
     Examples:
         # Numeric filtering
-        filter_rows(session_id, [FilterCondition(column="age", operator=">", value=25)])
+        filter_rows(session_id, [{"column": "age", "operator": ">", "value": 25}])
 
         # Text filtering with null handling
         filter_rows(session_id, [
-            FilterCondition(column="name", operator="contains", value="Smith"),
-            FilterCondition(column="email", operator="is_not_null")
+            {"column": "name", "operator": "contains", "value": "Smith"},
+            {"column": "email", "operator": "is_not_null"}
         ], mode="and")
 
         # Multiple conditions with OR logic
         filter_rows(session_id, [
-            FilterCondition(column="status", operator="==", value="active"),
-            FilterCondition(column="priority", operator="==", value="high")
+            {"column": "status", "operator": "==", "value": "active"},
+            {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
     """
     # Convert Pydantic models to dicts for compatibility with existing implementation
-    condition_dicts = [c.model_dump() for c in conditions]
+    condition_dicts = []
+    for c in conditions:
+        if isinstance(c, FilterCondition):
+            condition_dicts.append(c.model_dump())
+        else:
+            condition_dicts.append(c)
     return await _filter_rows(session_id, condition_dicts, mode, ctx)
 
 
-@transformation_server.tool
 async def sort_data(
     session_id: str,
-    columns: list[str | SortColumn],
+    columns: list[str | SortColumn | dict[str, Any]],
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Sort data by one or more columns.
@@ -130,13 +126,13 @@ async def sort_data(
         # Simple single column sort
         sort_data(session_id, ["age"])
 
-        # Multi-column sort (use SortColumn for mixed order)
+        # Multi-column sort
         sort_data(session_id, ["department", "salary"])
 
-        # Using SortColumn models for precise control
+        # Using dicts for precise control
         sort_data(session_id, [
-            SortColumn(column="department", ascending=True),
-            SortColumn(column="salary", ascending=False)
+            {"column": "department", "ascending": True},
+            {"column": "salary", "ascending": False}
         ])
     """
     # Convert to the format expected by the underlying function
@@ -144,6 +140,12 @@ async def sort_data(
     for col in columns:
         if isinstance(col, SortColumn):
             column_list.append({"column": col.column, "ascending": str(col.ascending)})
+        elif isinstance(col, dict):
+            # Pass dict through, converting ascending to string if present
+            if "ascending" in col:
+                column_list.append({"column": col["column"], "ascending": str(col["ascending"])})
+            else:
+                column_list.append(col)
         else:
             column_list.append(col)
 
@@ -151,7 +153,6 @@ async def sort_data(
     return result.model_dump()
 
 
-@transformation_server.tool
 async def remove_duplicates(
     session_id: str,
     subset: list[str] | None = None,
@@ -185,7 +186,6 @@ async def remove_duplicates(
     return await _remove_duplicates(session_id, subset, keep, ctx)
 
 
-@transformation_server.tool
 async def fill_missing_values(
     session_id: str,
     strategy: Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"] = "drop",
@@ -226,3 +226,19 @@ async def fill_missing_values(
         fill_missing_values(session_id, strategy="mean", columns=["age", "salary"])
     """
     return await _fill_missing_values(session_id, strategy, value, columns, ctx)
+
+
+# =============================================================================
+# SERVER INITIALIZATION
+# =============================================================================
+
+transformation_server = FastMCP(
+    "DataBeak Transformation Server",
+    instructions="Core data transformation server providing filtering, sorting, deduplication, and missing value handling",
+)
+
+# Register the functions as MCP tools
+transformation_server.tool(name="filter_rows")(filter_rows)
+transformation_server.tool(name="sort_data")(sort_data)
+transformation_server.tool(name="remove_duplicates")(remove_duplicates)
+transformation_server.tool(name="fill_missing_values")(fill_missing_values)

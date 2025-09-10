@@ -44,18 +44,10 @@ class SplitConfig(BaseModel):
 
 
 # =============================================================================
-# SERVER INITIALIZATION
-# =============================================================================
-
-column_text_server = FastMCP("DataBeak Text Column Operations Server")
-
-
-# =============================================================================
-# TOOL DEFINITIONS
+# TOOL DEFINITIONS (Direct implementations for testing)
 # =============================================================================
 
 
-@column_text_server.tool
 async def replace_in_column(
     session_id: str,
     column: str,
@@ -93,7 +85,6 @@ async def replace_in_column(
     return await _replace_in_column(session_id, column, pattern, replacement, regex, ctx)
 
 
-@column_text_server.tool
 async def extract_from_column(
     session_id: str,
     column: str,
@@ -129,7 +120,6 @@ async def extract_from_column(
     return await _extract_from_column(session_id, column, pattern, expand, ctx)
 
 
-@column_text_server.tool
 async def split_column(
     session_id: str,
     column: str,
@@ -172,7 +162,6 @@ async def split_column(
     )
 
 
-@column_text_server.tool
 async def transform_column_case(
     session_id: str,
     column: str,
@@ -210,7 +199,6 @@ async def transform_column_case(
     return await _transform_column_case(session_id, column, transform, ctx)
 
 
-@column_text_server.tool
 async def strip_column(
     session_id: str,
     column: str,
@@ -244,7 +232,6 @@ async def strip_column(
     return await _strip_column(session_id, column, chars, ctx)
 
 
-@column_text_server.tool
 async def fill_column_nulls(
     session_id: str, column: str, value: Any, ctx: Context | None = None
 ) -> ColumnOperationResult:
@@ -273,3 +260,21 @@ async def fill_column_nulls(
         fill_column_nulls(session_id, "score", -1)
     """
     return await _fill_column_nulls(session_id, column, value, ctx)
+
+
+# =============================================================================
+# SERVER INITIALIZATION
+# =============================================================================
+
+column_text_server = FastMCP(
+    "DataBeak Text Column Operations Server",
+    instructions="Text and string column operations server providing pattern matching, extraction, case transformation, and text cleaning",
+)
+
+# Register the functions as MCP tools
+column_text_server.tool(name="replace_in_column")(replace_in_column)
+column_text_server.tool(name="extract_from_column")(extract_from_column)
+column_text_server.tool(name="split_column")(split_column)
+column_text_server.tool(name="transform_column_case")(transform_column_case)
+column_text_server.tool(name="strip_column")(strip_column)
+column_text_server.tool(name="fill_column_nulls")(fill_column_nulls)

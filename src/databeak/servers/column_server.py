@@ -41,18 +41,10 @@ class ColumnFormula(BaseModel):
 
 
 # =============================================================================
-# SERVER INITIALIZATION
-# =============================================================================
-
-column_server = FastMCP("DataBeak Column Operations Server")
-
-
-# =============================================================================
-# TOOL DEFINITIONS
+# TOOL DEFINITIONS (Direct implementations for testing)
 # =============================================================================
 
 
-@column_server.tool
 async def select_columns(
     session_id: str, columns: list[str], ctx: Context | None = None
 ) -> dict[str, Any]:
@@ -77,17 +69,16 @@ async def select_columns(
     return result.model_dump()
 
 
-@column_server.tool
 async def rename_columns(
     session_id: str,
-    mapping: dict[str, str] | list[ColumnMapping],
+    mapping: dict[str, str],
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Rename columns in the dataframe.
 
     Args:
         session_id: Session identifier
-        mapping: Dict of old_name -> new_name or list of ColumnMapping objects
+        mapping: Dict of old_name -> new_name
         ctx: FastMCP context
 
     Returns:
@@ -97,23 +88,17 @@ async def rename_columns(
         # Using dictionary mapping
         rename_columns(session_id, {"old_col1": "new_col1", "old_col2": "new_col2"})
 
-        # Using ColumnMapping models
-        rename_columns(session_id, [
-            ColumnMapping(old_name="FirstName", new_name="first_name"),
-            ColumnMapping(old_name="LastName", new_name="last_name")
-        ])
+        # Rename multiple columns
+        rename_columns(session_id, {
+            "FirstName": "first_name",
+            "LastName": "last_name",
+            "EmailAddress": "email"
+        })
     """
-    # Convert ColumnMapping list to dict if needed
-    if isinstance(mapping, list):
-        mapping_dict = {m.old_name: m.new_name for m in mapping}
-    else:
-        mapping_dict = mapping
-
-    result = await _rename_columns(session_id, mapping_dict, ctx)
+    result = await _rename_columns(session_id, mapping, ctx)
     return result.model_dump()
 
 
-@column_server.tool
 async def add_column(
     session_id: str,
     name: str,
@@ -149,7 +134,6 @@ async def add_column(
     return await _add_column(session_id, name, value, formula, ctx)
 
 
-@column_server.tool
 async def remove_columns(
     session_id: str, columns: list[str], ctx: Context | None = None
 ) -> ColumnOperationResult:
@@ -176,7 +160,6 @@ async def remove_columns(
     return await _remove_columns(session_id, columns, ctx)
 
 
-@column_server.tool
 async def change_column_type(
     session_id: str,
     column: str,
@@ -214,7 +197,6 @@ async def change_column_type(
     return await _change_column_type(session_id, column, dtype, errors, ctx)
 
 
-@column_server.tool
 async def update_column(
     session_id: str,
     column: str,
@@ -253,3 +235,21 @@ async def update_column(
         update_column(session_id, "score", "fillna", value=0)
     """
     return await _update_column(session_id, column, operation, value, pattern, replacement, ctx)
+
+
+# =============================================================================
+# SERVER INITIALIZATION
+# =============================================================================
+
+column_server = FastMCP(
+    "DataBeak Column Operations Server",
+    instructions="Column-level operations server providing selection, renaming, addition, removal, and type conversion",
+)
+
+# Register the functions as MCP tools
+column_server.tool(name="select_columns")(select_columns)
+column_server.tool(name="rename_columns")(rename_columns)
+column_server.tool(name="add_column")(add_column)
+column_server.tool(name="remove_columns")(remove_columns)
+column_server.tool(name="change_column_type")(change_column_type)
+column_server.tool(name="update_column")(update_column)
