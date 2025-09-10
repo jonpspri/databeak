@@ -1,7 +1,7 @@
 """Statistics-specific Pydantic models for DataBeak.
 
-This module contains response models for statistical operations,
-separated to avoid circular imports between servers and services.
+This module contains response models for statistical operations, separated to avoid circular imports
+between servers and services.
 """
 
 from typing import Literal

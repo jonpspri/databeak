@@ -7,7 +7,6 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src.databeak.exceptions import (
-    ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
@@ -711,14 +710,18 @@ class TestUpdateColumn:
 
     async def test_update_column_with_formula(self, mock_manager):
         """Test updating column with replace operation."""
-        result = await update_column("test-session", "city", "replace", pattern="NYC", replacement="New York")
+        result = await update_column(
+            "test-session", "city", "replace", pattern="NYC", replacement="New York"
+        )
         assert result.success is True
         df = mock_manager.return_value.get_session.return_value.data_session.df
         # Just check operation succeeds (exact behavior depends on data)
 
     async def test_update_column_with_mapping(self, mock_manager):
         """Test updating column with replace operation."""
-        result = await update_column("test-session", "city", "replace", pattern="NYC", replacement="New York")
+        result = await update_column(
+            "test-session", "city", "replace", pattern="NYC", replacement="New York"
+        )
         assert result.success is True
         df = mock_manager.return_value.get_session.return_value.data_session.df
         # Just check operation succeeds (exact behavior depends on data)

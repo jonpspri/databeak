@@ -11,9 +11,16 @@ import json
 import pytest
 from pydantic import ValidationError
 
+# Import statistics models from dedicated module
+from src.databeak.models.statistics_models import (
+    ColumnStatisticsResult,
+    CorrelationResult,
+    StatisticsResult,
+    StatisticsSummary,
+    ValueCountsResult,
+)
 from src.databeak.models.tool_responses import (
     # Core tool responses
-    BaseToolResponse,
     CellLocation,
     CellValueResult,
     ColumnOperationResult,
@@ -32,13 +39,12 @@ from src.databeak.models.tool_responses import (
     UpdateRowResult,
 )
 
-# Import statistics models from dedicated module
-from src.databeak.models.statistics_models import (
-    ColumnStatisticsResult,
-    CorrelationResult,
-    StatisticsResult,
-    StatisticsSummary,
-    ValueCountsResult,
+# Import discovery server models
+from src.databeak.servers.discovery_server import (
+    GroupStatistics,
+    OutlierInfo,
+    OutliersResult,
+    ProfileInfo,
 )
 
 # Import IO server models that moved to modular architecture
@@ -48,14 +54,6 @@ from src.databeak.servers.io_server import (
     LoadResult,
     SessionInfoResult,
     SessionListResult,
-)
-
-# Import discovery server models
-from src.databeak.servers.discovery_server import (
-    GroupStatistics,
-    OutlierInfo,
-    OutliersResult,
-    ProfileInfo,
 )
 
 # =============================================================================

@@ -1,18 +1,20 @@
 """Session service abstraction for dependency injection patterns.
 
-This module provides abstractions for session management to improve testability
-and reduce coupling between server modules and session management implementation.
+This module provides abstractions for session management to improve testability and reduce coupling
+between server modules and session management implementation.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 
-import pandas as pd
-
-from .csv_session import CSVSession
 from .data_models import SessionInfo
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from .csv_session import CSVSession
 
 
 class SessionManagerProtocol(Protocol):
@@ -38,9 +40,8 @@ class SessionManagerProtocol(Protocol):
 class SessionService(ABC):
     """Abstract base service for operations that require session management.
 
-    This class provides a foundation for implementing server modules with
-    dependency injection for session management, improving testability
-    and reducing coupling.
+    This class provides a foundation for implementing server modules with dependency injection for
+    session management, improving testability and reducing coupling.
     """
 
     def __init__(self, session_manager: SessionManagerProtocol) -> None:
@@ -124,14 +125,15 @@ class SessionServiceFactory:
 def get_default_session_service_factory() -> SessionServiceFactory:
     """Get the default session service factory using the global session manager."""
     from .csv_session import get_session_manager
+
     return SessionServiceFactory(get_session_manager())
 
 
 class MockSessionManager:
     """Mock session manager for testing.
 
-    This provides a simple in-memory implementation suitable for unit testing
-    without requiring the full session management infrastructure.
+    This provides a simple in-memory implementation suitable for unit testing without requiring the
+    full session management infrastructure.
     """
 
     def __init__(self) -> None:
@@ -154,6 +156,7 @@ class MockSessionManager:
             self.next_id += 1
 
         from .csv_session import CSVSession
+
         session = CSVSession(session_id)
         self.sessions[session_id] = session
         return session
@@ -161,6 +164,7 @@ class MockSessionManager:
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
         from datetime import datetime, timezone
+
         results = []
         for session_id, session in self.sessions.items():
             info = SessionInfo(
@@ -168,8 +172,12 @@ class MockSessionManager:
                 created_at=datetime.now(timezone.utc),
                 last_accessed=datetime.now(timezone.utc),
                 row_count=len(session.data_session.df) if session.data_session.has_data() else 0,
-                column_count=len(session.data_session.df.columns) if session.data_session.has_data() else 0,
-                columns=list(session.data_session.df.columns) if session.data_session.has_data() else [],
+                column_count=len(session.data_session.df.columns)
+                if session.data_session.has_data()
+                else 0,
+                columns=list(session.data_session.df.columns)
+                if session.data_session.has_data()
+                else [],
                 memory_usage_mb=0.0,
                 file_path=None,
             )

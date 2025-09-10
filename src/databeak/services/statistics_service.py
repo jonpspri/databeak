@@ -1,7 +1,7 @@
 """Statistics service with dependency injection for improved testability.
 
-This module implements statistical operations using the SessionService pattern
-to reduce coupling with session management and improve testability.
+This module implements statistical operations using the SessionService pattern to reduce coupling
+with session management and improve testability.
 """
 
 from __future__ import annotations
@@ -13,20 +13,17 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-from ..models.session_service import SessionService
 from ..models.data_models import OperationType
-
-logger = logging.getLogger(__name__)
-
-
-# Import response models from dedicated models module to avoid circular imports
+from ..models.session_service import SessionService
 from ..models.statistics_models import (
-    StatisticsSummary,
-    StatisticsResult,
     ColumnStatisticsResult,
     CorrelationResult,
+    StatisticsResult,
+    StatisticsSummary,
     ValueCountsResult,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class StatisticsService(SessionService):

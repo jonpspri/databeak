@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
 # Type alias for CSV cell values - more specific than Any while still flexible
 CsvCellValue = str | int | float | bool | None
@@ -29,8 +29,6 @@ class SessionInfo(BaseModel):
     columns: list[str]
     memory_usage_mb: float
     file_path: str | None = None
-
-
 
 
 class DataTypeInfo(BaseModel):
@@ -98,8 +96,6 @@ class ServerInfoResult(BaseToolResponse):
     supported_formats: list[str]
     max_file_size_mb: int
     session_timeout_minutes: int
-
-
 
 
 # =============================================================================

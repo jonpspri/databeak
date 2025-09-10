@@ -1,13 +1,6 @@
 """Data models for CSV Editor MCP Server."""
 
 from .csv_session import CSVSession, SessionManager, get_session_manager
-from .session_service import (
-    MockSessionManager,
-    SessionManagerProtocol,
-    SessionService,
-    SessionServiceFactory,
-    get_default_session_service_factory,
-)
 from .data_models import (
     AggregateFunction,
     ColumnSchema,
@@ -23,6 +16,13 @@ from .data_models import (
     OperationType,
     SessionInfo,
     SortSpec,
+)
+from .session_service import (
+    MockSessionManager,
+    SessionManagerProtocol,
+    SessionService,
+    SessionServiceFactory,
+    get_default_session_service_factory,
 )
 
 __all__ = [

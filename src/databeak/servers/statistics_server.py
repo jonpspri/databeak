@@ -8,17 +8,11 @@ correlation analysis with optimized mathematical processing.
 from __future__ import annotations
 
 import logging
-from typing import Literal, cast
+from typing import TYPE_CHECKING, Literal
 
-import numpy as np
-import pandas as pd
 from fastmcp import Context, FastMCP
-from fastmcp.exceptions import ToolError
-from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management and data models from the main package
-from ..models import OperationType
-from ..models.tool_responses import BaseToolResponse
 from ..models.session_service import get_default_session_service_factory
 from ..services import StatisticsService
 
@@ -30,14 +24,14 @@ logger = logging.getLogger(__name__)
 
 
 # Import response models from dedicated models module
-from ..models.statistics_models import (
-    StatisticsSummary,
-    StatisticsResult,
-    ColumnStatisticsResult,
-    CorrelationResult,
-    ValueCountsResult,
-)
 
+if TYPE_CHECKING:
+    from ..models.statistics_models import (
+        ColumnStatisticsResult,
+        CorrelationResult,
+        StatisticsResult,
+        ValueCountsResult,
+    )
 
 # ============================================================================
 # STATISTICAL OPERATIONS LOGIC WITH DEPENDENCY INJECTION
@@ -52,7 +46,7 @@ async def get_statistics(
     session_id: str,
     columns: list[str] | None = None,
     include_percentiles: bool = True,
-    ctx: Context | None = None,  # noqa: ARG001
+    ctx: Context | None = None,  # noqa: ARG001  # noqa: ARG001
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
@@ -102,7 +96,7 @@ async def get_statistics(
 async def get_column_statistics(
     session_id: str,
     column: str,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnStatisticsResult:
     """Get detailed statistical analysis for a single column.
 
@@ -148,7 +142,7 @@ async def get_correlation_matrix(
     method: Literal["pearson", "spearman", "kendall"] = "pearson",
     columns: list[str] | None = None,
     min_correlation: float | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
 
@@ -200,7 +194,7 @@ async def get_value_counts(
     sort: bool = True,
     ascending: bool = False,
     top_n: int | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
 
