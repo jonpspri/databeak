@@ -218,23 +218,6 @@ class SortDataResult(BaseToolResponse):
     ascending: list[bool]
 
 
-class SelectColumnsResult(BaseToolResponse):
-    """Response model for column selection operations."""
-
-    session_id: str
-    selected_columns: list[str]
-    columns_before: int
-    columns_after: int
-
-
-class RenameColumnsResult(BaseToolResponse):
-    """Response model for column rename operations."""
-
-    session_id: str
-    renamed: dict[str, str]
-    columns: list[str]
-
-
 # =============================================================================
 # TYPE UNIONS FOR FLEXIBILITY
 # =============================================================================
@@ -253,6 +236,4 @@ ToolResponse = (
     | FilterOperationResult
     | ColumnOperationResult
     | SortDataResult
-    | SelectColumnsResult
-    | RenameColumnsResult
 )

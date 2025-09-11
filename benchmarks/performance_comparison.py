@@ -20,11 +20,11 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import psutil
+import psutil  # type: ignore[import-untyped]
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from databeak.models.tool_responses import (
+from databeak.models.tool_responses import (  # type: ignore[import-not-found]
     CorrelationResult,
     DataPreview,
     FilterOperationResult,
@@ -159,7 +159,7 @@ class PerformanceBenchmark:
         )
 
         # Additional serialization step (old pattern)
-        return result.model_dump()
+        return dict(result.model_dump())
 
     def simulate_new_pattern_statistics(self) -> dict[str, Any]:
         """Simulate new pattern: direct Pydantic model creation."""
@@ -186,13 +186,14 @@ class PerformanceBenchmark:
             )
             stats[col] = col_stats
 
-        return StatisticsResult(
+        result = StatisticsResult(
             session_id="test",
             statistics=stats,
             column_count=len(stats),
             numeric_columns=list(stats.keys()),
             total_rows=len(df),
         ).model_dump()
+        return dict(result)
 
     def simulate_old_pattern_correlation(self) -> dict[str, Any]:
         """Simulate old correlation pattern with intermediate dict."""
@@ -204,7 +205,7 @@ class PerformanceBenchmark:
 
         # Step 2: Multiple conversion layers (old pattern overhead)
         # First conversion - raw matrix to dict
-        raw_correlations = {}
+        raw_correlations: dict[str, dict[str, Any]] = {}
         for col1 in corr_matrix.columns:
             raw_correlations[col1] = {}
             for col2 in corr_matrix.columns:
@@ -212,7 +213,7 @@ class PerformanceBenchmark:
                 raw_correlations[col1][col2] = value
 
         # Step 3: Validation and cleaning layer
-        cleaned_correlations = {}
+        cleaned_correlations: dict[str, dict[str, float]] = {}
         for col1, col_dict in raw_correlations.items():
             cleaned_correlations[col1] = {}
             for col2, value in col_dict.items():
@@ -222,7 +223,7 @@ class PerformanceBenchmark:
                     cleaned_correlations[col1][col2] = float(value)
 
         # Step 4: Formatting layer
-        formatted_correlations = {}
+        formatted_correlations: dict[str, dict[str, float]] = {}
         for col1, col_dict in cleaned_correlations.items():
             formatted_correlations[col1] = {}
             for col2, value in col_dict.items():
@@ -248,7 +249,7 @@ class PerformanceBenchmark:
         result = CorrelationResult(**intermediate_result)
 
         # Step 8: Additional serialization (old pattern)
-        return result.model_dump()
+        return dict(result.model_dump())
 
     def simulate_new_pattern_correlation(self) -> dict[str, Any]:
         """Simulate new correlation pattern with direct Pydantic."""
@@ -566,7 +567,7 @@ def print_results_table(operation_name: str, results: dict[str, Any], data_size:
     )
 
 
-def run_comprehensive_benchmarks():
+def run_comprehensive_benchmarks() -> None:
     """Run comprehensive benchmarks across different data sizes."""
 
     data_sizes = [1000, 5000, 10000]

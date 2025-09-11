@@ -11,11 +11,14 @@ import asyncio
 
 import pandas as pd
 
-from databeak.models.csv_session import get_session_manager
-from databeak.tools.transformations import get_row_data, insert_row
+from databeak.models.csv_session import get_session_manager  # type: ignore[import-not-found]
+from databeak.tools.transformations import (  # type: ignore[import-not-found]
+    get_row_data,
+    insert_row,
+)
 
 
-async def main():
+async def main() -> None:
     """Demonstrate null value handling and Claude Code compatibility."""
 
     print("CSV Editor - Null Value Support & Claude Code Compatibility Demo")

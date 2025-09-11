@@ -10,11 +10,14 @@ from datetime import datetime, timezone
 import pandas as pd
 
 # Import the new service-based architecture
-from databeak.models.session_service import MockSessionManager, SessionServiceFactory
-from databeak.services.statistics_service import StatisticsService
+from databeak.models.session_service import (  # type: ignore[import-not-found]
+    MockSessionManager,
+    SessionServiceFactory,
+)
+from databeak.services.statistics_service import StatisticsService  # type: ignore[import-not-found]
 
 
-async def demonstrate_before_after():
+async def demonstrate_before_after() -> None:
     """Demonstrate the improvements from dependency injection."""
 
     print("=== DataBeak Dependency Injection Demo ===\n")
@@ -183,7 +186,7 @@ async def demonstrate_before_after():
     print("full backwards compatibility with existing DataBeak functionality.")
 
 
-def demonstrate_testing_patterns():
+def demonstrate_testing_patterns() -> None:
     """Show how the new architecture improves testing."""
 
     print("\n=== Testing Patterns Demo ===\n")

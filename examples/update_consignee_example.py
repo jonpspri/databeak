@@ -3,10 +3,10 @@
 
 import asyncio
 
-from mcp_client import MCPClient
+from mcp_client import MCPClient  # type: ignore[import-not-found]
 
 
-async def update_consignee_example():
+async def update_consignee_example() -> None:
     """Example of updating consignee field to keep only the company name."""
 
     # Initialize MCP client

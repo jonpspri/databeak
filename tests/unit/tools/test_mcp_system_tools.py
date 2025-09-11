@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.databeak.server import _load_instructions, mcp
 from src.databeak.tools.mcp_system_tools import HealthResult, ServerInfoResult
@@ -101,6 +101,7 @@ class TestServerInitialization:
     def test_server_instructions_content(self) -> None:
         """Test that server instructions contain expected content."""
         instructions = mcp.instructions
+        assert instructions is not None
 
         # Check for key sections that should be in instructions
         expected_content = [
@@ -202,7 +203,7 @@ class TestSystemToolFunctions:
             HealthResult(
                 status="healthy",
                 version="1.0.0",
-                active_sessions="invalid",  # Should be int, not str
+                active_sessions="invalid",  # type: ignore[arg-type]  # Should be int, not str
                 max_sessions=10,
                 session_ttl_minutes=60,
             )

@@ -11,7 +11,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..exceptions import (
     ColumnNotFoundError,
@@ -20,11 +20,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType, get_session_manager
-from ..models.tool_responses import (
-    ColumnOperationResult,
-    RenameColumnsResult,
-    SelectColumnsResult,
-)
+from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +35,8 @@ CellValue = str | int | float | bool | None
 class ColumnMapping(BaseModel):
     """Column rename mapping."""
 
+    model_config = ConfigDict(extra="forbid")
+
     old_name: str = Field(description="Current column name")
     new_name: str = Field(description="New column name")
 
@@ -46,8 +44,51 @@ class ColumnMapping(BaseModel):
 class ColumnFormula(BaseModel):
     """Formula specification for computed columns."""
 
+    model_config = ConfigDict(extra="forbid")
+
     expression: str = Field(description="Python expression for computing values")
     columns: list[str] = Field(default_factory=list, description="Columns referenced in expression")
+
+
+class UpdateColumnRequest(BaseModel):
+    """Request parameters for column update operations."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    operation: Literal["replace", "map", "apply", "fillna"] = Field(
+        description="Type of update operation"
+    )
+    value: Any | None = Field(
+        None, description="Value for the operation (depends on operation type)"
+    )
+    pattern: str | None = Field(None, description="Pattern for replace operation")
+    replacement: str | None = Field(None, description="Replacement for replace operation")
+
+
+# =============================================================================
+# RESPONSE MODELS (Server-specific)
+# =============================================================================
+
+
+class SelectColumnsResult(BaseToolResponse):
+    """Result of selecting specific columns."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(description="Session identifier")
+    selected_columns: list[str] = Field(description="List of selected column names")
+    columns_before: int = Field(description="Number of columns before selection")
+    columns_after: int = Field(description="Number of columns after selection")
+
+
+class RenameColumnsResult(BaseToolResponse):
+    """Result of renaming columns."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    session_id: str = Field(description="Session identifier")
+    renamed: dict[str, str] = Field(description="Mapping of old names to new names")
+    columns: list[str] = Field(description="List of final column names")
 
 
 # =============================================================================
@@ -80,7 +121,7 @@ async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> SelectColumnsResult:
     """Select specific columns from the dataframe, removing all others.
 
     Args:
@@ -104,7 +145,7 @@ async def select_columns(
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
-            raise ToolError(f"Columns not found: {missing_cols}")
+            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
 
         # Track counts before modification
         columns_before = len(df.columns)
@@ -119,16 +160,18 @@ async def select_columns(
             },
         )
 
-        result = SelectColumnsResult(
+        return SelectColumnsResult(
             session_id=session_id,
             selected_columns=columns,
             columns_before=columns_before,
             columns_after=len(columns),
         )
-        return result.model_dump()
 
+    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
+        logger.error(f"Select columns failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error selecting columns: {e!s}")
+        logger.error(f"Unexpected error selecting columns: {e!s}")
         raise ToolError(f"Failed to select columns: {e}") from e
 
 
@@ -136,7 +179,7 @@ async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
     Args:
@@ -164,7 +207,7 @@ async def rename_columns(
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
         if missing_cols:
-            raise ToolError(f"Columns not found: {missing_cols}")
+            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
 
         # Apply renaming
         session.data_session.df = df.rename(columns=mapping)
@@ -173,15 +216,17 @@ async def rename_columns(
             {"mapping": mapping, "renamed_count": len(mapping)},
         )
 
-        result = RenameColumnsResult(
+        return RenameColumnsResult(
             session_id=session_id,
             renamed=mapping,
             columns=list(mapping.values()),
         )
-        return result.model_dump()
 
+    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
+        logger.error(f"Rename columns failed with {type(e).__name__}: {e.message}")
+        raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error renaming columns: {e!s}")
+        logger.error(f"Unexpected error renaming columns: {e!s}")
         raise ToolError(f"Failed to rename columns: {e}") from e
 
 
@@ -436,10 +481,7 @@ async def change_column_type(
 async def update_column(
     session_id: str,
     column: str,
-    operation: Literal["replace", "map", "apply", "fillna"],
-    value: Any | None = None,
-    pattern: str | None = None,
-    replacement: str | None = None,
+    request: UpdateColumnRequest | dict[str, Any],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Update values in a column using various operations.
@@ -447,14 +489,7 @@ async def update_column(
     Args:
         session_id: Session identifier
         column: Column name to update
-        operation: Type of update operation:
-            - "replace": Replace pattern with replacement
-            - "map": Map values using a dictionary
-            - "apply": Apply a function/expression
-            - "fillna": Fill missing values
-        value: Value for the operation (depends on operation type)
-        pattern: Pattern for replace operation
-        replacement: Replacement for replace operation
+        request: Update operation parameters (UpdateColumnRequest or dict)
         ctx: FastMCP context
 
     Returns:
@@ -462,13 +497,23 @@ async def update_column(
 
     Examples:
         # Replace values
-        update_column(session_id, "status", "replace", pattern="N/A", replacement="Unknown")
+        update_column(session_id, "status", {
+            "operation": "replace",
+            "pattern": "N/A",
+            "replacement": "Unknown"
+        })
 
         # Map values
-        update_column(session_id, "code", "map", value={"A": "Alpha", "B": "Beta"})
+        update_column(session_id, "code", {
+            "operation": "map",
+            "value": {"A": "Alpha", "B": "Beta"}
+        })
 
         # Fill missing values
-        update_column(session_id, "score", "fillna", value=0)
+        update_column(session_id, "score", {
+            "operation": "fillna",
+            "value": 0
+        })
     """
     try:
         session, df = _get_session_data(session_id)
@@ -476,64 +521,75 @@ async def update_column(
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
 
+        # Convert dict to Pydantic model if needed
+        if isinstance(request, dict):
+            update_request = UpdateColumnRequest(**request)
+        else:
+            update_request = request
+
         # Track initial state
         null_count_before = df[column].isna().sum()
 
-        if operation == "replace":
-            if pattern is None or replacement is None:
+        if update_request.operation == "replace":
+            if update_request.pattern is None or update_request.replacement is None:
                 raise InvalidParameterError(
                     "pattern/replacement",
-                    f"{pattern}/{replacement}",
+                    f"{update_request.pattern}/{update_request.replacement}",
                     "Both pattern and replacement required for replace operation",
                 )
-            session.data_session.df[column] = df[column].replace(pattern, replacement)
+            session.data_session.df[column] = df[column].replace(
+                update_request.pattern, update_request.replacement
+            )
 
-        elif operation == "map":
-            if not isinstance(value, dict):
+        elif update_request.operation == "map":
+            if not isinstance(update_request.value, dict):
                 raise InvalidParameterError(
                     "value",
-                    str(value),
+                    str(update_request.value),
                     "Dictionary mapping required for map operation",
                 )
-            session.data_session.df[column] = df[column].map(value)
+            session.data_session.df[column] = df[column].map(update_request.value)
 
-        elif operation == "apply":
-            if value is None:
+        elif update_request.operation == "apply":
+            if update_request.value is None:
                 raise InvalidParameterError(
                     "value",
-                    str(value),
+                    str(update_request.value),
                     "Expression or function required for apply operation",
                 )
             # For simple expressions, use eval safely with restricted scope
-            if isinstance(value, str):
+            if isinstance(update_request.value, str):
                 import ast
 
                 # Parse and validate the expression is safe
                 try:
-                    ast.parse(value, mode="eval")
+                    ast.parse(update_request.value, mode="eval")
                     # Create a safe evaluation context
                     safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
+                    expression = update_request.value  # Type guard ensures this is str
                     session.data_session.df[column] = df[column].apply(
-                        lambda x: eval(value, safe_dict, {"x": x})  # noqa: S307
+                        lambda x: eval(expression, safe_dict, {"x": x})  # noqa: S307
                     )
                 except SyntaxError as e:
-                    raise InvalidParameterError("value", value, f"Invalid expression: {e}") from e
+                    raise InvalidParameterError(
+                        "value", update_request.value, f"Invalid expression: {e}"
+                    ) from e
             else:
-                session.data_session.df[column] = df[column].apply(value)
+                session.data_session.df[column] = df[column].apply(update_request.value)
 
-        elif operation == "fillna":
-            if value is None:
+        elif update_request.operation == "fillna":
+            if update_request.value is None:
                 raise InvalidParameterError(
                     "value",
-                    str(value),
+                    str(update_request.value),
                     "Fill value required for fillna operation",
                 )
-            session.data_session.df[column] = df[column].fillna(value)
+            session.data_session.df[column] = df[column].fillna(update_request.value)
 
         else:
             raise InvalidParameterError(
                 "operation",
-                operation,
+                update_request.operation,
                 "Supported operations: replace, map, apply, fillna",
             )
 
@@ -544,14 +600,14 @@ async def update_column(
             OperationType.UPDATE_COLUMN,
             {
                 "column": column,
-                "operation": operation,
+                "operation": update_request.operation,
                 "nulls_changed": int(null_count_after - null_count_before),
             },
         )
 
         return ColumnOperationResult(
             session_id=session_id,
-            operation=f"update_{operation}",
+            operation=f"update_{update_request.operation}",
             rows_affected=len(df),
             columns_affected=[column],
         )

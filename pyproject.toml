@@ -7,7 +7,7 @@ name = "databeak"
 version = "1.0.2"
 description = "DataBeak: MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
@@ -39,7 +39,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -217,7 +216,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 namespace_packages = true
 explicit_package_bases = true
 warn_return_any = true

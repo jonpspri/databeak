@@ -3,7 +3,7 @@
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 
 @pytest.fixture

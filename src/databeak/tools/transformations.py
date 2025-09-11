@@ -27,9 +27,7 @@ from ..models.tool_responses import (
     DeleteRowResult,
     FilterOperationResult,
     InsertRowResult,
-    RenameColumnsResult,
     RowDataResult,
-    SelectColumnsResult,
     SetCellResult,
     SortDataResult,
     UpdateRowResult,
@@ -227,7 +225,7 @@ async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> SelectColumnsResult:
+) -> dict[str, Any]:
     """Select specific columns from the dataframe.
 
     Args:
@@ -259,12 +257,12 @@ async def select_columns(
             },
         )
 
-        return SelectColumnsResult(
-            session_id=session_id,
-            selected_columns=columns,
-            columns_before=columns_before,
-            columns_after=len(columns),
-        )
+        return {
+            "session_id": session_id,
+            "selected_columns": columns,
+            "columns_before": columns_before,
+            "columns_after": len(columns),
+        }
 
     except Exception as e:
         logger.error(f"Error selecting columns: {e!s}")
@@ -275,7 +273,7 @@ async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> RenameColumnsResult:
+) -> dict[str, Any]:
     """Rename columns in the dataframe.
 
     Args:
@@ -297,9 +295,11 @@ async def rename_columns(
         session.data_session.df = df.rename(columns=mapping)
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
-        return RenameColumnsResult(
-            session_id=session_id, renamed=mapping, columns=session.data_session.df.columns.tolist()
-        )
+        return {
+            "session_id": session_id,
+            "renamed": mapping,
+            "columns": session.data_session.df.columns.tolist(),
+        }
 
     except Exception as e:
         logger.error(f"Error renaming columns: {e!s}")

@@ -3,6 +3,12 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
+# Import server modules for coverage tracking
+from src.databeak.servers import (  # noqa: F401
+    column_server,
+    column_text_server,
+    transformation_server,
+)
 from src.databeak.servers.discovery_server import get_data_summary
 from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.tools.transformations import (
