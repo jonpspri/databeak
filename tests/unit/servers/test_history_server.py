@@ -1,37 +1,38 @@
 """Tests for history server."""
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastmcp.exceptions import ToolError
 
 from src.databeak.servers.history_server import (
-    # History operations
-    undo_operation,
-    redo_operation,
-    get_history,
-    restore_to_operation,
+    # Data models
+    AutoSaveConfig,
+    AutoSaveConfigResult,
+    AutoSaveDisableResult,
+    AutoSaveStatusResult,
+    ClearHistoryResult,
+    ExportHistoryResult,
+    HistoryOperation,
+    HistoryResult,
+    HistorySummary,
+    ManualSaveResult,
+    RedoResult,
+    RestoreResult,
+    # Response models
+    UndoResult,
     clear_history,
-    export_history,
     # Auto-save operations
     configure_auto_save,
     disable_auto_save,
+    export_history,
     get_auto_save_status,
+    get_history,
+    redo_operation,
+    restore_to_operation,
     trigger_manual_save,
-    # Response models
-    UndoResult,
-    RedoResult,
-    HistoryResult,
-    RestoreResult,
-    ClearHistoryResult,
-    ExportHistoryResult,
-    AutoSaveConfigResult,
-    AutoSaveStatusResult,
-    AutoSaveDisableResult,
-    ManualSaveResult,
-    # Data models
-    AutoSaveConfig,
-    HistoryOperation,
-    HistorySummary,
+    # History operations
+    undo_operation,
 )
 
 
@@ -42,12 +43,14 @@ class TestHistoryOperations:
     async def test_undo_operation_success(self):
         """Test successful undo operation."""
         mock_session = Mock()
-        mock_session.undo = AsyncMock(return_value={
-            "success": True,
-            "message": "Operation undone",
-            "operation_type": "filter",
-            "previous_operation": "sort",
-        })
+        mock_session.undo = AsyncMock(
+            return_value={
+                "success": True,
+                "message": "Operation undone",
+                "operation_type": "filter",
+                "previous_operation": "sort",
+            }
+        )
         mock_session.get_history.return_value = {
             "can_undo": True,
             "can_redo": False,
@@ -57,7 +60,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await undo_operation("test_session")
 
         assert isinstance(result, UndoResult)
@@ -77,7 +82,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = None
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError, match="Session 'test_session' not found"):
                 await undo_operation("test_session")
 
@@ -85,15 +92,19 @@ class TestHistoryOperations:
     async def test_undo_operation_failure(self):
         """Test undo operation failure."""
         mock_session = Mock()
-        mock_session.undo = AsyncMock(return_value={
-            "success": False,
-            "error": "No operations to undo",
-        })
+        mock_session.undo = AsyncMock(
+            return_value={
+                "success": False,
+                "error": "No operations to undo",
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError, match="Undo operation failed: No operations to undo"):
                 await undo_operation("test_session")
 
@@ -101,12 +112,14 @@ class TestHistoryOperations:
     async def test_redo_operation_success(self):
         """Test successful redo operation."""
         mock_session = Mock()
-        mock_session.redo = AsyncMock(return_value={
-            "success": True,
-            "message": "Operation redone",
-            "operation_type": "transform",
-            "next_operation": "validate",
-        })
+        mock_session.redo = AsyncMock(
+            return_value={
+                "success": True,
+                "message": "Operation redone",
+                "operation_type": "transform",
+                "next_operation": "validate",
+            }
+        )
         mock_session.get_history.return_value = {
             "can_undo": False,
             "can_redo": True,
@@ -116,7 +129,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await redo_operation("test_session")
 
         assert isinstance(result, RedoResult)
@@ -166,7 +181,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await get_history("test_session", limit=10)
 
         assert isinstance(result, HistoryResult)
@@ -191,17 +208,21 @@ class TestHistoryOperations:
     async def test_restore_to_operation_success(self):
         """Test successful restore to operation."""
         mock_session = Mock()
-        mock_session.restore_to_operation = AsyncMock(return_value={
-            "success": True,
-            "operations_undone": 3,
-            "operations_redone": 1,
-            "final_position": 5,
-        })
+        mock_session.restore_to_operation = AsyncMock(
+            return_value={
+                "success": True,
+                "operations_undone": 3,
+                "operations_redone": 1,
+                "final_position": 5,
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await restore_to_operation("test_session", "target_op")
 
         assert isinstance(result, RestoreResult)
@@ -218,7 +239,7 @@ class TestHistoryOperations:
     async def test_clear_history_success(self):
         """Test successful history clearing."""
         mock_history_manager = Mock()
-        
+
         mock_session = Mock()
         mock_session.history_manager = mock_history_manager
         mock_session.get_history.return_value = {"total_operations": 5}
@@ -226,7 +247,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await clear_history("test_session")
 
         assert isinstance(result, ClearHistoryResult)
@@ -246,7 +269,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError, match="History is not enabled for this session"):
                 await clear_history("test_session")
 
@@ -263,7 +288,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with patch("os.path.getsize", return_value=1024):
                 result = await export_history("test_session", "/tmp/history.json", format="json")
 
@@ -289,7 +316,9 @@ class TestHistoryOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError, match="History export operation failed"):
                 await export_history("test_session", "/tmp/history.json")
 
@@ -307,7 +336,9 @@ class TestAutoSaveOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await configure_auto_save(
                 "test_session",
                 enabled=True,
@@ -355,12 +386,14 @@ class TestAutoSaveOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await configure_auto_save(
                 "test_session",
                 enabled=True,
                 mode="after_operation",  # Different from previous
-                strategy="backup",      # Different from previous
+                strategy="backup",  # Different from previous
             )
 
         assert isinstance(result, AutoSaveConfigResult)
@@ -375,7 +408,9 @@ class TestAutoSaveOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = Mock()
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError):
                 await configure_auto_save(
                     "test_session",
@@ -387,16 +422,20 @@ class TestAutoSaveOperations:
         """Test successful auto-save disable."""
         mock_session = Mock()
         mock_session.get_auto_save_status.return_value = {"enabled": True}
-        mock_session.disable_auto_save = AsyncMock(return_value={
-            "success": True,
-            "final_save_performed": True,
-            "final_save_path": "/tmp/final_save.csv",
-        })
+        mock_session.disable_auto_save = AsyncMock(
+            return_value={
+                "success": True,
+                "final_save_performed": True,
+                "final_save_path": "/tmp/final_save.csv",
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await disable_auto_save("test_session")
 
         assert isinstance(result, AutoSaveDisableResult)
@@ -413,15 +452,19 @@ class TestAutoSaveOperations:
         """Test disable auto-save when already disabled."""
         mock_session = Mock()
         mock_session.get_auto_save_status.return_value = {"enabled": False}
-        mock_session.disable_auto_save = AsyncMock(return_value={
-            "success": True,
-            "final_save_performed": False,
-        })
+        mock_session.disable_auto_save = AsyncMock(
+            return_value={
+                "success": True,
+                "final_save_performed": False,
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await disable_auto_save("test_session")
 
         assert result.was_enabled is False
@@ -452,7 +495,9 @@ class TestAutoSaveOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await get_auto_save_status("test_session")
 
         assert isinstance(result, AutoSaveStatusResult)
@@ -479,7 +524,9 @@ class TestAutoSaveOperations:
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await get_auto_save_status("test_session")
 
         assert result.status.enabled is False
@@ -496,18 +543,22 @@ class TestAutoSaveOperations:
         mock_session = Mock()
         mock_session.has_data.return_value = True
         mock_session.df = mock_df
-        mock_session.manual_save = AsyncMock(return_value={
-            "success": True,
-            "save_path": "/tmp/manual_save.csv",
-            "format": "csv",
-            "file_size_bytes": 2048,
-            "save_time": "2024-01-01T12:00:00",
-        })
+        mock_session.manual_save = AsyncMock(
+            return_value={
+                "success": True,
+                "save_path": "/tmp/manual_save.csv",
+                "format": "csv",
+                "file_size_bytes": 2048,
+                "save_time": "2024-01-01T12:00:00",
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await trigger_manual_save("test_session")
 
         assert isinstance(result, ManualSaveResult)
@@ -528,16 +579,20 @@ class TestAutoSaveOperations:
         mock_session = Mock()
         mock_session.has_data.return_value = False
         mock_session.df = None
-        mock_session.manual_save = AsyncMock(return_value={
-            "success": True,
-            "save_path": "/tmp/empty.csv",
-            "format": "csv",
-        })
+        mock_session.manual_save = AsyncMock(
+            return_value={
+                "success": True,
+                "save_path": "/tmp/empty.csv",
+                "format": "csv",
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             result = await trigger_manual_save("test_session")
 
         assert result.rows_saved == 0
@@ -547,15 +602,19 @@ class TestAutoSaveOperations:
     async def test_trigger_manual_save_failure(self):
         """Test manual save failure."""
         mock_session = Mock()
-        mock_session.manual_save = AsyncMock(return_value={
-            "success": False,
-            "error": "Disk full",
-        })
+        mock_session.manual_save = AsyncMock(
+            return_value={
+                "success": False,
+                "error": "Disk full",
+            }
+        )
 
         mock_manager = Mock()
         mock_manager.get_session.return_value = mock_session
 
-        with patch("src.databeak.servers.history_server.get_session_manager", return_value=mock_manager):
+        with patch(
+            "src.databeak.servers.history_server.get_session_manager", return_value=mock_manager
+        ):
             with pytest.raises(ToolError, match="Manual save failed: Disk full"):
                 await trigger_manual_save("test_session")
 
@@ -584,7 +643,9 @@ class TestAutoSaveConfigValidation:
     def test_interval_validation(self):
         """Test interval validation."""
         # Valid interval
-        config = AutoSaveConfig(enabled=True, mode="periodic", strategy="backup", interval_seconds=60)
+        config = AutoSaveConfig(
+            enabled=True, mode="periodic", strategy="backup", interval_seconds=60
+        )
         assert config.interval_seconds == 60
 
         # Invalid interval - too low
@@ -594,7 +655,9 @@ class TestAutoSaveConfigValidation:
     def test_max_backups_validation(self):
         """Test max_backups validation."""
         # Valid max_backups
-        config = AutoSaveConfig(enabled=True, mode="after_operation", strategy="backup", max_backups=5)
+        config = AutoSaveConfig(
+            enabled=True, mode="after_operation", strategy="backup", max_backups=5
+        )
         assert config.max_backups == 5
 
         # Invalid max_backups

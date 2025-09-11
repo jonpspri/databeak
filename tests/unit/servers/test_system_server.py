@@ -54,9 +54,9 @@ class TestHealthCheck:
     async def test_health_check_with_context(self):
         """Test health check with FastMCP context logging."""
         from unittest.mock import AsyncMock
-        
+
         mock_ctx = AsyncMock()
-        
+
         with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
             mock_session_manager = Mock()
             mock_session_manager.sessions = {"session1": Mock(), "session2": Mock()}
@@ -75,9 +75,9 @@ class TestHealthCheck:
     async def test_health_check_handles_session_manager_failure(self):
         """Test health check handles session manager failures gracefully."""
         from unittest.mock import AsyncMock
-        
+
         mock_ctx = AsyncMock()
-        
+
         with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
             mock_manager.side_effect = Exception("Session manager unavailable")
 
@@ -88,7 +88,7 @@ class TestHealthCheck:
             assert result.status == "unhealthy"
             assert result.active_sessions == 0
             assert result.max_sessions == 0
-            
+
             # Context should receive error
             mock_ctx.error.assert_called()
 
@@ -97,7 +97,10 @@ class TestHealthCheck:
         """Test health check handles critical failures that prevent fallback response."""
         with (
             patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
-            patch("src.databeak.servers.system_server.__version__", side_effect=Exception("Version error"))
+            patch(
+                "src.databeak.servers.system_server.__version__",
+                side_effect=Exception("Version error"),
+            ),
         ):
             mock_manager.side_effect = Exception("Critical failure")
 
@@ -123,7 +126,7 @@ class TestHealthCheck:
             assert hasattr(result, "active_sessions")
             assert hasattr(result, "max_sessions")
             assert hasattr(result, "session_ttl_minutes")
-            
+
             # Verify types
             assert isinstance(result.status, str)
             assert isinstance(result.version, str)
@@ -171,19 +174,19 @@ class TestServerInfo:
             # Verify capability categories exist
             expected_categories = [
                 "data_io",
-                "data_manipulation", 
+                "data_manipulation",
                 "data_analysis",
                 "data_validation",
                 "session_management",
                 "null_handling",
             ]
-            
+
             for category in expected_categories:
                 assert category in result.capabilities
                 assert isinstance(result.capabilities[category], list)
                 assert len(result.capabilities[category]) > 0
 
-    @pytest.mark.asyncio 
+    @pytest.mark.asyncio
     async def test_get_server_info_data_io_capabilities(self):
         """Test server info includes expected data I/O capabilities."""
         with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
@@ -197,7 +200,7 @@ class TestServerInfo:
             data_io_caps = result.capabilities["data_io"]
             expected_io_caps = [
                 "load_csv",
-                "load_csv_from_url", 
+                "load_csv_from_url",
                 "load_csv_from_content",
                 "export_csv",
                 "multiple_export_formats",
@@ -219,7 +222,7 @@ class TestServerInfo:
 
             expected_formats = [
                 "csv",
-                "tsv", 
+                "tsv",
                 "json",
                 "excel",
                 "parquet",
@@ -238,9 +241,9 @@ class TestServerInfo:
     async def test_get_server_info_with_context(self):
         """Test server info with FastMCP context logging."""
         from unittest.mock import AsyncMock
-        
+
         mock_ctx = AsyncMock()
-        
+
         with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 150
@@ -258,9 +261,9 @@ class TestServerInfo:
     async def test_get_server_info_handles_settings_failure(self):
         """Test server info handles configuration loading failures."""
         from unittest.mock import AsyncMock
-        
+
         mock_ctx = AsyncMock()
-        
+
         with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
             mock_settings.side_effect = Exception("Settings unavailable")
 
@@ -284,7 +287,7 @@ class TestServerInfo:
             null_caps = result.capabilities["null_handling"]
             expected_null_caps = [
                 "json_null_support",
-                "python_none_support", 
+                "python_none_support",
                 "pandas_nan_compatibility",
                 "null_value_insertion",
                 "null_value_updates",
@@ -313,7 +316,7 @@ class TestServerInfo:
                 "add_column",
                 "remove_columns",
                 "change_column_type",
-                "fill_missing_values", 
+                "fill_missing_values",
                 "remove_duplicates",
                 "null_value_support",
             ]
@@ -334,10 +337,10 @@ class TestServerInfo:
 
             # Test that the result can be serialized (Pydantic validation)
             result_dict = result.model_dump()
-            
+
             # Verify structure
             assert "success" in result_dict
-            assert "name" in result_dict 
+            assert "name" in result_dict
             assert "version" in result_dict
             assert "capabilities" in result_dict
             assert "supported_formats" in result_dict
@@ -357,7 +360,7 @@ class TestSystemServerIntegration:
     def test_system_server_exists(self):
         """Test that system server is properly exported."""
         from src.databeak.servers.system_server import system_server
-        
+
         assert system_server is not None
         assert system_server.name == "DataBeak-System"
         assert system_server.instructions is not None
@@ -365,17 +368,17 @@ class TestSystemServerIntegration:
     def test_system_server_has_correct_tools(self):
         """Test that system server has registered the expected tools."""
         from src.databeak.servers.system_server import system_server
-        
+
         # The server should have tools registered, but FastMCP doesn't expose them easily
         # We can at least verify the server is properly configured
-        assert hasattr(system_server, 'name')
-        assert hasattr(system_server, 'instructions')
+        assert hasattr(system_server, "name")
+        assert hasattr(system_server, "instructions")
 
     @pytest.mark.asyncio
     async def test_system_functions_are_async(self):
         """Test that system functions are properly async."""
         import inspect
-        
+
         # Verify functions are async
         assert inspect.iscoroutinefunction(health_check)
         assert inspect.iscoroutinefunction(get_server_info)
@@ -383,11 +386,11 @@ class TestSystemServerIntegration:
     def test_system_server_follows_naming_pattern(self):
         """Test that system server follows DataBeak naming conventions."""
         from src.databeak.servers.system_server import system_server
-        
+
         # Should follow DataBeak-<Service> naming pattern
         assert system_server.name.startswith("DataBeak-")
         assert "System" in system_server.name
-        
+
         # Instructions should mention the server purpose
         assert "system" in system_server.instructions.lower()
         assert "health" in system_server.instructions.lower()

@@ -105,7 +105,7 @@ async def health_check(ctx: Context | None = None) -> HealthResult:
         logger.error(f"Health check failed: {e!s}")
         if ctx:
             await ctx.error(f"Health check failed: {e!s}")
-        
+
         # Return unhealthy status with minimal info if health check itself fails
         try:
             return HealthResult(
@@ -157,7 +157,7 @@ async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
         info = await get_server_info()
         print(f"Server: {info.name} v{info.version}")
         print(f"Formats: {info.supported_formats}")
-        
+
         # Check specific capabilities
         if "correlation_matrix" in info.capabilities.get("data_analysis", []):
             perform_correlation_analysis()
@@ -187,7 +187,7 @@ async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
             capabilities={
                 "data_io": [
                     "load_csv",
-                    "load_csv_from_url", 
+                    "load_csv_from_url",
                     "load_csv_from_content",
                     "export_csv",
                     "multiple_export_formats",
@@ -206,7 +206,7 @@ async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
                 ],
                 "data_analysis": [
                     "get_statistics",
-                    "correlation_matrix", 
+                    "correlation_matrix",
                     "group_by_aggregate",
                     "value_counts",
                     "detect_outliers",
@@ -224,7 +224,7 @@ async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
                 ],
                 "null_handling": [
                     "json_null_support",
-                    "python_none_support", 
+                    "python_none_support",
                     "pandas_nan_compatibility",
                     "null_value_insertion",
                     "null_value_updates",
@@ -233,7 +233,7 @@ async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
             supported_formats=[
                 "csv",
                 "tsv",
-                "json", 
+                "json",
                 "excel",
                 "parquet",
                 "html",

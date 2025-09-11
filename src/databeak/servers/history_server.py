@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import SessionNotFoundError
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +271,9 @@ async def undo_operation(
         position = history_info.get("current_position", 0)
 
         if ctx:
-            await ctx.info(f"Successfully undid operation: {result.get('message', 'Operation undone')}")
+            await ctx.info(
+                f"Successfully undid operation: {result.get('message', 'Operation undone')}"
+            )
 
         return UndoResult(
             session_id=session_id,
@@ -353,7 +355,9 @@ async def redo_operation(
         position = history_info.get("current_position", 0)
 
         if ctx:
-            await ctx.info(f"Successfully redid operation: {result.get('message', 'Operation redone')}")
+            await ctx.info(
+                f"Successfully redid operation: {result.get('message', 'Operation redone')}"
+            )
 
         return RedoResult(
             session_id=session_id,
@@ -714,6 +718,7 @@ async def export_history(
         file_size = None
         try:
             import os
+
             file_size = os.path.getsize(file_path)
         except Exception:
             # File size is optional, continue without it
@@ -866,7 +871,9 @@ async def configure_auto_save(
         result = await session.enable_auto_save(config_dict)
 
         if not result["success"]:
-            raise ToolError(f"Failed to configure auto-save: {result.get('error', 'Unknown error')}")
+            raise ToolError(
+                f"Failed to configure auto-save: {result.get('error', 'Unknown error')}"
+            )
 
         if ctx:
             await ctx.info(f"Auto-save configured: {mode} mode, {strategy} strategy")
@@ -1060,7 +1067,9 @@ async def get_auto_save_status(
 
         if ctx:
             if status.enabled:
-                await ctx.info(f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode")
+                await ctx.info(
+                    f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode"
+                )
             else:
                 await ctx.info("Auto-save is currently disabled")
 
@@ -1115,7 +1124,7 @@ async def trigger_manual_save(
 
     AI Workflow Integration:
         1. Checkpoint creation before experimental operations
-        2. Forced backups at critical workflow milestones  
+        2. Forced backups at critical workflow milestones
         3. Manual intervention when auto-save timing is insufficient
         4. Immediate data preservation before system maintenance
         5. Backup verification by triggering save and checking results

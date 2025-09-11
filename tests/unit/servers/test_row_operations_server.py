@@ -5,6 +5,7 @@ operations with comprehensive boundary checking and error handling.
 """
 
 import json
+
 import pytest
 from fastmcp.exceptions import ToolError
 
@@ -377,16 +378,18 @@ class TestInsertRow:
 
     async def test_insert_row_json_string(self, row_operations_session):
         """Test inserting row with JSON string format."""
-        json_data = json.dumps({
-            "id": 7,
-            "first_name": "Eve",
-            "last_name": "Taylor",
-            "age": 31,
-            "email": None,  # Test null value
-            "salary": 56000,
-            "is_active": False,
-            "join_date": "2023-06-01",
-        })
+        json_data = json.dumps(
+            {
+                "id": 7,
+                "first_name": "Eve",
+                "last_name": "Taylor",
+                "age": 31,
+                "email": None,  # Test null value
+                "salary": 56000,
+                "is_active": False,
+                "join_date": "2023-06-01",
+            }
+        )
 
         result = insert_row(row_operations_session, 0, json_data)  # Insert at beginning
 

@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# Import session management from the main package  
+# Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
 from ..models import OperationType
 from ..models.tool_responses import (
@@ -27,7 +27,7 @@ from ..utils.validators import convert_pandas_na_list
 from .server_utils import get_session_data
 
 if TYPE_CHECKING:
-    from ..models.csv_session import CSVSession
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,9 @@ class RowInsertRequest(BaseModel):
 
     @field_validator("data")
     @classmethod
-    def parse_json_data(cls, v: dict[str, CellValue] | list[CellValue] | str) -> dict[str, CellValue] | list[CellValue]:
+    def parse_json_data(
+        cls, v: dict[str, CellValue] | list[CellValue] | str
+    ) -> dict[str, CellValue] | list[CellValue]:
         """Parse JSON string data for Claude Code compatibility."""
         if isinstance(v, str):
             try:
@@ -142,7 +144,8 @@ def get_cell_value(
     column: str | int,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> CellValueResult:
-    """Get the value of a specific cell with precise coordinate targeting and comprehensive metadata.
+    """Get the value of a specific cell with precise coordinate targeting and comprehensive
+    metadata.
 
     Essential tool for AI assistants to inspect individual cell values with full coordinate
     context. Part of the inspection workflow: get_data_summary → get_row_data → get_cell_value.
@@ -541,7 +544,8 @@ def insert_row(
     data: RowData | str,  # Accept string for Claude Code compatibility
     ctx: Context | None = None,  # noqa: ARG001
 ) -> InsertRowResult:
-    """Insert a new row at the specified index with comprehensive null value and JSON string support.
+    """Insert a new row at the specified index with comprehensive null value and JSON string
+    support.
 
     This function is optimized for AI assistants and supports multiple data input formats including
     automatic JSON string parsing for Claude Code compatibility.
@@ -770,7 +774,8 @@ def update_row(
     data: dict[str, CellValue] | str,
     ctx: Context | None = None,  # noqa: ARG001
 ) -> UpdateRowResult:
-    """Update specific columns in a row with comprehensive null value and Claude Code JSON string support.
+    """Update specific columns in a row with comprehensive null value and Claude Code JSON string
+    support.
 
     Provides selective column updates within a single row, supporting partial updates and
     automatic JSON string parsing. Optimized for AI assistants with detailed change tracking.
