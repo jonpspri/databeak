@@ -48,7 +48,7 @@ except ImportError:
         for i in range(preview_rows):
             row_dict = df.iloc[i].to_dict()
             # Convert keys to strings and handle pandas/numpy types
-            row = {}
+            row: dict[str, Any] = {}
             for key, value in row_dict.items():
                 str_key = str(key)
                 if pd.isna(value):
@@ -59,7 +59,7 @@ except ImportError:
                     row[str_key] = value.item()
                 else:
                     row[str_key] = value
-            row["__row_index__"] = i
+            row["__row_index__"] = str(i)
             records.append(row)
 
         return {
@@ -793,7 +793,7 @@ async def get_data_summary(
             else:
                 mapped_dtype = "object"
 
-            columns_info[col] = DataTypeInfo(
+            columns_info[str(col)] = DataTypeInfo(
                 type=cast(
                     "Literal['int64', 'float64', 'object', 'bool', 'datetime64', 'category']",
                     mapped_dtype,

@@ -1176,7 +1176,7 @@ async def list_sessions(ctx: Context | None = None) -> SessionListResult:
                 last_accessed=s.last_accessed.isoformat(),
                 row_count=s.row_count,
                 column_count=s.column_count,
-                columns=s.columns,
+                columns=[str(col) for col in s.columns],  # Ensure columns are strings
                 memory_usage_mb=s.memory_usage_mb,
                 file_path=s.file_path,
             )

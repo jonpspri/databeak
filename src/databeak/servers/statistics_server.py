@@ -113,15 +113,14 @@ async def get_statistics(
             if missing_cols:
                 raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
             numeric_df = df[columns].select_dtypes(include=[np.number])
-            # Return empty results if no numeric columns
+            # Raise error if no numeric columns found when specific columns requested
             if numeric_df.empty:
-                return StatisticsResult(
-                    session_id=session_id,
-                    statistics={},
-                    column_count=0,
-                    numeric_columns=[],
-                    total_rows=len(df),
-                )
+                non_numeric_cols = [
+                    col
+                    for col in columns
+                    if col not in df.select_dtypes(include=[np.number]).columns
+                ]
+                raise InvalidParameterError("columns", non_numeric_cols)
         else:
             numeric_df = df.select_dtypes(include=[np.number])
             # Return empty results if no numeric columns
@@ -290,33 +289,36 @@ async def get_column_statistics(
             },
         )
 
-        # Convert statistics dict to StatisticsSummary if numeric (but not boolean)
-        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            from ..models.statistics_models import StatisticsSummary
+        # Convert statistics dict to StatisticsSummary
+        from ..models.statistics_models import StatisticsSummary
 
+        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
+            # Numeric columns
             stats_summary = StatisticsSummary(
                 count=statistics["count"],
-                mean=statistics.get("mean", 0.0),
-                std=statistics.get("std", 0.0),
-                min=statistics.get("min", 0.0),
+                mean=statistics.get("mean"),
+                std=statistics.get("std"),
+                min=statistics.get("min"),
                 **{
-                    "25%": statistics.get("25%", 0.0),
-                    "50%": statistics.get("50%", 0.0),
-                    "75%": statistics.get("75%", 0.0),
+                    "25%": statistics.get("25%"),
+                    "50%": statistics.get("50%"),
+                    "75%": statistics.get("75%"),
                 },
-                max=statistics.get("max", 0.0),
+                max=statistics.get("max"),
+                unique=statistics["unique_count"],
             )
         else:
-            # For non-numeric columns, create a basic StatisticsSummary
-            from ..models.statistics_models import StatisticsSummary
-
+            # For non-numeric columns, populate categorical statistics
             stats_summary = StatisticsSummary(
                 count=statistics["count"],
-                mean=0.0,
-                std=0.0,
-                min=0.0,
-                **{"25%": 0.0, "50%": 0.0, "75%": 0.0},
-                max=0.0,
+                mean=None,
+                std=None,
+                min=None,
+                **{"25%": None, "50%": None, "75%": None},
+                max=None,
+                unique=statistics["unique_count"],
+                top=statistics.get("most_frequent"),
+                freq=statistics.get("most_frequent_count"),
             )
 
         # Map dtype to expected literal type
@@ -409,16 +411,10 @@ async def get_correlation_matrix(
             numeric_df = df.select_dtypes(include=[np.number])
 
         if numeric_df.empty:
-            raise InvalidParameterError(
-                "data", "dataframe", "No numeric columns found for correlation analysis"
-            )
+            raise ToolError("No numeric columns found for correlation analysis")
 
         if len(numeric_df.columns) < 2:
-            raise InvalidParameterError(
-                "columns",
-                str(list(numeric_df.columns)),
-                "At least 2 numeric columns required for correlation",
-            )
+            raise ToolError("Correlation analysis requires at least two numeric columns")
 
         # Calculate correlation matrix
         corr_matrix = numeric_df.corr(method=method)
@@ -474,6 +470,9 @@ async def get_correlation_matrix(
     ) as e:
         logger.error(f"Correlation calculation failed: {e.message}")
         raise ToolError(e.message) from e
+    except ToolError:
+        # Re-raise ToolErrors as-is to preserve the exact error message
+        raise
     except Exception as e:
         logger.error(f"Error calculating correlation matrix: {e!s}")
         raise ToolError(f"Error calculating correlation matrix: {e}") from e
