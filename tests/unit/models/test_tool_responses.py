@@ -71,34 +71,42 @@ from src.databeak.servers.io_server import (
 class TestSessionInfo:
     """Test SessionInfo model."""
 
-    def test_valid_creation(self):
-        """Test valid SessionInfo creation."""
-        session = SessionInfo(
-            session_id="test-123",
-            created_at="2023-01-01T10:00:00Z",
-            last_accessed="2023-01-01T10:30:00Z",
-            row_count=100,
-            column_count=5,
-            columns=["id", "name", "age", "email", "salary"],
-            memory_usage_mb=2.5,
-            file_path="/path/to/file.csv",
-        )
-        assert session.session_id == "test-123"
-        assert session.row_count == 100
-        assert session.file_path == "/path/to/file.csv"
-
-    def test_optional_file_path(self):
-        """Test SessionInfo with None file_path."""
-        session = SessionInfo(
-            session_id="test-123",
-            created_at="2023-01-01T10:00:00Z",
-            last_accessed="2023-01-01T10:30:00Z",
-            row_count=100,
-            column_count=5,
-            columns=["id", "name"],
-            memory_usage_mb=1.0,
-        )
-        assert session.file_path is None
+    @pytest.mark.parametrize("test_case,expected_results", [
+        (
+            {
+                "data": {
+                    "session_id": "test-123",
+                    "created_at": "2023-01-01T10:00:00Z",
+                    "last_accessed": "2023-01-01T10:30:00Z",
+                    "row_count": 100,
+                    "column_count": 5,
+                    "columns": ["id", "name", "age", "email", "salary"],
+                    "memory_usage_mb": 2.5,
+                    "file_path": "/path/to/file.csv",
+                },
+                "expected": {"session_id": "test-123", "row_count": 100, "file_path": "/path/to/file.csv"}
+            }
+        ),
+        (
+            {
+                "data": {
+                    "session_id": "test-456", 
+                    "created_at": "2023-01-01T10:00:00Z",
+                    "last_accessed": "2023-01-01T10:30:00Z",
+                    "row_count": 100,
+                    "column_count": 5,
+                    "columns": ["id", "name"],
+                    "memory_usage_mb": 1.0,
+                },
+                "expected": {"session_id": "test-456", "row_count": 100, "file_path": None}
+            }
+        ),
+    ])
+    def test_session_info_variations(self, test_case, expected_results):
+        """Test SessionInfo creation with different configurations."""
+        session = SessionInfo(**test_case["data"])
+        for attr, expected_value in test_case["expected"].items():
+            assert getattr(session, attr) == expected_value
 
     def test_missing_required_field(self):
         """Test missing required fields raise ValidationError."""

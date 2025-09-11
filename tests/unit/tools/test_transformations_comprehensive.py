@@ -114,105 +114,37 @@ class TestGetSessionData:
 class TestFilterRows:
     """Test filter_rows function with all operators."""
 
-    async def test_filter_equals(self, mock_manager):
-        """Test == operator."""
+    @pytest.mark.parametrize("operator,column,value,expected_rows", [
+        ("==", "city", "NYC", 2),
+        ("!=", "active", True, 2),
+        (">", "age", 30, 2),
+        ("<", "salary", 60000, 2),
+        (">=", "age", 30, 3),
+        ("<=", "age", 30, 3),
+        ("contains", "email", "@test.com", 4),
+        ("starts_with", "name", "D", 1),
+        ("ends_with", "phone", "0123", 1),
+        ("in", "city", ["NYC", "LA"], 4),
+        ("not_in", "city", ["NYC", "LA"], 1),
+    ])
+    async def test_filter_operators(self, mock_manager, operator, column, value, expected_rows):
+        """Test all filter operators with parameterized data."""
         result = await filter_rows(
-            "test-session", [{"column": "city", "operator": "==", "value": "NYC"}]
+            "test-session", [{"column": column, "operator": operator, "value": value}]
         )
         assert result.success is True
-        assert result.rows_after == 2
+        assert result.rows_after == expected_rows
 
-    async def test_filter_not_equals(self, mock_manager):
-        """Test != operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "active", "operator": "!=", "value": True}]
-        )
+    @pytest.mark.parametrize("operator,column,expected_rows", [
+        ("is_null", "email", 1),
+        ("not_null", "phone", 4),
+    ])
+    async def test_filter_null_operators(self, mock_manager, operator, column, expected_rows):
+        """Test null-checking operators that don't require a value."""
+        filters = [{"column": column, "operator": operator}]
+        result = await filter_rows("test-session", filters)
         assert result.success is True
-        assert result.rows_after == 2
-
-    async def test_filter_greater_than(self, mock_manager):
-        """Test > operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "age", "operator": ">", "value": 30}]
-        )
-        assert result.success is True
-        assert result.rows_after == 2
-
-    async def test_filter_less_than(self, mock_manager):
-        """Test < operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "salary", "operator": "<", "value": 60000}]
-        )
-        assert result.success is True
-        assert result.rows_after == 2
-
-    async def test_filter_greater_equal(self, mock_manager):
-        """Test >= operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "age", "operator": ">=", "value": 30}]
-        )
-        assert result.success is True
-        assert result.rows_after == 3
-
-    async def test_filter_less_equal(self, mock_manager):
-        """Test <= operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "age", "operator": "<=", "value": 30}]
-        )
-        assert result.success is True
-        assert result.rows_after == 3
-
-    async def test_filter_contains(self, mock_manager):
-        """Test contains operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "email", "operator": "contains", "value": "@test.com"}]
-        )
-        assert result.success is True
-        assert result.rows_after == 4
-
-    async def test_filter_starts_with(self, mock_manager):
-        """Test starts_with operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "name", "operator": "starts_with", "value": "D"}]
-        )
-        assert result.success is True
-        assert result.rows_after == 1
-
-    async def test_filter_ends_with(self, mock_manager):
-        """Test ends_with operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "phone", "operator": "ends_with", "value": "0123"}]
-        )
-        assert result.success is True
-        assert result.rows_after == 1
-
-    async def test_filter_in(self, mock_manager):
-        """Test in operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "city", "operator": "in", "value": ["NYC", "LA"]}]
-        )
-        assert result.success is True
-        assert result.rows_after == 4
-
-    async def test_filter_not_in(self, mock_manager):
-        """Test not_in operator."""
-        result = await filter_rows(
-            "test-session", [{"column": "city", "operator": "not_in", "value": ["NYC", "LA"]}]
-        )
-        assert result.success is True
-        assert result.rows_after == 1
-
-    async def test_filter_is_null(self, mock_manager):
-        """Test is_null operator."""
-        result = await filter_rows("test-session", [{"column": "email", "operator": "is_null"}])
-        assert result.success is True
-        assert result.rows_after == 1
-
-    async def test_filter_not_null(self, mock_manager):
-        """Test not_null operator."""
-        result = await filter_rows("test-session", [{"column": "phone", "operator": "not_null"}])
-        assert result.success is True
-        assert result.rows_after == 4
+        assert result.rows_after == expected_rows
 
     async def test_filter_or_mode(self, mock_manager):
         """Test OR mode for combining conditions."""

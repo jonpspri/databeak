@@ -18,52 +18,27 @@ from src.databeak.servers.io_server import (
 class TestFileEncodingDetection:
     """Test file encoding detection."""
 
+    @pytest.mark.parametrize("mock_encoding,mock_confidence,file_content,expected_encoding", [
+        ("UTF-8", 0.95, b"test content", "utf-8"),
+        ("ISO-8859-1", 0.3, b"\xef\xbb\xbftest,data\n1,2", ["utf-8", "utf-8-sig"]),
+        (None, 0, b"test,data\n1,2", "utf-8"),
+    ])
     @patch("chardet.detect")
-    def test_detect_encoding_high_confidence(self, mock_detect):
-        """Test encoding detection with high confidence."""
-        mock_detect.return_value = {"encoding": "UTF-8", "confidence": 0.95}
+    def test_encoding_detection_scenarios(self, mock_detect, mock_encoding, mock_confidence, file_content, expected_encoding):
+        """Test encoding detection with different chardet results."""
+        mock_detect.return_value = {"encoding": mock_encoding, "confidence": mock_confidence}
 
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
-            f.write(b"test content")
+            f.write(file_content)
             temp_path = f.name
 
         try:
             encoding = detect_file_encoding(temp_path)
-            assert encoding == "utf-8"
+            if isinstance(expected_encoding, list):
+                assert encoding in expected_encoding
+            else:
+                assert encoding == expected_encoding
             mock_detect.assert_called_once()
-        finally:
-            Path(temp_path).unlink()
-
-    @patch("chardet.detect")
-    def test_detect_encoding_low_confidence(self, mock_detect):
-        """Test encoding detection with low confidence fallback."""
-        mock_detect.return_value = {"encoding": "ISO-8859-1", "confidence": 0.3}
-
-        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as f:
-            # Write UTF-8 BOM to make pandas detection work
-            f.write(b"\xef\xbb\xbftest,data\n1,2")
-            temp_path = f.name
-
-        try:
-            encoding = detect_file_encoding(temp_path)
-            # Should fall back to pandas detection
-            assert encoding in ["utf-8", "utf-8-sig"]
-        finally:
-            Path(temp_path).unlink()
-
-    @patch("chardet.detect")
-    def test_detect_encoding_none_result(self, mock_detect):
-        """Test encoding detection when chardet returns None."""
-        mock_detect.return_value = {"encoding": None, "confidence": 0}
-
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as f:
-            f.write("test,data\n1,2")
-            temp_path = f.name
-
-        try:
-            encoding = detect_file_encoding(temp_path)
-            # Should fall back to pandas detection
-            assert encoding == "utf-8"
         finally:
             Path(temp_path).unlink()
 

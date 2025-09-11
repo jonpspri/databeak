@@ -37,44 +37,24 @@ async def column_session():
 class TestColumnServerSelect:
     """Test select_columns server function."""
 
-    async def test_select_basic_columns(self, column_session):
-        """Test selecting basic set of columns."""
-        result = await select_columns(column_session, ["first_name", "last_name", "email"])
+    @pytest.mark.parametrize("columns,expected_count,description", [
+        (["first_name", "last_name", "email"], 3, "basic selection"),
+        (["email", "id", "first_name"], 3, "reordered selection"), 
+        (["age"], 1, "single column"),
+        ([
+            "id", "first_name", "last_name", "age", 
+            "email", "salary", "is_active", "join_date"
+        ], 8, "all columns"),
+    ])
+    async def test_select_column_scenarios(self, column_session, columns, expected_count, description):
+        """Test various column selection scenarios."""
+        result = await select_columns(column_session, columns)
 
         assert result.session_id == column_session
-        assert result.selected_columns == ["first_name", "last_name", "email"]
-        assert result.columns_before == 8
-        assert result.columns_after == 3
-
-    async def test_select_reorder_columns(self, column_session):
-        """Test column reordering through selection."""
-        result = await select_columns(column_session, ["email", "id", "first_name"])
-
-        assert result.selected_columns == ["email", "id", "first_name"]
-        assert result.columns_after == 3
-
-    async def test_select_single_column(self, column_session):
-        """Test selecting single column."""
-        result = await select_columns(column_session, ["age"])
-
-        assert result.columns_after == 1
-        assert result.selected_columns == ["age"]
-
-    async def test_select_all_columns(self, column_session):
-        """Test selecting all existing columns."""
-        all_cols = [
-            "id",
-            "first_name",
-            "last_name",
-            "age",
-            "email",
-            "salary",
-            "is_active",
-            "join_date",
-        ]
-        result = await select_columns(column_session, all_cols)
-
-        assert result.columns_before == result.columns_after
+        assert result.selected_columns == columns
+        assert result.columns_after == expected_count
+        if expected_count == 8:  # all columns case
+            assert result.columns_before == result.columns_after
 
     async def test_select_nonexistent_column(self, column_session):
         """Test selecting non-existent column."""

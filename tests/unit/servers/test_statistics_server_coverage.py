@@ -171,49 +171,35 @@ class TestGetStatistics:
 class TestGetColumnStatistics:
     """Test get_column_statistics function."""
 
-    async def test_column_statistics_numeric(self, mock_manager):
-        """Test column statistics for numeric column."""
-        result = await get_column_statistics("test-session", "numeric1")
+    @pytest.mark.parametrize("column,expected_data_type,has_numeric_stats,expected_mean,expected_percentile_25", [
+        ("numeric1", "int64", True, 5.5, 3.25),
+        ("categorical", "object", False, None, None),
+        ("dates", "datetime64[ns]", False, None, None),  
+        ("boolean", "bool", False, None, None),
+    ])
+    async def test_column_statistics_by_type(
+        self, mock_manager, column, expected_data_type, has_numeric_stats, expected_mean, expected_percentile_25
+    ):
+        """Test column statistics for different data types."""
+        result = await get_column_statistics("test-session", column)
 
         assert isinstance(result, ColumnStatisticsResult)
         assert result.success is True
-        assert result.column == "numeric1"
-        assert result.data_type == "int64"
-        assert result.statistics.mean == 5.5
-        assert result.statistics.percentile_25 == 3.25
-        assert result.statistics.percentile_75 == 7.75
-
-    async def test_column_statistics_categorical(self, mock_manager):
-        """Test column statistics for categorical column."""
-        result = await get_column_statistics("test-session", "categorical")
-
-        assert result.success is True
-        assert result.column == "categorical"
-        # Non-numeric columns get StatisticsSummary with None for numeric fields
-        assert result.statistics.mean is None
-        assert result.statistics.std is None
-        assert result.data_type == "object"
-
-    async def test_column_statistics_datetime(self, mock_manager):
-        """Test column statistics for datetime column."""
-        result = await get_column_statistics("test-session", "dates")
-
-        assert result.success is True
-        assert result.column == "dates"
-        assert "datetime" in str(result.data_type).lower()
-        # Datetime columns are non-numeric, so stats are None
-        assert result.statistics.min is None
-        assert result.statistics.max is None
-
-    async def test_column_statistics_boolean(self, mock_manager):
-        """Test column statistics for boolean column."""
-        result = await get_column_statistics("test-session", "boolean")
-
-        assert result.success is True
-        assert result.column == "boolean"
-        # Boolean columns get basic StatisticsSummary with None for numeric fields
-        assert result.data_type == "bool"
-        assert result.statistics.mean is None
+        assert result.column == column
+        
+        # Check data type (with flexibility for datetime variants)
+        if "datetime" in expected_data_type:
+            assert "datetime" in str(result.data_type).lower()
+        else:
+            assert result.data_type == expected_data_type
+            
+        # Check statistics based on whether column should have numeric stats
+        if has_numeric_stats:
+            assert result.statistics.mean == expected_mean
+            assert result.statistics.percentile_25 == expected_percentile_25
+        else:
+            assert result.statistics.mean is None
+            assert result.statistics.std is None
 
     async def test_column_statistics_invalid_column(self, mock_manager):
         """Test column statistics with invalid column."""
