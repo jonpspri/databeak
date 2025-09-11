@@ -189,9 +189,9 @@ class TestGetColumnStatistics:
 
         assert result.success is True
         assert result.column == "categorical"
-        # Non-numeric columns get StatisticsSummary with zeros
-        assert result.statistics.mean == 0.0
-        assert result.statistics.std == 0.0
+        # Non-numeric columns get StatisticsSummary with None for numeric fields
+        assert result.statistics.mean is None
+        assert result.statistics.std is None
         assert result.data_type == "object"
 
     async def test_column_statistics_datetime(self, mock_manager):
@@ -201,9 +201,9 @@ class TestGetColumnStatistics:
         assert result.success is True
         assert result.column == "dates"
         assert "datetime" in str(result.data_type).lower()
-        # Datetime columns are non-numeric, so stats are zeros
-        assert result.statistics.min == 0.0
-        assert result.statistics.max == 0.0
+        # Datetime columns are non-numeric, so stats are None
+        assert result.statistics.min is None
+        assert result.statistics.max is None
 
     async def test_column_statistics_boolean(self, mock_manager):
         """Test column statistics for boolean column."""
@@ -211,9 +211,9 @@ class TestGetColumnStatistics:
 
         assert result.success is True
         assert result.column == "boolean"
-        # Boolean columns get basic StatisticsSummary with zeros
+        # Boolean columns get basic StatisticsSummary with None for numeric fields
         assert result.data_type == "bool"
-        assert result.statistics.mean == 0.0
+        assert result.statistics.mean is None
 
     async def test_column_statistics_invalid_column(self, mock_manager):
         """Test column statistics with invalid column."""
@@ -296,7 +296,7 @@ class TestGetCorrelationMatrix:
         )
 
         # Should raise an error when there are no numeric columns
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(ToolError, match="No numeric columns"):
             await get_correlation_matrix("test-session")
 
     async def test_correlation_matrix_invalid_method(self, mock_manager):
@@ -312,7 +312,7 @@ class TestGetCorrelationMatrix:
     async def test_correlation_matrix_single_column(self, mock_manager):
         """Test correlation matrix with single column."""
         # Single column should raise an error since correlation needs at least 2 columns
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(ToolError, match="at least two"):
             await get_correlation_matrix("test-session", columns=["numeric1"])
 
 
@@ -474,6 +474,6 @@ class TestEdgeCases:
 
         assert result.success is True
         assert result.column == "mixed"
-        # Mixed types are treated as non-numeric, so stats are zeros
+        # Mixed types are treated as non-numeric, so stats are None
         assert result.data_type == "object"
-        assert result.statistics.mean == 0.0
+        assert result.statistics.mean is None

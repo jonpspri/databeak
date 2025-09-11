@@ -39,7 +39,7 @@ class DataSession:
             {
                 "file_path": file_path,
                 "shape": df.shape,
-                "columns": df.columns.tolist(),
+                "columns": [str(col) for col in df.columns.tolist()],  # Ensure columns are strings
                 "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
                 "loaded_at": datetime.now(timezone.utc).isoformat(),
             }
@@ -59,7 +59,7 @@ class DataSession:
         return {
             "session_id": self.session_id,
             "shape": self.df.shape,
-            "columns": self.df.columns.tolist(),
+            "columns": [str(col) for col in self.df.columns.tolist()],  # Ensure columns are strings
             "dtypes": {col: str(dtype) for col, dtype in self.df.dtypes.items()},
             "memory_usage_mb": round(memory_usage, 2),
             "file_path": self.file_path,

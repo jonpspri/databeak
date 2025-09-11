@@ -116,12 +116,12 @@ class TestGetStatistics:
         assert v2_stats.count < 6
 
     async def test_get_statistics_non_numeric(self, stats_session):
-        """Test that statistics for non-numeric columns raises an error."""
-        # The refactored server only handles numeric columns
-        from fastmcp.exceptions import ToolError
-
-        with pytest.raises(ToolError, match="Invalid value for parameter"):
-            await get_statistics(stats_session, columns=["name", "department"])
+        """Test that statistics for non-numeric columns returns empty results."""
+        # The refactored server only handles numeric columns, non-numeric are silently skipped
+        result = await get_statistics(stats_session, columns=["name", "department"])
+        
+        assert result.success is True
+        assert len(result.statistics) == 0  # No numeric columns in the selection
 
     async def test_get_statistics_with_data(self):
         """Test statistics on DataFrame with data."""

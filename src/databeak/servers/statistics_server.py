@@ -113,14 +113,15 @@ async def get_statistics(
             if missing_cols:
                 raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
             numeric_df = df[columns].select_dtypes(include=[np.number])
-            # Raise error if no numeric columns found when specific columns requested
+            # Return empty results if no numeric columns found when specific columns requested
             if numeric_df.empty:
-                non_numeric_cols = [
-                    col
-                    for col in columns
-                    if col not in df.select_dtypes(include=[np.number]).columns
-                ]
-                raise InvalidParameterError("columns", non_numeric_cols)
+                return StatisticsResult(
+                    session_id=session_id,
+                    statistics={},
+                    column_count=0,
+                    numeric_columns=[],
+                    total_rows=len(df),
+                )
         else:
             numeric_df = df.select_dtypes(include=[np.number])
             # Return empty results if no numeric columns
