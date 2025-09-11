@@ -1,32 +1,20 @@
-"""Tests for FastMCP tool registration and server integration."""
+"""Tests for FastMCP server integration and tool availability.
+
+Note: Individual tool registration tests have been superseded by server module tests.
+This file tests the main server integration and overall functionality.
+"""
 
 from src.databeak.server import mcp
-from src.databeak.tools import (
-    # mcp_analytics_tools,  # Moved to servers/statistics_server.py and discovery_server.py
-    mcp_data_tools,
-    mcp_history_tools,
-    # mcp_io_tools,  # Moved to servers/io_server.py
-    mcp_row_tools,
-    mcp_system_tools,
-)
 
 
-class TestToolRegistration:
-    """Test that all tool modules register correctly with FastMCP."""
+class TestServerIntegration:
+    """Test that all server modules are properly integrated with main FastMCP server."""
 
-    def test_all_registration_functions_exist(self) -> None:
-        """Test that all registration functions exist and are callable."""
-        registration_funcs = [
-            mcp_system_tools.register_system_tools,
-            # mcp_io_tools.register_io_tools,  # Moved to servers/io_server.py
-            mcp_data_tools.register_data_tools,
-            mcp_row_tools.register_row_tools,
-            # mcp_analytics_tools.register_analytics_tools,  # Moved to servers
-            mcp_history_tools.register_history_tools,
-        ]
-
-        for reg_func in registration_funcs:
-            assert callable(reg_func)
+    def test_main_server_exists(self) -> None:
+        """Test that main server is properly configured."""
+        assert mcp is not None
+        assert mcp.name == "DataBeak"
+        assert mcp.instructions is not None
 
     def test_server_initialization_successful(self) -> None:
         """Test that server initializes successfully with all tools."""

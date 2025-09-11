@@ -23,9 +23,7 @@ from .servers.transformation_server import transformation_server
 from .servers.validation_server import validation_server
 from .tools.data_operations import create_data_preview_with_indices
 
-# from .tools.mcp_data_tools import register_data_tools  # Migrated to specialized servers
-# from .tools.mcp_history_tools import register_history_tools  # Migrated to history_server
-# from .tools.mcp_system_tools import register_system_tools  # Migrated to system_server
+# All MCP tools have been migrated to specialized server modules
 from .tools.transformations import get_cell_value as _get_cell_value
 from .tools.transformations import get_row_data as _get_row_data
 from .utils.logging_config import get_logger, set_correlation_id, setup_structured_logging
