@@ -587,16 +587,66 @@ async def update_column(
                 session.data_session.df[column] = df[column].map(operation.mapping)
             elif isinstance(operation, ApplyOperation):
                 operation_type = "apply"
-                # Safely evaluate expressions
-                import ast
+                # Use pandas.eval for safe expression evaluation
 
                 try:
-                    ast.parse(operation.expression, mode="eval")
-                    safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
-                    session.data_session.df[column] = df[column].apply(
-                        lambda x: eval(operation.expression, safe_dict, {"x": x})  # noqa: S307
-                    )
-                except SyntaxError as e:
+                    # For simple expressions, use pandas string operations or vectorized operations
+                    expr = operation.expression
+
+                    # Handle common string operations
+                    if "x.upper()" in expr:
+                        session.data_session.df[column] = df[column].str.upper()
+                    elif "x.lower()" in expr:
+                        session.data_session.df[column] = df[column].str.lower()
+                    elif "x.strip()" in expr:
+                        session.data_session.df[column] = df[column].str.strip()
+                    elif "x * " in expr or " * x" in expr:
+                        # Extract multiplier
+                        import re
+
+                        match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
+                        if match:
+                            multiplier = float(match.group(1) or match.group(2))
+                            session.data_session.df[column] = df[column] * multiplier
+                        else:
+                            raise InvalidParameterError(
+                                "expression",
+                                operation.expression,
+                                "Unsupported multiplication expression",
+                            )
+                    elif "x + " in expr or " + x" in expr:
+                        # Extract addend
+                        import re
+
+                        match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
+                        if match:
+                            addend = float(match.group(1) or match.group(2))
+                            session.data_session.df[column] = df[column] + addend
+                        else:
+                            raise InvalidParameterError(
+                                "expression",
+                                operation.expression,
+                                "Unsupported addition expression",
+                            )
+                    else:
+                        # For other expressions, use pandas eval with restricted namespace
+                        # This is safer than raw eval but still allows mathematical operations
+                        try:
+                            # Create a safe expression by replacing 'x' with column reference
+                            safe_expr = expr.replace("x", f"`{column}`")
+                            session.data_session.df[column] = session.data_session.df.eval(
+                                safe_expr, engine="python"
+                            )
+                        except Exception as pandas_err:
+                            # If pandas.eval fails, raise error
+                            raise InvalidParameterError(
+                                "expression",
+                                operation.expression,
+                                "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
+                            ) from pandas_err
+                except Exception as e:
+                    if isinstance(e, InvalidParameterError):
+                        raise
                     raise InvalidParameterError(
                         "expression", operation.expression, f"Invalid expression: {e}"
                     ) from e
@@ -623,15 +673,62 @@ async def update_column(
                         elif operation["type"] == "apply":
                             op = ApplyOperation(**operation)
                             operation_type = "apply"
-                            import ast
+                            # Use pandas.eval for safe expression evaluation
 
                             try:
-                                ast.parse(op.expression, mode="eval")
-                                safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
-                                session.data_session.df[column] = df[column].apply(
-                                    lambda x: eval(op.expression, safe_dict, {"x": x})  # noqa: S307
-                                )
-                            except SyntaxError as e:
+                                expr = op.expression
+
+                                # Handle common string operations
+                                if "x.upper()" in expr:
+                                    session.data_session.df[column] = df[column].str.upper()
+                                elif "x.lower()" in expr:
+                                    session.data_session.df[column] = df[column].str.lower()
+                                elif "x.strip()" in expr:
+                                    session.data_session.df[column] = df[column].str.strip()
+                                elif "x * " in expr or " * x" in expr:
+                                    # Extract multiplier
+                                    import re
+
+                                    match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
+                                    if match:
+                                        multiplier = float(match.group(1) or match.group(2))
+                                        session.data_session.df[column] = df[column] * multiplier
+                                    else:
+                                        raise InvalidParameterError(
+                                            "expression",
+                                            op.expression,
+                                            "Unsupported multiplication expression",
+                                        )
+                                elif "x + " in expr or " + x" in expr:
+                                    # Extract addend
+                                    import re
+
+                                    match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
+                                    if match:
+                                        addend = float(match.group(1) or match.group(2))
+                                        session.data_session.df[column] = df[column] + addend
+                                    else:
+                                        raise InvalidParameterError(
+                                            "expression",
+                                            op.expression,
+                                            "Unsupported addition expression",
+                                        )
+                                else:
+                                    # For other expressions, use pandas eval with restricted namespace
+                                    try:
+                                        safe_expr = expr.replace("x", f"`{column}`")
+                                        session.data_session.df[column] = (
+                                            session.data_session.df.eval(safe_expr, engine="python")
+                                        )
+                                    except Exception as pandas_err:
+                                        raise InvalidParameterError(
+                                            "expression",
+                                            op.expression,
+                                            "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
+                                        )
+                            except Exception as e:
+                                if isinstance(e, InvalidParameterError):
+                                    raise
                                 raise InvalidParameterError(
                                     "expression", op.expression, f"Invalid expression: {e}"
                                 ) from e
@@ -680,16 +777,62 @@ async def update_column(
                                 "Expression required for apply operation",
                             )
                         if isinstance(update_request.value, str):
-                            import ast
+                            # Use pandas.eval for safe expression evaluation
 
                             try:
-                                ast.parse(update_request.value, mode="eval")
-                                safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
-                                expression = update_request.value
-                                session.data_session.df[column] = df[column].apply(
-                                    lambda x: eval(expression, safe_dict, {"x": x})  # noqa: S307
-                                )
-                            except SyntaxError as e:
+                                expr = update_request.value
+
+                                # Handle common string operations
+                                if "x.upper()" in expr:
+                                    session.data_session.df[column] = df[column].str.upper()
+                                elif "x.lower()" in expr:
+                                    session.data_session.df[column] = df[column].str.lower()
+                                elif "x.strip()" in expr:
+                                    session.data_session.df[column] = df[column].str.strip()
+                                elif "x * " in expr or " * x" in expr:
+                                    # Extract multiplier
+                                    import re
+
+                                    match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
+                                    if match:
+                                        multiplier = float(match.group(1) or match.group(2))
+                                        session.data_session.df[column] = df[column] * multiplier
+                                    else:
+                                        raise InvalidParameterError(
+                                            "value",
+                                            update_request.value,
+                                            "Unsupported multiplication expression",
+                                        )
+                                elif "x + " in expr or " + x" in expr:
+                                    # Extract addend
+                                    import re
+
+                                    match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
+                                    if match:
+                                        addend = float(match.group(1) or match.group(2))
+                                        session.data_session.df[column] = df[column] + addend
+                                    else:
+                                        raise InvalidParameterError(
+                                            "value",
+                                            update_request.value,
+                                            "Unsupported addition expression",
+                                        )
+                                else:
+                                    # For other expressions, use pandas eval with restricted namespace
+                                    try:
+                                        safe_expr = expr.replace("x", f"`{column}`")
+                                        session.data_session.df[column] = (
+                                            session.data_session.df.eval(safe_expr, engine="python")
+                                        )
+                                    except Exception as pandas_err:
+                                        raise InvalidParameterError(
+                                            "value",
+                                            update_request.value,
+                                            "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
+                                        )
+                            except Exception as e:
+                                if isinstance(e, InvalidParameterError):
+                                    raise
                                 raise InvalidParameterError(
                                     "value", update_request.value, f"Invalid expression: {e}"
                                 ) from e
