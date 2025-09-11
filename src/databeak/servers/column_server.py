@@ -661,22 +661,22 @@ async def update_column(
                     # Try to parse as discriminated union
                     try:
                         if operation["type"] == "replace":
-                            op = ReplaceOperation(**operation)
+                            replace_op = ReplaceOperation(**operation)
                             operation_type = "replace"
                             session.data_session.df[column] = df[column].replace(
-                                op.pattern, op.replacement
+                                replace_op.pattern, replace_op.replacement
                             )
                         elif operation["type"] == "map":
-                            op = MapOperation(**operation)
+                            map_op = MapOperation(**operation)
                             operation_type = "map"
-                            session.data_session.df[column] = df[column].map(op.mapping)
+                            session.data_session.df[column] = df[column].map(map_op.mapping)
                         elif operation["type"] == "apply":
-                            op = ApplyOperation(**operation)
+                            apply_op = ApplyOperation(**operation)
                             operation_type = "apply"
                             # Use pandas.eval for safe expression evaluation
 
                             try:
-                                expr = op.expression
+                                expr = apply_op.expression
 
                                 # Handle common string operations
                                 if "x.upper()" in expr:
@@ -696,7 +696,7 @@ async def update_column(
                                     else:
                                         raise InvalidParameterError(
                                             "expression",
-                                            op.expression,
+                                            apply_op.expression,
                                             "Unsupported multiplication expression",
                                         )
                                 elif "x + " in expr or " + x" in expr:
@@ -710,7 +710,7 @@ async def update_column(
                                     else:
                                         raise InvalidParameterError(
                                             "expression",
-                                            op.expression,
+                                            apply_op.expression,
                                             "Unsupported addition expression",
                                         )
                                 else:
@@ -723,19 +723,19 @@ async def update_column(
                                     except Exception as pandas_err:
                                         raise InvalidParameterError(
                                             "expression",
-                                            op.expression,
+                                            apply_op.expression,
                                             "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
-                                        )
+                                        ) from pandas_err
                             except Exception as e:
                                 if isinstance(e, InvalidParameterError):
                                     raise
                                 raise InvalidParameterError(
-                                    "expression", op.expression, f"Invalid expression: {e}"
+                                    "expression", apply_op.expression, f"Invalid expression: {e}"
                                 ) from e
                         elif operation["type"] == "fillna":
-                            op = FillNaOperation(**operation)
+                            fillna_op = FillNaOperation(**operation)
                             operation_type = "fillna"
-                            session.data_session.df[column] = df[column].fillna(op.value)
+                            session.data_session.df[column] = df[column].fillna(fillna_op.value)
                         else:
                             raise InvalidParameterError(
                                 "type",
@@ -829,7 +829,7 @@ async def update_column(
                                             "value",
                                             update_request.value,
                                             "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
-                                        )
+                                        ) from pandas_err
                             except Exception as e:
                                 if isinstance(e, InvalidParameterError):
                                     raise
