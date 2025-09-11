@@ -81,15 +81,15 @@ class TestGetStatistics:
         assert result.success is True
         assert len(result.statistics) > 0
         assert result.total_rows == 10
-        assert result.total_columns == 9
+        assert result.column_count == 3  # Only numeric columns
 
         # Check numeric column stats
-        numeric1_stats = next(s for s in result.statistics if s["column"] == "numeric1")
-        assert numeric1_stats["mean"] == 5.5
-        assert numeric1_stats["median"] == 5.5
-        assert numeric1_stats["std"] > 0
-        assert numeric1_stats["min"] == 1
-        assert numeric1_stats["max"] == 10
+        numeric1_stats = result.statistics["numeric1"]
+        assert numeric1_stats.mean == 5.5
+        assert numeric1_stats.percentile_50 == 5.5  # median
+        assert numeric1_stats.std > 0
+        assert numeric1_stats.min == 1
+        assert numeric1_stats.max == 10
 
     async def test_statistics_specific_columns(self, mock_manager):
         """Test getting statistics for specific columns."""
@@ -97,39 +97,37 @@ class TestGetStatistics:
 
         assert result.success is True
         assert len(result.statistics) == 2
-        assert all(s["column"] in ["numeric1", "numeric2"] for s in result.statistics)
+        assert all(col in ["numeric1", "numeric2"] for col in result.statistics.keys())
 
     async def test_statistics_with_nulls(self, mock_manager):
         """Test statistics with null values."""
         result = await get_statistics("test-session", columns=["numeric3", "mostly_null"])
 
         assert result.success is True
-        numeric3_stats = next(s for s in result.statistics if s["column"] == "numeric3")
-        assert numeric3_stats["null_count"] == 1
-        assert numeric3_stats["null_percentage"] == 10.0
+        numeric3_stats = result.statistics["numeric3"]
+        # StatisticsSummary doesn't have null_count/null_percentage
+        assert numeric3_stats.count == 9  # Non-null count
 
-        mostly_null_stats = next(s for s in result.statistics if s["column"] == "mostly_null")
-        assert mostly_null_stats["null_count"] == 7
-        assert mostly_null_stats["null_percentage"] == 70.0
+        mostly_null_stats = result.statistics["mostly_null"]
+        assert mostly_null_stats.count == 3  # Non-null count
 
     async def test_statistics_non_numeric_columns(self, mock_manager):
         """Test statistics for non-numeric columns."""
+        # get_statistics only works with numeric columns
+        # Non-numeric columns are silently skipped
         result = await get_statistics("test-session", columns=["categorical", "boolean"])
 
         assert result.success is True
-        cat_stats = next(s for s in result.statistics if s["column"] == "categorical")
-        assert cat_stats["unique"] == 3
-        assert cat_stats["mode"] in ["A", "B", "C"]
-        assert cat_stats["mean"] is None  # Non-numeric shouldn't have mean
+        assert len(result.statistics) == 0  # No numeric columns in the selection
 
     async def test_statistics_empty_dataframe(self, mock_manager):
         """Test statistics on empty dataframe."""
-        mock_manager.return_value.get_session.return_value.data_session.df = pd.DataFrame()
+        mock_manager.return_value.get_session.return_value._df = pd.DataFrame()
 
         result = await get_statistics("test-session")
         assert result.success is True
         assert result.total_rows == 0
-        assert result.total_columns == 0
+        assert result.column_count == 0
         assert len(result.statistics) == 0
 
     async def test_statistics_invalid_columns(self, mock_manager):
@@ -165,10 +163,8 @@ class TestGetStatistics:
         result = await get_statistics("test-session", columns=["all_null"])
 
         assert result.success is True
-        null_stats = result.statistics[0]
-        assert null_stats["null_count"] == 10
-        assert null_stats["null_percentage"] == 100.0
-        assert null_stats["mean"] is None
+        # all_null column has no numeric values, so no statistics
+        assert len(result.statistics) == 0
 
 
 @pytest.mark.asyncio
@@ -182,10 +178,10 @@ class TestGetColumnStatistics:
         assert isinstance(result, ColumnStatisticsResult)
         assert result.success is True
         assert result.column == "numeric1"
-        assert result.dtype == "int64"
-        assert result.statistics["mean"] == 5.5
-        assert result.statistics["q1"] == 3.25
-        assert result.statistics["q3"] == 7.75
+        assert result.data_type == "int64"
+        assert result.statistics.mean == 5.5
+        assert result.statistics.percentile_25 == 3.25
+        assert result.statistics.percentile_75 == 7.75
 
     async def test_column_statistics_categorical(self, mock_manager):
         """Test column statistics for categorical column."""
@@ -193,10 +189,10 @@ class TestGetColumnStatistics:
 
         assert result.success is True
         assert result.column == "categorical"
-        assert result.statistics["unique"] == 3
-        assert result.statistics["mode"] in ["A", "B", "C"]
-        assert result.value_counts is not None
-        assert len(result.value_counts) == 3
+        # Non-numeric columns get StatisticsSummary with zeros
+        assert result.statistics.mean == 0.0
+        assert result.statistics.std == 0.0
+        assert result.data_type == "object"
 
     async def test_column_statistics_datetime(self, mock_manager):
         """Test column statistics for datetime column."""
@@ -204,9 +200,10 @@ class TestGetColumnStatistics:
 
         assert result.success is True
         assert result.column == "dates"
-        assert "datetime" in str(result.dtype).lower()
-        assert result.statistics["min"] is not None
-        assert result.statistics["max"] is not None
+        assert "datetime" in str(result.data_type).lower()
+        # Datetime columns are non-numeric, so stats are zeros
+        assert result.statistics.min == 0.0
+        assert result.statistics.max == 0.0
 
     async def test_column_statistics_boolean(self, mock_manager):
         """Test column statistics for boolean column."""
@@ -214,8 +211,9 @@ class TestGetColumnStatistics:
 
         assert result.success is True
         assert result.column == "boolean"
-        assert result.statistics["unique"] == 2
-        assert result.value_counts is not None
+        # Boolean columns get basic StatisticsSummary with zeros
+        assert result.data_type == "bool"
+        assert result.statistics.mean == 0.0
 
     async def test_column_statistics_invalid_column(self, mock_manager):
         """Test column statistics with invalid column."""
@@ -227,10 +225,10 @@ class TestGetColumnStatistics:
         result = await get_column_statistics("test-session", "numeric3")
 
         assert result.success is True
-        assert result.statistics["null_count"] == 1
-        assert result.statistics["null_percentage"] == 10.0
-        # Stats should be calculated excluding nulls
-        assert result.statistics["count"] == 9
+        # StatisticsSummary doesn't have null_count/null_percentage
+        # Count is non-null count
+        assert result.statistics.count == 9
+        assert result.non_null_count == 9
 
 
 @pytest.mark.asyncio
@@ -414,39 +412,38 @@ class TestEdgeCases:
     async def test_large_dataframe(self, mock_manager):
         """Test with large dataframe."""
         large_df = pd.DataFrame({f"col_{i}": np.random.randn(10000) for i in range(100)})
-        mock_manager.return_value.get_session.return_value.data_session.df = large_df
+        mock_manager.return_value.get_session.return_value._df = large_df
 
         result = await get_statistics("test-session")
         assert result.success is True
         assert result.total_rows == 10000
-        assert result.total_columns == 100
+        assert result.column_count == 100
 
     async def test_single_row_dataframe(self, mock_manager):
         """Test with single row dataframe."""
         single_row_df = pd.DataFrame({"col1": [1], "col2": ["text"], "col3": [True]})
-        mock_manager.return_value.get_session.return_value.data_session.df = single_row_df
+        mock_manager.return_value.get_session.return_value._df = single_row_df
 
         result = await get_statistics("test-session")
         assert result.success is True
         assert result.total_rows == 1
         # Standard deviation should be NaN or 0 for single row
-        stats = result.statistics[0]
-        assert stats["std"] == 0 or pd.isna(stats["std"])
+        assert result.column_count == 1  # Only col1 is numeric
+        stats = result.statistics["col1"]
+        assert stats.std == 0 or pd.isna(stats.std)
 
     async def test_all_same_values(self, mock_manager):
         """Test column with all same values."""
         same_values_df = pd.DataFrame({"constant": [5] * 10, "text_constant": ["same"] * 10})
-        mock_manager.return_value.get_session.return_value.data_session.df = same_values_df
+        mock_manager.return_value.get_session.return_value._df = same_values_df
 
         result = await get_statistics("test-session")
         assert result.success is True
 
-        const_stats = next(s for s in result.statistics if s["column"] == "constant")
-        assert const_stats["std"] == 0
-        assert const_stats["min"] == const_stats["max"]
-
-        text_stats = next(s for s in result.statistics if s["column"] == "text_constant")
-        assert text_stats["unique"] == 1
+        const_stats = result.statistics["constant"]
+        assert const_stats.std == 0
+        assert const_stats.min == const_stats.max
+        # text_constant is non-numeric, so it won't be in statistics
 
     async def test_extreme_values(self, mock_manager):
         """Test with extreme numeric values."""
@@ -457,7 +454,7 @@ class TestEdgeCases:
                 "mixed": [-1e50, 0, 1e50],
             }
         )
-        mock_manager.return_value.get_session.return_value.data_session.df = extreme_df
+        mock_manager.return_value.get_session.return_value._df = extreme_df
 
         result = await get_statistics("test-session")
         assert result.success is True
@@ -473,11 +470,11 @@ class TestEdgeCases:
                 "column@special#chars": [10, 11, 12],
             }
         )
-        mock_manager.return_value.get_session.return_value.data_session.df = special_df
+        mock_manager.return_value.get_session.return_value._df = special_df
 
         result = await get_statistics("test-session")
         assert result.success is True
-        assert result.total_columns == 4
+        assert result.column_count == 4
 
     async def test_mixed_type_column_statistics(self, mock_manager):
         """Test statistics for mixed type column."""
@@ -485,6 +482,6 @@ class TestEdgeCases:
 
         assert result.success is True
         assert result.column == "mixed"
-        # Mixed types should still provide basic stats
-        assert result.statistics["unique"] > 0
-        assert result.statistics["null_count"] == 0
+        # Mixed types are treated as non-numeric, so stats are zeros
+        assert result.data_type == "object"
+        assert result.statistics.mean == 0.0

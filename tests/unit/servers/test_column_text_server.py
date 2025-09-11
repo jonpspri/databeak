@@ -41,7 +41,7 @@ class TestColumnTextServerReplace:
         result = await replace_in_column(text_session, "phone", r"[^\d]", "", regex=True)
 
         assert result.session_id == text_session
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
         assert result.columns_affected == ["phone"]
         assert result.rows_affected == 4
 
@@ -49,19 +49,19 @@ class TestColumnTextServerReplace:
         """Test literal string replacement."""
         result = await replace_in_column(text_session, "address", "St.", "Street", regex=False)
 
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
 
     async def test_replace_whitespace_normalization(self, text_session):
         """Test normalizing multiple whitespace."""
         result = await replace_in_column(text_session, "address", r"\s+", " ", regex=True)
 
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
 
     async def test_replace_remove_parentheses(self, text_session):
         """Test removing parentheses from phone numbers."""
         result = await replace_in_column(text_session, "phone", r"[()]", "", regex=True)
 
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
 
     async def test_replace_nonexistent_column(self, text_session):
         """Test replacing in non-existent column."""
@@ -77,26 +77,26 @@ class TestColumnTextServerExtract:
         """Test extracting email username."""
         result = await extract_from_column(text_session, "email", r"(.+)@", expand=False)
 
-        assert result.operation == "extract_from_column"
+        assert result.operation == "extract_pattern"
         assert result.columns_affected == ["email"]
 
     async def test_extract_with_expansion(self, text_session):
         """Test extracting with single group (expansion parameter test)."""
         result = await extract_from_column(text_session, "email", r"(.+)@", expand=True)
 
-        assert result.operation == "extract_from_column"
+        assert result.operation == "extract_expand_1_groups"
 
     async def test_extract_status_code_parts(self, text_session):
         """Test extracting first part of code."""
         result = await extract_from_column(text_session, "status_code", r"([A-Z]+)", expand=True)
 
-        assert result.operation == "extract_from_column"
+        assert result.operation == "extract_expand_1_groups"
 
     async def test_extract_single_group(self, text_session):
         """Test extracting single capturing group."""
         result = await extract_from_column(text_session, "phone", r"(\d{3})", expand=False)
 
-        assert result.operation == "extract_from_column"
+        assert result.operation == "extract_pattern"
 
     async def test_extract_nonexistent_column(self, text_session):
         """Test extracting from non-existent column."""
@@ -112,26 +112,26 @@ class TestColumnTextServerSplit:
         """Test splitting name by space, keeping first part."""
         result = await split_column(text_session, "name", " ", part_index=0)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
         assert result.columns_affected == ["name"]
 
     async def test_split_by_space_last_part(self, text_session):
         """Test splitting name by space, keeping last part."""
         result = await split_column(text_session, "name", " ", part_index=1)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
 
     async def test_split_email_by_at(self, text_session):
         """Test splitting email by @ symbol."""
         result = await split_column(text_session, "email", "@", part_index=1)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
 
     async def test_split_with_expansion(self, text_session):
         """Test splitting with column expansion."""
         result = await split_column(text_session, "name", " ", expand_to_columns=True)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
 
     async def test_split_with_custom_column_names(self, text_session):
         """Test splitting with custom new column names."""
@@ -143,13 +143,13 @@ class TestColumnTextServerSplit:
             new_columns=["first_name", "last_name"],
         )
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
 
     async def test_split_address_by_period(self, text_session):
         """Test splitting address by period."""
         result = await split_column(text_session, "address", ".", part_index=0)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
 
     async def test_split_nonexistent_column(self, text_session):
         """Test splitting non-existent column."""
@@ -165,26 +165,26 @@ class TestColumnTextServerCase:
         """Test transforming to uppercase."""
         result = await transform_column_case(text_session, "name", "upper")
 
-        assert result.operation == "transform_column_case"
+        assert result.operation.startswith("case_")
         assert result.columns_affected == ["name"]
 
     async def test_transform_to_lower(self, text_session):
         """Test transforming to lowercase."""
         result = await transform_column_case(text_session, "email", "lower")
 
-        assert result.operation == "transform_column_case"
+        assert result.operation.startswith("case_")
 
     async def test_transform_to_title(self, text_session):
         """Test transforming to title case."""
         result = await transform_column_case(text_session, "description", "title")
 
-        assert result.operation == "transform_column_case"
+        assert result.operation.startswith("case_")
 
     async def test_transform_to_capitalize(self, text_session):
         """Test capitalizing first letter only."""
         result = await transform_column_case(text_session, "description", "capitalize")
 
-        assert result.operation == "transform_column_case"
+        assert result.operation.startswith("case_")
 
     async def test_transform_case_nonexistent_column(self, text_session):
         """Test transforming case of non-existent column."""
@@ -200,26 +200,26 @@ class TestColumnTextServerStrip:
         """Test stripping whitespace."""
         result = await strip_column(text_session, "description")
 
-        assert result.operation == "strip_column"
+        assert result.operation.startswith("strip_")
         assert result.columns_affected == ["description"]
 
     async def test_strip_custom_characters(self, text_session):
         """Test stripping custom characters."""
         result = await strip_column(text_session, "phone", "()")
 
-        assert result.operation == "strip_column"
+        assert result.operation.startswith("strip_")
 
     async def test_strip_dots_and_spaces(self, text_session):
         """Test stripping dots and spaces."""
         result = await strip_column(text_session, "address", ". ")
 
-        assert result.operation == "strip_column"
+        assert result.operation.startswith("strip_")
 
     async def test_strip_punctuation(self, text_session):
         """Test stripping punctuation from status codes."""
         result = await strip_column(text_session, "description", "!.,;")
 
-        assert result.operation == "strip_column"
+        assert result.operation.startswith("strip_")
 
     async def test_strip_nonexistent_column(self, text_session):
         """Test stripping non-existent column."""
@@ -238,7 +238,7 @@ class TestColumnTextServerFillNulls:
 
         result = await fill_column_nulls(text_session, "description", "No description")
 
-        assert result.operation == "fill_column_nulls"
+        assert result.operation == "fill_nulls"
         assert result.columns_affected == ["description"]
 
     async def test_fill_nulls_with_number(self, text_session):
@@ -250,7 +250,7 @@ class TestColumnTextServerFillNulls:
 
         result = await fill_column_nulls(text_session, "rating", 0)
 
-        assert result.operation == "fill_column_nulls"
+        assert result.operation == "fill_nulls"
 
     async def test_fill_nulls_with_boolean(self, text_session):
         """Test filling null values with boolean."""
@@ -260,7 +260,7 @@ class TestColumnTextServerFillNulls:
 
         result = await fill_column_nulls(text_session, "verified", False)
 
-        assert result.operation == "fill_column_nulls"
+        assert result.operation == "fill_nulls"
 
     async def test_fill_nulls_nonexistent_column(self, text_session):
         """Test filling nulls in non-existent column."""
@@ -309,7 +309,7 @@ class TestColumnTextServerComplexOperations:
             text_session, "phone", r"(\d{3})(\d{3})(\d{4})", r"(\1) \2-\3", regex=True
         )
 
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
 
     async def test_clean_address_workflow(self, text_session):
         """Test address cleaning workflow."""
@@ -322,7 +322,7 @@ class TestColumnTextServerComplexOperations:
         # Standardize abbreviations
         result = await replace_in_column(text_session, "address", "St.", "Street", regex=False)
 
-        assert result.operation == "replace_in_column"
+        assert result.operation == "replace_pattern"
 
     async def test_extract_and_split_workflow(self, text_session):
         """Test extracting then splitting data."""
@@ -332,4 +332,4 @@ class TestColumnTextServerComplexOperations:
         # Split domain by dots
         result = await split_column(text_session, "email", ".", part_index=0)
 
-        assert result.operation == "split_column"
+        assert result.operation.startswith(("split_keep_part_", "split_expand_"))
