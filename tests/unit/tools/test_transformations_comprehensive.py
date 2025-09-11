@@ -7,7 +7,6 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src.databeak.exceptions import (
-    InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
@@ -658,7 +657,6 @@ class TestStringOperations:
         """Test extracting pattern from column."""
         result = await extract_from_column("test-session", "phone", r"(\d{3})")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
         # The extraction modifies the phone column, not creates a new one
         assert result.columns_affected == ["phone"]
 
@@ -722,7 +720,6 @@ class TestUpdateColumn:
             "test-session", "city", "replace", pattern="NYC", replacement="New York"
         )
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
         # Just check operation succeeds (exact behavior depends on data)
 
     async def test_update_column_with_mapping(self, mock_manager):
@@ -731,7 +728,6 @@ class TestUpdateColumn:
             "test-session", "city", "replace", pattern="NYC", replacement="New York"
         )
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
         # Just check operation succeeds (exact behavior depends on data)
 
     async def test_update_column_invalid(self, mock_manager):

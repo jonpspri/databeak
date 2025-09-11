@@ -59,9 +59,11 @@ class TestErrorConditions:
             temp_path = f.name
 
         try:
-            with patch("pandas.read_csv", side_effect=mock_read_csv):
-                with pytest.raises(ToolError, match="Encoding error with all attempted encodings"):
-                    await load_csv(temp_path, encoding="utf-8")
+            with (
+                patch("pandas.read_csv", side_effect=mock_read_csv),
+                pytest.raises(ToolError, match="Encoding error with all attempted encodings"),
+            ):
+                await load_csv(temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -482,8 +484,11 @@ class TestExportFormats:
         yield result.session_id
         try:
             await close_session(result.session_id)
-        except:
-            pass  # Session might already be closed
+        except Exception as e:
+            # Log but don't fail if session cleanup fails
+            import logging
+
+            logging.getLogger(__name__).warning(f"Session cleanup failed: {e}")
 
     async def test_export_csv_format(self, session_with_data):
         """Test CSV export format."""
@@ -522,8 +527,9 @@ class TestExportFormats:
 
         # Verify valid JSON
         import json
+        from pathlib import Path
 
-        with open(result.file_path) as f:
+        with Path(result.file_path).open() as f:
             data = json.load(f)
         assert len(data) == 2
         assert data[0]["name"] == "Alice"

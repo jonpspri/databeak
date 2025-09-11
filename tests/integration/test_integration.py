@@ -24,6 +24,11 @@ from src.databeak.servers.statistics_server import (
     get_correlation_matrix,
     get_statistics,
 )
+from src.databeak.servers.transformation_server import (
+    fill_missing_values,
+    filter_rows,
+    sort_data,
+)
 from src.databeak.servers.validation_server import (
     ColumnValidationRules,
     ValidationSchema,
@@ -32,10 +37,7 @@ from src.databeak.servers.validation_server import (
     validate_schema,
 )
 from src.databeak.tools.transformations import (
-    add_column,
-    fill_missing_values,
-    filter_rows,
-    sort_data,
+    add_column,  # Not yet migrated to server
 )
 
 # Test data
@@ -95,9 +97,11 @@ class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
         if self.session_id:
             try:
                 await close_session(self.session_id)
-            except Exception:
-                # Ignore errors during cleanup
-                pass
+            except Exception as e:
+                # Log cleanup errors but don't fail test teardown
+                import logging
+
+                logging.getLogger(__name__).warning(f"Failed to close session during cleanup: {e}")
 
 
 class TestIOOperations(IntegrationTestCase):
@@ -125,7 +129,7 @@ class TestTransformations(IntegrationTestCase):
     async def test_filter_rows(self):
         """Test row filtering functionality."""
         assert self.session_id is not None
-        result = await filter_rows(
+        result = filter_rows(
             session_id=self.session_id,
             conditions=[
                 {"column": "salary", "operator": ">", "value": 60000},
@@ -145,7 +149,7 @@ class TestTransformations(IntegrationTestCase):
     async def test_sort_data(self):
         """Test data sorting functionality."""
         assert self.session_id is not None
-        result = await sort_data(
+        result = sort_data(
             session_id=self.session_id,
             columns=[
                 {"column": "department", "ascending": True},
@@ -167,7 +171,7 @@ class TestTransformations(IntegrationTestCase):
     async def test_fill_missing_values(self):
         """Test missing value imputation."""
         assert self.session_id is not None
-        result = await fill_missing_values(
+        result = fill_missing_values(
             session_id=self.session_id, strategy="mean", columns=["salary"]
         )
         self.assertTrue(get_attr(result, "success"))

@@ -27,7 +27,7 @@ Examples of unacceptable behavior include:
 - Publishing others' private information without explicit permission
 - Other conduct which could reasonably be considered inappropriate
 
-## Enforcement
+## Enforcement Guidelines
 
 Community leaders are responsible for clarifying and enforcing our standards of
 acceptable behavior and will take appropriate and fair corrective action in
@@ -39,7 +39,7 @@ or harmful.
 This Code of Conduct applies within all community spaces, and also applies when
 an individual is officially representing the community in public spaces.
 
-## Enforcement
+## Reporting and Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement at

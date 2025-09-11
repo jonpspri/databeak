@@ -1,25 +1,54 @@
 """FastMCP server for text and string column operations.
 
-This server provides specialized text manipulation operations for column data.
+This server provides specialized text manipulation operations for column data following DataBeak's
+server composition architecture with direct implementations.
 """
 
 from __future__ import annotations
 
+import logging
+import re
 from typing import Any, Literal
 
+import pandas as pd
 from fastmcp import Context, FastMCP
+from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
+from ..exceptions import (
+    ColumnNotFoundError,
+    InvalidParameterError,
+    NoDataLoadedError,
+    SessionNotFoundError,
+)
+from ..models import OperationType, get_session_manager
 from ..models.tool_responses import ColumnOperationResult
-from ..tools.transformations import extract_from_column as _extract_from_column
-from ..tools.transformations import fill_column_nulls as _fill_column_nulls
-from ..tools.transformations import replace_in_column as _replace_in_column
-from ..tools.transformations import split_column as _split_column
-from ..tools.transformations import strip_column as _strip_column
-from ..tools.transformations import transform_column_case as _transform_column_case
+
+logger = logging.getLogger(__name__)
 
 # Type aliases
 CellValue = str | int | float | bool | None
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+
+def _get_session_data(session_id: str) -> tuple[object, pd.DataFrame]:
+    """Get session and DataFrame, raising appropriate exceptions if not found."""
+    manager = get_session_manager()
+    session = manager.get_session(session_id)
+
+    if not session:
+        raise SessionNotFoundError(session_id)
+    if not session.data_session.has_data():
+        raise NoDataLoadedError(session_id)
+
+    df = session.data_session.df
+    if df is None:  # Type guard since has_data() was checked
+        raise NoDataLoadedError(session_id)
+    return session, df
+
 
 # =============================================================================
 # PYDANTIC MODELS FOR REQUEST PARAMETERS
@@ -54,7 +83,7 @@ async def replace_in_column(
     pattern: str,
     replacement: str,
     regex: bool = True,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
@@ -82,7 +111,71 @@ async def replace_in_column(
         # Replace multiple spaces with single space
         replace_in_column(session_id, "description", r"\s+", " ")
     """
-    return await _replace_in_column(session_id, column, pattern, replacement, regex, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Validate regex pattern if using regex mode
+        if regex:
+            try:
+                re.compile(pattern)
+            except re.error as e:
+                raise InvalidParameterError(
+                    "pattern", pattern, f"Invalid regex pattern: {e}"
+                ) from e
+
+        # Count replacements made
+        original_data = df[column].copy()
+
+        # Apply replacements
+        if regex:
+            session.data_session.df[column] = (
+                df[column]
+                .astype(str)
+                .str.replace(pattern, replacement, regex=True, na_action="ignore")
+            )
+        else:
+            session.data_session.df[column] = (
+                df[column]
+                .astype(str)
+                .str.replace(pattern, replacement, regex=False, na_action="ignore")
+            )
+
+        # Count changes
+        changed_mask = original_data.astype(str) != session.data_session.df[column].astype(str)
+        changes_made = int(changed_mask.sum())
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "replace_in_column",
+                "column": column,
+                "pattern": pattern,
+                "regex": regex,
+                "changes_made": changes_made,
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="replace_pattern",
+            rows_affected=changes_made,
+            columns_affected=[column],
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Replace in column failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error replacing in column: {e!s}")
+        raise ToolError(f"Error replacing in column: {e}") from e
 
 
 async def extract_from_column(
@@ -90,7 +183,7 @@ async def extract_from_column(
     column: str,
     pattern: str,
     expand: bool = False,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
 
@@ -117,7 +210,81 @@ async def extract_from_column(
         # Extract year from date string
         extract_from_column(session_id, "date", r"\d{4}")
     """
-    return await _extract_from_column(session_id, column, pattern, expand, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Validate regex pattern
+        try:
+            re.compile(pattern)
+        except re.error as e:
+            raise InvalidParameterError("pattern", pattern, f"Invalid regex pattern: {e}") from e
+
+        # Apply extraction
+        extracted = df[column].astype(str).str.extract(pattern, expand=expand)
+
+        if expand and isinstance(extracted, pd.DataFrame):
+            # Multiple capturing groups - create new columns
+            columns_created = []
+            for i in range(len(extracted.columns)):
+                new_col_name = f"{column}_extracted_{i}"
+                session.data_session.df[new_col_name] = extracted.iloc[:, i]
+                columns_created.append(new_col_name)
+
+            affected_columns = columns_created
+            operation_desc = f"extract_expand_{len(columns_created)}_groups"
+        else:
+            # Single group or no expand - replace original column
+            if isinstance(extracted, pd.DataFrame):
+                # Multiple groups but not expanding - take first group
+                session.data_session.df[column] = extracted.iloc[:, 0]
+            else:
+                # Single series result
+                session.data_session.df[column] = extracted
+
+            affected_columns = [column]
+            operation_desc = "extract_pattern"
+
+        # Count successful extractions (non-null results)
+        if expand and isinstance(extracted, pd.DataFrame):
+            successful_extractions = int((~extracted.isnull()).any(axis=1).sum())
+        else:
+            successful_extractions = (
+                int(extracted.notna().sum()) if hasattr(extracted, "notna") else len(extracted)
+            )
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "extract_from_column",
+                "column": column,
+                "pattern": pattern,
+                "expand": expand,
+                "successful_extractions": successful_extractions,
+                "columns_created": len(affected_columns),
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=operation_desc,
+            rows_affected=successful_extractions,
+            columns_affected=affected_columns,
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Extract from column failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error extracting from column: {e!s}")
+        raise ToolError(f"Error extracting from column: {e}") from e
 
 
 async def split_column(
@@ -127,7 +294,7 @@ async def split_column(
     part_index: int | None = None,
     expand_to_columns: bool = False,
     new_columns: list[str] | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
 
@@ -157,16 +324,118 @@ async def split_column(
         split_column(session_id, "name", " ", expand_to_columns=True,
                     new_columns=["first_name", "last_name"])
     """
-    return await _split_column(
-        session_id, column, delimiter, part_index, expand_to_columns, new_columns, ctx
-    )
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        if not delimiter:
+            raise InvalidParameterError("delimiter", delimiter, "Delimiter cannot be empty")
+
+        # Apply split operation
+        split_data = df[column].astype(str).str.split(delimiter, expand=expand_to_columns)
+
+        if expand_to_columns:
+            # Expanding to multiple columns
+            if isinstance(split_data, pd.DataFrame):
+                num_parts = len(split_data.columns)
+                columns_created = []
+
+                # Use custom column names if provided
+                if new_columns:
+                    if len(new_columns) > num_parts:
+                        # Truncate to actual number of parts
+                        new_columns = new_columns[:num_parts]
+                    elif len(new_columns) < num_parts:
+                        # Extend with default names
+                        for i in range(len(new_columns), num_parts):
+                            new_columns.append(f"{column}_part_{i}")
+                    column_names = new_columns
+                else:
+                    # Generate default column names
+                    column_names = [f"{column}_part_{i}" for i in range(num_parts)]
+
+                # Create new columns
+                for i, col_name in enumerate(column_names):
+                    if i < len(split_data.columns):
+                        session.data_session.df[col_name] = split_data.iloc[:, i]
+                        columns_created.append(col_name)
+
+                affected_columns = columns_created
+                operation_desc = f"split_expand_{len(columns_created)}_parts"
+                rows_affected = len(df)
+            else:
+                # Shouldn't happen with expand=True, but handle gracefully
+                raise InvalidParameterError(
+                    "expand_to_columns",
+                    str(expand_to_columns),
+                    "Split with expand=True did not produce DataFrame",
+                )
+        else:
+            # Not expanding - keep specific part or first part
+            if part_index is None:
+                part_index = 0
+
+            if isinstance(split_data, pd.DataFrame):
+                # This shouldn't happen with expand=False, but handle it
+                if part_index < len(split_data.columns):
+                    session.data_session.df[column] = split_data.iloc[:, part_index]
+                else:
+                    # Index out of range - fill with NaN
+                    session.data_session.df[column] = pd.NA
+            else:
+                # Series of lists - extract specified part
+                def get_part(split_list):
+                    if isinstance(split_list, list) and len(split_list) > part_index:
+                        return split_list[part_index]
+                    return pd.NA
+
+                session.data_session.df[column] = split_data.apply(get_part)
+
+            affected_columns = [column]
+            operation_desc = f"split_keep_part_{part_index}"
+
+            # Count successful splits (non-null results)
+            rows_affected = int(session.data_session.df[column].notna().sum())
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "split_column",
+                "column": column,
+                "delimiter": delimiter,
+                "part_index": part_index,
+                "expand_to_columns": expand_to_columns,
+                "columns_created": len(affected_columns),
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=operation_desc,
+            rows_affected=rows_affected,
+            columns_affected=affected_columns,
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Split column failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error splitting column: {e!s}")
+        raise ToolError(f"Error splitting column: {e}") from e
 
 
 async def transform_column_case(
     session_id: str,
     column: str,
     transform: Literal["upper", "lower", "title", "capitalize"],
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
@@ -196,14 +465,72 @@ async def transform_column_case(
         # Capitalize sentences
         transform_column_case(session_id, "description", "capitalize")
     """
-    return await _transform_column_case(session_id, column, transform, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Store original for comparison
+        original_data = df[column].copy()
+
+        # Apply case transformation
+        str_col = df[column].astype(str)
+
+        if transform == "upper":
+            session.data_session.df[column] = str_col.str.upper()
+        elif transform == "lower":
+            session.data_session.df[column] = str_col.str.lower()
+        elif transform == "title":
+            session.data_session.df[column] = str_col.str.title()
+        elif transform == "capitalize":
+            session.data_session.df[column] = str_col.str.capitalize()
+        else:
+            raise InvalidParameterError(
+                "transform", transform, "Supported transforms: upper, lower, title, capitalize"
+            )
+
+        # Count changes made (ignore null values)
+        changed_mask = original_data.astype(str).fillna("") != session.data_session.df[
+            column
+        ].astype(str).fillna("")
+        changes_made = int(changed_mask.sum())
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "transform_case",
+                "column": column,
+                "transform": transform,
+                "changes_made": changes_made,
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=f"case_{transform}",
+            rows_affected=changes_made,
+            columns_affected=[column],
+        )
+
+    except (
+        SessionNotFoundError,
+        NoDataLoadedError,
+        ColumnNotFoundError,
+        InvalidParameterError,
+    ) as e:
+        logger.error(f"Transform column case failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error transforming column case: {e!s}")
+        raise ToolError(f"Error transforming column case: {e}") from e
 
 
 async def strip_column(
     session_id: str,
     column: str,
     chars: str | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Strip whitespace or specified characters from column values.
 
@@ -229,11 +556,59 @@ async def strip_column(
         # Remove quotes
         strip_column(session_id, "quoted_text", "'\"")
     """
-    return await _strip_column(session_id, column, chars, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Store original for comparison
+        original_data = df[column].copy()
+
+        # Apply strip operation
+        if chars is None:
+            # Strip whitespace
+            session.data_session.df[column] = df[column].astype(str).str.strip()
+        else:
+            # Strip specified characters
+            session.data_session.df[column] = df[column].astype(str).str.strip(chars)
+
+        # Count changes made
+        changed_mask = original_data.astype(str).fillna("") != session.data_session.df[
+            column
+        ].astype(str).fillna("")
+        changes_made = int(changed_mask.sum())
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "strip_column",
+                "column": column,
+                "chars": chars,
+                "changes_made": changes_made,
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation=f"strip_{'whitespace' if chars is None else 'chars'}",
+            rows_affected=changes_made,
+            columns_affected=[column],
+        )
+
+    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
+        logger.error(f"Strip column failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error stripping column: {e!s}")
+        raise ToolError(f"Error stripping column: {e}") from e
 
 
 async def fill_column_nulls(
-    session_id: str, column: str, value: Any, ctx: Context | None = None
+    session_id: str,
+    column: str,
+    value: Any,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
 
@@ -259,7 +634,56 @@ async def fill_column_nulls(
         # Fill missing scores with -1
         fill_column_nulls(session_id, "score", -1)
     """
-    return await _fill_column_nulls(session_id, column, value, ctx)
+    try:
+        session, df = _get_session_data(session_id)
+
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        # Count nulls before filling
+        nulls_before = int(df[column].isna().sum())
+
+        if nulls_before == 0:
+            # No nulls to fill
+            return ColumnOperationResult(
+                session_id=session_id,
+                operation="fill_nulls",
+                rows_affected=0,
+                columns_affected=[column],
+            )
+
+        # Fill null values
+        session.data_session.df[column] = df[column].fillna(value)
+
+        # Verify fills worked
+        nulls_after = int(session.data_session.df[column].isna().sum())
+        filled_count = nulls_before - nulls_after
+
+        session.record_operation(
+            OperationType.TRANSFORM,
+            {
+                "operation": "fill_column_nulls",
+                "column": column,
+                "fill_value": str(value),
+                "nulls_filled": filled_count,
+                "nulls_before": nulls_before,
+                "nulls_after": nulls_after,
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="fill_nulls",
+            rows_affected=filled_count,
+            columns_affected=[column],
+        )
+
+    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
+        logger.error(f"Fill column nulls failed: {e.message}")
+        raise ToolError(e.message) from e
+    except Exception as e:
+        logger.error(f"Error filling column nulls: {e!s}")
+        raise ToolError(f"Error filling column nulls: {e}") from e
 
 
 # =============================================================================

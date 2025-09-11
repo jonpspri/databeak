@@ -207,14 +207,18 @@ async def sort_data(
             if col not in df.columns:
                 raise ToolError(f"Column '{col}' not found")
 
-        session.data_session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
-            drop=True
-        )
+        sorted_df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
+        session.data_session.df = sorted_df
         session.record_operation(
             OperationType.SORT, {"columns": sort_columns, "ascending": ascending}
         )
 
-        return SortDataResult(session_id=session_id, sorted_by=sort_columns, ascending=ascending)
+        return SortDataResult(
+            session_id=session_id,
+            sorted_by=sort_columns,
+            ascending=ascending,
+            rows_processed=len(sorted_df),
+        )
 
     except Exception as e:
         logger.error(f"Error sorting data: {e!s}")

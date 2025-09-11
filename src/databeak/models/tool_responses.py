@@ -208,6 +208,8 @@ class ColumnOperationResult(BaseToolResponse):
     part_index: int | None = None
     transform: str | None = None
     nulls_filled: int | None = None
+    rows_removed: int | None = None  # For remove_duplicates operation
+    values_filled: int | None = None  # For fill_missing_values operation
 
 
 class SortDataResult(BaseToolResponse):
@@ -216,6 +218,7 @@ class SortDataResult(BaseToolResponse):
     session_id: str
     sorted_by: list[str]
     ascending: list[bool]
+    rows_processed: int
 
 
 # =============================================================================

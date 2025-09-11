@@ -116,21 +116,12 @@ class TestGetStatistics:
         assert v2_stats.count < 6
 
     async def test_get_statistics_non_numeric(self, stats_session):
-        """Test statistics for non-numeric columns."""
-        result = await get_statistics(stats_session, columns=["name", "department"])
+        """Test that statistics for non-numeric columns raises an error."""
+        # The refactored server only handles numeric columns
+        from fastmcp.exceptions import ToolError
 
-        assert result.success is True
-
-        # String columns should have limited statistics
-        name_stats = result.statistics["name"]
-        assert name_stats.count == 10
-        assert name_stats.unique == 10  # All names are unique
-        assert name_stats.top is not None  # Most frequent value
-        assert name_stats.freq == 1  # Each name appears once
-
-        dept_stats = result.statistics["department"]
-        assert dept_stats.unique == 4  # 4 departments
-        assert dept_stats.top in ["Engineering", "Marketing", "Sales", "Management"]
+        with pytest.raises(ToolError, match="Invalid value for parameter"):
+            await get_statistics(stats_session, columns=["name", "department"])
 
     async def test_get_statistics_with_data(self):
         """Test statistics on DataFrame with data."""

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import tempfile
 from pathlib import Path
 
 from src.databeak.models.csv_session import DataBeakSettings
@@ -79,18 +80,20 @@ class TestEnvironmentVariableConfiguration:
 
     def test_environment_variable_override(self, monkeypatch):
         """Test that environment variables properly override defaults."""
-        # Set test environment variables
-        monkeypatch.setenv("DATABEAK_MAX_FILE_SIZE_MB", "2048")
-        monkeypatch.setenv("DATABEAK_CSV_HISTORY_DIR", "/tmp/test")
-        monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
-        monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
-        monkeypatch.setenv("DATABEAK_AUTO_SAVE", "false")
+        # Use secure temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Set test environment variables
+            monkeypatch.setenv("DATABEAK_MAX_FILE_SIZE_MB", "2048")
+            monkeypatch.setenv("DATABEAK_CSV_HISTORY_DIR", temp_dir)
+            monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
+            monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
+            monkeypatch.setenv("DATABEAK_AUTO_SAVE", "false")
 
-        # Create new settings instance to pick up env vars
-        settings = DataBeakSettings()
+            # Create new settings instance to pick up env vars
+            settings = DataBeakSettings()
 
-        assert settings.max_file_size_mb == 2048
-        assert settings.csv_history_dir == "/tmp/test"
+            assert settings.max_file_size_mb == 2048
+            assert settings.csv_history_dir == temp_dir
         assert settings.session_timeout == 7200
         assert settings.chunk_size == 5000
         assert settings.auto_save is False

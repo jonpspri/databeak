@@ -1,31 +1,33 @@
-"""FastMCP server for core data transformation operations.
-
-This server provides filtering, sorting, deduplication, and missing value handling.
-"""
+"""Standalone transformation server for DataBeak using FastMCP server composition."""
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Literal
 
+import pandas as pd
 from fastmcp import Context, FastMCP
-from pydantic import BaseModel, Field
+from fastmcp.exceptions import ToolError
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..models.tool_responses import ColumnOperationResult, FilterOperationResult
-from ..tools.transformations import fill_missing_values as _fill_missing_values
-from ..tools.transformations import filter_rows as _filter_rows
-from ..tools.transformations import remove_duplicates as _remove_duplicates
-from ..tools.transformations import sort_data as _sort_data
+# Import session management from the main package
+from ..models import OperationType, get_session_manager
+from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
+
+logger = logging.getLogger(__name__)
 
 # Type aliases
 CellValue = str | int | float | bool | None
 
-# =============================================================================
+# ============================================================================
 # PYDANTIC MODELS FOR REQUEST PARAMETERS
-# =============================================================================
+# ============================================================================
 
 
 class FilterCondition(BaseModel):
     """Filter condition for row filtering."""
+
+    model_config = ConfigDict(extra="forbid")
 
     column: str = Field(description="Column name to filter on")
     operator: Literal[
@@ -52,20 +54,22 @@ class FilterCondition(BaseModel):
 class SortColumn(BaseModel):
     """Column specification for sorting."""
 
+    model_config = ConfigDict(extra="forbid")
+
     column: str = Field(description="Column name to sort by")
     ascending: bool = Field(default=True, description="Sort in ascending order")
 
 
-# =============================================================================
-# TOOL DEFINITIONS (Direct implementations for testing)
-# =============================================================================
+# ============================================================================
+# TRANSFORMATION LOGIC (Direct implementations)
+# ============================================================================
 
 
-async def filter_rows(
+def filter_rows(
     session_id: str,
     conditions: list[FilterCondition | dict[str, Any]],
     mode: Literal["and", "or"] = "and",
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value and text matching
     support.
@@ -77,6 +81,7 @@ async def filter_rows(
         session_id: Session identifier for the active CSV data session
         conditions: List of filter conditions with column, operator, and value
         mode: Logic for combining conditions ("and" or "or")
+        ctx: FastMCP context
 
     Returns:
         FilterOperationResult with filtering statistics
@@ -97,72 +102,216 @@ async def filter_rows(
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
     """
-    # Convert Pydantic models to dicts for compatibility with existing implementation
-    condition_dicts = []
-    for c in conditions:
-        if isinstance(c, FilterCondition):
-            condition_dicts.append(c.model_dump())
-        else:
-            condition_dicts.append(c)
-    return await _filter_rows(session_id, condition_dicts, mode, ctx)
+    try:
+        manager = get_session_manager()
+        session = manager.get_session(session_id)
+
+        if not session or session.data_session.df is None:
+            raise ToolError("Invalid session or no data loaded")
+
+        df = session.data_session.df
+        rows_before = len(df)
+
+        # Initialize mask based on mode: AND starts True, OR starts False
+        mask = pd.Series([mode == "and"] * len(df))
+
+        # Process conditions - convert Pydantic models if needed
+        processed_conditions = []
+        for condition in conditions:
+            if isinstance(condition, FilterCondition):
+                processed_conditions.append(condition.model_dump())
+            else:
+                processed_conditions.append(condition)
+
+        for condition in processed_conditions:
+            column = condition.get("column")
+            operator = condition.get("operator")
+            value = condition.get("value")
+
+            if column is None or column not in df.columns:
+                raise ToolError(f"Column '{column}' not found in data")
+
+            col_data = df[column]
+
+            if operator == "==":
+                condition_mask = col_data == value
+            elif operator == "!=":
+                condition_mask = col_data != value
+            elif operator == ">":
+                condition_mask = col_data > value
+            elif operator == "<":
+                condition_mask = col_data < value
+            elif operator == ">=":
+                condition_mask = col_data >= value
+            elif operator == "<=":
+                condition_mask = col_data <= value
+            elif operator == "contains":
+                condition_mask = col_data.astype(str).str.contains(str(value), na=False)
+            elif operator == "not_contains":
+                condition_mask = ~col_data.astype(str).str.contains(str(value), na=False)
+            elif operator == "starts_with":
+                condition_mask = col_data.astype(str).str.startswith(str(value), na=False)
+            elif operator == "ends_with":
+                condition_mask = col_data.astype(str).str.endswith(str(value), na=False)
+            elif operator == "in":
+                condition_mask = col_data.isin(value if isinstance(value, list) else [value])
+            elif operator == "not_in":
+                condition_mask = ~col_data.isin(value if isinstance(value, list) else [value])
+            elif operator == "is_null":
+                condition_mask = col_data.isna()
+            elif operator == "is_not_null":
+                condition_mask = col_data.notna()
+            else:
+                raise ToolError(
+                    f"Invalid operator '{operator}'. Valid operators: "
+                    "==, !=, >, <, >=, <=, contains, not_contains, starts_with, ends_with, "
+                    "in, not_in, is_null, is_not_null"
+                )
+
+            mask = mask & condition_mask if mode == "and" else mask | condition_mask
+
+        # Apply filter
+        session.data_session.df = df[mask].reset_index(drop=True)
+        rows_after = len(session.data_session.df)
+
+        # Record operation
+        session.record_operation(
+            OperationType.FILTER,
+            {
+                "conditions": processed_conditions,
+                "mode": mode,
+                "rows_before": rows_before,
+                "rows_after": rows_after,
+            },
+        )
+
+        return FilterOperationResult(
+            session_id=session_id,
+            rows_before=rows_before,
+            rows_after=rows_after,
+            rows_filtered=rows_before - rows_after,
+            conditions_applied=len(processed_conditions),
+        )
+
+    except Exception as e:
+        logger.error(f"Error filtering rows: {e!s}")
+        raise ToolError(f"Error filtering rows: {e!s}") from e
 
 
-async def sort_data(
+def sort_data(
     session_id: str,
     columns: list[str | SortColumn | dict[str, Any]],
-    ctx: Context | None = None,
-) -> dict[str, Any]:
-    """Sort data by one or more columns.
+    ctx: Context | None = None,  # noqa: ARG001
+) -> SortDataResult:
+    """Sort data by one or more columns with comprehensive error handling.
+
+    Provides flexible sorting capabilities with support for multiple columns
+    and sort directions. Handles mixed data types appropriately and maintains
+    data integrity throughout the sorting process.
 
     Args:
-        session_id: Session identifier
-        columns: Column names (strings) or SortColumn specifications
+        session_id: Session identifier for the active CSV data session
+        columns: Column specifications - can be strings, SortColumn objects, or dicts
         ctx: FastMCP context
 
     Returns:
-        Dict with sorting details
+        SortDataResult with sorting details and statistics
 
     Examples:
         # Simple single column sort
         sort_data(session_id, ["age"])
 
-        # Multi-column sort
-        sort_data(session_id, ["department", "salary"])
-
-        # Using dicts for precise control
+        # Multi-column sort with different directions
         sort_data(session_id, [
             {"column": "department", "ascending": True},
             {"column": "salary", "ascending": False}
         ])
+
+        # Using SortColumn objects for type safety
+        sort_data(session_id, [
+            SortColumn(column="name", ascending=True),
+            SortColumn(column="age", ascending=False)
+        ])
     """
-    # Convert to the format expected by the underlying function
-    column_list: list[str | dict[str, str]] = []
-    for col in columns:
-        if isinstance(col, SortColumn):
-            column_list.append({"column": col.column, "ascending": str(col.ascending)})
-        elif isinstance(col, dict):
-            # Pass dict through, converting ascending to string if present
-            if "ascending" in col:
-                column_list.append({"column": col["column"], "ascending": str(col["ascending"])})
+    try:
+        manager = get_session_manager()
+        session = manager.get_session(session_id)
+
+        if not session or session.data_session.df is None:
+            raise ToolError("Invalid session or no data loaded")
+
+        df = session.data_session.df
+
+        # Parse columns into names and ascending flags
+        sort_columns: list[str] = []
+        ascending: list[bool] = []
+
+        for col in columns:
+            if isinstance(col, str):
+                sort_columns.append(col)
+                ascending.append(True)
+            elif isinstance(col, SortColumn):
+                sort_columns.append(col.column)
+                ascending.append(col.ascending)
+            elif isinstance(col, dict):
+                if "column" not in col:
+                    raise ToolError(f"Dict specification missing 'column' key: {col}")
+                sort_columns.append(col["column"])
+                # Handle string/bool conversion for ascending
+                asc_val = col.get("ascending", True)
+                if isinstance(asc_val, str):
+                    ascending.append(asc_val.lower() in ("true", "1", "yes"))
+                else:
+                    ascending.append(bool(asc_val))
             else:
-                column_list.append(col)
-        else:
-            column_list.append(col)
+                raise ToolError(f"Invalid column specification: {col}")
 
-    result = await _sort_data(session_id, column_list, ctx)
-    return result.model_dump()
+        # Validate all columns exist
+        missing_cols = [col for col in sort_columns if col not in df.columns]
+        if missing_cols:
+            raise ToolError(f"Columns not found: {missing_cols}")
+
+        # Perform sort
+        session.data_session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
+            drop=True
+        )
+
+        # Record operation
+        session.record_operation(
+            OperationType.SORT,
+            {
+                "columns": sort_columns,
+                "ascending": ascending,
+                "rows_processed": len(df),
+            },
+        )
+
+        return SortDataResult(
+            session_id=session_id,
+            sorted_by=sort_columns,
+            ascending=ascending,
+            rows_processed=len(df),
+        )
+
+    except Exception as e:
+        logger.error(f"Error sorting data: {e!s}")
+        raise ToolError(f"Error sorting data: {e!s}") from e
 
 
-async def remove_duplicates(
+def remove_duplicates(
     session_id: str,
     subset: list[str] | None = None,
     keep: Literal["first", "last", "none"] = "first",
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
-    """Remove duplicate rows from the dataframe.
+    """Remove duplicate rows from the dataframe with comprehensive validation.
+
+    Provides flexible duplicate removal with options for column subset selection
+    and different keep strategies. Handles edge cases and provides detailed
+    statistics about the deduplication process.
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier for the active CSV data session
         subset: Columns to consider for duplicates (None = all columns)
         keep: Which duplicates to keep ("first", "last", or "none" to drop all)
         ctx: FastMCP context
@@ -183,20 +332,73 @@ async def remove_duplicates(
         # Remove all duplicates (keep none)
         remove_duplicates(session_id, subset=["email"], keep="none")
     """
-    return await _remove_duplicates(session_id, subset, keep, ctx)
+    try:
+        manager = get_session_manager()
+        session = manager.get_session(session_id)
+
+        if not session or session.data_session.df is None:
+            raise ToolError("Invalid session or no data loaded")
+
+        df = session.data_session.df
+        rows_before = len(df)
+
+        # Validate subset columns if provided
+        if subset:
+            missing_cols = [col for col in subset if col not in df.columns]
+            if missing_cols:
+                raise ToolError(f"Columns not found in subset: {missing_cols}")
+
+        # Convert keep parameter for pandas
+        keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
+
+        # Remove duplicates
+        session.data_session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
+            drop=True
+        )
+
+        rows_after = len(session.data_session.df)
+        rows_removed = rows_before - rows_after
+
+        # Record operation
+        session.record_operation(
+            OperationType.REMOVE_DUPLICATES,
+            {
+                "subset": subset,
+                "keep": keep,
+                "rows_before": rows_before,
+                "rows_after": rows_after,
+                "rows_removed": rows_removed,
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="remove_duplicates",
+            rows_affected=rows_after,
+            columns_affected=subset if subset else df.columns.tolist(),
+            rows_removed=rows_removed,
+        )
+
+    except Exception as e:
+        logger.error(f"Error removing duplicates: {e!s}")
+        raise ToolError(f"Error removing duplicates: {e!s}") from e
 
 
-async def fill_missing_values(
+def fill_missing_values(
     session_id: str,
     strategy: Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"] = "drop",
     value: Any = None,
     columns: list[str] | None = None,
-    ctx: Context | None = None,
+    ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
-    """Fill or remove missing values in the dataframe.
+    """Fill or remove missing values with comprehensive strategy support.
+
+    Provides multiple strategies for handling missing data, including statistical
+    imputation methods. Handles different data types appropriately and validates
+    strategy compatibility with column types.
 
     Args:
-        session_id: Session identifier
+        session_id: Session identifier for the active CSV data session
         strategy: Strategy for handling missing values:
             - "drop": Remove rows with missing values
             - "fill": Fill with a specific value
@@ -225,19 +427,114 @@ async def fill_missing_values(
         # Fill with column mean for numeric columns
         fill_missing_values(session_id, strategy="mean", columns=["age", "salary"])
     """
-    return await _fill_missing_values(session_id, strategy, value, columns, ctx)
+    try:
+        manager = get_session_manager()
+        session = manager.get_session(session_id)
+
+        if not session or session.data_session.df is None:
+            raise ToolError("Invalid session or no data loaded")
+
+        df = session.data_session.df
+        rows_before = len(df)
+
+        # Validate and set target columns
+        if columns:
+            missing_cols = [col for col in columns if col not in df.columns]
+            if missing_cols:
+                raise ToolError(f"Columns not found: {missing_cols}")
+            target_cols = columns
+        else:
+            target_cols = df.columns.tolist()
+
+        # Count missing values before processing
+        missing_before = df[target_cols].isna().sum().sum()
+
+        # Apply strategy
+        if strategy == "drop":
+            session.data_session.df = df.dropna(subset=target_cols)
+        elif strategy == "fill":
+            if value is None:
+                raise ToolError("Value required for 'fill' strategy")
+            session.data_session.df = df.copy()
+            session.data_session.df[target_cols] = df[target_cols].fillna(value)
+        elif strategy == "forward":
+            session.data_session.df = df.copy()
+            session.data_session.df[target_cols] = df[target_cols].ffill()
+        elif strategy == "backward":
+            session.data_session.df = df.copy()
+            session.data_session.df[target_cols] = df[target_cols].bfill()
+        elif strategy == "mean":
+            session.data_session.df = df.copy()
+            for col in target_cols:
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    mean_val = df[col].mean()
+                    if not pd.isna(mean_val):
+                        session.data_session.df[col] = df[col].fillna(mean_val)
+                else:
+                    logger.warning(f"Column '{col}' is not numeric, skipping mean fill")
+        elif strategy == "median":
+            session.data_session.df = df.copy()
+            for col in target_cols:
+                if pd.api.types.is_numeric_dtype(df[col]):
+                    median_val = df[col].median()
+                    if not pd.isna(median_val):
+                        session.data_session.df[col] = df[col].fillna(median_val)
+                else:
+                    logger.warning(f"Column '{col}' is not numeric, skipping median fill")
+        elif strategy == "mode":
+            session.data_session.df = df.copy()
+            for col in target_cols:
+                mode_val = df[col].mode()
+                if len(mode_val) > 0:
+                    session.data_session.df[col] = df[col].fillna(mode_val[0])
+        else:
+            raise ToolError(
+                f"Invalid strategy '{strategy}'. Valid strategies: "
+                "drop, fill, forward, backward, mean, median, mode"
+            )
+
+        rows_after = len(session.data_session.df)
+        missing_after = session.data_session.df[target_cols].isna().sum().sum()
+        values_filled = missing_before - missing_after
+
+        # Record operation
+        session.record_operation(
+            OperationType.FILL_MISSING,
+            {
+                "strategy": strategy,
+                "value": str(value) if value is not None else None,
+                "columns": target_cols,
+                "rows_before": rows_before,
+                "rows_after": rows_after,
+                "values_filled": int(values_filled),
+            },
+        )
+
+        return ColumnOperationResult(
+            session_id=session_id,
+            operation="fill_missing_values",
+            rows_affected=rows_after,
+            columns_affected=target_cols,
+            values_filled=int(values_filled),
+        )
+
+    except Exception as e:
+        logger.error(f"Error filling missing values: {e!s}")
+        raise ToolError(f"Error filling missing values: {e!s}") from e
 
 
-# =============================================================================
-# SERVER INITIALIZATION
-# =============================================================================
+# ============================================================================
+# FASTMCP SERVER SETUP
+# ============================================================================
 
+
+# Create transformation server
 transformation_server = FastMCP(
-    "DataBeak Transformation Server",
-    instructions="Core data transformation server providing filtering, sorting, deduplication, and missing value handling",
+    "DataBeak-Transformation",
+    instructions="Core data transformation server for filtering, sorting, deduplication, and missing value handling",
 )
 
-# Register the functions as MCP tools
+# Register the logic functions directly as MCP tools (no wrapper functions needed)
 transformation_server.tool(name="filter_rows")(filter_rows)
 transformation_server.tool(name="sort_data")(sort_data)
 transformation_server.tool(name="remove_duplicates")(remove_duplicates)

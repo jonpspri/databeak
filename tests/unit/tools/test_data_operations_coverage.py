@@ -94,9 +94,9 @@ class TestCreateDataPreview:
 
         # Should convert pandas types to Python types for JSON serialization
         for record in result["records"]:
-            assert isinstance(record["int_col"], (int, type(None)))
-            assert isinstance(record["float_col"], (float, type(None)))
-            assert isinstance(record["bool_col"], (bool, type(None)))
+            assert isinstance(record["int_col"], int | type(None))
+            assert isinstance(record["float_col"], float | type(None))
+            assert isinstance(record["bool_col"], bool | type(None))
 
     def test_create_data_preview_non_integer_index(self):
         """Test data preview with non-integer pandas index."""
@@ -193,7 +193,7 @@ class TestGetDataSummary:
 
         # Check dtypes are converted to strings
         assert isinstance(result["dtypes"], dict)
-        for col, dtype in result["dtypes"].items():
+        for _col, dtype in result["dtypes"].items():
             assert isinstance(dtype, str)
 
         # Check null counts
@@ -218,7 +218,7 @@ class TestGetDataSummary:
         result = get_data_summary("test_session")
 
         assert "memory_usage_mb" in result
-        assert isinstance(result["memory_usage_mb"], (int, float))
+        assert isinstance(result["memory_usage_mb"], int | float)
         assert result["memory_usage_mb"] > 0
 
 

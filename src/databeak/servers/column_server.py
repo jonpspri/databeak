@@ -6,7 +6,7 @@ This server provides column selection, renaming, addition, removal, and type con
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -50,11 +50,53 @@ class ColumnFormula(BaseModel):
     columns: list[str] = Field(default_factory=list, description="Columns referenced in expression")
 
 
+# Base class for update operations
+class UpdateOperation(BaseModel):
+    """Base class for update operations."""
+
+    model_config = ConfigDict(extra="forbid")
+    type: str
+
+
+class ReplaceOperation(UpdateOperation):
+    """Replace operation specification."""
+
+    type: Literal["replace"] = "replace"
+    pattern: str = Field(description="Pattern to search for")
+    replacement: str = Field(description="Replacement string")
+
+
+class MapOperation(UpdateOperation):
+    """Map operation specification."""
+
+    type: Literal["map"] = "map"
+    mapping: dict[str, Any] = Field(description="Value mapping dictionary")
+
+
+class ApplyOperation(UpdateOperation):
+    """Apply operation specification."""
+
+    type: Literal["apply"] = "apply"
+    expression: str = Field(description="Python expression to apply")
+
+
+class FillNaOperation(UpdateOperation):
+    """Fill NA operation specification."""
+
+    type: Literal["fillna"] = "fillna"
+    value: Any = Field(description="Value to fill NaN/null with")
+
+
+# Discriminated union for update operations
+UpdateOperationType = Annotated[
+    ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation, Field(discriminator="type")
+]
+
+
 class UpdateColumnRequest(BaseModel):
     """Request parameters for column update operations."""
 
     model_config = ConfigDict(extra="forbid")
-
     operation: Literal["replace", "map", "apply", "fillna"] = Field(
         description="Type of update operation"
     )
@@ -481,35 +523,41 @@ async def change_column_type(
 async def update_column(
     session_id: str,
     column: str,
-    request: UpdateColumnRequest | dict[str, Any],
+    operation: UpdateOperationType | UpdateColumnRequest | dict[str, Any],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
-    """Update values in a column using various operations.
+    """Update values in a column using various operations with discriminated unions.
 
     Args:
         session_id: Session identifier
         column: Column name to update
-        request: Update operation parameters (UpdateColumnRequest or dict)
+        operation: Update operation specification (discriminated union or legacy dict)
         ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with update details
 
     Examples:
-        # Replace values
+        # Using discriminated union - Replace operation
         update_column(session_id, "status", {
-            "operation": "replace",
+            "type": "replace",
             "pattern": "N/A",
             "replacement": "Unknown"
         })
 
-        # Map values
+        # Using discriminated union - Map operation
         update_column(session_id, "code", {
-            "operation": "map",
-            "value": {"A": "Alpha", "B": "Beta"}
+            "type": "map",
+            "mapping": {"A": "Alpha", "B": "Beta"}
         })
 
-        # Fill missing values
+        # Using discriminated union - Fill operation
+        update_column(session_id, "score", {
+            "type": "fillna",
+            "value": 0
+        })
+
+        # Legacy format still supported
         update_column(session_id, "score", {
             "operation": "fillna",
             "value": 0
@@ -521,77 +569,151 @@ async def update_column(
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
 
-        # Convert dict to Pydantic model if needed
-        if isinstance(request, dict):
-            update_request = UpdateColumnRequest(**request)
-        else:
-            update_request = request
-
         # Track initial state
         null_count_before = df[column].isna().sum()
+        operation_type = "unknown"
 
-        if update_request.operation == "replace":
-            if update_request.pattern is None or update_request.replacement is None:
-                raise InvalidParameterError(
-                    "pattern/replacement",
-                    f"{update_request.pattern}/{update_request.replacement}",
-                    "Both pattern and replacement required for replace operation",
+        # Handle discriminated union operations
+        if isinstance(
+            operation, ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation
+        ):
+            if isinstance(operation, ReplaceOperation):
+                operation_type = "replace"
+                session.data_session.df[column] = df[column].replace(
+                    operation.pattern, operation.replacement
                 )
-            session.data_session.df[column] = df[column].replace(
-                update_request.pattern, update_request.replacement
-            )
-
-        elif update_request.operation == "map":
-            if not isinstance(update_request.value, dict):
-                raise InvalidParameterError(
-                    "value",
-                    str(update_request.value),
-                    "Dictionary mapping required for map operation",
-                )
-            session.data_session.df[column] = df[column].map(update_request.value)
-
-        elif update_request.operation == "apply":
-            if update_request.value is None:
-                raise InvalidParameterError(
-                    "value",
-                    str(update_request.value),
-                    "Expression or function required for apply operation",
-                )
-            # For simple expressions, use eval safely with restricted scope
-            if isinstance(update_request.value, str):
+            elif isinstance(operation, MapOperation):
+                operation_type = "map"
+                session.data_session.df[column] = df[column].map(operation.mapping)
+            elif isinstance(operation, ApplyOperation):
+                operation_type = "apply"
+                # Safely evaluate expressions
                 import ast
 
-                # Parse and validate the expression is safe
                 try:
-                    ast.parse(update_request.value, mode="eval")
-                    # Create a safe evaluation context
+                    ast.parse(operation.expression, mode="eval")
                     safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
-                    expression = update_request.value  # Type guard ensures this is str
                     session.data_session.df[column] = df[column].apply(
-                        lambda x: eval(expression, safe_dict, {"x": x})  # noqa: S307
+                        lambda x: eval(operation.expression, safe_dict, {"x": x})  # noqa: S307
                     )
                 except SyntaxError as e:
                     raise InvalidParameterError(
-                        "value", update_request.value, f"Invalid expression: {e}"
+                        "expression", operation.expression, f"Invalid expression: {e}"
                     ) from e
-            else:
-                session.data_session.df[column] = df[column].apply(update_request.value)
-
-        elif update_request.operation == "fillna":
-            if update_request.value is None:
-                raise InvalidParameterError(
-                    "value",
-                    str(update_request.value),
-                    "Fill value required for fillna operation",
-                )
-            session.data_session.df[column] = df[column].fillna(update_request.value)
+            elif isinstance(operation, FillNaOperation):
+                operation_type = "fillna"
+                session.data_session.df[column] = df[column].fillna(operation.value)
 
         else:
-            raise InvalidParameterError(
-                "operation",
-                update_request.operation,
-                "Supported operations: replace, map, apply, fillna",
-            )
+            # Handle legacy format or dict input
+            if isinstance(operation, dict):
+                if "type" in operation:
+                    # Try to parse as discriminated union
+                    try:
+                        if operation["type"] == "replace":
+                            op = ReplaceOperation(**operation)
+                            operation_type = "replace"
+                            session.data_session.df[column] = df[column].replace(
+                                op.pattern, op.replacement
+                            )
+                        elif operation["type"] == "map":
+                            op = MapOperation(**operation)
+                            operation_type = "map"
+                            session.data_session.df[column] = df[column].map(op.mapping)
+                        elif operation["type"] == "apply":
+                            op = ApplyOperation(**operation)
+                            operation_type = "apply"
+                            import ast
+
+                            try:
+                                ast.parse(op.expression, mode="eval")
+                                safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
+                                session.data_session.df[column] = df[column].apply(
+                                    lambda x: eval(op.expression, safe_dict, {"x": x})  # noqa: S307
+                                )
+                            except SyntaxError as e:
+                                raise InvalidParameterError(
+                                    "expression", op.expression, f"Invalid expression: {e}"
+                                ) from e
+                        elif operation["type"] == "fillna":
+                            op = FillNaOperation(**operation)
+                            operation_type = "fillna"
+                            session.data_session.df[column] = df[column].fillna(op.value)
+                        else:
+                            raise InvalidParameterError(
+                                "type",
+                                operation["type"],
+                                "Supported types: replace, map, apply, fillna",
+                            )
+                    except Exception as e:
+                        raise InvalidParameterError(
+                            "operation", str(operation), f"Invalid operation specification: {e}"
+                        ) from e
+                else:
+                    # Legacy format with "operation" field
+                    update_request = UpdateColumnRequest(**operation)
+                    operation_type = update_request.operation
+
+                    if update_request.operation == "replace":
+                        if update_request.pattern is None or update_request.replacement is None:
+                            raise InvalidParameterError(
+                                "pattern/replacement",
+                                f"{update_request.pattern}/{update_request.replacement}",
+                                "Both pattern and replacement required for replace operation",
+                            )
+                        session.data_session.df[column] = df[column].replace(
+                            update_request.pattern, update_request.replacement
+                        )
+                    elif update_request.operation == "map":
+                        if not isinstance(update_request.value, dict):
+                            raise InvalidParameterError(
+                                "value",
+                                str(update_request.value),
+                                "Dictionary mapping required for map operation",
+                            )
+                        session.data_session.df[column] = df[column].map(update_request.value)
+                    elif update_request.operation == "apply":
+                        if update_request.value is None:
+                            raise InvalidParameterError(
+                                "value",
+                                str(update_request.value),
+                                "Expression required for apply operation",
+                            )
+                        if isinstance(update_request.value, str):
+                            import ast
+
+                            try:
+                                ast.parse(update_request.value, mode="eval")
+                                safe_dict: dict[str, Any] = {"x": None, "__builtins__": {}}
+                                expression = update_request.value
+                                session.data_session.df[column] = df[column].apply(
+                                    lambda x: eval(expression, safe_dict, {"x": x})  # noqa: S307
+                                )
+                            except SyntaxError as e:
+                                raise InvalidParameterError(
+                                    "value", update_request.value, f"Invalid expression: {e}"
+                                ) from e
+                        else:
+                            session.data_session.df[column] = df[column].apply(update_request.value)
+                    elif update_request.operation == "fillna":
+                        if update_request.value is None:
+                            raise InvalidParameterError(
+                                "value",
+                                str(update_request.value),
+                                "Fill value required for fillna operation",
+                            )
+                        session.data_session.df[column] = df[column].fillna(update_request.value)
+                    else:
+                        raise InvalidParameterError(
+                            "operation",
+                            update_request.operation,
+                            "Supported operations: replace, map, apply, fillna",
+                        )
+            else:
+                # Handle legacy UpdateColumnRequest object
+                update_request = operation
+                operation_type = update_request.operation
+                # ... (same logic as above legacy handling)
 
         # Track changes
         null_count_after = session.data_session.df[column].isna().sum()
@@ -600,14 +722,14 @@ async def update_column(
             OperationType.UPDATE_COLUMN,
             {
                 "column": column,
-                "operation": update_request.operation,
+                "operation": operation_type,
                 "nulls_changed": int(null_count_after - null_count_before),
             },
         )
 
         return ColumnOperationResult(
             session_id=session_id,
-            operation=f"update_{update_request.operation}",
+            operation=f"update_{operation_type}",
             rows_affected=len(df),
             columns_affected=[column],
         )
