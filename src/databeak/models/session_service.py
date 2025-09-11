@@ -69,10 +69,10 @@ class SessionService(ABC):
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
-        if not session.data_session.has_data():
+        if not session.has_data():
             raise ValueError(f"No data loaded in session: {session_id}")
 
-        df = session.data_session.df
+        df = session.df
         if df is None:
             raise ValueError(f"Invalid data state in session: {session_id}")
 
@@ -167,7 +167,7 @@ class MockSessionManager:
 
         results = []
         for session_id, session in self.sessions.items():
-            df = session.data_session.df if session.data_session.has_data() else None
+            df = session.df if session.has_data() else None
             info = SessionInfo(
                 session_id=session_id,
                 created_at=datetime.now(timezone.utc),

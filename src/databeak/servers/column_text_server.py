@@ -219,7 +219,7 @@ async def extract_from_column(
             columns_created = []
             for i in range(len(extracted.columns)):
                 new_col_name = f"{column}_extracted_{i}"
-                session.data_session.df[new_col_name] = extracted.iloc[:, i]
+                session.df[new_col_name] = extracted.iloc[:, i]
                 columns_created.append(new_col_name)
 
             affected_columns = columns_created
@@ -228,10 +228,10 @@ async def extract_from_column(
             # Single group or no expand - replace original column
             if isinstance(extracted, pd.DataFrame):
                 # Multiple groups but not expanding - take first group
-                session.data_session.df[column] = extracted.iloc[:, 0]
+                session.df[column] = extracted.iloc[:, 0]
             else:
                 # Single series result
-                session.data_session.df[column] = extracted
+                session.df[column] = extracted
 
             affected_columns = [column]
             operation_desc = "extract_pattern"
@@ -348,7 +348,7 @@ async def split_column(
                 # Create new columns
                 for i, col_name in enumerate(column_names):
                     if i < len(split_data.columns):
-                        session.data_session.df[col_name] = split_data.iloc[:, i]
+                        session.df[col_name] = split_data.iloc[:, i]
                         columns_created.append(col_name)
 
                 affected_columns = columns_created
@@ -369,10 +369,10 @@ async def split_column(
             if isinstance(split_data, pd.DataFrame):
                 # This shouldn't happen with expand=False, but handle it
                 if part_index < len(split_data.columns):
-                    session.data_session.df[column] = split_data.iloc[:, part_index]
+                    session.df[column] = split_data.iloc[:, part_index]
                 else:
                     # Index out of range - fill with NaN
-                    session.data_session.df[column] = pd.NA
+                    session.df[column] = pd.NA
             else:
                 # Series of lists - extract specified part
                 def get_part(split_list):
@@ -380,13 +380,13 @@ async def split_column(
                         return split_list[part_index]
                     return pd.NA
 
-                session.data_session.df[column] = split_data.apply(get_part)
+                session.df[column] = split_data.apply(get_part)
 
             affected_columns = [column]
             operation_desc = f"split_keep_part_{part_index}"
 
             # Count successful splits (non-null results)
-            rows_affected = int(session.data_session.df[column].notna().sum())
+            rows_affected = int(session.df[column].notna().sum())
 
         session.record_operation(
             OperationType.TRANSFORM,
@@ -467,20 +467,20 @@ async def transform_column_case(
         str_col = df[column].astype(str)
 
         if transform == "upper":
-            session.data_session.df[column] = str_col.str.upper()
+            session.df[column] = str_col.str.upper()
         elif transform == "lower":
-            session.data_session.df[column] = str_col.str.lower()
+            session.df[column] = str_col.str.lower()
         elif transform == "title":
-            session.data_session.df[column] = str_col.str.title()
+            session.df[column] = str_col.str.title()
         elif transform == "capitalize":
-            session.data_session.df[column] = str_col.str.capitalize()
+            session.df[column] = str_col.str.capitalize()
         else:
             raise InvalidParameterError(
                 "transform", transform, "Supported transforms: upper, lower, title, capitalize"
             )
 
         # Count changes made (ignore null values)
-        changed_mask = original_data.astype(str).fillna("") != session.data_session.df[
+        changed_mask = original_data.astype(str).fillna("") != session.df[
             column
         ].astype(str).fillna("")
         changes_made = int(changed_mask.sum())
@@ -557,13 +557,13 @@ async def strip_column(
         # Apply strip operation
         if chars is None:
             # Strip whitespace
-            session.data_session.df[column] = df[column].astype(str).str.strip()
+            session.df[column] = df[column].astype(str).str.strip()
         else:
             # Strip specified characters
-            session.data_session.df[column] = df[column].astype(str).str.strip(chars)
+            session.df[column] = df[column].astype(str).str.strip(chars)
 
         # Count changes made
-        changed_mask = original_data.astype(str).fillna("") != session.data_session.df[
+        changed_mask = original_data.astype(str).fillna("") != session.df[
             column
         ].astype(str).fillna("")
         changes_made = int(changed_mask.sum())
@@ -642,10 +642,10 @@ async def fill_column_nulls(
             )
 
         # Fill null values
-        session.data_session.df[column] = df[column].fillna(value)
+        session.df[column] = df[column].fillna(value)
 
         # Verify fills worked
-        nulls_after = int(session.data_session.df[column].isna().sum())
+        nulls_after = int(session.df[column].isna().sum())
         filled_count = nulls_before - nulls_after
 
         session.record_operation(

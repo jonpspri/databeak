@@ -28,6 +28,8 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
                 continue
             if pd.isna(value):
                 record[key] = None
+            elif isinstance(value, pd.Timestamp):
+                record[key] = str(value)
             elif hasattr(value, "item"):
                 record[key] = value.item()
 
@@ -49,10 +51,10 @@ def get_data_summary(session_id: str) -> dict[str, Any]:
 
     if not session:
         raise SessionNotFoundError(session_id)
-    if session.data_session.df is None:
+    if session.df is None:
         raise NoDataLoadedError(session_id)
 
-    df = session.data_session.df
+    df = session.df
 
     return {
         "session_id": session_id,

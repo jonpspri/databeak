@@ -927,7 +927,7 @@ async def export_csv(
         session_manager = get_session_manager()
         session = session_manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError(f"Session not found or no data loaded: {session_id}")
 
         if ctx:
@@ -965,7 +965,7 @@ async def export_csv(
                     temp_file_path = file_path  # Track for cleanup on error
 
             path_obj = Path(file_path)
-            df = session.data_session.df
+            df = session.df
 
             if ctx:
                 await ctx.report_progress(0.5)
@@ -1107,9 +1107,9 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> Sessi
             session_id=session_id,
             created_at=info.created_at.isoformat(),
             last_modified=info.last_accessed.isoformat(),
-            data_loaded=session.data_session.df is not None,
-            row_count=info.row_count if session.data_session.df is not None else None,
-            column_count=info.column_count if session.data_session.df is not None else None,
+            data_loaded=session.df is not None,
+            row_count=info.row_count if session.df is not None else None,
+            column_count=info.column_count if session.df is not None else None,
             auto_save_enabled=session.auto_save_config.enabled,
         )
 

@@ -1,6 +1,5 @@
 """Tests specifically for encoding handling in io_server to reach 80% coverage."""
 
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -121,7 +120,10 @@ class TestLoadCsvEncodingFallbacks:
 
         try:
             # Mock to make memory check fail
-            with patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.0001), pytest.raises(ToolError, match="memory limit"):
+            with (
+                patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.0001),
+                pytest.raises(ToolError, match="memory limit"),
+            ):
                 await load_csv(file_path=temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
@@ -139,7 +141,10 @@ class TestLoadCsvEncodingFallbacks:
 
         try:
             # Mock MAX_ROWS to trigger limit
-            with patch("src.databeak.servers.io_server.MAX_ROWS", 5), pytest.raises(ToolError, match="rows exceeds limit"):
+            with (
+                patch("src.databeak.servers.io_server.MAX_ROWS", 5),
+                pytest.raises(ToolError, match="rows exceeds limit"),
+            ):
                 await load_csv(
                     file_path=temp_path, encoding="ascii"
                 )  # Wrong encoding to trigger fallback
@@ -185,7 +190,10 @@ class TestLoadCsvFromUrlFallbacks:
         # First fails, second returns large df
         mock_read_csv.side_effect = [UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"), large_df]
 
-        with patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001), pytest.raises(ToolError, match="memory limit"):
+        with (
+            patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
+            pytest.raises(ToolError, match="memory limit"),
+        ):
             await load_csv_from_url(url="http://example.com/data.csv", encoding="utf-8")
 
     @patch("pandas.read_csv")
@@ -197,7 +205,10 @@ class TestLoadCsvFromUrlFallbacks:
         # First fails, second returns large df
         mock_read_csv.side_effect = [UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"), large_df]
 
-        with patch("src.databeak.servers.io_server.MAX_ROWS", 100), pytest.raises(ToolError, match="rows exceeds limit"):
+        with (
+            patch("src.databeak.servers.io_server.MAX_ROWS", 100),
+            pytest.raises(ToolError, match="rows exceeds limit"),
+        ):
             await load_csv_from_url(url="http://example.com/data.csv", encoding="utf-8")
 
     @patch("pandas.read_csv")

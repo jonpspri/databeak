@@ -181,7 +181,7 @@ async def select_columns(
         # Track counts before modification
         columns_before = len(df.columns)
 
-        session.data_session.df = df[columns].copy()
+        session.df = df[columns].copy()
         session.record_operation(
             OperationType.SELECT,
             {
@@ -241,7 +241,7 @@ async def rename_columns(
             raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
 
         # Apply renaming
-        session.data_session.df = df.rename(columns=mapping)
+        session.df = df.rename(columns=mapping)
         session.record_operation(
             OperationType.RENAME,
             {"mapping": mapping, "renamed_count": len(mapping)},
@@ -302,7 +302,7 @@ async def add_column(
         if formula:
             try:
                 # Use pandas eval to safely evaluate formula
-                session.data_session.df[name] = df.eval(formula)
+                df[name] = df.eval(formula)
             except Exception as e:
                 raise InvalidParameterError("formula", formula, f"Invalid formula: {e}") from e
         elif isinstance(value, list):
@@ -312,10 +312,10 @@ async def add_column(
                     str(value),
                     f"List length ({len(value)}) must match row count ({len(df)})",
                 )
-            session.data_session.df[name] = value
+            df[name] = value
         else:
             # Single value for all rows
-            session.data_session.df[name] = value
+            df[name] = value
 
         session.record_operation(
             OperationType.ADD_COLUMN,
@@ -377,7 +377,7 @@ async def remove_columns(
         if missing_cols:
             raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
 
-        session.data_session.df = df.drop(columns=columns)
+        session.df = df.drop(columns=columns)
         session.record_operation(
             OperationType.REMOVE_COLUMN,
             {"columns": columns, "count": len(columns)},
@@ -458,16 +458,16 @@ async def change_column_type(
         try:
             if dtype == "datetime":
                 # Special handling for datetime conversion
-                session.data_session.df[column] = pd.to_datetime(df[column], errors=errors)
+                df[column] = pd.to_datetime(df[column], errors=errors)
             else:
                 # General type conversion
                 if errors == "coerce":
                     if dtype in ["int", "float"]:
-                        session.data_session.df[column] = pd.to_numeric(df[column], errors="coerce")
+                        df[column] = pd.to_numeric(df[column], errors="coerce")
                     else:
-                        session.data_session.df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+                        df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
                 else:
-                    session.data_session.df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+                    df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
 
         except (ValueError, TypeError) as e:
             if errors == "raise":
@@ -477,7 +477,7 @@ async def change_column_type(
             # If errors='coerce', the conversion has already handled invalid values
 
         # Track after state
-        null_count_after = session.data_session.df[column].isna().sum()
+        null_count_after = df[column].isna().sum()
 
         session.record_operation(
             OperationType.CHANGE_TYPE,
@@ -568,27 +568,30 @@ async def update_column(
         ):
             if isinstance(operation, ReplaceOperation):
                 operation_type = "replace"
-                session.data_session.df[column] = df[column].replace(
-                    operation.pattern, operation.replacement
-                )
+                df[column] = df[column].replace(operation.pattern, operation.replacement)
             elif isinstance(operation, MapOperation):
                 operation_type = "map"
-                session.data_session.df[column] = df[column].map(operation.mapping)
+                df[column] = df[column].map(operation.mapping)
             elif isinstance(operation, ApplyOperation):
                 operation_type = "apply"
                 expr = operation.expression
 
                 # Handle string operations that pandas.eval can't handle
-                if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                if (
+                    ".upper()" in expr
+                    or ".lower()" in expr
+                    or ".strip()" in expr
+                    or ".title()" in expr
+                ):
                     # String operations
                     if expr == "x.upper()":
-                        session.data_session.df[column] = df[column].str.upper()
+                        df[column] = df[column].str.upper()
                     elif expr == "x.lower()":
-                        session.data_session.df[column] = df[column].str.lower()
+                        df[column] = df[column].str.lower()
                     elif expr == "x.strip()":
-                        session.data_session.df[column] = df[column].str.strip()
+                        df[column] = df[column].str.strip()
                     elif expr == "x.title()":
-                        session.data_session.df[column] = df[column].str.title()
+                        df[column] = df[column].str.title()
                     else:
                         raise InvalidParameterError(
                             "expression",
@@ -601,9 +604,7 @@ async def update_column(
                         # Replace 'x' with the column reference for pandas.eval
                         safe_expr = expr.replace("x", f"`{column}`")
                         # pandas.eval is safe - it only allows mathematical operations
-                        session.data_session.df[column] = session.data_session.df.eval(
-                            safe_expr, engine="python"
-                        )
+                        df[column] = df.eval(safe_expr, engine="python")
                     except Exception as e:
                         raise InvalidParameterError(
                             "expression",
@@ -612,7 +613,7 @@ async def update_column(
                         ) from e
             elif isinstance(operation, FillNaOperation):
                 operation_type = "fillna"
-                session.data_session.df[column] = df[column].fillna(operation.value)
+                df[column] = df[column].fillna(operation.value)
 
         else:
             # Handle legacy format or dict input
@@ -623,29 +624,34 @@ async def update_column(
                         if operation["type"] == "replace":
                             replace_op = ReplaceOperation(**operation)
                             operation_type = "replace"
-                            session.data_session.df[column] = df[column].replace(
+                            df[column] = df[column].replace(
                                 replace_op.pattern, replace_op.replacement
                             )
                         elif operation["type"] == "map":
                             map_op = MapOperation(**operation)
                             operation_type = "map"
-                            session.data_session.df[column] = df[column].map(map_op.mapping)
+                            df[column] = df[column].map(map_op.mapping)
                         elif operation["type"] == "apply":
                             apply_op = ApplyOperation(**operation)
                             operation_type = "apply"
                             expr = apply_op.expression
 
                             # Handle string operations that pandas.eval can't handle
-                            if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                            if (
+                                ".upper()" in expr
+                                or ".lower()" in expr
+                                or ".strip()" in expr
+                                or ".title()" in expr
+                            ):
                                 # String operations
                                 if expr == "x.upper()":
-                                    session.data_session.df[column] = df[column].str.upper()
+                                    df[column] = df[column].str.upper()
                                 elif expr == "x.lower()":
-                                    session.data_session.df[column] = df[column].str.lower()
+                                    df[column] = df[column].str.lower()
                                 elif expr == "x.strip()":
-                                    session.data_session.df[column] = df[column].str.strip()
+                                    df[column] = df[column].str.strip()
                                 elif expr == "x.title()":
-                                    session.data_session.df[column] = df[column].str.title()
+                                    df[column] = df[column].str.title()
                                 else:
                                     raise InvalidParameterError(
                                         "expression",
@@ -658,9 +664,7 @@ async def update_column(
                                     # Replace 'x' with the column reference for pandas.eval
                                     safe_expr = expr.replace("x", f"`{column}`")
                                     # pandas.eval is safe - it only allows mathematical operations
-                                    session.data_session.df[column] = session.data_session.df.eval(
-                                        safe_expr, engine="python"
-                                    )
+                                    df[column] = df.eval(safe_expr, engine="python")
                                 except Exception as e:
                                     raise InvalidParameterError(
                                         "expression",
@@ -670,7 +674,7 @@ async def update_column(
                         elif operation["type"] == "fillna":
                             fillna_op = FillNaOperation(**operation)
                             operation_type = "fillna"
-                            session.data_session.df[column] = df[column].fillna(fillna_op.value)
+                            df[column] = df[column].fillna(fillna_op.value)
                         else:
                             raise InvalidParameterError(
                                 "type",
@@ -693,7 +697,7 @@ async def update_column(
                                 f"{update_request.pattern}/{update_request.replacement}",
                                 "Both pattern and replacement required for replace operation",
                             )
-                        session.data_session.df[column] = df[column].replace(
+                        df[column] = df[column].replace(
                             update_request.pattern, update_request.replacement
                         )
                     elif update_request.operation == "map":
@@ -703,7 +707,7 @@ async def update_column(
                                 str(update_request.value),
                                 "Dictionary mapping required for map operation",
                             )
-                        session.data_session.df[column] = df[column].map(update_request.value)
+                        df[column] = df[column].map(update_request.value)
                     elif update_request.operation == "apply":
                         if update_request.value is None:
                             raise InvalidParameterError(
@@ -715,16 +719,21 @@ async def update_column(
                             expr = update_request.value
 
                             # Handle string operations that pandas.eval can't handle
-                            if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                            if (
+                                ".upper()" in expr
+                                or ".lower()" in expr
+                                or ".strip()" in expr
+                                or ".title()" in expr
+                            ):
                                 # String operations
                                 if expr == "x.upper()":
-                                    session.data_session.df[column] = df[column].str.upper()
+                                    df[column] = df[column].str.upper()
                                 elif expr == "x.lower()":
-                                    session.data_session.df[column] = df[column].str.lower()
+                                    df[column] = df[column].str.lower()
                                 elif expr == "x.strip()":
-                                    session.data_session.df[column] = df[column].str.strip()
+                                    df[column] = df[column].str.strip()
                                 elif expr == "x.title()":
-                                    session.data_session.df[column] = df[column].str.title()
+                                    df[column] = df[column].str.title()
                                 else:
                                     raise InvalidParameterError(
                                         "value",
@@ -737,9 +746,7 @@ async def update_column(
                                     # Replace 'x' with the column reference for pandas.eval
                                     safe_expr = expr.replace("x", f"`{column}`")
                                     # pandas.eval is safe - it only allows mathematical operations
-                                    session.data_session.df[column] = session.data_session.df.eval(
-                                        safe_expr, engine="python"
-                                    )
+                                    df[column] = df.eval(safe_expr, engine="python")
                                 except Exception as e:
                                     raise InvalidParameterError(
                                         "value",
@@ -747,7 +754,7 @@ async def update_column(
                                         f"Invalid expression. Use 'x' to reference column values. Error: {e}",
                                     ) from e
                         else:
-                            session.data_session.df[column] = df[column].apply(update_request.value)
+                            df[column] = df[column].apply(update_request.value)
                     elif update_request.operation == "fillna":
                         if update_request.value is None:
                             raise InvalidParameterError(
@@ -755,7 +762,7 @@ async def update_column(
                                 str(update_request.value),
                                 "Fill value required for fillna operation",
                             )
-                        session.data_session.df[column] = df[column].fillna(update_request.value)
+                        df[column] = df[column].fillna(update_request.value)
                     else:
                         raise InvalidParameterError(
                             "operation",
@@ -769,7 +776,7 @@ async def update_column(
                 # ... (same logic as above legacy handling)
 
         # Track changes
-        null_count_after = session.data_session.df[column].isna().sum()
+        null_count_after = df[column].isna().sum()
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,

@@ -63,7 +63,7 @@ class CSVSession:
         self.operations_history: list[dict[str, Any]] = []  # Keep for backward compatibility
 
         # Core components
-        self.data_session = DataSession(self.session_id)
+        self._data_session = DataSession(self.session_id)
         self.lifecycle = SessionLifecycle(self.session_id, ttl_minutes)
 
         # Auto-save configuration
@@ -89,15 +89,36 @@ class CSVSession:
     def update_access_time(self) -> None:
         """Update the last accessed time."""
         self.lifecycle.update_access_time()
-        self.data_session.update_access_time()
+        self._data_session.update_access_time()
 
     def is_expired(self) -> bool:
         """Check if session has expired."""
         return self.lifecycle.is_expired()
 
+    @property
+    def df(self) -> pd.DataFrame | None:
+        """Get or set the DataFrame."""
+        return self._data_session.df
+    
+    @df.setter
+    def df(self, new_df: pd.DataFrame) -> None:
+        """Set the DataFrame."""
+        self._data_session.df = new_df
+        self.update_access_time()
+    
+    @df.deleter
+    def df(self) -> None:
+        """Clear the DataFrame."""
+        self._data_session.df = None
+        self.update_access_time()
+
+    def has_data(self) -> bool:
+        """Check if data is loaded."""
+        return self._data_session.has_data()
+
     def load_data(self, df: pd.DataFrame, file_path: str | None = None) -> None:
         """Load data into the session."""
-        self.data_session.load_data(df, file_path)
+        self._data_session.load_data(df, file_path)
         self.update_access_time()
         self.record_operation(OperationType.LOAD, {"file_path": file_path, "shape": df.shape})
 
@@ -107,7 +128,7 @@ class CSVSession:
 
     def get_info(self) -> SessionInfo:
         """Get session information."""
-        data_info = self.data_session.get_data_info()
+        data_info = self._data_session.get_data_info()
         lifecycle_info = self.lifecycle.get_lifecycle_info()
 
         return SessionInfo(
@@ -142,32 +163,32 @@ class CSVSession:
         self.update_access_time()
 
         # New persistent history
-        if self.history_manager and self.data_session.df is not None:
+        if self.history_manager and self._data_session.df is not None:
             self.history_manager.add_operation(
                 operation_type=operation_value,
                 details=details,
-                current_data=self.data_session.df,
+                current_data=self._data_session.df,
                 metadata={
-                    "file_path": self.data_session.file_path,
+                    "file_path": self._data_session.file_path,
                     "shape": (
-                        self.data_session.df.shape if self.data_session.df is not None else (0, 0)
+                        self._data_session.df.shape if self._data_session.df is not None else (0, 0)
                     ),
                 },
             )
 
         # Mark that auto-save is needed
-        self.data_session.metadata["needs_autosave"] = True
+        self._data_session.metadata["needs_autosave"] = True
 
     async def trigger_auto_save_if_needed(self) -> dict[str, Any] | None:
         """Trigger auto-save after operation if configured."""
-        if self.auto_save_manager.should_save_after_operation() and self.data_session.metadata.get(
+        if self.auto_save_manager.should_save_after_operation() and self._data_session.metadata.get(
             "needs_autosave"
         ):
             result = await self.auto_save_manager.trigger_save(
                 self._save_callback, "after_operation"
             )
             if result.get("success"):
-                self.data_session.metadata["needs_autosave"] = False
+                self._data_session.metadata["needs_autosave"] = False
             return result
         return None
 
@@ -176,7 +197,7 @@ class CSVSession:
     ) -> dict[str, Any]:
         """Callback for auto-save operations."""
         try:
-            if self.data_session.df is None:
+            if self._data_session.df is None:
                 return {"success": False, "error": "No data to save"}
 
             # Handle different export formats
@@ -184,35 +205,35 @@ class CSVSession:
             path_obj.parent.mkdir(parents=True, exist_ok=True)
 
             if format == ExportFormat.CSV:
-                self.data_session.df.to_csv(path_obj, index=False, encoding=encoding)
+                self._data_session.df.to_csv(path_obj, index=False, encoding=encoding)
             elif format == ExportFormat.TSV:
-                self.data_session.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
+                self._data_session.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
             elif format == ExportFormat.JSON:
-                self.data_session.df.to_json(path_obj, orient="records", indent=2)
+                self._data_session.df.to_json(path_obj, orient="records", indent=2)
             elif format == ExportFormat.EXCEL:
-                self.data_session.df.to_excel(path_obj, index=False)
+                self._data_session.df.to_excel(path_obj, index=False)
             elif format == ExportFormat.PARQUET:
-                self.data_session.df.to_parquet(path_obj, index=False)
+                self._data_session.df.to_parquet(path_obj, index=False)
             else:
                 return {"success": False, "error": f"Unsupported format: {format}"}
 
             return {
                 "success": True,
                 "file_path": str(path_obj),
-                "rows": len(self.data_session.df),
-                "columns": len(self.data_session.df.columns),
+                "rows": len(self._data_session.df),
+                "columns": len(self._data_session.df.columns),
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
     def rollback(self, steps: int = 1) -> bool:
         """Rollback operations by specified number of steps."""
-        if self.data_session.original_df is None:
+        if self._data_session.original_df is None:
             return False
 
         if steps >= len(self.operations_history):
             # Rollback to original state
-            self.data_session.df = self.data_session.original_df.copy()
+            self._data_session.df = self._data_session.original_df.copy()
             self.operations_history = []
             return True
 
@@ -228,7 +249,7 @@ class CSVSession:
             self.auto_save_manager = AutoSaveManager(
                 self.session_id,
                 self.auto_save_config,
-                self.data_session.file_path,  # Pass the original file path
+                self._data_session.file_path,  # Pass the original file path
             )
 
             # Start periodic save if needed
@@ -272,7 +293,7 @@ class CSVSession:
             operation, data_snapshot = self.history_manager.undo()
 
             if data_snapshot is not None and operation is not None:
-                self.data_session.df = data_snapshot
+                self._data_session.df = data_snapshot
 
                 # Trigger auto-save if configured
                 if self.auto_save_manager.should_save_after_operation():
@@ -310,7 +331,7 @@ class CSVSession:
             operation, data_snapshot = self.history_manager.redo()
 
             if data_snapshot is not None and operation is not None:
-                self.data_session.df = data_snapshot
+                self._data_session.df = data_snapshot
 
                 # Trigger auto-save if configured
                 if self.auto_save_manager.should_save_after_operation():
@@ -380,7 +401,7 @@ class CSVSession:
                     "success": True,
                     "message": f"Restored to operation {operation_id}",
                     "shape": (
-                        self.data_session.df.shape if self.data_session.df is not None else (0, 0)
+                        self._data_session.df.shape if self._data_session.df is not None else (0, 0)
                     ),
                 }
             else:
@@ -409,7 +430,7 @@ class CSVSession:
             self.history_manager.clear_history()
 
         # Clear data session
-        self.data_session.clear_data()
+        self._data_session.clear_data()
         self.operations_history.clear()
 
 
@@ -463,7 +484,7 @@ class SessionManager:
         return [
             session.get_info()
             for session in self.sessions.values()
-            if session.data_session.has_data()
+            if session.has_data()
         ]
 
     def _cleanup_expired(self) -> None:
@@ -499,7 +520,7 @@ class SessionManager:
             "session_id": session.session_id,
             "created_at": session.lifecycle.created_at.isoformat(),
             "operations": session.operations_history,
-            "metadata": session.data_session.metadata,
+            "metadata": session._data_session.metadata,
         }
 
 

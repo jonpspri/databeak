@@ -23,7 +23,7 @@ from src.databeak.servers.statistics_server import (
 def mock_session_with_data():
     """Create mock session with diverse test data."""
     session = Mock()
-    session.data_session.df = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "numeric1": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             "numeric2": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
@@ -36,8 +36,13 @@ def mock_session_with_data():
             "mostly_null": [1, None, None, None, 5, None, None, None, None, 10],
         }
     )
-    session.data_session.has_data.return_value = True
-    session.data_session.record_operation = Mock()
+    # Configure mock to use new API
+    session._df = df
+    type(session).df = property(
+        fget=lambda self: self._df, fset=lambda self, value: setattr(self, "_df", value)
+    )
+    session.has_data.return_value = True
+    session.record_operation = Mock()
     return session
 
 
@@ -45,9 +50,14 @@ def mock_session_with_data():
 def mock_empty_session():
     """Create mock session with empty dataframe."""
     session = Mock()
-    session.data_session.df = pd.DataFrame()
-    session.data_session.has_data.return_value = True
-    session.data_session.record_operation = Mock()
+    df = pd.DataFrame()
+    # Configure mock to use new API
+    session._df = df
+    type(session).df = property(
+        fget=lambda self: self._df, fset=lambda self, value: setattr(self, "_df", value)
+    )
+    session.has_data.return_value = True
+    session.record_operation = Mock()
     return session
 
 

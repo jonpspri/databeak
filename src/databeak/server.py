@@ -74,11 +74,11 @@ async def get_csv_data(session_id: str) -> dict[str, Any]:
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
 
-    if not session or not session.data_session.has_data():
+    if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}
 
     # Use enhanced preview for better AI accessibility
-    df = session.data_session.df
+    df = session.df
     assert df is not None  # Type guard since has_data() returned True
 
     preview_data = create_data_preview_with_indices(df, 10)
@@ -100,10 +100,10 @@ async def get_csv_schema(session_id: str) -> dict[str, Any]:
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
 
-    if not session or not session.data_session.has_data():
+    if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}
 
-    df = session.data_session.df
+    df = session.df
     assert df is not None  # Type guard since has_data() returned True
 
     return {
@@ -162,10 +162,10 @@ async def get_csv_preview(session_id: str) -> dict[str, Any]:
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
 
-    if not session or not session.data_session.has_data():
+    if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}
 
-    df = session.data_session.df
+    df = session.df
     assert df is not None  # Type guard since has_data() returned True
 
     preview_data = create_data_preview_with_indices(df, 10)

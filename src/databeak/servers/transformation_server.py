@@ -106,10 +106,10 @@ def filter_rows(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
         rows_before = len(df)
 
         # Initialize mask based on mode: AND starts True, OR starts False
@@ -171,8 +171,8 @@ def filter_rows(
             mask = mask & condition_mask if mode == "and" else mask | condition_mask
 
         # Apply filter
-        session.data_session.df = df[mask].reset_index(drop=True)
-        rows_after = len(session.data_session.df)
+        session.df = df[mask].reset_index(drop=True)
+        rows_after = len(session.df)
 
         # Record operation
         session.record_operation(
@@ -237,10 +237,10 @@ def sort_data(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
 
         # Parse columns into names and ascending flags
         sort_columns: list[str] = []
@@ -272,7 +272,7 @@ def sort_data(
             raise ToolError(f"Columns not found: {missing_cols}")
 
         # Perform sort
-        session.data_session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
+        session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
             drop=True
         )
 
@@ -336,10 +336,10 @@ def remove_duplicates(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
         rows_before = len(df)
 
         # Validate subset columns if provided
@@ -352,11 +352,11 @@ def remove_duplicates(
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
 
         # Remove duplicates
-        session.data_session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
+        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
             drop=True
         )
 
-        rows_after = len(session.data_session.df)
+        rows_after = len(session.df)
         rows_removed = rows_before - rows_after
 
         # Record operation
@@ -431,10 +431,10 @@ def fill_missing_values(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
         rows_before = len(df)
 
         # Validate and set target columns
@@ -451,50 +451,50 @@ def fill_missing_values(
 
         # Apply strategy
         if strategy == "drop":
-            session.data_session.df = df.dropna(subset=target_cols)
+            session.df = df.dropna(subset=target_cols)
         elif strategy == "fill":
             if value is None:
                 raise ToolError("Value required for 'fill' strategy")
-            session.data_session.df = df.copy()
-            session.data_session.df[target_cols] = df[target_cols].fillna(value)
+            session.df = df.copy()
+            session.df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
-            session.data_session.df = df.copy()
-            session.data_session.df[target_cols] = df[target_cols].ffill()
+            session.df = df.copy()
+            session.df[target_cols] = df[target_cols].ffill()
         elif strategy == "backward":
-            session.data_session.df = df.copy()
-            session.data_session.df[target_cols] = df[target_cols].bfill()
+            session.df = df.copy()
+            session.df[target_cols] = df[target_cols].bfill()
         elif strategy == "mean":
-            session.data_session.df = df.copy()
+            session.df = df.copy()
             for col in target_cols:
                 if pd.api.types.is_numeric_dtype(df[col]):
                     mean_val = df[col].mean()
                     if not pd.isna(mean_val):
-                        session.data_session.df[col] = df[col].fillna(mean_val)
+                        session.df[col] = df[col].fillna(mean_val)
                 else:
                     logger.warning(f"Column '{col}' is not numeric, skipping mean fill")
         elif strategy == "median":
-            session.data_session.df = df.copy()
+            session.df = df.copy()
             for col in target_cols:
                 if pd.api.types.is_numeric_dtype(df[col]):
                     median_val = df[col].median()
                     if not pd.isna(median_val):
-                        session.data_session.df[col] = df[col].fillna(median_val)
+                        session.df[col] = df[col].fillna(median_val)
                 else:
                     logger.warning(f"Column '{col}' is not numeric, skipping median fill")
         elif strategy == "mode":
-            session.data_session.df = df.copy()
+            session.df = df.copy()
             for col in target_cols:
                 mode_val = df[col].mode()
                 if len(mode_val) > 0:
-                    session.data_session.df[col] = df[col].fillna(mode_val[0])
+                    session.df[col] = df[col].fillna(mode_val[0])
         else:
             raise ToolError(
                 f"Invalid strategy '{strategy}'. Valid strategies: "
                 "drop, fill, forward, backward, mean, median, mode"
             )
 
-        rows_after = len(session.data_session.df)
-        missing_after = session.data_session.df[target_cols].isna().sum().sum()
+        rows_after = len(session.df)
+        missing_after = session.df[target_cols].isna().sum().sum()
         values_filled = missing_before - missing_after
 
         # Record operation

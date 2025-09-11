@@ -51,6 +51,8 @@ except ImportError:
             for key, value in row.items():
                 if pd.isna(value):
                     row[key] = None
+                elif isinstance(value, pd.Timestamp):
+                    row[key] = str(value)
                 elif hasattr(value, "item"):
                     row[key] = value.item()
             row["__row_index__"] = i
@@ -181,10 +183,10 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
     if not session:
         raise SessionNotFoundError(session_id)
-    if not session.data_session.has_data():
+    if not session.has_data():
         raise NoDataLoadedError(session_id)
 
-    df = session.data_session.df
+    df = session.df
     assert df is not None  # Type guard since has_data() was checked
     return session, df
 
@@ -240,10 +242,10 @@ async def detect_outliers(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or not session.data_session.has_data():
+        if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
-        df = session.data_session.df
+        df = session.df
         assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Select numeric columns
@@ -402,10 +404,10 @@ async def profile_data(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or not session.data_session.has_data():
+        if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
-        df = session.data_session.df
+        df = session.df
         assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Create ProfileInfo for each column (simplified to match model)
@@ -520,10 +522,10 @@ async def group_by_aggregate(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or not session.data_session.has_data():
+        if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
-        df = session.data_session.df
+        df = session.df
         assert df is not None  # Type guard: has_data() ensures df is not None
 
         # Validate group by columns
@@ -943,6 +945,8 @@ async def inspect_data_around(
                     continue
                 if pd.isna(value):
                     record[key] = None
+                elif isinstance(value, pd.Timestamp):
+                    record[key] = str(value)
                 elif hasattr(value, "item"):
                     record[key] = value.item()
 

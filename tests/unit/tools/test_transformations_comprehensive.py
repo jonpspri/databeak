@@ -42,7 +42,7 @@ from src.databeak.tools.transformations import (
 def mock_session():
     """Create a mock session with test data."""
     session = Mock()
-    session.data_session.df = pd.DataFrame(
+    df = pd.DataFrame(
         {
             "name": ["Alice", "Bob", "Charlie", "Diana", "Eve"],
             "age": [25, 30, 35, 28, 32],
@@ -54,8 +54,24 @@ def mock_session():
             "score": [85.5, 92.3, None, 88.7, 79.4],
         }
     )
-    session.data_session.has_data.return_value = True
-    session.data_session.record_operation = Mock()
+    # Configure the mock to use the new API
+    # Store the df reference
+    session._df = df
+
+    # Create a property mock that returns the stored df
+    def get_df():
+        return session._df
+
+    def set_df(value):
+        session._df = value
+
+    # Set up the property mock
+    type(session).df = property(
+        fget=lambda self: self._df, fset=lambda self, value: setattr(self, "_df", value)
+    )
+
+    session.has_data.return_value = True
+    session.record_operation = Mock()
     return session
 
 
@@ -249,14 +265,14 @@ class TestSortData:
         result = await sort_data("test-session", columns=["age"])
         assert result.success is True
         assert result.sorted_by == ["age"]
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.iloc[0]["age"] == 25
 
     async def test_sort_descending(self, mock_manager):
         """Test sorting in descending order."""
         result = await sort_data("test-session", columns=[{"column": "salary", "ascending": False}])
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.iloc[0]["salary"] == 70000
 
     async def test_sort_multiple_columns(self, mock_manager):
@@ -280,7 +296,7 @@ class TestColumnOperations:
         result = await add_column("test-session", "new_col", value="default")
         assert result.success is True
         assert "new_col" in result.columns_affected
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert "new_col" in df.columns
         assert all(df["new_col"] == "default")
 
@@ -289,14 +305,14 @@ class TestColumnOperations:
         values = [1, 2, 3, 4, 5]
         result = await add_column("test-session", "numbers", value=values)
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert list(df["numbers"]) == values
 
     async def test_add_column_with_formula(self, mock_manager):
         """Test adding column with formula."""
         result = await add_column("test-session", "age_doubled", formula="age * 2")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["age_doubled"].iloc[0] == 50
 
     async def test_add_column_existing(self, mock_manager):
@@ -311,7 +327,7 @@ class TestColumnOperations:
         assert result.success is True
         assert "email" in result.columns_affected
         assert "phone" in result.columns_affected
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert "email" not in df.columns
         assert "phone" not in df.columns
 
@@ -323,8 +339,9 @@ class TestColumnOperations:
     async def test_rename_columns(self, mock_manager):
         """Test renaming columns."""
         result = await rename_columns("test-session", {"name": "full_name", "age": "years"})
-        assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        assert "session_id" in result
+        assert result["renamed"] == {"name": "full_name", "age": "years"}
+        df = mock_manager.return_value.get_session.return_value.df
         assert "full_name" in df.columns
         assert "years" in df.columns
         assert "name" not in df.columns
@@ -333,22 +350,22 @@ class TestColumnOperations:
     async def test_select_columns(self, mock_manager):
         """Test selecting specific columns."""
         result = await select_columns("test-session", ["name", "age", "city"])
-        assert result.success is True
-        assert result.selected_columns == ["name", "age", "city"]
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        assert "session_id" in result
+        assert result["selected_columns"] == ["name", "age", "city"]
+        df = mock_manager.return_value.get_session.return_value.df
         assert list(df.columns) == ["name", "age", "city"]
 
     async def test_change_column_type_to_string(self, mock_manager):
         """Test changing column type to string."""
         result = await change_column_type("test-session", "age", "str")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["age"].dtype == object
 
     async def test_change_column_type_to_int(self, mock_manager):
         """Test changing column type to int."""
         # Create a numeric column that can be converted to int
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["numeric_col"] = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0])
 
         result = await change_column_type("test-session", "numeric_col", "int")
@@ -365,7 +382,7 @@ class TestColumnOperations:
     async def test_change_column_type_to_bool(self, mock_manager):
         """Test changing column type to bool."""
         # Create a column with 0s and 1s
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["binary"] = [0, 1, 0, 1, 1]
         result = await change_column_type("test-session", "binary", "bool")
         assert result.success is True
@@ -373,7 +390,7 @@ class TestColumnOperations:
 
     async def test_change_column_type_to_datetime(self, mock_manager):
         """Test changing column type to datetime."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["date"] = ["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04", "2024-01-05"]
         result = await change_column_type("test-session", "date", "datetime")
         assert result.success is True
@@ -422,14 +439,14 @@ class TestCellOperations:
         assert result.success is True
         assert result.old_value == 25
         assert result.new_value == 26
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.loc[0, "age"] == 26
 
     async def test_set_cell_value_null(self, mock_manager):
         """Test setting cell to null."""
         result = await set_cell_value("test-session", 0, "email", None)
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert pd.isna(df.loc[0, "email"])
 
 
@@ -457,7 +474,7 @@ class TestRowOperations:
         result = await update_row("test-session", 0, new_data)
         assert result.success is True
         assert result.row_index == 0
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.loc[0, "name"] == "Alice Updated"
         assert df.loc[0, "age"] == 26
         assert df.loc[0, "city"] == "Boston"
@@ -468,7 +485,7 @@ class TestRowOperations:
         result = await insert_row("test-session", 2, new_row)
         assert result.success is True
         assert result.row_index == 2
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.iloc[2]["name"] == "Frank"
         assert len(df) == 6
 
@@ -477,7 +494,7 @@ class TestRowOperations:
         new_row = {"name": "Grace", "age": 45, "city": "Miami"}
         result = await insert_row("test-session", -1, new_row)
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df.iloc[-1]["name"] == "Grace"
         assert len(df) == 6
 
@@ -486,7 +503,7 @@ class TestRowOperations:
         result = await delete_row("test-session", 2)
         assert result.success is True
         assert result.row_index == 2
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert len(df) == 4
         assert "Charlie" not in df["name"].values
 
@@ -539,7 +556,7 @@ class TestDataCleaning:
     async def test_remove_duplicates_subset(self, mock_manager):
         """Test removing duplicates based on subset of columns."""
         # Add a row with duplicate city
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df.loc[len(df)] = [
             "New Person",
             50,
@@ -557,7 +574,7 @@ class TestDataCleaning:
 
     async def test_remove_duplicates_keep_last(self, mock_manager):
         """Test removing duplicates keeping last occurrence."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         duplicate = df.iloc[0].copy()
         df.loc[len(df)] = duplicate
 
@@ -569,14 +586,14 @@ class TestDataCleaning:
         """Test filling missing values with mean."""
         result = await fill_missing_values("test-session", columns=["score"], strategy="mean")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["score"].isna().sum() == 0
 
     async def test_fill_missing_values_median(self, mock_manager):
         """Test filling missing values with median."""
         result = await fill_missing_values("test-session", columns=["score"], strategy="median")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["score"].isna().sum() == 0
 
     async def test_fill_missing_values_mode(self, mock_manager):
@@ -590,7 +607,7 @@ class TestDataCleaning:
             "test-session", columns=["email"], strategy="fill", value="unknown@test.com"
         )
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["email"].isna().sum() == 0
 
     async def test_fill_missing_values_forward(self, mock_manager):
@@ -607,7 +624,7 @@ class TestDataCleaning:
         """Test filling nulls in specific column."""
         result = await fill_column_nulls("test-session", "email", "no-email@test.com")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["email"].isna().sum() == 0
 
 
@@ -617,7 +634,7 @@ class TestStringOperations:
 
     async def test_split_column(self, mock_manager):
         """Test splitting column by delimiter."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["full_address"] = [
             "123 Main St, NYC",
             "456 Oak Ave, LA",
@@ -635,7 +652,7 @@ class TestStringOperations:
 
     async def test_split_column_expand(self, mock_manager):
         """Test splitting column with expand."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
 
         result = await split_column("test-session", "phone", "-", expand_to_columns=True)
         assert result.success is True
@@ -645,7 +662,7 @@ class TestStringOperations:
 
     async def test_strip_column(self, mock_manager):
         """Test stripping whitespace from column."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["name"] = ["  Alice  ", " Bob", "Charlie ", " Diana ", "Eve"]
 
         result = await strip_column("test-session", "name")
@@ -664,19 +681,19 @@ class TestStringOperations:
         """Test transforming column to uppercase."""
         result = await transform_column_case("test-session", "name", "upper")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["name"].iloc[0] == "ALICE"
 
     async def test_transform_column_case_lower(self, mock_manager):
         """Test transforming column to lowercase."""
         result = await transform_column_case("test-session", "name", "lower")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert df["name"].iloc[0] == "alice"
 
     async def test_transform_column_case_title(self, mock_manager):
         """Test transforming column to title case."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["name"] = ["john doe", "jane smith", "bob johnson", "alice brown", "eve davis"]
 
         result = await transform_column_case("test-session", "name", "title")
@@ -687,7 +704,7 @@ class TestStringOperations:
         """Test replacing values in column."""
         result = await replace_in_column("test-session", "city", "NYC", "New York City")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         assert "New York City" in df["city"].values
         assert "NYC" not in df["city"].values
 
@@ -697,7 +714,7 @@ class TestStringOperations:
             "test-session", "phone", r"(\d{3})-(\d{3})-(\d{4})", r"(\1) \2-\3", regex=True
         )
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         # Check that phone numbers are reformatted
         assert "(" in str(df["phone"].iloc[0])
 
@@ -710,7 +727,7 @@ class TestUpdateColumn:
         """Test updating column with fill operation."""
         result = await update_column("test-session", "email", "fill", value="updated@test.com")
         assert result.success is True
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         # Check that null values were filled
         assert df["email"].notna().all()
 
@@ -789,7 +806,7 @@ class TestErrorHandling:
 
     async def test_invalid_dtype_conversion(self, mock_manager):
         """Test invalid dtype conversion."""
-        df = mock_manager.return_value.get_session.return_value.data_session.df
+        df = mock_manager.return_value.get_session.return_value.df
         df["text"] = ["abc", "def", "ghi", "jkl", "mno"]
 
         with pytest.raises(ToolError) as exc_info:

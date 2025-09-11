@@ -46,10 +46,10 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
     if not session:
         raise SessionNotFoundError(session_id)
-    if not session.data_session.has_data():
+    if not session.has_data():
         raise NoDataLoadedError(session_id)
 
-    df = session.data_session.df
+    df = session.df
     if df is None:  # Type guard since has_data() was checked
         raise NoDataLoadedError(session_id)
     return session, df
