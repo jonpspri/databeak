@@ -464,7 +464,7 @@ class TestValidationIntegration:
     async def test_validation_after_transformations(self, validation_test_session):
         """Test validation after data transformations."""
         # First apply some transformations
-        from src.databeak.tools.transformations import fill_missing_values
+        from src.databeak.services.transformation_operations import fill_missing_values
 
         # Fill missing values
         await fill_missing_values(validation_test_session, strategy="drop")

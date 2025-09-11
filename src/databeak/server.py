@@ -21,11 +21,11 @@ from .servers.statistics_server import statistics_server
 from .servers.system_server import system_server
 from .servers.transformation_server import transformation_server
 from .servers.validation_server import validation_server
-from .tools.data_operations import create_data_preview_with_indices
+from .services.data_operations import create_data_preview_with_indices
 
 # All MCP tools have been migrated to specialized server modules
-from .tools.transformations import get_cell_value as _get_cell_value
-from .tools.transformations import get_row_data as _get_row_data
+from .services.transformation_operations import get_cell_value as _get_cell_value
+from .services.transformation_operations import get_row_data as _get_row_data
 from .utils.logging_config import get_logger, set_correlation_id, setup_structured_logging
 
 # Configure structured logging

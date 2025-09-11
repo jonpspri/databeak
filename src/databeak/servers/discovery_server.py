@@ -37,7 +37,7 @@ from ..models.tool_responses import (
 
 # Import data operations function directly to avoid dependency issues
 try:
-    from ..tools.data_operations import create_data_preview_with_indices
+    from ..services.data_operations import create_data_preview_with_indices
 except ImportError:
     # Fallback implementation for create_data_preview_with_indices
     def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> dict[str, Any]:

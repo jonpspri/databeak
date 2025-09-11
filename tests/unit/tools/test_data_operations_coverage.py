@@ -11,7 +11,7 @@ from src.databeak.exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from src.databeak.tools.data_operations import (
+from src.databeak.services.data_operations import (
     create_data_preview_with_indices,
     get_data_summary,
     safe_type_conversion,

@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.databeak.servers.io_server import export_csv, load_csv_from_content
 from src.databeak.tools.analytics import get_statistics
-from src.databeak.tools.transformations import filter_rows, sort_data
+from src.databeak.services.transformation_operations import filter_rows, sort_data
 
 # Sample CSV data
 SAMPLE_DATA = """product,category,price,quantity,date

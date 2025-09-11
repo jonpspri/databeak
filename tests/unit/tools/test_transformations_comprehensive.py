@@ -10,7 +10,7 @@ from src.databeak.exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from src.databeak.tools.transformations import (
+from src.databeak.services.transformation_operations import (
     _get_session_data,
     add_column,
     change_column_type,

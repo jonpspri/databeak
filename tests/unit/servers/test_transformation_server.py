@@ -128,7 +128,7 @@ class TestTransformationServerDuplicates:
     async def test_remove_duplicates_all_columns(self, transformation_session):
         """Test removing exact duplicates."""
         # First add a duplicate row
-        from src.databeak.tools.transformations import insert_row
+        from src.databeak.services.transformation_operations import insert_row
 
         await insert_row(
             transformation_session,

@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Import session management and data models from the main package
 from ..models import ExportFormat, OperationType, get_session_manager
 from ..models.tool_responses import BaseToolResponse
-from ..tools.data_operations import create_data_preview_with_indices
+from ..services.data_operations import create_data_preview_with_indices
 from ..utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)

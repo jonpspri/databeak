@@ -11,7 +11,7 @@ from src.databeak.servers import (  # noqa: F401
 )
 from src.databeak.servers.discovery_server import get_data_summary
 from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.tools.transformations import (
+from src.databeak.services.transformation_operations import (
     add_column,
     change_column_type,
     delete_row,
