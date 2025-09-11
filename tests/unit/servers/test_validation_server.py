@@ -1,6 +1,7 @@
 """Tests for validation module to improve coverage."""
 
 import pytest
+from fastmcp.exceptions import ToolError
 
 from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.servers.validation_server import (
@@ -385,13 +386,9 @@ class TestValidationEdgeCases:
 
     async def test_validate_schema_empty_dataframe(self):
         """Test schema validation on empty dataframe."""
-        empty_result = await load_csv_from_content("id,name\n")  # Header only
-        session_id = empty_result.session_id
-
-        # Empty dataframes have object dtype, so use compatible schema
-        schema = {"id": {"type": "str"}, "name": {"type": "str"}}
-        result = validate_schema(session_id, ValidationSchema(schema))
-        assert result.valid is True  # Empty data with compatible types should pass
+        # load_csv_from_content now rejects empty CSVs
+        with pytest.raises(ToolError, match="no data rows"):
+            await load_csv_from_content("id,name\n")  # Header only
 
     async def test_schema_validation_all_types(self, validation_test_session):
         """Test schema validation with all supported data types."""
