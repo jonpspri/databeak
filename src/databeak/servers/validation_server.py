@@ -320,10 +320,10 @@ def validate_schema(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
         validation_errors: dict[str, list[ValidationError]] = {}
 
         parsed_schema = schema.root
@@ -557,10 +557,10 @@ def check_data_quality(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
         recommendations: list[str] = []
@@ -893,10 +893,10 @@ def find_anomalies(
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
 
-        df = session.data_session.df
+        df = session.df
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]

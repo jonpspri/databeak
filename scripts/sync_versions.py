@@ -212,7 +212,8 @@ def get_package_version() -> str:
     pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
     with pyproject_path.open("rb") as f:
         data = tomllib.load(f)
-    return data["project"]["version"]
+    version: str = data["project"]["version"]
+    return version
 
 
 def update_package_json(version: str) -> None:

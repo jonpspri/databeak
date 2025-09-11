@@ -207,7 +207,7 @@ import sys
 from pathlib import Path
 
 
-def run_command(cmd, check=True):
+def run_command(cmd: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run a command and return the result."""
     print(f"Running: {cmd}")
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)  # noqa: S602
@@ -219,7 +219,7 @@ def run_command(cmd, check=True):
     return result
 
 
-def main():
+def main() -> None:
     """Main publishing workflow."""
     # Ensure we're in the project root
     project_root = Path(__file__).parent.parent

@@ -509,7 +509,7 @@ async def load_csv(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -733,7 +733,7 @@ async def load_csv_from_url(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -851,7 +851,7 @@ async def load_csv_from_content(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -927,7 +927,7 @@ async def export_csv(
         session_manager = get_session_manager()
         session = session_manager.get_session(session_id)
 
-        if not session or session.data_session.df is None:
+        if not session or session.df is None:
             raise ToolError(f"Session not found or no data loaded: {session_id}")
 
         if ctx:
@@ -965,7 +965,11 @@ async def export_csv(
                     temp_file_path = file_path  # Track for cleanup on error
 
             path_obj = Path(file_path)
-            df = session.data_session.df
+
+            # Create parent directory if it doesn't exist
+            path_obj.parent.mkdir(parents=True, exist_ok=True)
+
+            df = session.df
 
             if ctx:
                 await ctx.report_progress(0.5)
@@ -1107,9 +1111,9 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> Sessi
             session_id=session_id,
             created_at=info.created_at.isoformat(),
             last_modified=info.last_accessed.isoformat(),
-            data_loaded=session.data_session.df is not None,
-            row_count=info.row_count if session.data_session.df is not None else None,
-            column_count=info.column_count if session.data_session.df is not None else None,
+            data_loaded=session.df is not None,
+            row_count=info.row_count if session.df is not None else None,
+            column_count=info.column_count if session.df is not None else None,
             auto_save_enabled=session.auto_save_config.enabled,
         )
 
@@ -1172,7 +1176,7 @@ async def list_sessions(ctx: Context | None = None) -> SessionListResult:
                 last_accessed=s.last_accessed.isoformat(),
                 row_count=s.row_count,
                 column_count=s.column_count,
-                columns=s.columns,
+                columns=[str(col) for col in s.columns],  # Ensure columns are strings
                 memory_usage_mb=s.memory_usage_mb,
                 file_path=s.file_path,
             )

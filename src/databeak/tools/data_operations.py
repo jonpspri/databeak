@@ -19,17 +19,19 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
     for _, (row_idx, row) in enumerate(preview_df.iterrows()):
         # Handle pandas index types safely
         row_index_val = row_idx if isinstance(row_idx, int) else 0
+        # Convert all keys to strings and handle pandas/numpy types
         record = {"__row_index__": row_index_val}  # Include original row index
-        record.update(row.to_dict())
-
-        # Handle pandas/numpy types for JSON serialization
-        for key, value in record.items():
-            if key == "__row_index__":
-                continue
+        row_dict = row.to_dict()
+        for key, value in row_dict.items():
+            str_key = str(key)
             if pd.isna(value):
-                record[key] = None
+                record[str_key] = None
+            elif isinstance(value, pd.Timestamp):
+                record[str_key] = str(value)
             elif hasattr(value, "item"):
-                record[key] = value.item()
+                record[str_key] = value.item()
+            else:
+                record[str_key] = value
 
         preview_records.append(record)
 
@@ -49,10 +51,10 @@ def get_data_summary(session_id: str) -> dict[str, Any]:
 
     if not session:
         raise SessionNotFoundError(session_id)
-    if session.data_session.df is None:
+    if session.df is None:
         raise NoDataLoadedError(session_id)
 
-    df = session.data_session.df
+    df = session.df
 
     return {
         "session_id": session_id,

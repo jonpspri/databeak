@@ -208,6 +208,8 @@ class ColumnOperationResult(BaseToolResponse):
     part_index: int | None = None
     transform: str | None = None
     nulls_filled: int | None = None
+    rows_removed: int | None = None  # For remove_duplicates operation
+    values_filled: int | None = None  # For fill_missing_values operation
 
 
 class SortDataResult(BaseToolResponse):
@@ -216,23 +218,7 @@ class SortDataResult(BaseToolResponse):
     session_id: str
     sorted_by: list[str]
     ascending: list[bool]
-
-
-class SelectColumnsResult(BaseToolResponse):
-    """Response model for column selection operations."""
-
-    session_id: str
-    selected_columns: list[str]
-    columns_before: int
-    columns_after: int
-
-
-class RenameColumnsResult(BaseToolResponse):
-    """Response model for column rename operations."""
-
-    session_id: str
-    renamed: dict[str, str]
-    columns: list[str]
+    rows_processed: int
 
 
 # =============================================================================
@@ -253,6 +239,4 @@ ToolResponse = (
     | FilterOperationResult
     | ColumnOperationResult
     | SortDataResult
-    | SelectColumnsResult
-    | RenameColumnsResult
 )

@@ -241,7 +241,7 @@ CI pipeline runs:
 
 ## Best Practices
 
-### DO:
+### DO
 
 - Write tests before fixing bugs (regression tests)
 - Keep tests focused and independent
@@ -251,7 +251,7 @@ CI pipeline runs:
 - Use fixtures for common setup
 - Run tests locally before pushing
 
-### DON'T:
+### DON'T
 
 - Write tests that depend on test execution order
 - Use production data in tests

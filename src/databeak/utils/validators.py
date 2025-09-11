@@ -149,6 +149,8 @@ def validate_dataframe(df: pd.DataFrame) -> dict[str, Any]:
     if df.columns.duplicated().any():
         dupes = df.columns[df.columns.duplicated()].tolist()
         issues["errors"].append(f"Duplicate column names: {dupes}")
+        # Return early if duplicate columns exist to avoid errors in subsequent checks
+        return issues
 
     # Check for completely null columns
     null_cols = df.columns[df.isnull().all()].tolist()

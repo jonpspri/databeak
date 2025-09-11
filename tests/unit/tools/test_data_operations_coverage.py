@@ -94,9 +94,9 @@ class TestCreateDataPreview:
 
         # Should convert pandas types to Python types for JSON serialization
         for record in result["records"]:
-            assert isinstance(record["int_col"], (int, type(None)))
-            assert isinstance(record["float_col"], (float, type(None)))
-            assert isinstance(record["bool_col"], (bool, type(None)))
+            assert isinstance(record["int_col"], int | type(None))
+            assert isinstance(record["float_col"], float | type(None))
+            assert isinstance(record["bool_col"], bool | type(None))
 
     def test_create_data_preview_non_integer_index(self):
         """Test data preview with non-integer pandas index."""
@@ -128,9 +128,9 @@ class TestGetDataSummary:
     @patch("src.databeak.tools.data_operations.get_session_manager")
     def test_get_data_summary_basic(self, mock_get_session_manager):
         """Test basic data summary retrieval."""
-        # Mock session with data
+        # Mock session with data using property-based API
         mock_session = Mock()
-        mock_session.data_session.df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
+        mock_session.df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
 
         mock_session_manager = Mock()
         mock_session_manager.get_session.return_value = mock_session
@@ -161,7 +161,7 @@ class TestGetDataSummary:
     def test_get_data_summary_no_data_loaded(self, mock_get_session_manager):
         """Test data summary when no data loaded."""
         mock_session = Mock()
-        mock_session.data_session.df = None
+        mock_session.df = None
 
         mock_session_manager = Mock()
         mock_session_manager.get_session.return_value = mock_session
@@ -183,7 +183,7 @@ class TestGetDataSummary:
         )
 
         mock_session = Mock()
-        mock_session.data_session.df = df
+        mock_session.df = df
 
         mock_session_manager = Mock()
         mock_session_manager.get_session.return_value = mock_session
@@ -193,7 +193,7 @@ class TestGetDataSummary:
 
         # Check dtypes are converted to strings
         assert isinstance(result["dtypes"], dict)
-        for col, dtype in result["dtypes"].items():
+        for _col, dtype in result["dtypes"].items():
             assert isinstance(dtype, str)
 
         # Check null counts
@@ -209,7 +209,7 @@ class TestGetDataSummary:
         df = pd.DataFrame({"data": range(1000), "text": [f"text_{i}" for i in range(1000)]})
 
         mock_session = Mock()
-        mock_session.data_session.df = df
+        mock_session.df = df
 
         mock_session_manager = Mock()
         mock_session_manager.get_session.return_value = mock_session
@@ -218,7 +218,7 @@ class TestGetDataSummary:
         result = get_data_summary("test_session")
 
         assert "memory_usage_mb" in result
-        assert isinstance(result["memory_usage_mb"], (int, float))
+        assert isinstance(result["memory_usage_mb"], int | float)
         assert result["memory_usage_mb"] > 0
 
 

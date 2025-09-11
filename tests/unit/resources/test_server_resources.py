@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp
@@ -88,9 +88,9 @@ class TestServerSessionHandling:
 
         # Test session has data
         assert session is not None
-        assert session.data_session.has_data()
-        assert session.data_session.df is not None
-        assert len(session.data_session.df) == 2
+        assert session.has_data()
+        assert session.df is not None
+        assert len(session.df) == 2
 
 
 class TestServerConfiguration:
@@ -107,6 +107,7 @@ class TestServerConfiguration:
     def test_instructions_content_structure(self):
         """Test instruction content has expected structure."""
         instructions = mcp.instructions
+        assert instructions is not None
         assert "Core Philosophy" in instructions
         assert "Coordinate System" in instructions
         assert "Getting Started" in instructions

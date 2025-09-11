@@ -18,7 +18,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from databeak.models.tool_responses import (
+from databeak.models.tool_responses import (  # type: ignore[import-not-found]
     StatisticsResult,
     StatisticsSummary,
 )
@@ -73,13 +73,14 @@ def old_pattern_statistics(df: pd.DataFrame) -> dict[str, Any]:
         serialized = pydantic_obj.model_dump()
         stats_dict[col] = StatisticsSummary(**serialized)
 
-    return StatisticsResult(
+    result = StatisticsResult(
         session_id="test",
         statistics=stats_dict,
         column_count=len(stats_dict),
         numeric_columns=list(stats_dict.keys()),
         total_rows=len(df),
     ).model_dump()
+    return dict(result)
 
 
 def new_pattern_statistics(df: pd.DataFrame) -> dict[str, Any]:
@@ -100,16 +101,17 @@ def new_pattern_statistics(df: pd.DataFrame) -> dict[str, Any]:
             max=float(col_data.max()),
         )
 
-    return StatisticsResult(
+    result = StatisticsResult(
         session_id="test",
         statistics=stats,
         column_count=len(stats),
         numeric_columns=list(stats.keys()),
         total_rows=len(df),
     ).model_dump()
+    return dict(result)
 
 
-def benchmark_function(func, *args, iterations: int = 20) -> dict[str, float]:
+def benchmark_function(func: Any, *args: Any, iterations: int = 20) -> dict[str, float]:
     """Benchmark a function."""
     times = []
 
@@ -127,7 +129,7 @@ def benchmark_function(func, *args, iterations: int = 20) -> dict[str, float]:
     }
 
 
-def run_quick_benchmark():
+def run_quick_benchmark() -> None:
     """Run a quick benchmark."""
     print("DataBeak Quick Performance Benchmark")
     print("Testing wrapper pattern elimination")

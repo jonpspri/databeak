@@ -333,7 +333,7 @@ class TestDataframeValidation:
         assert "shape" in result["info"]
         assert "memory_usage_mb" in result["info"]
         assert result["info"]["shape"] == (100, 1)
-        assert isinstance(result["info"]["memory_usage_mb"], (int, float))
+        assert isinstance(result["info"]["memory_usage_mb"], int | float)
 
     def test_validate_dataframe_high_cardinality(self) -> None:
         """Test validation detects high cardinality columns."""

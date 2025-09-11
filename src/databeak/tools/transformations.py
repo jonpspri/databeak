@@ -27,9 +27,7 @@ from ..models.tool_responses import (
     DeleteRowResult,
     FilterOperationResult,
     InsertRowResult,
-    RenameColumnsResult,
     RowDataResult,
-    SelectColumnsResult,
     SetCellResult,
     SortDataResult,
     UpdateRowResult,
@@ -56,10 +54,10 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
     if not session:
         raise SessionNotFoundError(session_id)
-    if not session.data_session.has_data():
+    if not session.has_data():
         raise NoDataLoadedError(session_id)
 
-    df = session.data_session.df
+    df = session.df
     assert df is not None  # Type guard since has_data() was checked
     return session, df
 
@@ -134,22 +132,22 @@ async def filter_rows(
 
             mask = mask & condition_mask if mode == "and" else mask | condition_mask
 
-        session.data_session.df = df[mask].reset_index(drop=True)
+        session.df = df[mask].reset_index(drop=True)
         session.record_operation(
             OperationType.FILTER,
             {
                 "conditions": conditions,
                 "mode": mode,
                 "rows_before": len(df),
-                "rows_after": len(session.data_session.df),
+                "rows_after": len(session.df),
             },
         )
 
         return FilterOperationResult(
             session_id=session_id,
             rows_before=len(df),
-            rows_after=len(session.data_session.df),
-            rows_filtered=len(df) - len(session.data_session.df),
+            rows_after=len(session.df),
+            rows_filtered=len(df) - len(session.df),
             conditions_applied=len(conditions),
         )
 
@@ -209,14 +207,18 @@ async def sort_data(
             if col not in df.columns:
                 raise ToolError(f"Column '{col}' not found")
 
-        session.data_session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
-            drop=True
-        )
+        sorted_df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
+        session.df = sorted_df
         session.record_operation(
             OperationType.SORT, {"columns": sort_columns, "ascending": ascending}
         )
 
-        return SortDataResult(session_id=session_id, sorted_by=sort_columns, ascending=ascending)
+        return SortDataResult(
+            session_id=session_id,
+            sorted_by=sort_columns,
+            ascending=ascending,
+            rows_processed=len(sorted_df),
+        )
 
     except Exception as e:
         logger.error(f"Error sorting data: {e!s}")
@@ -227,7 +229,7 @@ async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> SelectColumnsResult:
+) -> dict[str, Any]:
     """Select specific columns from the dataframe.
 
     Args:
@@ -249,7 +251,7 @@ async def select_columns(
         # Track counts before modification
         columns_before = len(df.columns)
 
-        session.data_session.df = df[columns].copy()
+        session.df = df[columns].copy()
         session.record_operation(
             OperationType.SELECT,
             {
@@ -259,12 +261,12 @@ async def select_columns(
             },
         )
 
-        return SelectColumnsResult(
-            session_id=session_id,
-            selected_columns=columns,
-            columns_before=columns_before,
-            columns_after=len(columns),
-        )
+        return {
+            "session_id": session_id,
+            "selected_columns": columns,
+            "columns_before": columns_before,
+            "columns_after": len(columns),
+        }
 
     except Exception as e:
         logger.error(f"Error selecting columns: {e!s}")
@@ -275,7 +277,7 @@ async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> RenameColumnsResult:
+) -> dict[str, Any]:
     """Rename columns in the dataframe.
 
     Args:
@@ -294,12 +296,14 @@ async def rename_columns(
         if missing_cols:
             raise ToolError(f"Columns not found: {missing_cols}")
 
-        session.data_session.df = df.rename(columns=mapping)
+        session.df = df.rename(columns=mapping)
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
-        return RenameColumnsResult(
-            session_id=session_id, renamed=mapping, columns=session.data_session.df.columns.tolist()
-        )
+        return {
+            "session_id": session_id,
+            "renamed": mapping,
+            "columns": session.df.columns.tolist(),
+        }
 
     except Exception as e:
         logger.error(f"Error renaming columns: {e!s}")
@@ -334,7 +338,7 @@ async def add_column(
         if formula:
             # Evaluate formula in the context of the dataframe
             try:
-                session.data_session.df[name] = df.eval(formula)
+                session.df[name] = df.eval(formula)
             except Exception as e:
                 raise ToolError(f"Formula evaluation failed: {e}") from e
         elif isinstance(value, list):
@@ -342,10 +346,10 @@ async def add_column(
                 raise ToolError(
                     f"Value list length ({len(value)}) doesn't match row count ({len(df)})"
                 )
-            session.data_session.df[name] = value
+            session.df[name] = value
         else:
             # Scalar value or None
-            session.data_session.df[name] = value
+            session.df[name] = value
 
         session.record_operation(
             OperationType.ADD_COLUMN,
@@ -359,7 +363,7 @@ async def add_column(
         return ColumnOperationResult(
             session_id=session_id,
             operation="add_column",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[name],
         )
 
@@ -391,13 +395,13 @@ async def remove_columns(
         if missing_cols:
             raise ToolError(f"Columns not found: {missing_cols}")
 
-        session.data_session.df = df.drop(columns=columns)
+        session.df = df.drop(columns=columns)
         session.record_operation(OperationType.REMOVE_COLUMN, {"columns": columns})
 
         return ColumnOperationResult(
             session_id=session_id,
             operation="remove_columns",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=columns,
         )
 
@@ -435,19 +439,19 @@ async def change_column_type(
 
         # Convert based on target dtype
         if dtype == "int":
-            session.data_session.df[column] = pd.to_numeric(df[column], errors=errors).astype(
+            session.df[column] = pd.to_numeric(df[column], errors=errors).astype(
                 "Int64"
             )
         elif dtype == "float":
-            session.data_session.df[column] = pd.to_numeric(df[column], errors=errors)
+            session.df[column] = pd.to_numeric(df[column], errors=errors)
         elif dtype == "str":
-            session.data_session.df[column] = df[column].astype(str)
+            session.df[column] = df[column].astype(str)
         elif dtype == "bool":
-            session.data_session.df[column] = df[column].astype(bool)
+            session.df[column] = df[column].astype(bool)
         elif dtype == "datetime":
-            session.data_session.df[column] = pd.to_datetime(df[column], errors=errors)
+            session.df[column] = pd.to_datetime(df[column], errors=errors)
         elif dtype == "category":
-            session.data_session.df[column] = df[column].astype("category")
+            session.df[column] = df[column].astype("category")
         else:
             raise ToolError(f"Unsupported dtype: {dtype}")
 
@@ -464,7 +468,7 @@ async def change_column_type(
         return ColumnOperationResult(
             session_id=session_id,
             operation="change_column_type",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
         )
 
@@ -504,28 +508,28 @@ async def fill_missing_values(
             target_cols = df.columns.tolist()
 
         if strategy == "drop":
-            session.data_session.df = df.dropna(subset=target_cols)
+            session.df = df.dropna(subset=target_cols)
         elif strategy == "fill":
             if value is None:
                 raise ToolError("Value required for 'fill' strategy")
-            session.data_session.df[target_cols] = df[target_cols].fillna(value)
+            session.df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
-            session.data_session.df[target_cols] = df[target_cols].ffill()
+            session.df[target_cols] = df[target_cols].ffill()
         elif strategy == "backward":
-            session.data_session.df[target_cols] = df[target_cols].bfill()
+            session.df[target_cols] = df[target_cols].bfill()
         elif strategy == "mean":
             for col in target_cols:
                 if df[col].dtype in ["int64", "float64"]:
-                    session.data_session.df[col] = df[col].fillna(df[col].mean())
+                    session.df[col] = df[col].fillna(df[col].mean())
         elif strategy == "median":
             for col in target_cols:
                 if df[col].dtype in ["int64", "float64"]:
-                    session.data_session.df[col] = df[col].fillna(df[col].median())
+                    session.df[col] = df[col].fillna(df[col].median())
         elif strategy == "mode":
             for col in target_cols:
                 mode_val = df[col].mode()
                 if len(mode_val) > 0:
-                    session.data_session.df[col] = df[col].fillna(mode_val[0])
+                    session.df[col] = df[col].fillna(mode_val[0])
         else:
             raise ToolError(f"Unknown strategy: {strategy}")
 
@@ -541,7 +545,7 @@ async def fill_missing_values(
         return ColumnOperationResult(
             session_id=session_id,
             operation="fill_missing_values",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=target_cols,
         )
 
@@ -584,14 +588,14 @@ async def update_column(
         if operation == "replace":
             if pattern is None or replacement is None:
                 raise ToolError("Pattern and replacement required for replace operation")
-            session.data_session.df[column] = (
+            session.df[column] = (
                 df[column].astype(str).str.replace(pattern, replacement, regex=True)
             )
 
         elif operation == "extract":
             if pattern is None:
                 raise ToolError("Pattern required for extract operation")
-            session.data_session.df[column] = (
+            session.df[column] = (
                 df[column].astype(str).str.extract(pattern, expand=False)
             )
 
@@ -600,32 +604,32 @@ async def update_column(
                 pattern = " "
             if value is not None and isinstance(value, int):
                 # Extract specific part after split
-                session.data_session.df[column] = (
+                session.df[column] = (
                     df[column].astype(str).str.split(pattern).str[value]
                 )
             else:
                 # Just do the split, take first part
-                session.data_session.df[column] = df[column].astype(str).str.split(pattern).str[0]
+                session.df[column] = df[column].astype(str).str.split(pattern).str[0]
 
         elif operation == "strip":
-            session.data_session.df[column] = df[column].astype(str).str.strip()
+            session.df[column] = df[column].astype(str).str.strip()
 
         elif operation == "upper":
-            session.data_session.df[column] = df[column].astype(str).str.upper()
+            session.df[column] = df[column].astype(str).str.upper()
 
         elif operation == "lower":
-            session.data_session.df[column] = df[column].astype(str).str.lower()
+            session.df[column] = df[column].astype(str).str.lower()
 
         elif operation == "fill":
             if value is None:
                 raise ToolError("Value required for fill operation")
-            session.data_session.df[column] = df[column].fillna(value)
+            session.df[column] = df[column].fillna(value)
 
         else:
             raise ToolError(f"Unknown operation: {operation}")
 
         updated_values_sample = convert_pandas_na_list(
-            session.data_session.df[column].head(5).tolist()
+            session.df[column].head(5).tolist()
         )
 
         session.record_operation(
@@ -643,7 +647,7 @@ async def update_column(
             success=True,
             session_id=session_id,
             operation=f"update_column_{operation}",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
             original_sample=original_values_sample[:5] if original_values_sample else [],
             updated_sample=updated_values_sample[:5] if updated_values_sample else [],
@@ -683,10 +687,10 @@ async def remove_duplicates(
         # Convert keep parameter
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
 
-        session.data_session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
+        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
             drop=True
         )
-        rows_after = len(session.data_session.df)
+        rows_after = len(session.df)
 
         session.record_operation(
             OperationType.REMOVE_DUPLICATES,
@@ -819,8 +823,8 @@ async def set_cell_value(
             old_value = old_value.item()
 
         # Set new value
-        session.data_session.df.iloc[
-            row_index, session.data_session.df.columns.get_loc(column_name)
+        session.df.iloc[
+            row_index, session.df.columns.get_loc(column_name)
         ] = value
 
         # Record operation
@@ -1010,12 +1014,12 @@ async def replace_in_column(
         original_sample = convert_pandas_na_list(df[column].head(5).tolist())
 
         # Perform replacement
-        session.data_session.df[column] = (
+        session.df[column] = (
             df[column].astype(str).str.replace(pattern, replacement, regex=regex)
         )
 
         # Get updated sample
-        updated_sample = convert_pandas_na_list(session.data_session.df[column].head(5).tolist())
+        updated_sample = convert_pandas_na_list(session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1031,7 +1035,7 @@ async def replace_in_column(
         return ColumnOperationResult(
             session_id=session_id,
             operation="replace_in_column",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
             original_sample=original_sample,
             updated_sample=updated_sample,
@@ -1071,7 +1075,7 @@ async def extract_from_column(
             raise ToolError(f"Column '{column}' not found")
 
         # Perform extraction
-        session.data_session.df[column] = df[column].astype(str).str.extract(pattern, expand=False)
+        session.df[column] = df[column].astype(str).str.extract(pattern, expand=False)
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1086,7 +1090,7 @@ async def extract_from_column(
         return ColumnOperationResult(
             session_id=session_id,
             operation="extract_from_column",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
         )
 
@@ -1138,20 +1142,20 @@ async def split_column(
                     new_col_name = new_columns[i]
                 else:
                     new_col_name = f"{column}_{i}"
-                session.data_session.df[new_col_name] = split_data[col_data]
+                session.df[new_col_name] = split_data[col_data]
                 column_names.append(new_col_name)
             # Drop original column
-            session.data_session.df = session.data_session.df.drop(columns=[column])
+            session.df = session.df.drop(columns=[column])
             columns_affected = column_names
         else:
             # Keep specific part
             if part_index is not None:
-                session.data_session.df[column] = (
+                session.df[column] = (
                     df[column].astype(str).str.split(delimiter).str[part_index]
                 )
             else:
                 # Keep first part by default
-                session.data_session.df[column] = df[column].astype(str).str.split(delimiter).str[0]
+                session.df[column] = df[column].astype(str).str.split(delimiter).str[0]
             columns_affected = [column]
 
         session.record_operation(
@@ -1168,7 +1172,7 @@ async def split_column(
         return ColumnOperationResult(
             session_id=session_id,
             operation="split_column",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=columns_affected,
             part_index=part_index,
         )
@@ -1206,13 +1210,13 @@ async def transform_column_case(
 
         # Perform case transformation
         if transform == "upper":
-            session.data_session.df[column] = df[column].astype(str).str.upper()
+            session.df[column] = df[column].astype(str).str.upper()
         elif transform == "lower":
-            session.data_session.df[column] = df[column].astype(str).str.lower()
+            session.df[column] = df[column].astype(str).str.lower()
         elif transform == "title":
-            session.data_session.df[column] = df[column].astype(str).str.title()
+            session.df[column] = df[column].astype(str).str.title()
         elif transform == "capitalize":
-            session.data_session.df[column] = df[column].astype(str).str.capitalize()
+            session.df[column] = df[column].astype(str).str.capitalize()
         else:
             raise ToolError(f"Unknown transform: {transform}")
 
@@ -1228,7 +1232,7 @@ async def transform_column_case(
         return ColumnOperationResult(
             session_id=session_id,
             operation="transform_column_case",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
             transform=transform,
         )
@@ -1269,12 +1273,12 @@ async def strip_column(
 
         # Perform strip
         if chars is None:
-            session.data_session.df[column] = df[column].astype(str).str.strip()
+            session.df[column] = df[column].astype(str).str.strip()
         else:
-            session.data_session.df[column] = df[column].astype(str).str.strip(chars)
+            session.df[column] = df[column].astype(str).str.strip(chars)
 
         updated_values_sample = convert_pandas_na_list(
-            session.data_session.df[column].head(5).tolist()
+            session.df[column].head(5).tolist()
         )
 
         session.record_operation(
@@ -1289,7 +1293,7 @@ async def strip_column(
         return ColumnOperationResult(
             session_id=session_id,
             operation="strip_column",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
             original_sample=original_values_sample,
             updated_sample=updated_values_sample,
@@ -1331,10 +1335,10 @@ async def fill_column_nulls(
         nulls_before = df[column].isna().sum()
 
         # Fill nulls
-        session.data_session.df[column] = df[column].fillna(value)
+        session.df[column] = df[column].fillna(value)
 
         # Count nulls after
-        nulls_after = session.data_session.df[column].isna().sum()
+        nulls_after = session.df[column].isna().sum()
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1349,7 +1353,7 @@ async def fill_column_nulls(
         return ColumnOperationResult(
             session_id=session_id,
             operation="fill_column_nulls",
-            rows_affected=len(session.data_session.df),
+            rows_affected=len(session.df),
             columns_affected=[column],
             nulls_filled=int(nulls_before - nulls_after),
         )
@@ -1433,14 +1437,14 @@ async def insert_row(
 
         # Insert the row
         if row_index == 0:
-            session.data_session.df = pd.concat([new_row_df, df], ignore_index=True)
+            session.df = pd.concat([new_row_df, df], ignore_index=True)
         elif row_index >= len(df):
-            session.data_session.df = pd.concat([df, new_row_df], ignore_index=True)
+            session.df = pd.concat([df, new_row_df], ignore_index=True)
         else:
             # Split and insert
             before = df.iloc[:row_index]
             after = df.iloc[row_index:]
-            session.data_session.df = pd.concat([before, new_row_df, after], ignore_index=True)
+            session.df = pd.concat([before, new_row_df, after], ignore_index=True)
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,  # Reuse existing type
@@ -1449,7 +1453,7 @@ async def insert_row(
                 "row_index": row_index,
                 "data": row_data,
                 "rows_before": rows_before,
-                "rows_after": len(session.data_session.df),
+                "rows_after": len(session.df),
             },
         )
 
@@ -1463,7 +1467,7 @@ async def insert_row(
             session_id=session_id,
             row_index=row_index,
             rows_before=rows_before,
-            rows_after=len(session.data_session.df),
+            rows_after=len(session.df),
             data_inserted=data_inserted,
             columns=df.columns.tolist(),
         )
@@ -1510,7 +1514,7 @@ async def delete_row(
                 deleted_data[key] = value.item()
 
         # Delete the row
-        session.data_session.df = df.drop(df.index[row_index]).reset_index(drop=True)
+        session.df = df.drop(df.index[row_index]).reset_index(drop=True)
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,  # Reuse existing type
@@ -1519,7 +1523,7 @@ async def delete_row(
                 "row_index": row_index,
                 "deleted_data": deleted_data,
                 "rows_before": rows_before,
-                "rows_after": len(session.data_session.df),
+                "rows_after": len(session.df),
             },
         )
 
@@ -1527,7 +1531,7 @@ async def delete_row(
             session_id=session_id,
             row_index=row_index,
             rows_before=rows_before,
-            rows_after=len(session.data_session.df),
+            rows_after=len(session.df),
             deleted_data=deleted_data,
         )
 
@@ -1596,14 +1600,14 @@ async def update_row(
 
         # Update the row
         for column, value in data.items():
-            session.data_session.df.iloc[
-                row_index, session.data_session.df.columns.get_loc(column)
+            session.df.iloc[
+                row_index, session.df.columns.get_loc(column)
             ] = value
 
         # Get new values for tracking
         new_values: dict[str, Any] = {}
         for col in data:
-            new_val = session.data_session.df.iloc[row_index][col]
+            new_val = session.df.iloc[row_index][col]
             if pd.isna(new_val):
                 new_values[col] = None
             elif hasattr(new_val, "item"):

@@ -17,13 +17,18 @@ class StatisticsSummary(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     count: int
-    mean: float
-    std: float
-    min: float
-    percentile_25: float = Field(alias="25%")
-    percentile_50: float = Field(alias="50%")
-    percentile_75: float = Field(alias="75%")
-    max: float
+    mean: float | None = None
+    std: float | None = None
+    min: float | str | None = None
+    percentile_25: float | None = Field(default=None, alias="25%")
+    percentile_50: float | None = Field(default=None, alias="50%")
+    percentile_75: float | None = Field(default=None, alias="75%")
+    max: float | str | None = None
+
+    # Categorical statistics fields
+    unique: int | None = None
+    top: str | None = None
+    freq: int | None = None
 
 
 class StatisticsResult(BaseToolResponse):

@@ -7,7 +7,7 @@ name = "databeak"
 version = "1.0.2"
 description = "DataBeak: MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [
     {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
@@ -39,7 +39,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -66,6 +65,7 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "psutil>=7.0.0",
     "chardet>=5.2.0",
+    "scipy>=1.16.1",
 ]
 
 [project.optional-dependencies]
@@ -188,7 +188,6 @@ select = [
     "PTH",  # flake8-use-pathlib
     "RUF",  # Ruff-specific rules
     "ASYNC",# flake8-async
-    "TCH",  # flake8-type-checking
     "DTZ",  # flake8-datetimez
     "FA",   # flake8-future-annotations
 ]
@@ -198,14 +197,11 @@ ignore = [
     "B905",  # `zip()` without an explicit `strict=` parameter
     "SIM105", # contextlib.suppress is slower
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
-    "TCH001", # Move imports into type-checking block (breaks FastMCP runtime imports)
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ARG", "S101", "DTZ"]  # Allow unused arguments, assert, and naive datetime in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
-"src/databeak/tools/mcp_*.py" = ["TCH002"]  # FastMCP Context needed at runtime
-"src/databeak/models/data_models.py" = ["TCH003"]  # datetime needed at runtime for pydantic
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]
@@ -217,7 +213,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 namespace_packages = true
 explicit_package_bases = true
 warn_return_any = true

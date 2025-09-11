@@ -1,6 +1,6 @@
 """Additional tests for analytics module to improve coverage."""
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 from fastmcp.exceptions import ToolError
 
 from src.databeak.servers.discovery_server import (

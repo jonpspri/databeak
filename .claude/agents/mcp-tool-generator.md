@@ -424,6 +424,8 @@ return DomainResult(session_id=session_id, data={...})
 - **Integration Pattern**: `tests/test_integration.py` - TestCase structure
 - **Test Patterns**: `tests/test_validation.py` - Comprehensive test coverage
 - **Server Mounting**: `src/databeak/server.py` - Composition example
+- **Refactoring Guide**: @src/databeak/servers/REFACTORING_CHECKLIST.md -
+  Step-by-step checklist for server refactoring
 
 This approach creates maintainable, testable, and composable domain servers that
 can evolve independently while integrating seamlessly with the main DataBeak

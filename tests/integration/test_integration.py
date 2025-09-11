@@ -24,17 +24,20 @@ from src.databeak.servers.statistics_server import (
     get_correlation_matrix,
     get_statistics,
 )
+from src.databeak.servers.transformation_server import (
+    fill_missing_values,
+    filter_rows,
+    sort_data,
+)
 from src.databeak.servers.validation_server import (
+    ColumnValidationRules,
     ValidationSchema,
     check_data_quality,
     find_anomalies,
     validate_schema,
 )
 from src.databeak.tools.transformations import (
-    add_column,
-    fill_missing_values,
-    filter_rows,
-    sort_data,
+    add_column,  # Not yet migrated to server
 )
 
 # Test data
@@ -77,6 +80,8 @@ class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
     and cleanup in tearDown.
     """
 
+    session_id: str | None
+
     def setUp(self):
         """Create a fresh session with test data for each test."""
         self.session_id = None
@@ -92,9 +97,11 @@ class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
         if self.session_id:
             try:
                 await close_session(self.session_id)
-            except Exception:
-                # Ignore errors during cleanup
-                pass
+            except Exception as e:
+                # Log cleanup errors but don't fail test teardown
+                import logging
+
+                logging.getLogger(__name__).warning(f"Failed to close session during cleanup: {e}")
 
 
 class TestIOOperations(IntegrationTestCase):
@@ -103,6 +110,7 @@ class TestIOOperations(IntegrationTestCase):
     async def test_load_and_session_info(self):
         """Test CSV loading and session info retrieval."""
         # Session already created in setUp
+        assert self.session_id is not None
         info = await get_session_info(session_id=self.session_id)
         self.assertTrue(get_attr(info, "success"))
         self.assertTrue(get_attr(info, "data_loaded"))
@@ -120,7 +128,8 @@ class TestTransformations(IntegrationTestCase):
 
     async def test_filter_rows(self):
         """Test row filtering functionality."""
-        result = await filter_rows(
+        assert self.session_id is not None
+        result = filter_rows(
             session_id=self.session_id,
             conditions=[
                 {"column": "salary", "operator": ">", "value": 60000},
@@ -139,7 +148,8 @@ class TestTransformations(IntegrationTestCase):
 
     async def test_sort_data(self):
         """Test data sorting functionality."""
-        result = await sort_data(
+        assert self.session_id is not None
+        result = sort_data(
             session_id=self.session_id,
             columns=[
                 {"column": "department", "ascending": True},
@@ -150,6 +160,7 @@ class TestTransformations(IntegrationTestCase):
 
     async def test_add_column(self):
         """Test adding calculated columns."""
+        assert self.session_id is not None
         result = await add_column(
             session_id=self.session_id,
             name="salary_level",
@@ -159,7 +170,8 @@ class TestTransformations(IntegrationTestCase):
 
     async def test_fill_missing_values(self):
         """Test missing value imputation."""
-        result = await fill_missing_values(
+        assert self.session_id is not None
+        result = fill_missing_values(
             session_id=self.session_id, strategy="mean", columns=["salary"]
         )
         self.assertTrue(get_attr(result, "success"))
@@ -170,6 +182,7 @@ class TestAnalytics(IntegrationTestCase):
 
     async def test_get_statistics(self):
         """Test statistical analysis."""
+        assert self.session_id is not None
         result = await get_statistics(session_id=self.session_id, columns=["salary"])
         self.assertTrue(get_attr(result, "success"))
         statistics = get_attr(result, "statistics", {})
@@ -177,6 +190,7 @@ class TestAnalytics(IntegrationTestCase):
 
     async def test_correlation_matrix(self):
         """Test correlation analysis."""
+        assert self.session_id is not None
         result = await get_correlation_matrix(
             session_id=self.session_id, method="pearson", min_correlation=0.1
         )
@@ -184,6 +198,7 @@ class TestAnalytics(IntegrationTestCase):
 
     async def test_group_by_aggregate(self):
         """Test grouping and aggregation."""
+        assert self.session_id is not None
         result = await group_by_aggregate(
             session_id=self.session_id,
             group_by=["department"],
@@ -193,6 +208,7 @@ class TestAnalytics(IntegrationTestCase):
 
     async def test_detect_outliers(self):
         """Test outlier detection."""
+        assert self.session_id is not None
         result = await detect_outliers(
             session_id=self.session_id, columns=["salary"], method="iqr", threshold=1.5
         )
@@ -200,6 +216,7 @@ class TestAnalytics(IntegrationTestCase):
 
     async def test_profile_data(self):
         """Test comprehensive data profiling."""
+        assert self.session_id is not None
         result = await profile_data(
             session_id=self.session_id, include_correlations=True, include_outliers=True
         )
@@ -211,22 +228,24 @@ class TestValidation(IntegrationTestCase):
 
     async def test_validate_schema(self):
         """Test schema validation with new validation server."""
-        schema_dict = {
-            "name": {"type": "str", "nullable": False},
-            "age": {"type": "int", "min": 0, "max": 200},
-            "salary": {"type": "int", "min": 0, "max": 200000},
-            "department": {
-                "type": "str",
-                "values": ["Engineering", "Management", "Marketing", "Sales"],
-            },
+        schema_dict: dict[str, ColumnValidationRules] = {
+            "name": ColumnValidationRules(type="str", nullable=False),
+            "age": ColumnValidationRules(type="int", min=0, max=200),
+            "salary": ColumnValidationRules(type="int", min=0, max=200000),
+            "department": ColumnValidationRules(
+                type="str",
+                values=["Engineering", "Management", "Marketing", "Sales"],
+            ),
         }
 
+        assert self.session_id is not None
         result = validate_schema(session_id=self.session_id, schema=ValidationSchema(schema_dict))
         self.assertIsInstance(result.valid, bool)
         self.assertIsInstance(result.errors, list)
 
     async def test_check_data_quality(self):
         """Test data quality checking."""
+        assert self.session_id is not None
         result = check_data_quality(session_id=self.session_id)
         quality_results = result.quality_results
         self.assertIsInstance(quality_results.overall_score, float)
@@ -235,6 +254,7 @@ class TestValidation(IntegrationTestCase):
 
     async def test_find_anomalies(self):
         """Test anomaly detection."""
+        assert self.session_id is not None
         result = find_anomalies(session_id=self.session_id, columns=["salary"])
         summary = result.anomalies.summary
         self.assertIsInstance(summary.total_anomalies, int)
@@ -251,6 +271,7 @@ class TestExport(IntegrationTestCase):
 
         try:
             output_file = output_dir / "test_export.csv"
+            assert self.session_id is not None
             result = await export_csv(
                 session_id=self.session_id, file_path=str(output_file), format="csv"
             )

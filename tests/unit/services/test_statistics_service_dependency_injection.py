@@ -200,8 +200,8 @@ class TestMockSessionManagerBehavior:
 
         session = self.mock.get_session("test_session")
         assert session is not None
-        assert session.data_session.has_data()
-        pd.testing.assert_frame_equal(session.data_session.df, test_df)
+        assert session.has_data()
+        pd.testing.assert_frame_equal(session.df, test_df)
 
     @pytest.mark.asyncio
     async def test_session_removal(self) -> None:
