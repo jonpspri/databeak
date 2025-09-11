@@ -32,7 +32,7 @@ def parse_json_string_to_dict(v: dict[str, Any] | str) -> dict[str, Any]:
 
 
 def parse_json_string_to_dict_or_list(
-    v: dict[str, Any] | list[Any] | str
+    v: dict[str, Any] | list[Any] | str,
 ) -> dict[str, Any] | list[Any]:
     """Parse JSON string to dictionary or list for Claude Code compatibility.
 

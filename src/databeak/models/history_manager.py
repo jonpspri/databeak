@@ -145,7 +145,13 @@ class HistoryManager:
                             f"Loaded {len(self.history)} history entries for session {self.session_id}"
                         )
 
-        except (OSError, PermissionError, json.JSONDecodeError, pickle.PickleError, ValueError) as e:
+        except (
+            OSError,
+            PermissionError,
+            json.JSONDecodeError,
+            pickle.PickleError,
+            ValueError,
+        ) as e:
             logger.error(f"Error loading history: {e!s}")
 
     def _save_history(self) -> None:
@@ -184,7 +190,13 @@ class HistoryManager:
 
             logger.debug(f"Saved {len(self.history)} history entries for session {self.session_id}")
 
-        except (OSError, PermissionError, json.JSONDecodeError, pickle.PickleError, ValueError) as e:
+        except (
+            OSError,
+            PermissionError,
+            json.JSONDecodeError,
+            pickle.PickleError,
+            ValueError,
+        ) as e:
             logger.error(f"Error saving history: {e!s}")
 
     def add_operation(

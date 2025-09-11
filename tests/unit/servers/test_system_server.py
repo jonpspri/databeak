@@ -105,7 +105,7 @@ class TestHealthCheck:
             mock_manager.side_effect = Exception("Critical failure")
 
             result = await health_check()
-            
+
             # Should return unhealthy status rather than raise exception
             assert result.success is True  # Base model default
             assert result.status == "unhealthy"
@@ -396,5 +396,6 @@ class TestSystemServerIntegration:
         assert "System" in system_server.name
 
         # Instructions should mention the server purpose
-        assert "system" in system_server.instructions.lower()
-        assert "health" in system_server.instructions.lower()
+        instructions = system_server.instructions or ""
+        assert "system" in instructions.lower()
+        assert "health" in instructions.lower()

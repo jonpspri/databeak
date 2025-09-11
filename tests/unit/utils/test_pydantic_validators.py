@@ -151,14 +151,14 @@ class TestValidatorEdgeCases:
         assert result == {}
 
         # Empty list
-        result = parse_json_string_to_list("[]")
-        assert result == []
+        result_list = parse_json_string_to_list("[]")
+        assert result_list == []
 
         # Empty for dict_or_list
-        result = parse_json_string_to_dict_or_list("{}")
-        assert result == {}
-        result = parse_json_string_to_dict_or_list("[]")
-        assert result == []
+        result_dict = parse_json_string_to_dict_or_list("{}")
+        assert result_dict == {}
+        result_list = parse_json_string_to_dict_or_list("[]")
+        assert result_list == []
 
     def test_null_json_values(self):
         """Test handling of null values in JSON."""
@@ -169,8 +169,8 @@ class TestValidatorEdgeCases:
 
         # List with null values
         json_string = '[null, "John", null]'
-        result = parse_json_string_to_list(json_string)
-        assert result == [None, "John", None]
+        result_list = parse_json_string_to_list(json_string)
+        assert result_list == [None, "John", None]
 
     def test_unicode_handling(self):
         """Test handling of unicode characters in JSON."""
