@@ -104,8 +104,12 @@ class TestHealthCheck:
         ):
             mock_manager.side_effect = Exception("Critical failure")
 
-            with pytest.raises(ToolError, match="Critical health check failure"):
-                await health_check()
+            result = await health_check()
+            
+            # Should return unhealthy status rather than raise exception
+            assert result.success is True  # Base model default
+            assert result.status == "unhealthy"
+            assert result.active_sessions == 0
 
     @pytest.mark.asyncio
     async def test_health_check_response_structure(self):

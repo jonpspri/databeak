@@ -248,6 +248,10 @@ ignore_missing_imports = true
 module = "tests.*"
 disallow_untyped_defs = false
 
+[[tool.mypy.overrides]]
+module = "examples.*"
+ignore_errors = true
+
 
 [tool.pytest.ini_options]
 minversion = "8.0"

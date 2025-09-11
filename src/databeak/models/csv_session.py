@@ -223,7 +223,7 @@ class CSVSession:
                 "rows": len(self._data_session.df),
                 "columns": len(self._data_session.df.columns),
             }
-        except Exception as e:
+        except (OSError, PermissionError, ValueError, TypeError, UnicodeError) as e:
             return {"success": False, "error": str(e)}
 
     def rollback(self, steps: int = 1) -> bool:

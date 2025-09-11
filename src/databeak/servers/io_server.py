@@ -218,7 +218,7 @@ def detect_file_encoding(file_path: str) -> str:
             f"Chardet detection low confidence ({detection['confidence'] if detection else 0:.2f}), using fallbacks"
         )
 
-    except Exception as e:
+    except (ImportError, AttributeError, UnicodeError, OSError) as e:
         logger.debug(f"Chardet detection failed: {e}, using fallbacks")
 
     # Fallback to common encodings in priority order

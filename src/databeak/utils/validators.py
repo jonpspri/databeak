@@ -45,7 +45,7 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
 
         return True, str(path)
 
-    except Exception as e:
+    except (OSError, PermissionError, ValueError, TypeError) as e:
         return False, f"Error validating path: {e!s}"
 
 
@@ -113,7 +113,7 @@ def validate_url(url: str) -> tuple[bool, str]:
 
         return True, url
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return False, f"Invalid URL: {e!s}"
 
 

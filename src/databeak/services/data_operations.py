@@ -96,5 +96,5 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
             return series.astype(bool)
         else:
             raise ValueError(f"Unsupported type: {target_type}")
-    except Exception as e:
+    except (ValueError, TypeError, OverflowError) as e:
         raise ValueError(f"Failed to convert to {target_type}: {e}") from e

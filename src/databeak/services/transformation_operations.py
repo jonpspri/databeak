@@ -32,6 +32,7 @@ from ..models.tool_responses import (
     SortDataResult,
     UpdateRowResult,
 )
+from ..utils.pydantic_validators import parse_json_string_to_dict
 from ..utils.validators import convert_pandas_na_list
 
 # Type aliases for better type safety (non-conflicting)
@@ -1376,11 +1377,9 @@ async def insert_row(
     try:
         # Handle Claude Code's JSON string serialization issue
         if isinstance(data, str):
-            import json
-
             try:
-                data = json.loads(data)
-            except json.JSONDecodeError as e:
+                data = parse_json_string_to_dict(data)
+            except ValueError as e:
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)
@@ -1547,11 +1546,9 @@ async def update_row(
     try:
         # Handle Claude Code's JSON string serialization issue
         if isinstance(data, str):
-            import json
-
             try:
-                data = json.loads(data)
-            except json.JSONDecodeError as e:
+                data = parse_json_string_to_dict(data)
+            except ValueError as e:
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)

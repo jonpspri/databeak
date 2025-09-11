@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +22,7 @@ from ..models.tool_responses import (
     SetCellResult,
     UpdateRowResult,
 )
+from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
 from ..utils.validators import convert_pandas_na_list
 from .server_utils import get_session_data
 
@@ -73,15 +73,7 @@ class RowInsertRequest(BaseModel):
         cls, v: dict[str, CellValue] | list[CellValue] | str
     ) -> dict[str, CellValue] | list[CellValue]:
         """Parse JSON string data for Claude Code compatibility."""
-        if isinstance(v, str):
-            try:
-                parsed = json.loads(v)
-                if not isinstance(parsed, dict | list):
-                    raise ValueError("JSON string must parse to dict or list")
-                return parsed
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON string: {e}") from e
-        return v
+        return parse_json_string_to_dict_or_list(v)
 
 
 class RowUpdateRequest(BaseModel):
@@ -104,15 +96,7 @@ class RowUpdateRequest(BaseModel):
     @classmethod
     def parse_json_data(cls, v: dict[str, CellValue] | str) -> dict[str, CellValue]:
         """Parse JSON string data for Claude Code compatibility."""
-        if isinstance(v, str):
-            try:
-                parsed = json.loads(v)
-                if not isinstance(parsed, dict):
-                    raise ValueError("JSON string must parse to dict for updates")
-                return parsed
-            except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON string: {e}") from e
-        return v
+        return parse_json_string_to_dict(v)
 
 
 class ColumnDataRequest(BaseModel):
@@ -229,7 +213,7 @@ def get_cell_value(
 
     except (ColumnNotFoundError, ToolError):
         raise
-    except Exception as e:
+    except (ValueError, TypeError, KeyError, IndexError) as e:
         logger.error(f"Error getting cell value: {e!s}")
         raise ToolError(f"Error getting cell value: {e!s}") from e
 
@@ -344,7 +328,7 @@ def set_cell_value(
 
     except (ColumnNotFoundError, ToolError):
         raise
-    except Exception as e:
+    except (ValueError, TypeError, KeyError, IndexError) as e:
         logger.error(f"Error setting cell value: {e!s}")
         raise ToolError(f"Error setting cell value: {e!s}") from e
 
@@ -594,8 +578,8 @@ def insert_row(
         # Handle Claude Code's JSON string serialization
         if isinstance(data, str):
             try:
-                data = json.loads(data)
-            except json.JSONDecodeError as e:
+                data = parse_json_string_to_dict(data)
+            except ValueError as e:
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = get_session_data(session_id)
@@ -819,8 +803,8 @@ def update_row(
         # Handle Claude Code's JSON string serialization
         if isinstance(data, str):
             try:
-                data = json.loads(data)
-            except json.JSONDecodeError as e:
+                data = parse_json_string_to_dict(data)
+            except ValueError as e:
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         if not isinstance(data, dict):

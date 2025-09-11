@@ -101,23 +101,37 @@ async def health_check(ctx: Context | None = None) -> HealthResult:
             session_ttl_minutes=session_manager.ttl_minutes,
         )
 
+    except (ImportError, AttributeError, ValueError, TypeError) as e:
+        # Handle specific configuration/import issues - return unhealthy
+        logger.error(f"Health check failed due to configuration issue: {e!s}")
+        if ctx:
+            await ctx.error(f"Health check failed: {e!s}")
+
+        return HealthResult(
+            status="unhealthy",
+            version="unknown",
+            active_sessions=0,
+            max_sessions=0,
+            session_ttl_minutes=0,
+        )
     except Exception as e:
+        # Treat unexpected session manager errors as recoverable - return unhealthy
         logger.error(f"Health check failed: {e!s}")
         if ctx:
             await ctx.error(f"Health check failed: {e!s}")
 
-        # Return unhealthy status with minimal info if health check itself fails
         try:
-            return HealthResult(
-                status="unhealthy",
-                version=__version__,
-                active_sessions=0,
-                max_sessions=0,
-                session_ttl_minutes=0,
-            )
-        except Exception as fallback_error:
-            logger.error(f"Fallback health result creation failed: {fallback_error!s}")
-            raise ToolError(f"Critical health check failure: {e}") from e
+            version = str(__version__)
+        except Exception:
+            version = "unknown"
+
+        return HealthResult(
+            status="unhealthy",
+            version=version,
+            active_sessions=0,
+            max_sessions=0,
+            session_ttl_minutes=0,
+        )
 
 
 async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
