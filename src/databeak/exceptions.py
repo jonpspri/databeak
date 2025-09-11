@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 
-class CSVEditorError(Exception):
+class DatabeakError(Exception):
     """Base exception for DataBeak operations."""
 
     def __init__(self, message: str, error_code: str | None = None, details: dict | None = None):
@@ -25,7 +25,7 @@ class CSVEditorError(Exception):
         }
 
 
-class SessionError(CSVEditorError):
+class SessionError(DatabeakError):
     """Session-related errors."""
 
 
@@ -53,7 +53,7 @@ class SessionExpiredError(SessionError):
         )
 
 
-class DataError(CSVEditorError):
+class DataError(DatabeakError):
     """Data-related errors."""
 
 
@@ -108,7 +108,7 @@ class DataValidationError(DataError):
         )
 
 
-class FileError(CSVEditorError):
+class FileError(DatabeakError):
     """File operation errors."""
 
 
@@ -148,7 +148,7 @@ class FileFormatError(FileError):
         )
 
 
-class OperationError(CSVEditorError):
+class OperationError(DatabeakError):
     """Operation execution errors."""
 
 
@@ -164,7 +164,7 @@ class InvalidOperationError(OperationError):
         )
 
 
-class ParameterError(CSVEditorError):
+class ParameterError(DatabeakError):
     """Parameter validation errors."""
 
 
@@ -196,7 +196,7 @@ class MissingParameterError(ParameterError):
         )
 
 
-class HistoryError(CSVEditorError):
+class HistoryError(DatabeakError):
     """History management errors."""
 
 
@@ -224,7 +224,7 @@ class InvalidHistoryOperationError(HistoryError):
         )
 
 
-class AutoSaveError(CSVEditorError):
+class AutoSaveError(DatabeakError):
     """Auto-save operation errors."""
 
 
