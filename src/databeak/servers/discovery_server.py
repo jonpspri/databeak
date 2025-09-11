@@ -46,15 +46,19 @@ except ImportError:
         preview_rows = min(num_rows, len(df))
 
         for i in range(preview_rows):
-            row = df.iloc[i].to_dict()
-            # Handle pandas/numpy types
-            for key, value in row.items():
+            row_dict = df.iloc[i].to_dict()
+            # Convert keys to strings and handle pandas/numpy types
+            row = {}
+            for key, value in row_dict.items():
+                str_key = str(key)
                 if pd.isna(value):
-                    row[key] = None
+                    row[str_key] = None
                 elif isinstance(value, pd.Timestamp):
-                    row[key] = str(value)
+                    row[str_key] = str(value)
                 elif hasattr(value, "item"):
-                    row[key] = value.item()
+                    row[str_key] = value.item()
+                else:
+                    row[str_key] = value
             row["__row_index__"] = i
             records.append(row)
 
@@ -799,18 +803,20 @@ async def get_data_summary(
                 null_count=int(df[col].isnull().sum()),
             )
 
-        # Create data types categorization
+        # Create data types categorization (convert column names to strings)
         data_types = {
-            "numeric": df.select_dtypes(include=["number"]).columns.tolist(),
-            "text": df.select_dtypes(include=["object"]).columns.tolist(),
-            "datetime": df.select_dtypes(include=["datetime"]).columns.tolist(),
-            "boolean": df.select_dtypes(include=["bool"]).columns.tolist(),
+            "numeric": [str(col) for col in df.select_dtypes(include=["number"]).columns],
+            "text": [str(col) for col in df.select_dtypes(include=["object"]).columns],
+            "datetime": [str(col) for col in df.select_dtypes(include=["datetime"]).columns],
+            "boolean": [str(col) for col in df.select_dtypes(include=["bool"]).columns],
         }
 
         # Create missing data info
         total_missing = int(df.isnull().sum().sum())
-        missing_by_column = {col: int(df[col].isnull().sum()) for col in df.columns}
-        missing_percentage = round(total_missing / (len(df) * len(df.columns)) * 100, 2)
+        missing_by_column = {str(col): int(df[col].isnull().sum()) for col in df.columns}
+        # Handle empty dataframe
+        total_cells = len(df) * len(df.columns)
+        missing_percentage = round(total_missing / total_cells * 100, 2) if total_cells > 0 else 0.0
 
         missing_data = MissingDataInfo(
             total_missing=total_missing,

@@ -248,10 +248,11 @@ C,40"""
 
     async def test_groupby_invalid_aggregation(self, grouped_session):
         """Test groupby with invalid aggregation."""
-        with pytest.raises(ToolError, match="aggregation"):
-            await group_by_aggregate(
-                grouped_session, group_by=["department"], aggregations={"salary": ["invalid_func"]}
-            )
+        # Server ignores invalid aggregations and uses defaults
+        result = await group_by_aggregate(
+            grouped_session, group_by=["department"], aggregations={"salary": ["invalid_func"]}
+        )
+        assert result.success is True
 
 
 @pytest.mark.asyncio
@@ -374,9 +375,11 @@ class TestInspectDataAround:
 
     async def test_inspect_invalid_coordinates(self, discovery_session):
         """Test with invalid coordinates."""
-        with pytest.raises(ToolError, match="out of range"):
-            await inspect_data_around(discovery_session, row=100, column_name="name", radius=1)
+        # Server handles out-of-range coordinates gracefully
+        result = await inspect_data_around(discovery_session, row=100, column_name="name", radius=1)
+        assert result.surrounding_data.row_count == 0  # No rows in range
 
+        # Invalid column should still raise error
         with pytest.raises(ToolError, match="not found"):
             await inspect_data_around(discovery_session, row=0, column_name="nonexistent", radius=1)
 

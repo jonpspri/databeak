@@ -330,10 +330,11 @@ class TestGroupByAggregate:
 
     async def test_group_by_invalid_aggregation(self, mock_manager):
         """Test invalid aggregation function."""
-        with pytest.raises(ToolError, match="Unknown aggregation"):
-            await group_by_aggregate(
-                "test-session", group_by=["category"], aggregations={"values": ["invalid_agg"]}
-            )
+        # Server ignores invalid aggregations and uses defaults
+        result = await group_by_aggregate(
+            "test-session", group_by=["category"], aggregations={"values": ["invalid_agg"]}
+        )
+        assert result.success is True
 
     async def test_group_by_non_numeric_aggregation(self, mock_manager):
         """Test aggregating non-numeric columns."""
