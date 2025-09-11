@@ -171,14 +171,23 @@ class TestGetStatistics:
 class TestGetColumnStatistics:
     """Test get_column_statistics function."""
 
-    @pytest.mark.parametrize("column,expected_data_type,has_numeric_stats,expected_mean,expected_percentile_25", [
-        ("numeric1", "int64", True, 5.5, 3.25),
-        ("categorical", "object", False, None, None),
-        ("dates", "datetime64[ns]", False, None, None),  
-        ("boolean", "bool", False, None, None),
-    ])
+    @pytest.mark.parametrize(
+        "column,expected_data_type,has_numeric_stats,expected_mean,expected_percentile_25",
+        [
+            ("numeric1", "int64", True, 5.5, 3.25),
+            ("categorical", "object", False, None, None),
+            ("dates", "datetime64[ns]", False, None, None),
+            ("boolean", "bool", False, None, None),
+        ],
+    )
     async def test_column_statistics_by_type(
-        self, mock_manager, column, expected_data_type, has_numeric_stats, expected_mean, expected_percentile_25
+        self,
+        mock_manager,
+        column,
+        expected_data_type,
+        has_numeric_stats,
+        expected_mean,
+        expected_percentile_25,
     ):
         """Test column statistics for different data types."""
         result = await get_column_statistics("test-session", column)
@@ -186,13 +195,13 @@ class TestGetColumnStatistics:
         assert isinstance(result, ColumnStatisticsResult)
         assert result.success is True
         assert result.column == column
-        
+
         # Check data type (with flexibility for datetime variants)
         if "datetime" in expected_data_type:
             assert "datetime" in str(result.data_type).lower()
         else:
             assert result.data_type == expected_data_type
-            
+
         # Check statistics based on whether column should have numeric stats
         if has_numeric_stats:
             assert result.statistics.mean == expected_mean

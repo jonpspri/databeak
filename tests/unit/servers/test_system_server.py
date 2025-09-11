@@ -1,0 +1,393 @@
+"""Comprehensive tests for system_server module."""
+
+from unittest.mock import Mock, patch
+
+import pytest
+from fastmcp.exceptions import ToolError
+
+from src.databeak.servers.system_server import get_server_info, health_check
+
+
+class TestHealthCheck:
+    """Test system health check functionality."""
+
+    @pytest.mark.asyncio
+    async def test_health_check_healthy_status(self):
+        """Test health check returns healthy status under normal conditions."""
+        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+            # Mock session manager with normal load
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}  # Empty sessions dict
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            result = await health_check()
+
+            assert result.success is True
+            assert result.status == "healthy"
+            assert result.version is not None
+            assert result.active_sessions == 0
+            assert result.max_sessions == 100
+            assert result.session_ttl_minutes == 60
+
+    @pytest.mark.asyncio
+    async def test_health_check_degraded_status(self):
+        """Test health check returns degraded status when near session limit."""
+        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+            # Mock session manager with high load (90%+ capacity)
+            mock_session_manager = Mock()
+            # Create 91 sessions (91% of 100)
+            mock_session_manager.sessions = {f"session_{i}": Mock() for i in range(91)}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            result = await health_check()
+
+            assert result.success is True
+            assert result.status == "degraded"
+            assert result.active_sessions == 91
+            assert result.max_sessions == 100
+
+    @pytest.mark.asyncio
+    async def test_health_check_with_context(self):
+        """Test health check with FastMCP context logging."""
+        from unittest.mock import AsyncMock
+        
+        mock_ctx = AsyncMock()
+        
+        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {"session1": Mock(), "session2": Mock()}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 30
+            mock_manager.return_value = mock_session_manager
+
+            result = await health_check(mock_ctx)
+
+            # Verify context was used for logging
+            mock_ctx.info.assert_called()
+            assert result.success is True
+            assert result.active_sessions == 2
+
+    @pytest.mark.asyncio
+    async def test_health_check_handles_session_manager_failure(self):
+        """Test health check handles session manager failures gracefully."""
+        from unittest.mock import AsyncMock
+        
+        mock_ctx = AsyncMock()
+        
+        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+            mock_manager.side_effect = Exception("Session manager unavailable")
+
+            result = await health_check(mock_ctx)
+
+            # Should return unhealthy status on failure
+            assert result.success is True  # Base model default
+            assert result.status == "unhealthy"
+            assert result.active_sessions == 0
+            assert result.max_sessions == 0
+            
+            # Context should receive error
+            mock_ctx.error.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_health_check_critical_failure(self):
+        """Test health check handles critical failures that prevent fallback response."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.__version__", side_effect=Exception("Version error"))
+        ):
+            mock_manager.side_effect = Exception("Critical failure")
+
+            with pytest.raises(ToolError, match="Critical health check failure"):
+                await health_check()
+
+    @pytest.mark.asyncio
+    async def test_health_check_response_structure(self):
+        """Test health check response has correct Pydantic model structure."""
+        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}
+            mock_session_manager.max_sessions = 50
+            mock_session_manager.ttl_minutes = 120
+            mock_manager.return_value = mock_session_manager
+
+            result = await health_check()
+
+            # Verify all required fields are present
+            assert hasattr(result, "success")
+            assert hasattr(result, "status")
+            assert hasattr(result, "version")
+            assert hasattr(result, "active_sessions")
+            assert hasattr(result, "max_sessions")
+            assert hasattr(result, "session_ttl_minutes")
+            
+            # Verify types
+            assert isinstance(result.status, str)
+            assert isinstance(result.version, str)
+            assert isinstance(result.active_sessions, int)
+            assert isinstance(result.max_sessions, int)
+            assert isinstance(result.session_ttl_minutes, int)
+
+
+class TestServerInfo:
+    """Test server information functionality."""
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_basic_structure(self):
+        """Test server info returns proper structure with all required fields."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 500
+            mock_config.session_timeout = 3600  # 1 hour in seconds
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            # Verify basic server information
+            assert result.success is True
+            assert result.name == "DataBeak"
+            assert result.version is not None
+            assert result.description is not None
+            assert "comprehensive MCP server" in result.description
+
+            # Verify configuration
+            assert result.max_file_size_mb == 500
+            assert result.session_timeout_minutes == 60  # Converted from seconds
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_capabilities_structure(self):
+        """Test server info includes all expected capability categories."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 100
+            mock_config.session_timeout = 1800
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            # Verify capability categories exist
+            expected_categories = [
+                "data_io",
+                "data_manipulation", 
+                "data_analysis",
+                "data_validation",
+                "session_management",
+                "null_handling",
+            ]
+            
+            for category in expected_categories:
+                assert category in result.capabilities
+                assert isinstance(result.capabilities[category], list)
+                assert len(result.capabilities[category]) > 0
+
+    @pytest.mark.asyncio 
+    async def test_get_server_info_data_io_capabilities(self):
+        """Test server info includes expected data I/O capabilities."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 200
+            mock_config.session_timeout = 7200
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            data_io_caps = result.capabilities["data_io"]
+            expected_io_caps = [
+                "load_csv",
+                "load_csv_from_url", 
+                "load_csv_from_content",
+                "export_csv",
+                "multiple_export_formats",
+            ]
+
+            for cap in expected_io_caps:
+                assert cap in data_io_caps
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_supported_formats(self):
+        """Test server info includes expected supported formats."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 300
+            mock_config.session_timeout = 1200
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            expected_formats = [
+                "csv",
+                "tsv", 
+                "json",
+                "excel",
+                "parquet",
+                "html",
+                "markdown",
+            ]
+
+            for fmt in expected_formats:
+                assert fmt in result.supported_formats
+
+            # Verify it's a proper list
+            assert isinstance(result.supported_formats, list)
+            assert len(result.supported_formats) == len(expected_formats)
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_with_context(self):
+        """Test server info with FastMCP context logging."""
+        from unittest.mock import AsyncMock
+        
+        mock_ctx = AsyncMock()
+        
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 150
+            mock_config.session_timeout = 2400
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info(mock_ctx)
+
+            # Verify context was used for logging
+            mock_ctx.info.assert_called()
+            assert result.success is True
+            assert result.name == "DataBeak"
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_handles_settings_failure(self):
+        """Test server info handles configuration loading failures."""
+        from unittest.mock import AsyncMock
+        
+        mock_ctx = AsyncMock()
+        
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_settings.side_effect = Exception("Settings unavailable")
+
+            with pytest.raises(ToolError, match="Failed to get server information"):
+                await get_server_info(mock_ctx)
+
+            # Context should receive error
+            mock_ctx.error.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_null_handling_capabilities(self):
+        """Test server info includes comprehensive null handling capabilities."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 400
+            mock_config.session_timeout = 5400
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            null_caps = result.capabilities["null_handling"]
+            expected_null_caps = [
+                "json_null_support",
+                "python_none_support", 
+                "pandas_nan_compatibility",
+                "null_value_insertion",
+                "null_value_updates",
+            ]
+
+            for cap in expected_null_caps:
+                assert cap in null_caps
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_data_manipulation_capabilities(self):
+        """Test server info includes expected data manipulation capabilities."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 250
+            mock_config.session_timeout = 3000
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            manipulation_caps = result.capabilities["data_manipulation"]
+            expected_caps = [
+                "filter_rows",
+                "sort_data",
+                "select_columns",
+                "rename_columns",
+                "add_column",
+                "remove_columns",
+                "change_column_type",
+                "fill_missing_values", 
+                "remove_duplicates",
+                "null_value_support",
+            ]
+
+            for cap in expected_caps:
+                assert cap in manipulation_caps
+
+    @pytest.mark.asyncio
+    async def test_get_server_info_response_model_validation(self):
+        """Test server info response validates as proper Pydantic model."""
+        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 600
+            mock_config.session_timeout = 7200
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info()
+
+            # Test that the result can be serialized (Pydantic validation)
+            result_dict = result.model_dump()
+            
+            # Verify structure
+            assert "success" in result_dict
+            assert "name" in result_dict 
+            assert "version" in result_dict
+            assert "capabilities" in result_dict
+            assert "supported_formats" in result_dict
+            assert "max_file_size_mb" in result_dict
+            assert "session_timeout_minutes" in result_dict
+
+            # Verify capabilities is a dict of lists
+            assert isinstance(result_dict["capabilities"], dict)
+            for category, caps in result_dict["capabilities"].items():
+                assert isinstance(caps, list)
+                assert all(isinstance(cap, str) for cap in caps)
+
+
+class TestSystemServerIntegration:
+    """Test system server integration and patterns."""
+
+    def test_system_server_exists(self):
+        """Test that system server is properly exported."""
+        from src.databeak.servers.system_server import system_server
+        
+        assert system_server is not None
+        assert system_server.name == "DataBeak-System"
+        assert system_server.instructions is not None
+
+    def test_system_server_has_correct_tools(self):
+        """Test that system server has registered the expected tools."""
+        from src.databeak.servers.system_server import system_server
+        
+        # The server should have tools registered, but FastMCP doesn't expose them easily
+        # We can at least verify the server is properly configured
+        assert hasattr(system_server, 'name')
+        assert hasattr(system_server, 'instructions')
+
+    @pytest.mark.asyncio
+    async def test_system_functions_are_async(self):
+        """Test that system functions are properly async."""
+        import inspect
+        
+        # Verify functions are async
+        assert inspect.iscoroutinefunction(health_check)
+        assert inspect.iscoroutinefunction(get_server_info)
+
+    def test_system_server_follows_naming_pattern(self):
+        """Test that system server follows DataBeak naming conventions."""
+        from src.databeak.servers.system_server import system_server
+        
+        # Should follow DataBeak-<Service> naming pattern
+        assert system_server.name.startswith("DataBeak-")
+        assert "System" in system_server.name
+        
+        # Instructions should mention the server purpose
+        assert "system" in system_server.instructions.lower()
+        assert "health" in system_server.instructions.lower()

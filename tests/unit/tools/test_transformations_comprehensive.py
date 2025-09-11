@@ -114,19 +114,22 @@ class TestGetSessionData:
 class TestFilterRows:
     """Test filter_rows function with all operators."""
 
-    @pytest.mark.parametrize("operator,column,value,expected_rows", [
-        ("==", "city", "NYC", 2),
-        ("!=", "active", True, 2),
-        (">", "age", 30, 2),
-        ("<", "salary", 60000, 2),
-        (">=", "age", 30, 3),
-        ("<=", "age", 30, 3),
-        ("contains", "email", "@test.com", 4),
-        ("starts_with", "name", "D", 1),
-        ("ends_with", "phone", "0123", 1),
-        ("in", "city", ["NYC", "LA"], 4),
-        ("not_in", "city", ["NYC", "LA"], 1),
-    ])
+    @pytest.mark.parametrize(
+        "operator,column,value,expected_rows",
+        [
+            ("==", "city", "NYC", 2),
+            ("!=", "active", True, 2),
+            (">", "age", 30, 2),
+            ("<", "salary", 60000, 2),
+            (">=", "age", 30, 3),
+            ("<=", "age", 30, 3),
+            ("contains", "email", "@test.com", 4),
+            ("starts_with", "name", "D", 1),
+            ("ends_with", "phone", "0123", 1),
+            ("in", "city", ["NYC", "LA"], 4),
+            ("not_in", "city", ["NYC", "LA"], 1),
+        ],
+    )
     async def test_filter_operators(self, mock_manager, operator, column, value, expected_rows):
         """Test all filter operators with parameterized data."""
         result = await filter_rows(
@@ -135,10 +138,13 @@ class TestFilterRows:
         assert result.success is True
         assert result.rows_after == expected_rows
 
-    @pytest.mark.parametrize("operator,column,expected_rows", [
-        ("is_null", "email", 1),
-        ("not_null", "phone", 4),
-    ])
+    @pytest.mark.parametrize(
+        "operator,column,expected_rows",
+        [
+            ("is_null", "email", 1),
+            ("not_null", "phone", 4),
+        ],
+    )
     async def test_filter_null_operators(self, mock_manager, operator, column, expected_rows):
         """Test null-checking operators that don't require a value."""
         filters = [{"column": column, "operator": operator}]

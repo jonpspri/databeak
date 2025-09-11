@@ -14,15 +14,17 @@ from .models import get_session_manager
 from .servers.column_server import column_server
 from .servers.column_text_server import column_text_server
 from .servers.discovery_server import discovery_server
+from .servers.history_server import history_server
 from .servers.io_server import io_server
+from .servers.row_operations_server import row_operations_server
 from .servers.statistics_server import statistics_server
+from .servers.system_server import system_server
 from .servers.transformation_server import transformation_server
 from .servers.validation_server import validation_server
 from .tools.data_operations import create_data_preview_with_indices
-from .tools.mcp_data_tools import register_data_tools
-from .tools.mcp_history_tools import register_history_tools
-from .tools.mcp_row_tools import register_row_tools
-from .tools.mcp_system_tools import register_system_tools
+# from .tools.mcp_data_tools import register_data_tools  # Migrated to specialized servers
+# from .tools.mcp_history_tools import register_history_tools  # Migrated to history_server
+# from .tools.mcp_system_tools import register_system_tools  # Migrated to system_server
 from .tools.transformations import get_cell_value as _get_cell_value
 from .tools.transformations import get_row_data as _get_row_data
 from .utils.logging_config import get_logger, set_correlation_id, setup_structured_logging
@@ -47,15 +49,14 @@ def _load_instructions() -> str:
 # Initialize FastMCP server
 mcp = FastMCP("DataBeak", instructions=_load_instructions())
 
-# Register remaining tools with the FastMCP server
-register_system_tools(mcp)
-register_data_tools(mcp)
-register_row_tools(mcp)
-# register_analytics_tools(mcp)  # Migrated to specialized analytics servers
-register_history_tools(mcp)
+# All tools have been migrated to specialized servers
+# No direct tool registration needed - using server composition pattern
 
 # Mount specialized servers
+mcp.mount(system_server)
 mcp.mount(io_server)
+mcp.mount(history_server)
+mcp.mount(row_operations_server)
 mcp.mount(statistics_server)
 mcp.mount(discovery_server)
 mcp.mount(validation_server)

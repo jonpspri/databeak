@@ -71,37 +71,44 @@ from src.databeak.servers.io_server import (
 class TestSessionInfo:
     """Test SessionInfo model."""
 
-    @pytest.mark.parametrize("test_case,expected_results", [
-        (
-            {
-                "data": {
-                    "session_id": "test-123",
-                    "created_at": "2023-01-01T10:00:00Z",
-                    "last_accessed": "2023-01-01T10:30:00Z",
-                    "row_count": 100,
-                    "column_count": 5,
-                    "columns": ["id", "name", "age", "email", "salary"],
-                    "memory_usage_mb": 2.5,
-                    "file_path": "/path/to/file.csv",
-                },
-                "expected": {"session_id": "test-123", "row_count": 100, "file_path": "/path/to/file.csv"}
-            }
-        ),
-        (
-            {
-                "data": {
-                    "session_id": "test-456", 
-                    "created_at": "2023-01-01T10:00:00Z",
-                    "last_accessed": "2023-01-01T10:30:00Z",
-                    "row_count": 100,
-                    "column_count": 5,
-                    "columns": ["id", "name"],
-                    "memory_usage_mb": 1.0,
-                },
-                "expected": {"session_id": "test-456", "row_count": 100, "file_path": None}
-            }
-        ),
-    ])
+    @pytest.mark.parametrize(
+        "test_case,expected_results",
+        [
+            (
+                {
+                    "data": {
+                        "session_id": "test-123",
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "last_accessed": "2023-01-01T10:30:00Z",
+                        "row_count": 100,
+                        "column_count": 5,
+                        "columns": ["id", "name", "age", "email", "salary"],
+                        "memory_usage_mb": 2.5,
+                        "file_path": "/path/to/file.csv",
+                    },
+                    "expected": {
+                        "session_id": "test-123",
+                        "row_count": 100,
+                        "file_path": "/path/to/file.csv",
+                    },
+                }
+            ),
+            (
+                {
+                    "data": {
+                        "session_id": "test-456",
+                        "created_at": "2023-01-01T10:00:00Z",
+                        "last_accessed": "2023-01-01T10:30:00Z",
+                        "row_count": 100,
+                        "column_count": 5,
+                        "columns": ["id", "name"],
+                        "memory_usage_mb": 1.0,
+                    },
+                    "expected": {"session_id": "test-456", "row_count": 100, "file_path": None},
+                }
+            ),
+        ],
+    )
     def test_session_info_variations(self, test_case, expected_results):
         """Test SessionInfo creation with different configurations."""
         session = SessionInfo(**test_case["data"])

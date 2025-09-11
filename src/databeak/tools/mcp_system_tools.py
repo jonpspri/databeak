@@ -1,4 +1,15 @@
-"""FastMCP system tool definitions for DataBeak."""
+"""FastMCP system tool definitions for DataBeak.
+
+WARNING: This module is deprecated as of DataBeak server refactoring.
+System tools have been migrated to src.databeak.servers.system_server.
+
+The functions in this module are kept for backward compatibility but will be
+removed in a future version. New code should import from system_server instead.
+
+Migration path:
+- Old: from src.databeak.tools.mcp_system_tools import register_system_tools
+- New: from src.databeak.servers.system_server import system_server, health_check, get_server_info
+"""
 
 from __future__ import annotations
 
