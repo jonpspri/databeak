@@ -44,7 +44,11 @@ class TestBackwardCompatibilityThroughModules:
         assert callable(export_csv)
 
         # Test core transformation functions
-        from src.databeak.services.transformation_operations import add_column, filter_rows, insert_row
+        from src.databeak.services.transformation_operations import (
+            add_column,
+            filter_rows,
+            insert_row,
+        )
 
         assert callable(insert_row)
         assert callable(filter_rows)
@@ -62,7 +66,11 @@ class TestBackwardCompatibilityThroughModules:
         # These functions should support None/null values
         import inspect
 
-        from src.databeak.services.transformation_operations import insert_row, set_cell_value, update_row
+        from src.databeak.services.transformation_operations import (
+            insert_row,
+            set_cell_value,
+            update_row,
+        )
 
         # Check that insert_row accepts Any type for data
         sig = inspect.signature(insert_row)

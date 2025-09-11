@@ -483,7 +483,7 @@ async def group_by_aggregate(
 ) -> GroupAggregateResult:
     """Group data and compute aggregations for analytical insights.
 
-    Performs SQL-like GROUP BY operations with multiple aggregation functions
+    Performs GROUP BY operations with multiple aggregation functions
     per column. Essential for segmentation analysis and understanding patterns
     across different data groups.
 

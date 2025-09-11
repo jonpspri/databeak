@@ -135,7 +135,7 @@ uv run ruff check && uv run ruff format --check && uv run mypy src/ && uv run -m
 
 ## Future Considerations
 
-- **SQL query interface** for advanced operations
+- **Advanced transformation interface** for complex operations
 - **Real-time collaboration** features
 - **Machine learning integrations** for data insights
 - **Cloud storage support** for remote data sources

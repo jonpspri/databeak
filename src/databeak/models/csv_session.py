@@ -99,13 +99,13 @@ class CSVSession:
     def df(self) -> pd.DataFrame | None:
         """Get or set the DataFrame."""
         return self._data_session.df
-    
+
     @df.setter
     def df(self, new_df: pd.DataFrame) -> None:
         """Set the DataFrame."""
         self._data_session.df = new_df
         self.update_access_time()
-    
+
     @df.deleter
     def df(self) -> None:
         """Clear the DataFrame."""
@@ -481,11 +481,7 @@ class SessionManager:
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
         self._cleanup_expired()
-        return [
-            session.get_info()
-            for session in self.sessions.values()
-            if session.has_data()
-        ]
+        return [session.get_info() for session in self.sessions.values() if session.has_data()]
 
     def _cleanup_expired(self) -> None:
         """Mark expired sessions for cleanup."""

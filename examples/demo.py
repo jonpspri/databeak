@@ -11,8 +11,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.tools.analytics import get_statistics, profile_data
 from src.databeak.services.transformation_operations import filter_rows
+from src.databeak.tools.analytics import get_statistics, profile_data
 from src.databeak.tools.validation import check_data_quality
 
 # Demo data

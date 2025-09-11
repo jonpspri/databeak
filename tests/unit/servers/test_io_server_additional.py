@@ -221,7 +221,7 @@ class TestMemoryAndPerformance:
 
     async def test_session_memory_tracking(self):
         """Test that memory usage is tracked."""
-        csv_content = "col1,col2,col3\n" + "\n".join(f"{i},{i+1},{i+2}" for i in range(100))
+        csv_content = "col1,col2,col3\n" + "\n".join(f"{i},{i + 1},{i + 2}" for i in range(100))
 
         load_result = await load_csv_from_content(csv_content)
         info = await get_session_info(load_result.session_id)

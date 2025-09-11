@@ -21,7 +21,7 @@ class HistoryStorage(str, Enum):
     MEMORY = "memory"  # In-memory only (lost on session end)
     JSON = "json"  # Save as JSON file
     PICKLE = "pickle"  # Save as pickle (preserves DataFrames)
-    SQLITE = "sqlite"  # Save in SQLite database (future)
+    # DATABASE = "database"  # Future: database storage option
 
 
 class OperationHistory:

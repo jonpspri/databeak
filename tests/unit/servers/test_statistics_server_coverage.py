@@ -97,7 +97,7 @@ class TestGetStatistics:
 
         assert result.success is True
         assert len(result.statistics) == 2
-        assert all(col in ["numeric1", "numeric2"] for col in result.statistics.keys())
+        assert all(col in ["numeric1", "numeric2"] for col in result.statistics)
 
     async def test_statistics_with_nulls(self, mock_manager):
         """Test statistics with null values."""
@@ -389,7 +389,7 @@ class TestGetValueCounts:
         assert result.success is True
         assert result.unique_values == 10
         # value_counts keys should be strings for dates
-        assert all(isinstance(k, str) for k in result.value_counts.keys())
+        assert all(isinstance(k, str) for k in result.value_counts)
 
 
 @pytest.mark.asyncio

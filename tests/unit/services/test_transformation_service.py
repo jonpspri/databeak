@@ -219,12 +219,14 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_session_not_found_error(self):
         """Test handling of SessionNotFoundError."""
-        with patch(
-            "src.databeak.services.transformation_service._get_session_data",
-            side_effect=SessionNotFoundError("test-session"),
+        with (
+            patch(
+                "src.databeak.services.transformation_service._get_session_data",
+                side_effect=SessionNotFoundError("test-session"),
+            ),
+            pytest.raises(ToolError),
         ):
-            with pytest.raises(ToolError):
-                await filter_rows_with_pydantic("invalid-session", [])
+            await filter_rows_with_pydantic("invalid-session", [])
 
 
 class TestSortData:

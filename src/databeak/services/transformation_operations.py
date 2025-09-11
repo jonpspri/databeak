@@ -439,9 +439,7 @@ async def change_column_type(
 
         # Convert based on target dtype
         if dtype == "int":
-            session.df[column] = pd.to_numeric(df[column], errors=errors).astype(
-                "Int64"
-            )
+            session.df[column] = pd.to_numeric(df[column], errors=errors).astype("Int64")
         elif dtype == "float":
             session.df[column] = pd.to_numeric(df[column], errors=errors)
         elif dtype == "str":
@@ -595,18 +593,14 @@ async def update_column(
         elif operation == "extract":
             if pattern is None:
                 raise ToolError("Pattern required for extract operation")
-            session.df[column] = (
-                df[column].astype(str).str.extract(pattern, expand=False)
-            )
+            session.df[column] = df[column].astype(str).str.extract(pattern, expand=False)
 
         elif operation == "split":
             if pattern is None:
                 pattern = " "
             if value is not None and isinstance(value, int):
                 # Extract specific part after split
-                session.df[column] = (
-                    df[column].astype(str).str.split(pattern).str[value]
-                )
+                session.df[column] = df[column].astype(str).str.split(pattern).str[value]
             else:
                 # Just do the split, take first part
                 session.df[column] = df[column].astype(str).str.split(pattern).str[0]
@@ -628,9 +622,7 @@ async def update_column(
         else:
             raise ToolError(f"Unknown operation: {operation}")
 
-        updated_values_sample = convert_pandas_na_list(
-            session.df[column].head(5).tolist()
-        )
+        updated_values_sample = convert_pandas_na_list(session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -687,9 +679,7 @@ async def remove_duplicates(
         # Convert keep parameter
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
 
-        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
-            drop=True
-        )
+        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(drop=True)
         rows_after = len(session.df)
 
         session.record_operation(
@@ -823,9 +813,7 @@ async def set_cell_value(
             old_value = old_value.item()
 
         # Set new value
-        session.df.iloc[
-            row_index, session.df.columns.get_loc(column_name)
-        ] = value
+        session.df.iloc[row_index, session.df.columns.get_loc(column_name)] = value
 
         # Record operation
         session.record_operation(
@@ -1014,9 +1002,7 @@ async def replace_in_column(
         original_sample = convert_pandas_na_list(df[column].head(5).tolist())
 
         # Perform replacement
-        session.df[column] = (
-            df[column].astype(str).str.replace(pattern, replacement, regex=regex)
-        )
+        session.df[column] = df[column].astype(str).str.replace(pattern, replacement, regex=regex)
 
         # Get updated sample
         updated_sample = convert_pandas_na_list(session.df[column].head(5).tolist())
@@ -1150,9 +1136,7 @@ async def split_column(
         else:
             # Keep specific part
             if part_index is not None:
-                session.df[column] = (
-                    df[column].astype(str).str.split(delimiter).str[part_index]
-                )
+                session.df[column] = df[column].astype(str).str.split(delimiter).str[part_index]
             else:
                 # Keep first part by default
                 session.df[column] = df[column].astype(str).str.split(delimiter).str[0]
@@ -1277,9 +1261,7 @@ async def strip_column(
         else:
             session.df[column] = df[column].astype(str).str.strip(chars)
 
-        updated_values_sample = convert_pandas_na_list(
-            session.df[column].head(5).tolist()
-        )
+        updated_values_sample = convert_pandas_na_list(session.df[column].head(5).tolist())
 
         session.record_operation(
             OperationType.UPDATE_COLUMN,
@@ -1600,9 +1582,7 @@ async def update_row(
 
         # Update the row
         for column, value in data.items():
-            session.df.iloc[
-                row_index, session.df.columns.get_loc(column)
-            ] = value
+            session.df.iloc[row_index, session.df.columns.get_loc(column)] = value
 
         # Get new values for tracking
         new_values: dict[str, Any] = {}

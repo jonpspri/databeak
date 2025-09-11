@@ -272,9 +272,7 @@ def sort_data(
             raise ToolError(f"Columns not found: {missing_cols}")
 
         # Perform sort
-        session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(
-            drop=True
-        )
+        session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
 
         # Record operation
         session.record_operation(
@@ -352,9 +350,7 @@ def remove_duplicates(
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
 
         # Remove duplicates
-        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(
-            drop=True
-        )
+        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(drop=True)
 
         rows_after = len(session.df)
         rows_removed = rows_before - rows_after

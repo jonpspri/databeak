@@ -20,7 +20,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
         # Handle pandas index types safely
         row_index_val = row_idx if isinstance(row_idx, int) else 0
         # Convert all keys to strings and handle pandas/numpy types
-        record = {"__row_index__": row_index_val}  # Include original row index
+        record: dict[str, Any] = {"__row_index__": row_index_val}  # Include original row index
         row_dict = row.to_dict()
         for key, value in row_dict.items():
             str_key = str(key)

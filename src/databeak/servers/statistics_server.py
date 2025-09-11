@@ -143,25 +143,25 @@ async def get_statistics(
             from ..models.statistics_models import StatisticsSummary
 
             # Calculate statistics, using 0.0 for undefined values
-            col_stats = StatisticsSummary(
-                count=int(col_data.count()),
-                mean=float(col_data.mean())
-                if len(col_data) > 0 and not pd.isna(col_data.mean())
-                else 0.0,
-                std=float(col_data.std())
-                if len(col_data) > 1 and not pd.isna(col_data.std())
-                else 0.0,
-                min=float(col_data.min())
-                if len(col_data) > 0 and not pd.isna(col_data.min())
-                else 0.0,
-                max=float(col_data.max())
-                if len(col_data) > 0 and not pd.isna(col_data.max())
-                else 0.0,
-                **{
+            col_stats = StatisticsSummary.model_validate(
+                {
+                    "count": int(col_data.count()),
+                    "mean": float(col_data.mean())
+                    if len(col_data) > 0 and not pd.isna(col_data.mean())
+                    else 0.0,
+                    "std": float(col_data.std())
+                    if len(col_data) > 1 and not pd.isna(col_data.std())
+                    else 0.0,
+                    "min": float(col_data.min())
+                    if len(col_data) > 0 and not pd.isna(col_data.min())
+                    else 0.0,
+                    "max": float(col_data.max())
+                    if len(col_data) > 0 and not pd.isna(col_data.max())
+                    else 0.0,
                     "25%": float(col_data.quantile(0.25)) if len(col_data) > 0 else 0.0,
                     "50%": float(col_data.quantile(0.50)) if len(col_data) > 0 else 0.0,
                     "75%": float(col_data.quantile(0.75)) if len(col_data) > 0 else 0.0,
-                },
+                }
             )
 
             stats_dict[col] = col_stats

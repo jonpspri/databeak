@@ -349,7 +349,7 @@ class TestServerInfo:
 
             # Verify capabilities is a dict of lists
             assert isinstance(result_dict["capabilities"], dict)
-            for category, caps in result_dict["capabilities"].items():
+            for _category, caps in result_dict["capabilities"].items():
                 assert isinstance(caps, list)
                 assert all(isinstance(cap, str) for cap in caps)
 

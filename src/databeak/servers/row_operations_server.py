@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -76,7 +76,7 @@ class RowInsertRequest(BaseModel):
         if isinstance(v, str):
             try:
                 parsed = json.loads(v)
-                if not isinstance(parsed, (dict, list)):
+                if not isinstance(parsed, dict | list):
                     raise ValueError("JSON string must parse to dict or list")
                 return parsed
             except json.JSONDecodeError as e:
@@ -199,13 +199,13 @@ def get_cell_value(
             column_name = column
 
         # Get the cell value
-        value = df.iloc[row_index, df.columns.get_loc(column_name)]
+        value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
 
         # Handle pandas/numpy types for JSON serialization
         if pd.isna(value):
             value = None
         elif hasattr(value, "item"):  # numpy scalar
-            value = value.item()
+            value = value.item()  # type: ignore[assignment]
 
         # Get column data type
         data_type = str(df[column_name].dtype)
@@ -222,7 +222,7 @@ def get_cell_value(
         )
 
         return CellValueResult(
-            value=value,
+            value=value,  # type: ignore[arg-type]
             coordinates={"row": row_index, "column": column_name},
             data_type=data_type,
         )
@@ -304,21 +304,21 @@ def set_cell_value(
             column_name = column
 
         # Get the old value for tracking
-        old_value = df.iloc[row_index, df.columns.get_loc(column_name)]
+        old_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
         if pd.isna(old_value):
             old_value = None
         elif hasattr(old_value, "item"):  # numpy scalar
-            old_value = old_value.item()
+            old_value = old_value.item()  # type: ignore[assignment]
 
         # Set the new value
-        df.iloc[row_index, df.columns.get_loc(column_name)] = value
+        df.iloc[row_index, df.columns.get_loc(column_name)] = value  # type: ignore[index]
 
         # Get the new value for tracking (after pandas type conversion)
-        new_value = df.iloc[row_index, df.columns.get_loc(column_name)]
+        new_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
         if pd.isna(new_value):
             new_value = None
         elif hasattr(new_value, "item"):  # numpy scalar
-            new_value = new_value.item()
+            new_value = new_value.item()  # type: ignore[assignment]
 
         # Get column data type
         data_type = str(df[column_name].dtype)
@@ -337,8 +337,8 @@ def set_cell_value(
 
         return SetCellResult(
             coordinates={"row": row_index, "column": column_name},
-            old_value=old_value,
-            new_value=new_value,
+            old_value=old_value,  # type: ignore[arg-type]
+            new_value=new_value,  # type: ignore[arg-type]
             data_type=data_type,
         )
 
@@ -645,7 +645,7 @@ def insert_row(
         session.df = df_new
 
         # Prepare inserted data for response (handle pandas types)
-        data_inserted = {}
+        data_inserted: dict[str, Any] = {}
         for key, value in row_data.items():
             if pd.isna(value):
                 data_inserted[key] = None
@@ -833,7 +833,7 @@ def update_row(
             raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
 
         # Validate all columns exist
-        missing_columns = [col for col in data.keys() if col not in df.columns]
+        missing_columns = [col for col in data if col not in df.columns]
         if missing_columns:
             raise ColumnNotFoundError(missing_columns[0], list(df.columns))
 
@@ -845,21 +845,21 @@ def update_row(
         # Update each column
         for column, new_value in data.items():
             # Get old value
-            old_value = df.iloc[row_index, df.columns.get_loc(column)]
+            old_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
             if pd.isna(old_value):
                 old_value = None
             elif hasattr(old_value, "item"):  # numpy scalar
-                old_value = old_value.item()
+                old_value = old_value.item()  # type: ignore[assignment]
 
             # Set new value
-            df.iloc[row_index, df.columns.get_loc(column)] = new_value
+            df.iloc[row_index, df.columns.get_loc(column)] = new_value  # type: ignore[index]
 
             # Get new value (after pandas type conversion)
-            updated_value = df.iloc[row_index, df.columns.get_loc(column)]
+            updated_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
             if pd.isna(updated_value):
                 updated_value = None
             elif hasattr(updated_value, "item"):  # numpy scalar
-                updated_value = updated_value.item()
+                updated_value = updated_value.item()  # type: ignore[assignment]
 
             # Track the change
             columns_updated.append(column)
@@ -880,8 +880,8 @@ def update_row(
         return UpdateRowResult(
             row_index=row_index,
             columns_updated=columns_updated,
-            old_values=old_values,
-            new_values=new_values,
+            old_values=old_values,  # type: ignore[arg-type]
+            new_values=new_values,  # type: ignore[arg-type]
             changes_made=len(columns_updated),
         )
 

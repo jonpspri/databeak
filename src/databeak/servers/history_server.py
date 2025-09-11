@@ -717,12 +717,12 @@ async def export_history(
         # Try to get file size
         file_size = None
         try:
-            import os
+            from pathlib import Path
 
-            file_size = os.path.getsize(file_path)
-        except Exception:
+            file_size = Path(file_path).stat().st_size
+        except Exception as e:
             # File size is optional, continue without it
-            pass
+            logger.debug(f"Could not get file size for {file_path}: {e}")
 
         if ctx:
             await ctx.info(f"Successfully exported {operations_count} operations to {file_path}")
