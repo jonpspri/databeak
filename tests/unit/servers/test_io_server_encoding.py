@@ -104,7 +104,7 @@ class TestLoadCsvEncodingFallbacks:
             temp_path = f.name
 
         try:
-            with pytest.raises(ToolError, match="Failed to load CSV with any encoding"):
+            with pytest.raises(ToolError, match="Encoding error with all attempted encodings"):
                 await load_csv(file_path=temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
@@ -122,7 +122,7 @@ class TestLoadCsvEncodingFallbacks:
             # Mock to make memory check fail
             with (
                 patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.0001),
-                pytest.raises(ToolError, match="memory limit"),
+                pytest.raises(ToolError, match="exceeds memory limit"),
             ):
                 await load_csv(file_path=temp_path, encoding="utf-8")
         finally:
@@ -166,6 +166,7 @@ class TestLoadCsvFromUrlFallbacks:
         # Mock context
         mock_ctx = MagicMock()
         mock_ctx.info = AsyncMock(return_value=None)
+        mock_ctx.error = AsyncMock(return_value=None)
         mock_ctx.report_progress = AsyncMock(return_value=None)
 
         result = await load_csv_from_url(
@@ -192,7 +193,7 @@ class TestLoadCsvFromUrlFallbacks:
 
         with (
             patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
-            pytest.raises(ToolError, match="memory limit"),
+            pytest.raises(ToolError, match="exceeds memory limit"),
         ):
             await load_csv_from_url(url="http://example.com/data.csv", encoding="utf-8")
 

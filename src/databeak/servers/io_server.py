@@ -509,7 +509,7 @@ async def load_csv(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -733,7 +733,7 @@ async def load_csv_from_url(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -851,7 +851,7 @@ async def load_csv_from_content(
         return LoadResult(
             session_id=session.session_id,
             rows_affected=len(df),
-            columns_affected=df.columns.tolist(),
+            columns_affected=[str(col) for col in df.columns],
             data=data_preview,
             memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
         )
@@ -965,6 +965,10 @@ async def export_csv(
                     temp_file_path = file_path  # Track for cleanup on error
 
             path_obj = Path(file_path)
+
+            # Create parent directory if it doesn't exist
+            path_obj.parent.mkdir(parents=True, exist_ok=True)
+
             df = session.df
 
             if ctx:

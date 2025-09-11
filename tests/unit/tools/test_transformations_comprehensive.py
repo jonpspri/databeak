@@ -97,7 +97,7 @@ class TestGetSessionData:
         """Test when session has no data."""
         with patch("src.databeak.tools.transformations.get_session_manager") as manager:
             session = Mock()
-            session.data_session.has_data.return_value = False
+            session.has_data.return_value = False
             manager.return_value.get_session.return_value = session
             with pytest.raises(NoDataLoadedError):
                 _get_session_data("empty-session")
@@ -770,7 +770,7 @@ class TestErrorHandling:
         """Test operations with no data loaded."""
         with patch("src.databeak.tools.transformations.get_session_manager") as manager:
             session = Mock()
-            session.data_session.has_data.return_value = False
+            session.has_data.return_value = False
             manager.return_value.get_session.return_value = session
 
             with pytest.raises(ToolError) as exc_info:

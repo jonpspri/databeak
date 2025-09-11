@@ -143,8 +143,9 @@ class TestErrorConditions:
             # Create a mock stat object
             mock_stat_obj = type("MockStat", (), {})()
             mock_stat_obj.st_size = (MAX_FILE_SIZE_MB + 10) * 1024 * 1024
+            mock_stat_obj.st_mode = 0o100644  # Regular file mode
 
-            with patch.object(Path(temp_path), "stat", return_value=mock_stat_obj):
+            with patch("pathlib.Path.stat", return_value=mock_stat_obj):
                 with pytest.raises(ToolError, match="File size.*exceeds limit"):
                     await load_csv(temp_path)
         finally:

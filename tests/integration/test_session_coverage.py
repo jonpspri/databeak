@@ -51,7 +51,7 @@ class TestCSVSessionAutoSave:
 
         # Load data and mark as needing save
         session.load_data(df, "test.csv")
-        session.data_session.metadata["needs_autosave"] = True
+        session._data_session.metadata["needs_autosave"] = True
 
         # Test auto-save trigger
         result = await session.trigger_auto_save_if_needed()
@@ -61,7 +61,7 @@ class TestCSVSessionAutoSave:
         assert result["success"] is True
         session.auto_save_manager.trigger_save.assert_called_once()
         # Should clear the autosave flag
-        assert session.data_session.metadata["needs_autosave"] is False
+        assert session._data_session.metadata["needs_autosave"] is False
 
     @pytest.mark.asyncio
     async def test_trigger_auto_save_not_needed(self):
@@ -100,7 +100,7 @@ class TestCSVSessionHistoryIntegration:
         call_args = session.history_manager.add_operation.call_args
         assert call_args[1]["operation_type"] == "filter"
         assert call_args[1]["details"] == operation_details
-        assert call_args[1]["current_data"] is session.data_session.df
+        assert call_args[1]["current_data"] is session.df
 
     def test_record_operation_with_history_disabled(self):
         """Test recording operations when history is disabled."""
@@ -141,12 +141,12 @@ class TestCSVSessionHistoryIntegration:
         session.load_data(df, "test.csv")
 
         # Clear the autosave flag
-        session.data_session.metadata["needs_autosave"] = False
+        session._data_session.metadata["needs_autosave"] = False
 
         session.record_operation(OperationType.FILTER, {"test": "data"})
 
         # Should mark auto-save as needed (line 159)
-        assert session.data_session.metadata["needs_autosave"] is True
+        assert session._data_session.metadata["needs_autosave"] is True
 
 
 class TestCSVSessionLifecycle:
@@ -170,13 +170,13 @@ class TestCSVSessionLifecycle:
 
         # Mock both update methods
         session.lifecycle.update_access_time = Mock()
-        session.data_session.update_access_time = Mock()
+        session._data_session.update_access_time = Mock()
 
         session.update_access_time()
 
         # Both should be called
         session.lifecycle.update_access_time.assert_called_once()
-        session.data_session.update_access_time.assert_called_once()
+        session._data_session.update_access_time.assert_called_once()
 
 
 class TestCSVSessionInitialization:

@@ -253,8 +253,8 @@ async def get_column_statistics(
             "unique_count": unique_count,
         }
 
-        # Add numeric statistics if column is numeric
-        if pd.api.types.is_numeric_dtype(col_data):
+        # Add numeric statistics if column is numeric (but not boolean)
+        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
             statistics.update(
                 {
                     "mean": float(col_data.mean()) if not pd.isna(col_data.mean()) else 0.0,
@@ -290,8 +290,8 @@ async def get_column_statistics(
             },
         )
 
-        # Convert statistics dict to StatisticsSummary if numeric
-        if pd.api.types.is_numeric_dtype(col_data):
+        # Convert statistics dict to StatisticsSummary if numeric (but not boolean)
+        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
             from ..models.statistics_models import StatisticsSummary
 
             stats_summary = StatisticsSummary(

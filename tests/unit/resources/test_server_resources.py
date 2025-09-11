@@ -88,9 +88,9 @@ class TestServerSessionHandling:
 
         # Test session has data
         assert session is not None
-        assert session.data_session.has_data()
-        assert session.data_session.df is not None
-        assert len(session.data_session.df) == 2
+        assert session.has_data()
+        assert session.df is not None
+        assert len(session.df) == 2
 
 
 class TestServerConfiguration:

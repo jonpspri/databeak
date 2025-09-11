@@ -168,9 +168,7 @@ class TestExportFunctionality:
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            export_result = await export_csv(
-                session_id=load_result.session_id, file_path=tmp.name
-            )
+            export_result = await export_csv(session_id=load_result.session_id, file_path=tmp.name)
 
             assert export_result.rows_exported == 2
 
@@ -199,7 +197,7 @@ class TestExportFunctionality:
         session_id = session_manager.create_session()
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            with pytest.raises(ToolError, match="No data loaded"):
+            with pytest.raises(ToolError, match="no data loaded"):
                 await export_csv(session_id=session_id, file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)

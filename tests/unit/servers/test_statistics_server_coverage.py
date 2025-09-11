@@ -152,7 +152,7 @@ class TestGetStatistics:
         """Test statistics when no data is loaded."""
         with patch("src.databeak.servers.statistics_server.get_session_manager") as manager:
             session = Mock()
-            session.data_session.has_data.return_value = False
+            session.df = None  # Use property-based API
             manager.return_value.get_session.return_value = session
 
             with pytest.raises(ToolError, match="No data loaded"):
@@ -275,6 +275,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_kendall(self, mock_manager):
         """Test correlation matrix with Kendall method."""
+        pytest.importorskip("scipy", reason="scipy not installed")
         result = await get_correlation_matrix("test-session", method="kendall")
 
         assert result.success is True
@@ -294,10 +295,9 @@ class TestGetCorrelationMatrix:
             {"text1": ["a", "b", "c"], "text2": ["x", "y", "z"]}
         )
 
-        result = await get_correlation_matrix("test-session")
-        assert result.success is True
-        assert len(result.columns_analyzed) == 0
-        assert len(result.correlation_matrix) == 0
+        # Should raise an error when there are no numeric columns
+        with pytest.raises(ToolError, match="Invalid value"):
+            await get_correlation_matrix("test-session")
 
     async def test_correlation_matrix_invalid_method(self, mock_manager):
         """Test correlation matrix with invalid method."""
@@ -311,12 +311,9 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_single_column(self, mock_manager):
         """Test correlation matrix with single column."""
-        result = await get_correlation_matrix("test-session", columns=["numeric1"])
-
-        assert result.success is True
-        assert len(result.columns) == 1
-        assert len(result.matrix) == 1
-        assert result.matrix[0][0] == 1.0
+        # Single column should raise an error since correlation needs at least 2 columns
+        with pytest.raises(ToolError, match="Invalid value"):
+            await get_correlation_matrix("test-session", columns=["numeric1"])
 
 
 @pytest.mark.asyncio

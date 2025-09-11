@@ -11,14 +11,14 @@ def mock_session():
     """Create a mock session with test data."""
     with patch("src.databeak.tools.data_operations.get_session_manager") as mock_manager:
         mock_session = MagicMock()
-        mock_session.data_session.df = pd.DataFrame(
+        mock_session.df = pd.DataFrame(
             {
                 "name": ["Alice", "Bob", "Charlie"],
                 "age": [25, 30, 35],
                 "salary": [50000, 60000, 70000],
             }
         )
-        mock_session.data_session.has_data.return_value = True
+        mock_session.has_data.return_value = True
 
         mock_manager.return_value.get_session.return_value = mock_session
         yield mock_session
