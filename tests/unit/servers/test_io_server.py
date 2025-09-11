@@ -174,8 +174,9 @@ class TestEdgeCases:
             temp_path = f.name
 
         try:
-            with pytest.raises(ToolError, match="contains no data rows"):
-                await load_csv(temp_path)
+            # Loading CSV with only headers is valid - creates empty DataFrame with columns
+            result = await load_csv(temp_path)
+            assert result.rows_affected == 0
         finally:
             Path(temp_path).unlink()
 
