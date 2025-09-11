@@ -19,8 +19,9 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType, get_session_manager
+from ..models import OperationType
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
+from .server_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -138,20 +139,8 @@ class RenameColumnsResult(BaseToolResponse):
 # =============================================================================
 
 
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
-    manager = get_session_manager()
-    session = manager.get_session(session_id)
-
-    if not session:
-        raise SessionNotFoundError(session_id)
-    if not session.data_session.has_data():
-        raise NoDataLoadedError(session_id)
-
-    df = session.data_session.df
-    if df is None:  # Type guard since has_data() was checked
-        raise NoDataLoadedError(session_id)
-    return session, df
+# Use shared implementation from server_utils
+_get_session_data = get_session_data
 
 
 # =============================================================================
@@ -587,69 +576,40 @@ async def update_column(
                 session.data_session.df[column] = df[column].map(operation.mapping)
             elif isinstance(operation, ApplyOperation):
                 operation_type = "apply"
-                # Use pandas.eval for safe expression evaluation
+                expr = operation.expression
 
-                try:
-                    # For simple expressions, use pandas string operations or vectorized operations
-                    expr = operation.expression
-
-                    # Handle common string operations
-                    if "x.upper()" in expr:
+                # Handle string operations that pandas.eval can't handle
+                if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                    # String operations
+                    if expr == "x.upper()":
                         session.data_session.df[column] = df[column].str.upper()
-                    elif "x.lower()" in expr:
+                    elif expr == "x.lower()":
                         session.data_session.df[column] = df[column].str.lower()
-                    elif "x.strip()" in expr:
+                    elif expr == "x.strip()":
                         session.data_session.df[column] = df[column].str.strip()
-                    elif "x * " in expr or " * x" in expr:
-                        # Extract multiplier
-                        import re
-
-                        match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
-                        if match:
-                            multiplier = float(match.group(1) or match.group(2))
-                            session.data_session.df[column] = df[column] * multiplier
-                        else:
-                            raise InvalidParameterError(
-                                "expression",
-                                operation.expression,
-                                "Unsupported multiplication expression",
-                            )
-                    elif "x + " in expr or " + x" in expr:
-                        # Extract addend
-                        import re
-
-                        match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
-                        if match:
-                            addend = float(match.group(1) or match.group(2))
-                            session.data_session.df[column] = df[column] + addend
-                        else:
-                            raise InvalidParameterError(
-                                "expression",
-                                operation.expression,
-                                "Unsupported addition expression",
-                            )
+                    elif expr == "x.title()":
+                        session.data_session.df[column] = df[column].str.title()
                     else:
-                        # For other expressions, use pandas eval with restricted namespace
-                        # This is safer than raw eval but still allows mathematical operations
-                        try:
-                            # Create a safe expression by replacing 'x' with column reference
-                            safe_expr = expr.replace("x", f"`{column}`")
-                            session.data_session.df[column] = session.data_session.df.eval(
-                                safe_expr, engine="python"
-                            )
-                        except Exception as pandas_err:
-                            # If pandas.eval fails, raise error
-                            raise InvalidParameterError(
-                                "expression",
-                                operation.expression,
-                                "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
-                            ) from pandas_err
-                except Exception as e:
-                    if isinstance(e, InvalidParameterError):
-                        raise
-                    raise InvalidParameterError(
-                        "expression", operation.expression, f"Invalid expression: {e}"
-                    ) from e
+                        raise InvalidParameterError(
+                            "expression",
+                            operation.expression,
+                            "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
+                        )
+                else:
+                    # Use pandas.eval for mathematical expressions
+                    try:
+                        # Replace 'x' with the column reference for pandas.eval
+                        safe_expr = expr.replace("x", f"`{column}`")
+                        # pandas.eval is safe - it only allows mathematical operations
+                        session.data_session.df[column] = session.data_session.df.eval(
+                            safe_expr, engine="python"
+                        )
+                    except Exception as e:
+                        raise InvalidParameterError(
+                            "expression",
+                            operation.expression,
+                            f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+                        ) from e
             elif isinstance(operation, FillNaOperation):
                 operation_type = "fillna"
                 session.data_session.df[column] = df[column].fillna(operation.value)
@@ -673,65 +633,40 @@ async def update_column(
                         elif operation["type"] == "apply":
                             apply_op = ApplyOperation(**operation)
                             operation_type = "apply"
-                            # Use pandas.eval for safe expression evaluation
+                            expr = apply_op.expression
 
-                            try:
-                                expr = apply_op.expression
-
-                                # Handle common string operations
-                                if "x.upper()" in expr:
+                            # Handle string operations that pandas.eval can't handle
+                            if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                                # String operations
+                                if expr == "x.upper()":
                                     session.data_session.df[column] = df[column].str.upper()
-                                elif "x.lower()" in expr:
+                                elif expr == "x.lower()":
                                     session.data_session.df[column] = df[column].str.lower()
-                                elif "x.strip()" in expr:
+                                elif expr == "x.strip()":
                                     session.data_session.df[column] = df[column].str.strip()
-                                elif "x * " in expr or " * x" in expr:
-                                    # Extract multiplier
-                                    import re
-
-                                    match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
-                                    if match:
-                                        multiplier = float(match.group(1) or match.group(2))
-                                        session.data_session.df[column] = df[column] * multiplier
-                                    else:
-                                        raise InvalidParameterError(
-                                            "expression",
-                                            apply_op.expression,
-                                            "Unsupported multiplication expression",
-                                        )
-                                elif "x + " in expr or " + x" in expr:
-                                    # Extract addend
-                                    import re
-
-                                    match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
-                                    if match:
-                                        addend = float(match.group(1) or match.group(2))
-                                        session.data_session.df[column] = df[column] + addend
-                                    else:
-                                        raise InvalidParameterError(
-                                            "expression",
-                                            apply_op.expression,
-                                            "Unsupported addition expression",
-                                        )
+                                elif expr == "x.title()":
+                                    session.data_session.df[column] = df[column].str.title()
                                 else:
-                                    # For other expressions, use pandas eval with restricted namespace
-                                    try:
-                                        safe_expr = expr.replace("x", f"`{column}`")
-                                        session.data_session.df[column] = (
-                                            session.data_session.df.eval(safe_expr, engine="python")
-                                        )
-                                    except Exception as pandas_err:
-                                        raise InvalidParameterError(
-                                            "expression",
-                                            apply_op.expression,
-                                            "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
-                                        ) from pandas_err
-                            except Exception as e:
-                                if isinstance(e, InvalidParameterError):
-                                    raise
-                                raise InvalidParameterError(
-                                    "expression", apply_op.expression, f"Invalid expression: {e}"
-                                ) from e
+                                    raise InvalidParameterError(
+                                        "expression",
+                                        apply_op.expression,
+                                        "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
+                                    )
+                            else:
+                                # Use pandas.eval for mathematical expressions
+                                try:
+                                    # Replace 'x' with the column reference for pandas.eval
+                                    safe_expr = expr.replace("x", f"`{column}`")
+                                    # pandas.eval is safe - it only allows mathematical operations
+                                    session.data_session.df[column] = session.data_session.df.eval(
+                                        safe_expr, engine="python"
+                                    )
+                                except Exception as e:
+                                    raise InvalidParameterError(
+                                        "expression",
+                                        apply_op.expression,
+                                        f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+                                    ) from e
                         elif operation["type"] == "fillna":
                             fillna_op = FillNaOperation(**operation)
                             operation_type = "fillna"
@@ -777,65 +712,40 @@ async def update_column(
                                 "Expression required for apply operation",
                             )
                         if isinstance(update_request.value, str):
-                            # Use pandas.eval for safe expression evaluation
+                            expr = update_request.value
 
-                            try:
-                                expr = update_request.value
-
-                                # Handle common string operations
-                                if "x.upper()" in expr:
+                            # Handle string operations that pandas.eval can't handle
+                            if ".upper()" in expr or ".lower()" in expr or ".strip()" in expr or ".title()" in expr:
+                                # String operations
+                                if expr == "x.upper()":
                                     session.data_session.df[column] = df[column].str.upper()
-                                elif "x.lower()" in expr:
+                                elif expr == "x.lower()":
                                     session.data_session.df[column] = df[column].str.lower()
-                                elif "x.strip()" in expr:
+                                elif expr == "x.strip()":
                                     session.data_session.df[column] = df[column].str.strip()
-                                elif "x * " in expr or " * x" in expr:
-                                    # Extract multiplier
-                                    import re
-
-                                    match = re.search(r"x \* ([\d.]+)|([\d.]+) \* x", expr)
-                                    if match:
-                                        multiplier = float(match.group(1) or match.group(2))
-                                        session.data_session.df[column] = df[column] * multiplier
-                                    else:
-                                        raise InvalidParameterError(
-                                            "value",
-                                            update_request.value,
-                                            "Unsupported multiplication expression",
-                                        )
-                                elif "x + " in expr or " + x" in expr:
-                                    # Extract addend
-                                    import re
-
-                                    match = re.search(r"x \+ ([\d.]+)|([\d.]+) \+ x", expr)
-                                    if match:
-                                        addend = float(match.group(1) or match.group(2))
-                                        session.data_session.df[column] = df[column] + addend
-                                    else:
-                                        raise InvalidParameterError(
-                                            "value",
-                                            update_request.value,
-                                            "Unsupported addition expression",
-                                        )
+                                elif expr == "x.title()":
+                                    session.data_session.df[column] = df[column].str.title()
                                 else:
-                                    # For other expressions, use pandas eval with restricted namespace
-                                    try:
-                                        safe_expr = expr.replace("x", f"`{column}`")
-                                        session.data_session.df[column] = (
-                                            session.data_session.df.eval(safe_expr, engine="python")
-                                        )
-                                    except Exception as pandas_err:
-                                        raise InvalidParameterError(
-                                            "value",
-                                            update_request.value,
-                                            "Expression not supported. Use simple operations like 'x * 2', 'x + 1', 'x.upper()'",
-                                        ) from pandas_err
-                            except Exception as e:
-                                if isinstance(e, InvalidParameterError):
-                                    raise
-                                raise InvalidParameterError(
-                                    "value", update_request.value, f"Invalid expression: {e}"
-                                ) from e
+                                    raise InvalidParameterError(
+                                        "value",
+                                        update_request.value,
+                                        "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
+                                    )
+                            else:
+                                # Use pandas.eval for mathematical expressions
+                                try:
+                                    # Replace 'x' with the column reference for pandas.eval
+                                    safe_expr = expr.replace("x", f"`{column}`")
+                                    # pandas.eval is safe - it only allows mathematical operations
+                                    session.data_session.df[column] = session.data_session.df.eval(
+                                        safe_expr, engine="python"
+                                    )
+                                except Exception as e:
+                                    raise InvalidParameterError(
+                                        "value",
+                                        update_request.value,
+                                        f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+                                    ) from e
                         else:
                             session.data_session.df[column] = df[column].apply(update_request.value)
                     elif update_request.operation == "fillna":

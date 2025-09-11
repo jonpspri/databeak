@@ -21,8 +21,9 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType, get_session_manager
+from ..models import OperationType
 from ..models.tool_responses import ColumnOperationResult
+from .server_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +35,8 @@ CellValue = str | int | float | bool | None
 # =============================================================================
 
 
-def _get_session_data(session_id: str) -> tuple[object, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
-    manager = get_session_manager()
-    session = manager.get_session(session_id)
-
-    if not session:
-        raise SessionNotFoundError(session_id)
-    if not session.data_session.has_data():
-        raise NoDataLoadedError(session_id)
-
-    df = session.data_session.df
-    if df is None:  # Type guard since has_data() was checked
-        raise NoDataLoadedError(session_id)
-    return session, df
+# Use shared implementation from server_utils
+_get_session_data = get_session_data
 
 
 # =============================================================================
@@ -131,20 +120,20 @@ async def replace_in_column(
 
         # Apply replacements
         if regex:
-            session.data_session.df[column] = (
+            df[column] = (
                 df[column]
                 .astype(str)
-                .str.replace(pattern, replacement, regex=True, na_action="ignore")
+                .str.replace(pattern, replacement, regex=True)
             )
         else:
-            session.data_session.df[column] = (
+            df[column] = (
                 df[column]
                 .astype(str)
-                .str.replace(pattern, replacement, regex=False, na_action="ignore")
+                .str.replace(pattern, replacement, regex=False)
             )
 
         # Count changes
-        changed_mask = original_data.astype(str) != session.data_session.df[column].astype(str)
+        changed_mask = original_data.astype(str) != df[column].astype(str)
         changes_made = int(changed_mask.sum())
 
         session.record_operation(
