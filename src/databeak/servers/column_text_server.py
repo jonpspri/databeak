@@ -212,13 +212,15 @@ async def extract_from_column(
             raise InvalidParameterError("pattern", pattern, f"Invalid regex pattern: {e}") from e
 
         # Apply extraction
-        extracted = df[column].astype(str).str.extract(pattern, expand=expand)
+        # Note: mypy has issues with overloaded extract method, but this is valid
+        extracted = df[column].astype(str).str.extract(pattern, expand=expand)  # type: ignore[call-overload]
 
         if expand and isinstance(extracted, pd.DataFrame):
             # Multiple capturing groups - create new columns
             columns_created = []
             for i in range(len(extracted.columns)):
                 new_col_name = f"{column}_extracted_{i}"
+                assert session.df is not None  # Type guard - guaranteed by _get_session_data
                 session.df[new_col_name] = extracted.iloc[:, i]
                 columns_created.append(new_col_name)
 
@@ -228,9 +230,11 @@ async def extract_from_column(
             # Single group or no expand - replace original column
             if isinstance(extracted, pd.DataFrame):
                 # Multiple groups but not expanding - take first group
+                assert session.df is not None  # Type guard - guaranteed by _get_session_data
                 session.df[column] = extracted.iloc[:, 0]
             else:
                 # Single series result
+                assert session.df is not None  # Type guard - guaranteed by _get_session_data
                 session.df[column] = extracted
 
             affected_columns = [column]
@@ -323,7 +327,8 @@ async def split_column(
             raise InvalidParameterError("delimiter", delimiter, "Delimiter cannot be empty")
 
         # Apply split operation
-        split_data = df[column].astype(str).str.split(delimiter, expand=expand_to_columns)
+        # Note: mypy has issues with overloaded split method, but this is valid
+        split_data = df[column].astype(str).str.split(delimiter, expand=expand_to_columns)  # type: ignore[call-overload]
 
         if expand_to_columns:
             # Expanding to multiple columns
@@ -348,6 +353,7 @@ async def split_column(
                 # Create new columns
                 for i, col_name in enumerate(column_names):
                     if i < len(split_data.columns):
+                        assert session.df is not None  # Type guard - guaranteed by _get_session_data
                         session.df[col_name] = split_data.iloc[:, i]
                         columns_created.append(col_name)
 
@@ -368,6 +374,7 @@ async def split_column(
 
             if isinstance(split_data, pd.DataFrame):
                 # This shouldn't happen with expand=False, but handle it
+                assert session.df is not None  # Type guard - guaranteed by _get_session_data
                 if part_index < len(split_data.columns):
                     session.df[column] = split_data.iloc[:, part_index]
                 else:
@@ -375,17 +382,19 @@ async def split_column(
                     session.df[column] = pd.NA
             else:
                 # Series of lists - extract specified part
-                def get_part(split_list):
+                def get_part(split_list: Any) -> Any:
                     if isinstance(split_list, list) and len(split_list) > part_index:
                         return split_list[part_index]
                     return pd.NA
 
+                assert session.df is not None  # Type guard - guaranteed by _get_session_data
                 session.df[column] = split_data.apply(get_part)
 
             affected_columns = [column]
             operation_desc = f"split_keep_part_{part_index}"
 
             # Count successful splits (non-null results)
+            assert session.df is not None  # Type guard - guaranteed by _get_session_data
             rows_affected = int(session.df[column].notna().sum())
 
         session.record_operation(
@@ -466,6 +475,7 @@ async def transform_column_case(
         # Apply case transformation
         str_col = df[column].astype(str)
 
+        assert session.df is not None  # Type guard - guaranteed by _get_session_data
         if transform == "upper":
             session.df[column] = str_col.str.upper()
         elif transform == "lower":
@@ -480,6 +490,7 @@ async def transform_column_case(
             )
 
         # Count changes made (ignore null values)
+        assert session.df is not None  # Type guard - guaranteed by _get_session_data
         changed_mask = original_data.astype(str).fillna("") != session.df[
             column
         ].astype(str).fillna("")
@@ -555,6 +566,7 @@ async def strip_column(
         original_data = df[column].copy()
 
         # Apply strip operation
+        assert session.df is not None  # Type guard - guaranteed by _get_session_data
         if chars is None:
             # Strip whitespace
             session.df[column] = df[column].astype(str).str.strip()
@@ -563,6 +575,7 @@ async def strip_column(
             session.df[column] = df[column].astype(str).str.strip(chars)
 
         # Count changes made
+        assert session.df is not None  # Type guard - guaranteed by _get_session_data
         changed_mask = original_data.astype(str).fillna("") != session.df[
             column
         ].astype(str).fillna("")
@@ -642,6 +655,7 @@ async def fill_column_nulls(
             )
 
         # Fill null values
+        assert session.df is not None  # Type guard - guaranteed by _get_session_data
         session.df[column] = df[column].fillna(value)
 
         # Verify fills worked

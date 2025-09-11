@@ -526,9 +526,10 @@ async def get_value_counts(
             raise ColumnNotFoundError(column, df.columns.tolist())
 
         # Get value counts
+        # Note: mypy has issues with value_counts overloads when normalize is a bool variable
         value_counts = df[column].value_counts(
             normalize=normalize, sort=sort, ascending=ascending, dropna=True
-        )
+        )  # type: ignore[call-overload]
 
         # Limit to top_n if specified
         if top_n is not None and top_n > 0:
