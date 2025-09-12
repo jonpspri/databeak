@@ -28,7 +28,9 @@ class SessionInfo(BaseModel):
     column_count: int = Field(description="Number of columns in dataset")
     columns: list[str] = Field(description="List of column names")
     memory_usage_mb: float = Field(description="Memory usage in megabytes")
-    file_path: str | None = Field(None, description="Original file path if loaded from file")
+    file_path: str | None = Field(
+        default=None, description="Original file path if loaded from file"
+    )
 
 
 class DataTypeInfo(BaseModel):
@@ -56,7 +58,7 @@ class DataPreview(BaseModel):
     rows: list[dict[str, CsvCellValue]] = Field(description="Sample rows from dataset")
     row_count: int = Field(description="Total number of rows in dataset")
     column_count: int = Field(description="Total number of columns in dataset")
-    truncated: bool = Field(False, description="Whether preview is truncated")
+    truncated: bool = Field(default=False, description="Whether preview is truncated")
 
 
 class CellLocation(BaseModel):
@@ -70,7 +72,7 @@ class CellLocation(BaseModel):
 class BaseToolResponse(BaseModel):
     """Base response model for all MCP tool operations."""
 
-    success: bool = Field(True, description="Whether operation completed successfully")
+    success: bool = Field(default=True, description="Whether operation completed successfully")
 
 
 # =============================================================================
@@ -151,15 +153,15 @@ class ColumnDataResult(BaseToolResponse):
     )
     total_values: int = Field(description="Number of values returned")
     start_row: int | None = Field(
-        None, description="Starting row index used (None if from beginning)"
+        default=None, description="Starting row index used (None if from beginning)"
     )
-    end_row: int | None = Field(None, description="Ending row index used (None if to end)")
+    end_row: int | None = Field(default=None, description="Ending row index used (None if to end)")
 
 
 class InsertRowResult(BaseToolResponse):
     """Response model for row insertion operations."""
 
-    operation: str = Field("insert_row", description="Operation type identifier")
+    operation: str = Field(default="insert_row", description="Operation type identifier")
     row_index: int = Field(description="Index where row was inserted")
     rows_before: int = Field(description="Row count before insertion")
     rows_after: int = Field(description="Row count after insertion")
@@ -174,7 +176,7 @@ class DeleteRowResult(BaseToolResponse):
     """Response model for row deletion operations."""
 
     session_id: str = Field(description="Session identifier")
-    operation: str = Field("delete_row", description="Operation type identifier")
+    operation: str = Field(default="delete_row", description="Operation type identifier")
     row_index: int = Field(description="Index of deleted row")
     rows_before: int = Field(description="Row count before deletion")
     rows_after: int = Field(description="Row count after deletion")
@@ -184,7 +186,7 @@ class DeleteRowResult(BaseToolResponse):
 class UpdateRowResult(BaseToolResponse):
     """Response model for row update operations."""
 
-    operation: str = Field("update_row", description="Operation type identifier")
+    operation: str = Field(default="update_row", description="Operation type identifier")
     row_index: int = Field(description="Index of updated row")
     columns_updated: list[str] = Field(description="Names of columns that were updated")
     old_values: dict[str, str | int | float | bool | None] = Field(
@@ -219,20 +221,20 @@ class ColumnOperationResult(BaseToolResponse):
     rows_affected: int = Field(description="Number of rows affected by operation")
     columns_affected: list[str] = Field(description="Names of columns affected")
     original_sample: list[CsvCellValue] | None = Field(
-        None, description="Sample values before operation"
+        default=None, description="Sample values before operation"
     )
     updated_sample: list[CsvCellValue] | None = Field(
-        None, description="Sample values after operation"
+        default=None, description="Sample values after operation"
     )
     # Additional fields for specific operations
-    part_index: int | None = Field(None, description="Part index for split operations")
-    transform: str | None = Field(None, description="Transform description")
-    nulls_filled: int | None = Field(None, description="Number of null values filled")
+    part_index: int | None = Field(default=None, description="Part index for split operations")
+    transform: str | None = Field(default=None, description="Transform description")
+    nulls_filled: int | None = Field(default=None, description="Number of null values filled")
     rows_removed: int | None = Field(
-        None, description="Number of rows removed (for remove_duplicates)"
+        default=None, description="Number of rows removed (for remove_duplicates)"
     )
     values_filled: int | None = Field(
-        None, description="Number of values filled (for fill_missing_values)"
+        default=None, description="Number of values filled (for fill_missing_values)"
     )
 
 

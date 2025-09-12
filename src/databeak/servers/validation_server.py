@@ -29,24 +29,30 @@ class ValidationError(BaseModel):
     error: str = Field(description="Type of validation error encountered")
     message: str = Field(description="Human-readable error message")
     actual_type: str | None = Field(
-        None, description="Actual data type found (for type mismatch errors)"
+        default=None, description="Actual data type found (for type mismatch errors)"
     )
-    null_count: int | None = Field(None, description="Number of null/missing values found")
+    null_count: int | None = Field(default=None, description="Number of null/missing values found")
     null_indices: list[int] | None = Field(
-        None, description="Row indices where null values occur (limited to 100)"
+        default=None, description="Row indices where null values occur (limited to 100)"
     )
-    violation_count: int | None = Field(None, description="Number of values violating the rule")
+    violation_count: int | None = Field(
+        default=None, description="Number of values violating the rule"
+    )
     min_found: float | None = Field(
-        None, description="Minimum value found (for min/max violations)"
+        default=None, description="Minimum value found (for min/max violations)"
     )
     max_found: float | None = Field(
-        None, description="Maximum value found (for min/max violations)"
+        default=None, description="Maximum value found (for min/max violations)"
     )
     sample_violations: list[str] | None = Field(
-        None, description="Sample of values that violated the rule"
+        default=None, description="Sample of values that violated the rule"
     )
-    invalid_values: list[str] | None = Field(None, description="List of invalid values found")
-    duplicate_count: int | None = Field(None, description="Number of duplicate values found")
+    invalid_values: list[str] | None = Field(
+        default=None, description="List of invalid values found"
+    )
+    duplicate_count: int | None = Field(
+        default=None, description="Number of duplicate values found"
+    )
 
 
 class ValidationSummary(BaseModel):
@@ -81,7 +87,7 @@ class QualityIssue(BaseModel):
     type: str = Field(description="Type of quality issue identified")
     severity: str = Field(description="Severity level: low, medium, high, or critical")
     column: str | None = Field(
-        None, description="Column name where issue was found (None for dataset-wide issues)"
+        default=None, description="Column name where issue was found (None for dataset-wide issues)"
     )
     message: str = Field(description="Human-readable description of the quality issue")
     affected_rows: int = Field(description="Number of rows affected by this issue")
@@ -96,7 +102,9 @@ class QualityRuleResult(BaseModel):
     passed: bool = Field(description="Whether the quality rule passed")
     score: float = Field(description="Quality score for this rule (0-100)")
     issues: list[QualityIssue] = Field(description="List of quality issues found by this rule")
-    column: str | None = Field(None, description="Column name if rule applies to specific column")
+    column: str | None = Field(
+        default=None, description="Column name if rule applies to specific column"
+    )
 
 
 class QualityResults(BaseModel):
@@ -223,14 +231,14 @@ class ColumnValidationRules(BaseModel):
     type: Literal["int", "float", "str", "bool", "datetime"] | None = Field(
         None, description="Expected data type: int, float, str, bool, datetime"
     )
-    nullable: bool = Field(True, description="Whether null values are allowed")
-    min: int | float | None = Field(None, description="Minimum value for numeric columns")
-    max: int | float | None = Field(None, description="Maximum value for numeric columns")
-    pattern: str | None = Field(None, description="Regex pattern for string validation")
-    values: list[str] | None = Field(None, description="List of allowed values")
-    unique: bool = Field(False, description="Whether values must be unique")
-    min_length: int | None = Field(None, description="Minimum string length")
-    max_length: int | None = Field(None, description="Maximum string length")
+    nullable: bool = Field(default=True, description="Whether null values are allowed")
+    min: int | float | None = Field(default=None, description="Minimum value for numeric columns")
+    max: int | float | None = Field(default=None, description="Maximum value for numeric columns")
+    pattern: str | None = Field(default=None, description="Regex pattern for string validation")
+    values: list[str] | None = Field(default=None, description="List of allowed values")
+    unique: bool = Field(default=False, description="Whether values must be unique")
+    min_length: int | None = Field(default=None, description="Minimum string length")
+    max_length: int | None = Field(default=None, description="Maximum string length")
 
     @field_validator("pattern")
     @classmethod
@@ -259,56 +267,59 @@ class QualityRule(BaseModel):
 class CompletenessRule(QualityRule):
     """Rule for checking data completeness."""
 
-    type: Literal["completeness"] = Field("completeness", description="Rule type identifier")
+    type: Literal["completeness"] = Field(
+        default="completeness", description="Rule type identifier"
+    )
     threshold: float = Field(
-        0.95, ge=0.0, le=1.0, description="Minimum completeness ratio required (0.0-1.0)"
+        default=0.95, ge=0.0, le=1.0, description="Minimum completeness ratio required (0.0-1.0)"
     )
     columns: list[str] | None = Field(
-        None, description="Specific columns to check (None for all columns)"
+        default=None, description="Specific columns to check (None for all columns)"
     )
 
 
 class DuplicatesRule(QualityRule):
     """Rule for checking duplicate rows."""
 
-    type: Literal["duplicates"] = Field("duplicates", description="Rule type identifier")
+    type: Literal["duplicates"] = Field(default="duplicates", description="Rule type identifier")
     threshold: float = Field(
-        0.01, ge=0.0, le=1.0, description="Maximum allowable duplicate ratio (0.0-1.0)"
+        default=0.01, ge=0.0, le=1.0, description="Maximum allowable duplicate ratio (0.0-1.0)"
     )
     columns: list[str] | None = Field(
-        None, description="Columns to consider for duplicate detection (None for all columns)"
+        default=None,
+        description="Columns to consider for duplicate detection (None for all columns)",
     )
 
 
 class UniquenessRule(QualityRule):
     """Rule for checking column uniqueness."""
 
-    type: Literal["uniqueness"] = Field("uniqueness", description="Rule type identifier")
+    type: Literal["uniqueness"] = Field(default="uniqueness", description="Rule type identifier")
     column: str = Field(description="Column name to check for uniqueness")
     expected_unique: bool = Field(
-        True, description="Whether column values are expected to be unique"
+        default=True, description="Whether column values are expected to be unique"
     )
 
 
 class DataTypesRule(QualityRule):
     """Rule for checking data type consistency."""
 
-    type: Literal["data_types"] = Field("data_types", description="Rule type identifier")
+    type: Literal["data_types"] = Field(default="data_types", description="Rule type identifier")
 
 
 class OutliersRule(QualityRule):
     """Rule for checking outliers in numeric columns."""
 
-    type: Literal["outliers"] = Field("outliers", description="Rule type identifier")
+    type: Literal["outliers"] = Field(default="outliers", description="Rule type identifier")
     threshold: float = Field(
-        0.05, ge=0.0, le=1.0, description="Maximum allowable outlier ratio (0.0-1.0)"
+        default=0.05, ge=0.0, le=1.0, description="Maximum allowable outlier ratio (0.0-1.0)"
     )
 
 
 class ConsistencyRule(QualityRule):
     """Rule for checking data consistency between columns."""
 
-    type: Literal["consistency"] = Field("consistency", description="Rule type identifier")
+    type: Literal["consistency"] = Field(default="consistency", description="Rule type identifier")
     columns: list[str] = Field(
         default_factory=list, description="Column pairs to check for consistency"
     )
@@ -361,7 +372,7 @@ def validate_schema(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition."""
     try:
@@ -603,7 +614,7 @@ def check_data_quality(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules."""
     try:
@@ -948,7 +959,7 @@ def find_anomalies(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods."""
     try:

@@ -76,7 +76,7 @@ def filter_rows(
     ] = "and",
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value and text matching
     support.
@@ -215,7 +215,7 @@ def sort_data(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> SortDataResult:
     """Sort data by one or more columns with comprehensive error handling.
 
@@ -322,7 +322,7 @@ def remove_duplicates(
     ] = "first",
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Remove duplicate rows from the dataframe with comprehensive validation.
 
@@ -416,7 +416,7 @@ def fill_missing_values(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Fill or remove missing values with comprehensive strategy support.
 

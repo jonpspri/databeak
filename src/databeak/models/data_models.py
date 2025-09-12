@@ -115,7 +115,7 @@ class FilterCondition(BaseModel):
 
     column: str = Field(..., description="Column name to filter on")
     operator: ComparisonOperator = Field(..., description="Comparison operator")
-    value: FilterValue = Field(None, description="Value to compare against")
+    value: FilterValue = Field(default=None, description="Value to compare against")
 
     @field_validator("value", mode="before")
     @classmethod
@@ -136,7 +136,7 @@ class SortSpec(BaseModel):
     """Specification for sorting data."""
 
     column: str = Field(..., description="Column to sort by")
-    ascending: bool = Field(True, description="Sort in ascending order")
+    ascending: bool = Field(default=True, description="Sort in ascending order")
 
 
 class ColumnSchema(BaseModel):
@@ -144,20 +144,22 @@ class ColumnSchema(BaseModel):
 
     name: str = Field(..., description="Column name")
     dtype: DataType = Field(..., description="Data type")
-    nullable: bool = Field(True, description="Whether column can contain null values")
-    unique: bool = Field(False, description="Whether values must be unique")
-    min_value: float | int | str | None = Field(None, description="Minimum value")
-    max_value: float | int | str | None = Field(None, description="Maximum value")
-    allowed_values: list[CellValue] | None = Field(None, description="List of allowed values")
-    pattern: str | None = Field(None, description="Regex pattern for validation")
+    nullable: bool = Field(default=True, description="Whether column can contain null values")
+    unique: bool = Field(default=False, description="Whether values must be unique")
+    min_value: float | int | str | None = Field(default=None, description="Minimum value")
+    max_value: float | int | str | None = Field(default=None, description="Maximum value")
+    allowed_values: list[CellValue] | None = Field(
+        default=None, description="List of allowed values"
+    )
+    pattern: str | None = Field(default=None, description="Regex pattern for validation")
 
 
 class DataSchema(BaseModel):
     """Complete schema for a dataset."""
 
     columns: list[ColumnSchema] = Field(..., description="Column definitions")
-    row_count: int | None = Field(None, description="Expected number of rows")
-    primary_key: list[str] | None = Field(None, description="Primary key columns")
+    row_count: int | None = Field(default=None, description="Expected number of rows")
+    primary_key: list[str] | None = Field(default=None, description="Primary key columns")
 
     def validate_dataframe(self, df: pd.DataFrame) -> dict[str, Any]:
         """Validate a DataFrame against this schema."""
@@ -205,12 +207,12 @@ class DataQualityRule(BaseModel):
 
     name: str = Field(..., description="Rule name")
     description: str = Field(..., description="Rule description")
-    column: str | None = Field(None, description="Column to check (if applicable)")
+    column: str | None = Field(default=None, description="Column to check (if applicable)")
     rule_type: Literal["completeness", "uniqueness", "validity", "consistency", "accuracy"] = Field(
         ..., description="Type of quality check"
     )
-    expression: str | None = Field(None, description="Expression to evaluate")
-    threshold: float | None = Field(None, description="Threshold for pass/fail")
+    expression: str | None = Field(default=None, description="Expression to evaluate")
+    threshold: float | None = Field(default=None, description="Threshold for pass/fail")
 
 
 class OperationResult(BaseModel):
@@ -218,12 +220,12 @@ class OperationResult(BaseModel):
 
     success: bool = Field(..., description="Whether operation succeeded")
     message: str = Field(..., description="Result message")
-    session_id: str | None = Field(None, description="Session ID")
-    rows_affected: int | None = Field(None, description="Number of rows affected")
-    columns_affected: list[str] | None = Field(None, description="Columns affected")
-    data: dict[str, Any] | None = Field(None, description="Additional result data")
-    error: str | None = Field(None, description="Error message if failed")
-    warnings: list[str] | None = Field(None, description="Warning messages")
+    session_id: str | None = Field(default=None, description="Session ID")
+    rows_affected: int | None = Field(default=None, description="Number of rows affected")
+    columns_affected: list[str] | None = Field(default=None, description="Columns affected")
+    data: dict[str, Any] | None = Field(default=None, description="Additional result data")
+    error: str | None = Field(default=None, description="Error message if failed")
+    warnings: list[str] | None = Field(default=None, description="Warning messages")
 
 
 class SessionInfo(BaseModel):
@@ -236,8 +238,8 @@ class SessionInfo(BaseModel):
     column_count: int = Field(..., description="Number of columns")
     columns: list[str] = Field(..., description="Column names")
     memory_usage_mb: float = Field(..., description="Memory usage in MB")
-    operations_count: int = Field(0, description="Number of operations performed")
-    file_path: str | None = Field(None, description="Source file path")
+    operations_count: int = Field(default=0, description="Number of operations performed")
+    file_path: str | None = Field(default=None, description="Source file path")
 
 
 class DataStatistics(BaseModel):
@@ -248,11 +250,13 @@ class DataStatistics(BaseModel):
     count: int = Field(..., description="Non-null count")
     null_count: int = Field(..., description="Null count")
     unique_count: int = Field(..., description="Unique value count")
-    mean: float | None = Field(None, description="Mean (numeric only)")
-    std: float | None = Field(None, description="Standard deviation (numeric only)")
-    min: CellValue = Field(None, description="Minimum value")
-    max: CellValue = Field(None, description="Maximum value")
-    q25: float | None = Field(None, description="25th percentile (numeric only)")
-    q50: float | None = Field(None, description="50th percentile (numeric only)")
-    q75: float | None = Field(None, description="75th percentile (numeric only)")
-    top_values: dict[str, int] | None = Field(None, description="Top 10 most frequent values")
+    mean: float | None = Field(default=None, description="Mean (numeric only)")
+    std: float | None = Field(default=None, description="Standard deviation (numeric only)")
+    min: CellValue = Field(default=None, description="Minimum value")
+    max: CellValue = Field(default=None, description="Maximum value")
+    q25: float | None = Field(default=None, description="25th percentile (numeric only)")
+    q50: float | None = Field(default=None, description="50th percentile (numeric only)")
+    q75: float | None = Field(default=None, description="75th percentile (numeric only)")
+    top_values: dict[str, int] | None = Field(
+        default=None, description="Top 10 most frequent values"
+    )

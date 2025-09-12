@@ -155,7 +155,7 @@ async def select_columns(
     columns: Annotated[list[str], Field(description="List of column names to select and keep")],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> SelectColumnsResult:
     """Select specific columns from dataframe, removing all others.
 
@@ -207,7 +207,7 @@ async def rename_columns(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
@@ -274,7 +274,7 @@ async def add_column(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
 
@@ -361,7 +361,7 @@ async def remove_columns(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
@@ -429,7 +429,7 @@ async def change_column_type(
     ] = "coerce",
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Change the data type of a column.
 
@@ -544,7 +544,7 @@ async def update_column(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Update values in a column using various operations with discriminated unions.
 

@@ -17,9 +17,9 @@ class StatisticsSummary(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     count: int = Field(description="Total number of non-null values")
-    mean: float | None = Field(None, description="Arithmetic mean (numeric columns only)")
-    std: float | None = Field(None, description="Standard deviation (numeric columns only)")
-    min: float | str | None = Field(None, description="Minimum value in the column")
+    mean: float | None = Field(default=None, description="Arithmetic mean (numeric columns only)")
+    std: float | None = Field(default=None, description="Standard deviation (numeric columns only)")
+    min: float | str | None = Field(default=None, description="Minimum value in the column")
     percentile_25: float | None = Field(
         default=None, alias="25%", description="25th percentile value (numeric columns only)"
     )
@@ -29,7 +29,7 @@ class StatisticsSummary(BaseModel):
     percentile_75: float | None = Field(
         default=None, alias="75%", description="75th percentile value (numeric columns only)"
     )
-    max: float | str | None = Field(None, description="Maximum value in the column")
+    max: float | str | None = Field(default=None, description="Maximum value in the column")
 
     # Categorical statistics fields
     unique: int | None = Field(
@@ -92,4 +92,6 @@ class ValueCountsResult(BaseToolResponse):
     )
     total_values: int = Field(description="Total number of values (including duplicates)")
     unique_values: int = Field(description="Number of unique/distinct values")
-    normalize: bool = Field(False, description="Whether counts are normalized as proportions")
+    normalize: bool = Field(
+        default=False, description="Whether counts are normalized as proportions"
+    )

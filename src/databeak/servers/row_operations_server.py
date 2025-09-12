@@ -133,7 +133,7 @@ def get_cell_value(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> CellValueResult:
     """Get value of specific cell with coordinate targeting.
 
@@ -210,7 +210,7 @@ def set_cell_value(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> SetCellResult:
     """Set value of specific cell with coordinate targeting.
 
@@ -294,7 +294,7 @@ def get_row_data(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> RowDataResult:
     """Get data from specific row with optional column filtering.
 
@@ -367,7 +367,7 @@ def get_column_data(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnDataResult:
     """Get data from specific column with optional row range slicing.
 
@@ -446,7 +446,7 @@ def insert_row(
     ],  # Accept string for Claude Code compatibility
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> InsertRowResult:
     """Insert new row at specified index with multiple data formats.
 
@@ -552,7 +552,7 @@ def delete_row(
     row_index: Annotated[int, Field(description="Row index (0-based) to delete")],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> DeleteRowResult:
     """Delete row at specified index with comprehensive tracking.
 
@@ -621,7 +621,7 @@ def update_row(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> UpdateRowResult:
     """Update specific columns in row with selective updates.
 

@@ -67,13 +67,15 @@ class AutoSaveConfig(BaseModel):
     interval_seconds: int | None = Field(
         None, description="Interval between periodic saves (seconds)"
     )
-    max_backups: int | None = Field(None, description="Maximum number of backup files to keep")
-    backup_dir: str | None = Field(None, description="Directory for backup files")
-    custom_path: str | None = Field(None, description="Custom file path for saves")
+    max_backups: int | None = Field(
+        default=None, description="Maximum number of backup files to keep"
+    )
+    backup_dir: str | None = Field(default=None, description="Directory for backup files")
+    custom_path: str | None = Field(default=None, description="Custom file path for saves")
     format: Literal["csv", "tsv", "json", "excel", "parquet"] = Field(
         "csv", description="Export format for saved files"
     )
-    encoding: str = Field("utf-8", description="Text encoding for saved files")
+    encoding: str = Field(default="utf-8", description="Text encoding for saved files")
 
     @field_validator("interval_seconds")
     @classmethod
@@ -98,10 +100,16 @@ class AutoSaveStatus(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     enabled: bool = Field(description="Whether auto-save is currently enabled")
-    config: AutoSaveConfig | None = Field(None, description="Current auto-save configuration")
-    last_save_time: str | None = Field(None, description="Timestamp of last save (ISO format)")
-    save_count: int = Field(0, description="Total number of saves performed")
-    last_save_path: str | None = Field(None, description="Path of the most recent save file")
+    config: AutoSaveConfig | None = Field(
+        default=None, description="Current auto-save configuration"
+    )
+    last_save_time: str | None = Field(
+        default=None, description="Timestamp of last save (ISO format)"
+    )
+    save_count: int = Field(default=0, description="Total number of saves performed")
+    last_save_path: str | None = Field(
+        default=None, description="Path of the most recent save file"
+    )
     next_scheduled_save: str | None = Field(
         None, description="Timestamp of next scheduled save (ISO format)"
     )
@@ -116,56 +124,66 @@ class UndoResult(BaseModel):
     """Response model for undo operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the undo operation was successful")
-    operation_undone: str | None = Field(None, description="Type of operation that was undone")
-    previous_operation: str | None = Field(None, description="Previous operation in history")
-    can_undo_more: bool = Field(False, description="Whether more operations can be undone")
-    can_redo: bool = Field(False, description="Whether any operations can be redone")
-    history_position: int = Field(0, description="Current position in operation history")
+    success: bool = Field(default=True, description="Whether the undo operation was successful")
+    operation_undone: str | None = Field(
+        default=None, description="Type of operation that was undone"
+    )
+    previous_operation: str | None = Field(
+        default=None, description="Previous operation in history"
+    )
+    can_undo_more: bool = Field(default=False, description="Whether more operations can be undone")
+    can_redo: bool = Field(default=False, description="Whether any operations can be redone")
+    history_position: int = Field(default=0, description="Current position in operation history")
 
 
 class RedoResult(BaseModel):
     """Response model for redo operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the redo operation was successful")
-    operation_redone: str | None = Field(None, description="Type of operation that was redone")
-    next_operation: str | None = Field(None, description="Next operation in history")
-    can_undo: bool = Field(False, description="Whether any operations can be undone")
-    can_redo_more: bool = Field(False, description="Whether more operations can be redone")
-    history_position: int = Field(0, description="Current position in operation history")
+    success: bool = Field(default=True, description="Whether the redo operation was successful")
+    operation_redone: str | None = Field(
+        default=None, description="Type of operation that was redone"
+    )
+    next_operation: str | None = Field(default=None, description="Next operation in history")
+    can_undo: bool = Field(default=False, description="Whether any operations can be undone")
+    can_redo_more: bool = Field(default=False, description="Whether more operations can be redone")
+    history_position: int = Field(default=0, description="Current position in operation history")
 
 
 class HistoryResult(BaseModel):
     """Response model for history retrieval operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the history retrieval was successful")
+    success: bool = Field(default=True, description="Whether the history retrieval was successful")
     operations: list[HistoryOperation] = Field(
         default_factory=list, description="List of history operations"
     )
     summary: HistorySummary = Field(description="Summary of operation history")
-    total_found: int = Field(0, description="Total number of operations found")
-    limit_applied: int | None = Field(None, description="Maximum number of operations returned")
+    total_found: int = Field(default=0, description="Total number of operations found")
+    limit_applied: int | None = Field(
+        default=None, description="Maximum number of operations returned"
+    )
 
 
 class RestoreResult(BaseModel):
     """Response model for restore operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the restore operation was successful")
-    restored_to_operation: str | None = Field(None, description="Operation ID that was restored to")
-    operations_undone: int = Field(0, description="Number of operations that were undone")
-    operations_redone: int = Field(0, description="Number of operations that were redone")
-    final_position: int = Field(0, description="Final position in operation history")
+    success: bool = Field(default=True, description="Whether the restore operation was successful")
+    restored_to_operation: str | None = Field(
+        default=None, description="Operation ID that was restored to"
+    )
+    operations_undone: int = Field(default=0, description="Number of operations that were undone")
+    operations_redone: int = Field(default=0, description="Number of operations that were redone")
+    final_position: int = Field(default=0, description="Final position in operation history")
 
 
 class ClearHistoryResult(BaseModel):
     """Response model for clear history operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the clear operation was successful")
-    operations_cleared: int = Field(0, description="Number of operations that were cleared")
+    success: bool = Field(default=True, description="Whether the clear operation was successful")
+    operations_cleared: int = Field(default=0, description="Number of operations that were cleared")
     history_was_enabled: bool = Field(
         True, description="Whether history was enabled before clearing"
     )
@@ -175,30 +193,34 @@ class ExportHistoryResult(BaseModel):
     """Response model for history export operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the export was successful")
+    success: bool = Field(default=True, description="Whether the export was successful")
     file_path: str = Field(description="Path to the exported history file")
-    format: Literal["json", "csv"] = Field("json", description="Format used for export")
-    operations_exported: int = Field(0, description="Number of operations exported")
-    file_size_bytes: int | None = Field(None, description="Size of exported file in bytes")
+    format: Literal["json", "csv"] = Field(default="json", description="Format used for export")
+    operations_exported: int = Field(default=0, description="Number of operations exported")
+    file_size_bytes: int | None = Field(default=None, description="Size of exported file in bytes")
 
 
 class AutoSaveConfigResult(BaseModel):
     """Response model for auto-save configuration operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the configuration update was successful")
+    success: bool = Field(
+        default=True, description="Whether the configuration update was successful"
+    )
     config: AutoSaveConfig = Field(description="New auto-save configuration")
     previous_config: AutoSaveConfig | None = Field(
         None, description="Previous auto-save configuration"
     )
-    config_changed: bool = Field(True, description="Whether the configuration actually changed")
+    config_changed: bool = Field(
+        default=True, description="Whether the configuration actually changed"
+    )
 
 
 class AutoSaveStatusResult(BaseModel):
     """Response model for auto-save status operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the status retrieval was successful")
+    success: bool = Field(default=True, description="Whether the status retrieval was successful")
     status: AutoSaveStatus = Field(description="Current auto-save status information")
 
 
@@ -206,24 +228,28 @@ class AutoSaveDisableResult(BaseModel):
     """Response model for auto-save disable operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the disable operation was successful")
-    was_enabled: bool = Field(False, description="Whether auto-save was enabled before disabling")
+    success: bool = Field(default=True, description="Whether the disable operation was successful")
+    was_enabled: bool = Field(
+        default=False, description="Whether auto-save was enabled before disabling"
+    )
     final_save_performed: bool = Field(
         False, description="Whether a final save was performed before disabling"
     )
-    final_save_path: str | None = Field(None, description="Path of final save file if performed")
+    final_save_path: str | None = Field(
+        default=None, description="Path of final save file if performed"
+    )
 
 
 class ManualSaveResult(BaseModel):
     """Response model for manual save operations."""
 
     session_id: str = Field(description="Session identifier")
-    success: bool = Field(True, description="Whether the manual save was successful")
+    success: bool = Field(default=True, description="Whether the manual save was successful")
     save_path: str = Field(description="Path where the data was saved")
-    format: str = Field("csv", description="Format used for saving")
-    rows_saved: int = Field(0, description="Number of rows saved")
-    columns_saved: int = Field(0, description="Number of columns saved")
-    file_size_bytes: int | None = Field(None, description="Size of saved file in bytes")
+    format: str = Field(default="csv", description="Format used for saving")
+    rows_saved: int = Field(default=0, description="Number of rows saved")
+    columns_saved: int = Field(default=0, description="Number of columns saved")
+    file_size_bytes: int | None = Field(default=None, description="Size of saved file in bytes")
     save_time: str | None = Field(
         None, description="Timestamp when save was completed (ISO format)"
     )

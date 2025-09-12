@@ -77,7 +77,7 @@ async def replace_in_column(
     ] = True,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
@@ -173,7 +173,7 @@ async def extract_from_column(
     ] = False,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
 
@@ -299,7 +299,7 @@ async def split_column(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
 
@@ -454,7 +454,7 @@ async def transform_column_case(
     ],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
@@ -558,7 +558,7 @@ async def strip_column(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Strip whitespace or specified characters from column values.
 
@@ -642,7 +642,7 @@ async def fill_column_nulls(
     value: Annotated[Any, Field(description="Value to use for filling null/NaN values")],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
 

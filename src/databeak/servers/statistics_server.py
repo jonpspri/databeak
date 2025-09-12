@@ -72,7 +72,7 @@ async def get_statistics(
     ] = True,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
@@ -209,7 +209,7 @@ async def get_column_statistics(
     column: Annotated[str, Field(description="Name of the column to analyze in detail")],
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ColumnStatisticsResult:
     """Get detailed statistical analysis for a single column.
 
@@ -378,7 +378,7 @@ async def get_correlation_matrix(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
 
@@ -514,7 +514,7 @@ async def get_value_counts(
     ] = None,
     ctx: Annotated[
         Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,  # noqa: ARG001
+    ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
 

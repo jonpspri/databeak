@@ -82,8 +82,8 @@ class OutlierInfo(BaseModel):
 
     row_index: int = Field(description="Row index where outlier was detected")
     value: float = Field(description="Outlier value found")
-    z_score: float | None = Field(None, description="Z-score if using z-score method")
-    iqr_score: float | None = Field(None, description="IQR score if using IQR method")
+    z_score: float | None = Field(default=None, description="Z-score if using z-score method")
+    iqr_score: float | None = Field(default=None, description="IQR score if using IQR method")
 
 
 class ProfileInfo(BaseModel):
@@ -103,11 +103,11 @@ class GroupStatistics(BaseModel):
     """Statistics for a grouped data segment."""
 
     count: int = Field(description="Number of records in this group")
-    mean: float | None = Field(None, description="Mean value for numeric columns")
-    sum: float | None = Field(None, description="Sum of values for numeric columns")
-    min: float | None = Field(None, description="Minimum value in the group")
-    max: float | None = Field(None, description="Maximum value in the group")
-    std: float | None = Field(None, description="Standard deviation for numeric columns")
+    mean: float | None = Field(default=None, description="Mean value for numeric columns")
+    sum: float | None = Field(default=None, description="Sum of values for numeric columns")
+    min: float | None = Field(default=None, description="Minimum value in the group")
+    max: float | None = Field(default=None, description="Maximum value in the group")
+    std: float | None = Field(default=None, description="Standard deviation for numeric columns")
 
 
 class OutliersResult(BaseToolResponse):
