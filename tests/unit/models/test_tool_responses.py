@@ -71,10 +71,11 @@ from src.databeak.servers.io_server import (
 class TestSessionInfo:
     """Test SessionInfo model."""
 
-    @pytest.mark.parametrize("test_case,expected_results", [
-        (
-            {
-                "data": {
+    @pytest.mark.parametrize(
+        "session_data,expected_attrs",
+        [
+            (
+                {
                     "session_id": "test-123",
                     "created_at": "2023-01-01T10:00:00Z",
                     "last_accessed": "2023-01-01T10:30:00Z",
@@ -84,13 +85,11 @@ class TestSessionInfo:
                     "memory_usage_mb": 2.5,
                     "file_path": "/path/to/file.csv",
                 },
-                "expected": {"session_id": "test-123", "row_count": 100, "file_path": "/path/to/file.csv"}
-            }
-        ),
-        (
-            {
-                "data": {
-                    "session_id": "test-456", 
+                {"session_id": "test-123", "row_count": 100, "file_path": "/path/to/file.csv"},
+            ),
+            (
+                {
+                    "session_id": "test-456",
                     "created_at": "2023-01-01T10:00:00Z",
                     "last_accessed": "2023-01-01T10:30:00Z",
                     "row_count": 100,
@@ -98,14 +97,14 @@ class TestSessionInfo:
                     "columns": ["id", "name"],
                     "memory_usage_mb": 1.0,
                 },
-                "expected": {"session_id": "test-456", "row_count": 100, "file_path": None}
-            }
-        ),
-    ])
-    def test_session_info_variations(self, test_case, expected_results):
+                {"session_id": "test-456", "row_count": 100, "file_path": None},
+            ),
+        ],
+    )
+    def test_session_info_variations(self, session_data, expected_attrs):
         """Test SessionInfo creation with different configurations."""
-        session = SessionInfo(**test_case["data"])
-        for attr, expected_value in test_case["expected"].items():
+        session = SessionInfo(**session_data)
+        for attr, expected_value in expected_attrs.items():
             assert getattr(session, attr) == expected_value
 
     def test_missing_required_field(self):
@@ -1196,36 +1195,29 @@ class TestComprehensiveEdgeCases:
 class TestSortDataResult:
     """Test SortDataResult model."""
 
-    def test_valid_creation(self):
-        """Test valid SortDataResult creation."""
+    @pytest.mark.parametrize(
+        "session_id,sorted_by,ascending,rows_processed,description",
+        [
+            ("sort-123", ["department", "salary"], [True, False], 100, "multi-column sort"),
+            ("single-sort", ["name"], [True], 50, "single column sort"),
+            ("multi-sort", ["dept", "salary", "age"], [True, False, True], 75, "three column sort"),
+        ],
+    )
+    def test_sort_data_result_creation(
+        self, session_id, sorted_by, ascending, rows_processed, description
+    ):
+        """Test SortDataResult creation with various configurations."""
         result = SortDataResult(
-            session_id="sort-123",
-            sorted_by=["department", "salary"],
-            ascending=[True, False],
+            session_id=session_id,
+            sorted_by=sorted_by,
+            ascending=ascending,
+            rows_processed=rows_processed,
         )
-        assert result.session_id == "sort-123"
-        assert result.sorted_by == ["department", "salary"]
-        assert result.ascending == [True, False]
-
-    def test_single_column_sort(self):
-        """Test sorting by single column."""
-        result = SortDataResult(
-            session_id="single-sort",
-            sorted_by=["name"],
-            ascending=[True],
-        )
-        assert len(result.sorted_by) == 1
-        assert len(result.ascending) == 1
-
-    def test_multiple_column_sort(self):
-        """Test sorting by multiple columns."""
-        result = SortDataResult(
-            session_id="multi-sort",
-            sorted_by=["dept", "salary", "age"],
-            ascending=[True, False, True],
-        )
-        assert len(result.sorted_by) == 3
-        assert len(result.ascending) == 3
+        assert result.session_id == session_id
+        assert result.sorted_by == sorted_by
+        assert result.ascending == ascending
+        assert result.rows_processed == rows_processed
+        assert len(result.sorted_by) == len(ascending)
 
     def test_serialization_roundtrip(self):
         """Test serialization and deserialization."""
@@ -1233,6 +1225,7 @@ class TestSortDataResult:
             session_id="serialize-test",
             sorted_by=["col1", "col2"],
             ascending=[False, True],
+            rows_processed=25,
         )
         data = original.model_dump()
         restored = SortDataResult(**data)

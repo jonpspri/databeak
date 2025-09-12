@@ -21,7 +21,7 @@ class HistoryStorage(str, Enum):
     MEMORY = "memory"  # In-memory only (lost on session end)
     JSON = "json"  # Save as JSON file
     PICKLE = "pickle"  # Save as pickle (preserves DataFrames)
-    SQLITE = "sqlite"  # Save in SQLite database (future)
+    # DATABASE = "database"  # Future: database storage option
 
 
 class OperationHistory:
@@ -145,7 +145,13 @@ class HistoryManager:
                             f"Loaded {len(self.history)} history entries for session {self.session_id}"
                         )
 
-        except Exception as e:
+        except (
+            OSError,
+            PermissionError,
+            json.JSONDecodeError,
+            pickle.PickleError,
+            ValueError,
+        ) as e:
             logger.error(f"Error loading history: {e!s}")
 
     def _save_history(self) -> None:
@@ -184,7 +190,13 @@ class HistoryManager:
 
             logger.debug(f"Saved {len(self.history)} history entries for session {self.session_id}")
 
-        except Exception as e:
+        except (
+            OSError,
+            PermissionError,
+            json.JSONDecodeError,
+            pickle.PickleError,
+            ValueError,
+        ) as e:
             logger.error(f"Error saving history: {e!s}")
 
     def add_operation(
@@ -424,7 +436,7 @@ class HistoryManager:
             logger.info(f"Exported history to {file_path}")
             return True
 
-        except Exception as e:
+        except (OSError, PermissionError, json.JSONDecodeError, ValueError, TypeError) as e:
             logger.error(f"Error exporting history: {e!s}")
             return False
 

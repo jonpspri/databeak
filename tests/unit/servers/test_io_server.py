@@ -79,9 +79,11 @@ class TestErrorConditions:
             temp_path = f.name
 
         try:
-            with patch("pandas.read_csv", return_value=large_data):
-                with pytest.raises(ToolError, match="File too large.*rows exceeds limit"):
-                    await load_csv(temp_path)
+            with (
+                patch("pandas.read_csv", return_value=large_data),
+                pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
+            ):
+                await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -101,9 +103,11 @@ class TestErrorConditions:
             return MockSeries()
 
         try:
-            with patch("pandas.DataFrame.memory_usage", side_effect=mock_memory_usage):
-                with pytest.raises(ToolError, match="File too large.*MB exceeds memory limit"):
-                    await load_csv(temp_path)
+            with (
+                patch("pandas.DataFrame.memory_usage", side_effect=mock_memory_usage),
+                pytest.raises(ToolError, match="File too large.*MB exceeds memory limit"),
+            ):
+                await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -145,9 +149,11 @@ class TestErrorConditions:
             mock_stat_obj.st_size = (MAX_FILE_SIZE_MB + 10) * 1024 * 1024
             mock_stat_obj.st_mode = 0o100644  # Regular file mode
 
-            with patch("pathlib.Path.stat", return_value=mock_stat_obj):
-                with pytest.raises(ToolError, match="File size.*exceeds limit"):
-                    await load_csv(temp_path)
+            with (
+                patch("pathlib.Path.stat", return_value=mock_stat_obj),
+                pytest.raises(ToolError, match="File size.*exceeds limit"),
+            ):
+                await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -343,9 +349,11 @@ class TestTempFileCleanup:
 
         try:
             # Mock pandas to_excel to raise an error
-            with patch("pandas.DataFrame.to_excel", side_effect=Exception("Mock export error")):
-                with pytest.raises(ToolError, match="Export failed"):
-                    await export_csv(session_id, format="excel")
+            with (
+                patch("pandas.DataFrame.to_excel", side_effect=Exception("Mock export error")),
+                pytest.raises(ToolError, match="Export failed"),
+            ):
+                await export_csv(session_id, format="excel")
 
             # Verify no temp files were left behind
             # (This is implicit - if cleanup failed, we'd see orphaned files)
@@ -682,9 +690,11 @@ class TestMemoryAndPerformance:
             temp_path = f.name
 
         try:
-            with patch("pandas.read_csv", return_value=large_df):
-                with pytest.raises(ToolError, match="File too large.*rows exceeds limit"):
-                    await load_csv(temp_path)
+            with (
+                patch("pandas.read_csv", return_value=large_df),
+                pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
+            ):
+                await load_csv(temp_path)
         finally:
             Path(temp_path).unlink()
 

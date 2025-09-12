@@ -50,6 +50,9 @@ class OperationType(str, Enum):
     PROFILE = "profile"
     QUALITY_CHECK = "quality_check"
     ANOMALY_DETECTION = "anomaly_detection"
+    DATA_INSPECTION = "data_inspection"
+    DATA_MODIFICATION = "data_modification"
+    CUSTOM_OPERATION = "custom_operation"
 
 
 class ComparisonOperator(str, Enum):

@@ -283,9 +283,9 @@ async def sort_data_with_pydantic(
             raise ToolError(f"Columns not found: {missing_cols}")
 
         # Sort data
-        session.df = df.sort_values(
-            by=sort_columns, ascending=sort_ascending
-        ).reset_index(drop=True)
+        session.df = df.sort_values(by=sort_columns, ascending=sort_ascending).reset_index(
+            drop=True
+        )
 
         # Record operation
         session.record_operation(
@@ -332,9 +332,7 @@ async def remove_duplicates_with_pydantic(
                 raise ToolError(f"Columns not found: {missing_cols}")
 
         # Remove duplicates
-        session.df = df.drop_duplicates(subset=subset, keep=keep).reset_index(
-            drop=True
-        )
+        session.df = df.drop_duplicates(subset=subset, keep=keep).reset_index(drop=True)
         rows_after = len(session.df)
 
         # Record operation
@@ -429,9 +427,7 @@ async def fill_missing_values_with_pydantic(
             raise ToolError(f"Unknown strategy: {strategy}")
 
         # Count nulls after
-        nulls_after = (
-            session.df[target_cols].isna().sum().sum() if strategy != "drop" else 0
-        )
+        nulls_after = session.df[target_cols].isna().sum().sum() if strategy != "drop" else 0
 
         # Record operation
         session.record_operation(

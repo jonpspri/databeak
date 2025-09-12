@@ -10,7 +10,7 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
 )
 from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.tools.transformations import (
+from src.databeak.services.transformation_operations import (
     delete_row,
     extract_from_column,
     fill_column_nulls,

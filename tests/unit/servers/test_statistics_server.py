@@ -119,7 +119,7 @@ class TestGetStatistics:
         """Test that statistics for non-numeric columns returns empty results."""
         # The refactored server only handles numeric columns, non-numeric are silently skipped
         result = await get_statistics(stats_session, columns=["name", "department"])
-        
+
         assert result.success is True
         assert len(result.statistics) == 0  # No numeric columns in the selection
 

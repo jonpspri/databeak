@@ -148,7 +148,8 @@ class TestProjectStructureConsistency:
         documented_dirs = [
             "src/databeak",
             "src/databeak/models",
-            "src/databeak/tools",
+            "src/databeak/servers",
+            "src/databeak/services",
             "src/databeak/resources",
             "src/databeak/utils",
             "src/databeak/prompts",

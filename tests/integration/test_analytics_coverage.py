@@ -121,12 +121,12 @@ class TestGetColumnStatistics:
         assert result.column == "category"
         assert result.data_type == "object"
 
-        # For non-numeric columns, statistics should be placeholder values
+        # For non-numeric columns, statistics should be None (not meaningful)
         assert result.statistics.count > 0  # Should count non-null values
-        assert result.statistics.mean == 0.0
-        assert result.statistics.std == 0.0
-        assert result.statistics.min == 0.0
-        assert result.statistics.max == 0.0
+        assert result.statistics.mean is None  # Non-numeric columns don't have meaningful mean
+        assert result.statistics.std is None
+        assert result.statistics.min is None
+        assert result.statistics.max is None
 
     async def test_get_column_statistics_with_nulls(self):
         """Test column statistics with null values."""
@@ -156,10 +156,8 @@ class TestGetColumnStatistics:
         assert stats_result.statistics.mean == 42.0
         assert stats_result.statistics.min == 42.0
         assert stats_result.statistics.max == 42.0
-        # Single value std is NaN in pandas, which is mathematically correct
-        import math
-
-        assert math.isnan(stats_result.statistics.std)
+        # Single value std should be 0.0 in our implementation (converted from NaN)
+        assert stats_result.statistics.std == 0.0
 
     async def test_get_column_statistics_empty_numeric_column(self):
         """Test column statistics with all null numeric values."""
@@ -193,10 +191,10 @@ class TestGetColumnStatistics:
         assert stats_result.column == "flag"
         assert stats_result.data_type == "bool"
 
-        # Boolean columns should get placeholder statistics (not numeric calculations)
+        # Boolean columns should get None statistics (treated as non-numeric in our implementation)
         assert stats_result.statistics.count > 0  # Should count non-null values
-        assert stats_result.statistics.mean == 0.0
-        assert stats_result.statistics.std == 0.0
+        assert stats_result.statistics.mean is None  # Boolean columns treated as non-numeric
+        assert stats_result.statistics.std is None
 
 
 @pytest.mark.asyncio

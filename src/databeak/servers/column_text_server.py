@@ -120,17 +120,9 @@ async def replace_in_column(
 
         # Apply replacements
         if regex:
-            df[column] = (
-                df[column]
-                .astype(str)
-                .str.replace(pattern, replacement, regex=True)
-            )
+            df[column] = df[column].astype(str).str.replace(pattern, replacement, regex=True)
         else:
-            df[column] = (
-                df[column]
-                .astype(str)
-                .str.replace(pattern, replacement, regex=False)
-            )
+            df[column] = df[column].astype(str).str.replace(pattern, replacement, regex=False)
 
         # Count changes
         changed_mask = original_data.astype(str) != df[column].astype(str)
@@ -220,7 +212,8 @@ async def extract_from_column(
             columns_created = []
             for i in range(len(extracted.columns)):
                 new_col_name = f"{column}_extracted_{i}"
-                assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                if session.df is None:
+                    raise ToolError("Session data not available")
                 session.df[new_col_name] = extracted.iloc[:, i]
                 columns_created.append(new_col_name)
 
@@ -230,11 +223,13 @@ async def extract_from_column(
             # Single group or no expand - replace original column
             if isinstance(extracted, pd.DataFrame):
                 # Multiple groups but not expanding - take first group
-                assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                if session.df is None:
+                    raise ToolError("Session data not available")
                 session.df[column] = extracted.iloc[:, 0]
             else:
                 # Single series result
-                assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                if session.df is None:
+                    raise ToolError("Session data not available")
                 session.df[column] = extracted
 
             affected_columns = [column]
@@ -353,7 +348,8 @@ async def split_column(
                 # Create new columns
                 for i, col_name in enumerate(column_names):
                     if i < len(split_data.columns):
-                        assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                        if session.df is None:
+                            raise ToolError("Session data not available")
                         session.df[col_name] = split_data.iloc[:, i]
                         columns_created.append(col_name)
 
@@ -374,7 +370,8 @@ async def split_column(
 
             if isinstance(split_data, pd.DataFrame):
                 # This shouldn't happen with expand=False, but handle it
-                assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                if session.df is None:
+                    raise ToolError("Session data not available")
                 if part_index < len(split_data.columns):
                     session.df[column] = split_data.iloc[:, part_index]
                 else:
@@ -387,14 +384,16 @@ async def split_column(
                         return split_list[part_index]
                     return pd.NA
 
-                assert session.df is not None  # Type guard - guaranteed by _get_session_data
+                if session.df is None:
+                    raise ToolError("Session data not available")
                 session.df[column] = split_data.apply(get_part)
 
             affected_columns = [column]
             operation_desc = f"split_keep_part_{part_index}"
 
             # Count successful splits (non-null results)
-            assert session.df is not None  # Type guard - guaranteed by _get_session_data
+            if session.df is None:
+                raise ToolError("Session data not available")
             rows_affected = int(session.df[column].notna().sum())
 
         session.record_operation(
@@ -475,7 +474,8 @@ async def transform_column_case(
         # Apply case transformation
         str_col = df[column].astype(str)
 
-        assert session.df is not None  # Type guard - guaranteed by _get_session_data
+        if session.df is None:
+            raise ToolError("Session data not available")
         if transform == "upper":
             session.df[column] = str_col.str.upper()
         elif transform == "lower":
@@ -490,10 +490,11 @@ async def transform_column_case(
             )
 
         # Count changes made (ignore null values)
-        assert session.df is not None  # Type guard - guaranteed by _get_session_data
-        changed_mask = original_data.astype(str).fillna("") != session.df[
-            column
-        ].astype(str).fillna("")
+        if session.df is None:
+            raise ToolError("Session data not available")
+        changed_mask = original_data.astype(str).fillna("") != session.df[column].astype(
+            str
+        ).fillna("")
         changes_made = int(changed_mask.sum())
 
         session.record_operation(
@@ -566,7 +567,8 @@ async def strip_column(
         original_data = df[column].copy()
 
         # Apply strip operation
-        assert session.df is not None  # Type guard - guaranteed by _get_session_data
+        if session.df is None:
+            raise ToolError("Session data not available")
         if chars is None:
             # Strip whitespace
             session.df[column] = df[column].astype(str).str.strip()
@@ -575,10 +577,11 @@ async def strip_column(
             session.df[column] = df[column].astype(str).str.strip(chars)
 
         # Count changes made
-        assert session.df is not None  # Type guard - guaranteed by _get_session_data
-        changed_mask = original_data.astype(str).fillna("") != session.df[
-            column
-        ].astype(str).fillna("")
+        if session.df is None:
+            raise ToolError("Session data not available")
+        changed_mask = original_data.astype(str).fillna("") != session.df[column].astype(
+            str
+        ).fillna("")
         changes_made = int(changed_mask.sum())
 
         session.record_operation(
@@ -655,7 +658,8 @@ async def fill_column_nulls(
             )
 
         # Fill null values
-        assert session.df is not None  # Type guard - guaranteed by _get_session_data
+        if session.df is None:
+            raise ToolError("Session data not available")
         session.df[column] = df[column].fillna(value)
 
         # Verify fills worked

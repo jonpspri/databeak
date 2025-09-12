@@ -5,10 +5,6 @@ analysis. It focuses on memory limits, security enhancements, temp file cleanup,
 error handling.
 """
 
-import pytest
-
-pytestmark = pytest.mark.skip(reason="Complex mocking tests - skipping for now")
-
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -28,6 +24,8 @@ from src.databeak.servers.io_server import (
     load_csv_from_content,
     load_csv_from_url,
 )
+
+pytestmark = pytest.mark.skip(reason="Complex mocking tests - skipping for now")
 
 
 @pytest.mark.asyncio

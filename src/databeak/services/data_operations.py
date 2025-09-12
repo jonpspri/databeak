@@ -20,7 +20,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
         # Handle pandas index types safely
         row_index_val = row_idx if isinstance(row_idx, int) else 0
         # Convert all keys to strings and handle pandas/numpy types
-        record = {"__row_index__": row_index_val}  # Include original row index
+        record: dict[str, Any] = {"__row_index__": row_index_val}  # Include original row index
         row_dict = row.to_dict()
         for key, value in row_dict.items():
             str_key = str(key)
@@ -96,5 +96,5 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
             return series.astype(bool)
         else:
             raise ValueError(f"Unsupported type: {target_type}")
-    except Exception as e:
+    except (ValueError, TypeError, OverflowError) as e:
         raise ValueError(f"Failed to convert to {target_type}: {e}") from e

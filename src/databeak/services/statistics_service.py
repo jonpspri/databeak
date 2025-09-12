@@ -80,13 +80,17 @@ class StatisticsService(SessionService):
                 percentile_50 = float(col_data.quantile(0.50)) if include_percentiles else 0.0
                 percentile_75 = float(col_data.quantile(0.75)) if include_percentiles else 0.0
 
-                col_stats = StatisticsSummary(
-                    count=int(col_data.count()),
-                    mean=float(col_data.mean()),
-                    std=float(col_data.std()),
-                    min=float(col_data.min()),
-                    **{"25%": percentile_25, "50%": percentile_50, "75%": percentile_75},
-                    max=float(col_data.max()),
+                col_stats = StatisticsSummary.model_validate(
+                    {
+                        "count": int(col_data.count()),
+                        "mean": float(col_data.mean()),
+                        "std": float(col_data.std()),
+                        "min": float(col_data.min()),
+                        "25%": percentile_25,
+                        "50%": percentile_50,
+                        "75%": percentile_75,
+                        "max": float(col_data.max()),
+                    }
                 )
 
                 stats[col] = col_stats
@@ -155,37 +159,45 @@ class StatisticsService(SessionService):
             if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
                 non_null = col_data.dropna()
                 if len(non_null) > 0:
-                    statistics = StatisticsSummary(
-                        count=int(non_null.count()),
-                        mean=float(non_null.mean()),
-                        std=float(non_null.std()),
-                        min=float(non_null.min()),
-                        **{
+                    statistics = StatisticsSummary.model_validate(
+                        {
+                            "count": int(non_null.count()),
+                            "mean": float(non_null.mean()),
+                            "std": float(non_null.std()),
+                            "min": float(non_null.min()),
                             "25%": float(non_null.quantile(0.25)),
                             "50%": float(non_null.quantile(0.50)),
                             "75%": float(non_null.quantile(0.75)),
-                        },
-                        max=float(non_null.max()),
+                            "max": float(non_null.max()),
+                        }
                     )
                 else:
                     # Empty numeric column
-                    statistics = StatisticsSummary(
-                        count=0,
-                        mean=0.0,
-                        std=0.0,
-                        min=0.0,
-                        **{"25%": 0.0, "50%": 0.0, "75%": 0.0},
-                        max=0.0,
+                    statistics = StatisticsSummary.model_validate(
+                        {
+                            "count": 0,
+                            "mean": 0.0,
+                            "std": 0.0,
+                            "min": 0.0,
+                            "25%": 0.0,
+                            "50%": 0.0,
+                            "75%": 0.0,
+                            "max": 0.0,
+                        }
                     )
             else:
                 # For non-numeric columns, create placeholder statistics
-                statistics = StatisticsSummary(
-                    count=int(col_data.notna().sum()),
-                    mean=0.0,
-                    std=0.0,
-                    min=0.0,
-                    **{"25%": 0.0, "50%": 0.0, "75%": 0.0},
-                    max=0.0,
+                statistics = StatisticsSummary.model_validate(
+                    {
+                        "count": int(col_data.notna().sum()),
+                        "mean": None,
+                        "std": None,
+                        "min": None,
+                        "25%": None,
+                        "50%": None,
+                        "75%": None,
+                        "max": None,
+                    }
                 )
 
             session.record_operation(

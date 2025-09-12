@@ -45,7 +45,7 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
 
         return True, str(path)
 
-    except Exception as e:
+    except (OSError, PermissionError, ValueError, TypeError) as e:
         return False, f"Error validating path: {e!s}"
 
 
@@ -113,7 +113,7 @@ def validate_url(url: str) -> tuple[bool, str]:
 
         return True, url
 
-    except Exception as e:
+    except (ValueError, TypeError, AttributeError) as e:
         return False, f"Invalid URL: {e!s}"
 
 
@@ -222,32 +222,6 @@ def validate_expression(expression: str, allowed_vars: list[str]) -> tuple[bool,
             return False, f"Unknown variable or function: {token}"
 
     return True, expression
-
-
-def validate_sql_query(query: str) -> tuple[bool, str]:
-    """Validate SQL query for safety (basic check)."""
-    query_lower = query.lower()
-
-    # Only allow SELECT queries
-    if not query_lower.strip().startswith("select"):
-        return False, "Only SELECT queries are allowed"
-
-    # Check for dangerous keywords
-    dangerous = [
-        "drop",
-        "delete",
-        "insert",
-        "update",
-        "alter",
-        "create",
-        "exec",
-        "execute",
-    ]
-    for keyword in dangerous:
-        if keyword in query_lower:
-            return False, f"Dangerous operation '{keyword}' not allowed"
-
-    return True, query
 
 
 def sanitize_filename(filename: str) -> str:

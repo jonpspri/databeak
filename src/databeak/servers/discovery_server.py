@@ -4,7 +4,7 @@ This module provides a complete Discovery server implementation following DataBe
 architecture pattern. It focuses on data exploration, profiling, pattern detection, and outlier
 analysis with specialized algorithms for data insights.
 """
-# ruff: noqa: S101, ARG001
+# ruff: noqa: ARG001
 
 from __future__ import annotations
 
@@ -37,7 +37,7 @@ from ..models.tool_responses import (
 
 # Import data operations function directly to avoid dependency issues
 try:
-    from ..tools.data_operations import create_data_preview_with_indices
+    from ..services.data_operations import create_data_preview_with_indices
 except ImportError:
     # Fallback implementation for create_data_preview_with_indices
     def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> dict[str, Any]:
@@ -191,7 +191,8 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
         raise NoDataLoadedError(session_id)
 
     df = session.df
-    assert df is not None  # Type guard since has_data() was checked
+    if df is None:  # Additional defensive check
+        raise NoDataLoadedError(session_id)
     return session, df
 
 
@@ -250,7 +251,8 @@ async def detect_outliers(
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
         df = session.df
-        assert df is not None  # Type guard: has_data() ensures df is not None
+        if df is None:  # Additional defensive check
+            raise ToolError(f"No data available in session: {session_id}")
 
         # Select numeric columns
         if columns:
@@ -412,7 +414,8 @@ async def profile_data(
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
         df = session.df
-        assert df is not None  # Type guard: has_data() ensures df is not None
+        if df is None:  # Additional defensive check
+            raise ToolError(f"No data available in session: {session_id}")
 
         # Create ProfileInfo for each column (simplified to match model)
         profile_dict = {}
@@ -483,7 +486,7 @@ async def group_by_aggregate(
 ) -> GroupAggregateResult:
     """Group data and compute aggregations for analytical insights.
 
-    Performs SQL-like GROUP BY operations with multiple aggregation functions
+    Performs GROUP BY operations with multiple aggregation functions
     per column. Essential for segmentation analysis and understanding patterns
     across different data groups.
 
@@ -530,7 +533,8 @@ async def group_by_aggregate(
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
 
         df = session.df
-        assert df is not None  # Type guard: has_data() ensures df is not None
+        if df is None:  # Additional defensive check
+            raise ToolError(f"No data available in session: {session_id}")
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]

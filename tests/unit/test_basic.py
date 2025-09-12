@@ -97,7 +97,7 @@ class TestDataOperations:
 
     async def test_filter_rows(self, test_session) -> None:
         """Test filtering rows."""
-        from src.databeak.tools.transformations import filter_rows
+        from src.databeak.services.transformation_operations import filter_rows
 
         result = await filter_rows(
             session_id=test_session,

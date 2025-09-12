@@ -13,7 +13,6 @@ from src.databeak.utils.validators import (
     validate_dataframe,
     validate_expression,
     validate_file_path,
-    validate_sql_query,
     validate_url,
 )
 
@@ -404,59 +403,6 @@ class TestExpressionValidation:
             assert is_valid is False
 
 
-class TestSQLQueryValidation:
-    """Test SQL query validation functionality."""
-
-    def test_validate_sql_query_safe_select(self) -> None:
-        """Test validation of safe SELECT queries."""
-        safe_queries = [
-            "SELECT * FROM table",
-            "SELECT col1, col2 FROM table WHERE col1 > 5",
-            "SELECT COUNT(*) FROM table GROUP BY col1",
-            "SELECT col1 FROM table ORDER BY col1 LIMIT 10",
-        ]
-
-        for query in safe_queries:
-            is_valid, message = validate_sql_query(query)
-            assert is_valid is True, f"Failed for safe query: {query}"
-
-    def test_validate_sql_query_dangerous_operations(self) -> None:
-        """Test validation blocks dangerous SQL operations."""
-        dangerous_queries = [
-            "DROP TABLE users",
-            "DELETE FROM table",
-            "INSERT INTO table VALUES (1)",
-            "UPDATE table SET col1 = 'value'",
-            "CREATE TABLE new_table (id INT)",
-            "ALTER TABLE table ADD COLUMN col1 INT",
-            "TRUNCATE TABLE table",
-        ]
-
-        for query in dangerous_queries:
-            is_valid, message = validate_sql_query(query)
-            assert is_valid is False, f"Should have blocked dangerous query: {query}"
-
-    def test_validate_sql_query_empty(self) -> None:
-        """Test validation of empty query."""
-        is_valid, message = validate_sql_query("")
-
-        assert is_valid is False
-        assert "SELECT" in message
-
-    def test_validate_sql_query_case_insensitive(self) -> None:
-        """Test validation is case insensitive for dangerous operations."""
-        dangerous_queries = [
-            "drop table users",
-            "DELETE from table",
-            "insert into table values (1)",
-            "Update table set col1 = 'value'",
-        ]
-
-        for query in dangerous_queries:
-            is_valid, message = validate_sql_query(query)
-            assert is_valid is False
-
-
 class TestUtilityFunctions:
     """Test utility functions for data conversion and sanitization."""
 
@@ -555,7 +501,6 @@ class TestValidatorEdgeCases:
         validate_url("")
         validate_column_name("")
         validate_expression("", [])
-        validate_sql_query("")
         sanitize_filename("")
 
         # DataFrame validators with minimal data
@@ -578,7 +523,6 @@ class TestValidatorEdgeCases:
 
         # Should handle long inputs gracefully
         validate_column_name(long_string)
-        validate_sql_query(f"SELECT * FROM {long_string}")
         sanitize_filename(long_string)
 
     def test_special_dataframe_cases(self) -> None:

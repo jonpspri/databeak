@@ -37,16 +37,31 @@ async def column_session():
 class TestColumnServerSelect:
     """Test select_columns server function."""
 
-    @pytest.mark.parametrize("columns,expected_count,description", [
-        (["first_name", "last_name", "email"], 3, "basic selection"),
-        (["email", "id", "first_name"], 3, "reordered selection"), 
-        (["age"], 1, "single column"),
-        ([
-            "id", "first_name", "last_name", "age", 
-            "email", "salary", "is_active", "join_date"
-        ], 8, "all columns"),
-    ])
-    async def test_select_column_scenarios(self, column_session, columns, expected_count, description):
+    @pytest.mark.parametrize(
+        "columns,expected_count,description",
+        [
+            (["first_name", "last_name", "email"], 3, "basic selection"),
+            (["email", "id", "first_name"], 3, "reordered selection"),
+            (["age"], 1, "single column"),
+            (
+                [
+                    "id",
+                    "first_name",
+                    "last_name",
+                    "age",
+                    "email",
+                    "salary",
+                    "is_active",
+                    "join_date",
+                ],
+                8,
+                "all columns",
+            ),
+        ],
+    )
+    async def test_select_column_scenarios(
+        self, column_session, columns, expected_count, description
+    ):
         """Test various column selection scenarios."""
         result = await select_columns(column_session, columns)
 

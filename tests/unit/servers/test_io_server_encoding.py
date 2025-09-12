@@ -18,13 +18,18 @@ from src.databeak.servers.io_server import (
 class TestFileEncodingDetection:
     """Test file encoding detection."""
 
-    @pytest.mark.parametrize("mock_encoding,mock_confidence,file_content,expected_encoding", [
-        ("UTF-8", 0.95, b"test content", "utf-8"),
-        ("ISO-8859-1", 0.3, b"\xef\xbb\xbftest,data\n1,2", ["utf-8", "utf-8-sig"]),
-        (None, 0, b"test,data\n1,2", "utf-8"),
-    ])
+    @pytest.mark.parametrize(
+        "mock_encoding,mock_confidence,file_content,expected_encoding",
+        [
+            ("UTF-8", 0.95, b"test content", "utf-8"),
+            ("ISO-8859-1", 0.3, b"\xef\xbb\xbftest,data\n1,2", ["utf-8", "utf-8-sig"]),
+            (None, 0, b"test,data\n1,2", "utf-8"),
+        ],
+    )
     @patch("chardet.detect")
-    def test_encoding_detection_scenarios(self, mock_detect, mock_encoding, mock_confidence, file_content, expected_encoding):
+    def test_encoding_detection_scenarios(
+        self, mock_detect, mock_encoding, mock_confidence, file_content, expected_encoding
+    ):
         """Test encoding detection with different chardet results."""
         mock_detect.return_value = {"encoding": mock_encoding, "confidence": mock_confidence}
 

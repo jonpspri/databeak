@@ -36,7 +36,7 @@ from src.databeak.servers.validation_server import (
     find_anomalies,
     validate_schema,
 )
-from src.databeak.tools.transformations import (
+from src.databeak.services.transformation_operations import (
     add_column,  # Not yet migrated to server
 )
 

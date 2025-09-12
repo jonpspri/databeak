@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "databeak"
-version = "1.0.2"
+version = "1.0.5"
 description = "DataBeak: MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -200,7 +200,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "S101", "DTZ"]  # Allow unused arguments, assert, and naive datetime in tests
+"tests/*" = ["ARG", "S101", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, assert, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
 
 [tool.ruff.lint.isort]
@@ -240,12 +240,17 @@ module = [
     "numexpr",
     "bottleneck",
     "fastparquet",
+    "pytest",
 ]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
 disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "examples.*"
+ignore_errors = true
 
 
 [tool.pytest.ini_options]
