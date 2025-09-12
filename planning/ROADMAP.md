@@ -5,439 +5,289 @@ Strategic Development Phases for DataBeak 1.1.0 - 2.0.0
 ## Executive Summary
 
 This roadmap outlines the strategic development phases for evolving DataBeak
-from its current robust foundation into a best-in-class MCP server with
-multi-format support, advanced architecture, and enterprise capabilities.
+from its current robust foundation into a best-in-class MCP server with enhanced
+type safety, comprehensive testing, and advanced capabilities.
 
-## Current State Assessment (Post-Validation Server Merge)
+## Current State Assessment (v1.0.5)
 
-- **Test Coverage**: 65.81% overall (390/402 tests passing) 🔄 **PROGRESS MADE**
-  (target: 80%)
-- **Type Safety**: Validation domain modernized with Pydantic discriminated
-  unions 🔄 **DOMAIN-SPECIFIC**
-- **Architecture**: Server composition proof-of-concept with validation server 🔄
-  **FOUNDATION LAID**
-- **Performance**: Validation functions optimized (async → sync) 🔄 **SELECTIVE
-  IMPROVEMENTS**
-- **Documentation**: Enhanced Field documentation in validation domain 🔄
-  **DOMAIN-SPECIFIC**
+**✅ Major Accomplishments Completed**:
 
-### Key Validation Server Accomplishments ✅
+- **Architecture**: ✅ Complete modular server architecture (10 specialized
+  servers)
+- **Test Coverage**: ✅ 79.03% overall coverage (target: 80%)
+- **Type Safety**: ✅ Zero MyPy errors in production code
+- **Code Quality**: ✅ Zero linting violations
+- **Pydantic Migration**: ✅ Comprehensive response models across all tool
+  categories
+- **Error Handling**: ✅ Specific exception types and defensive programming
+- **Security**: ✅ SQL functionality removed, assert statements eliminated
+- **Tool Migration**: ✅ All 53 MCP tools migrated to server architecture
 
-- **FastMCP Server Composition**: Standalone validation_server.py with full
-  functionality
-- **Pydantic Discriminated Unions**: Automatic rule type conversion
-- **Modern Patterns**: Literal types, ConfigDict, comprehensive Field validation
-- **Test Excellence**: 41 validation tests + 15 integration tests with proper
-  isolation
-- **Code Quality**: Zero deprecation warnings, meaningful assertions
+**📊 Current Quality Metrics**:
+
+- **Test Coverage**: 79.03% (1,164 passing tests, 0 failures)
+- **Linting**: 0 violations (down from 71)
+- **Type Safety**: 0 MyPy errors (down from 30)
+- **Code Quality**: Clean imports, no unused code
+- **Version Sync**: ✅ 1.0.5 synchronized across all files
 
 ______________________________________________________________________
 
-## Phase 1: Foundation Strengthening (v1.1.0)
+## Phase 1: Production Readiness (v1.1.0)
 
 Priority: Critical | Duration: 2-3 weeks
 
 ### Objectives
 
-Achieve production readiness through comprehensive test coverage and critical
-bug fixes.
+Cross the 80% coverage threshold and address remaining production readiness
+concerns.
 
 ### Success Criteria
 
-- [ ] Test coverage ≥ 80% across all modules 🔄 **PROGRESS: 65.81%** (need
-  +14.19%)
-- [x] Zero critical security vulnerabilities ✅ **ACHIEVED with validation
-  patterns**
-- [ ] All existing functionality fully tested 🔄 **PROGRESS: Validation domain
-  complete**
-- [ ] Performance baseline established
+- [x] ✅ **Zero critical security vulnerabilities** (SQL removed, assert
+  statements fixed)
+- [x] ✅ **Modular server architecture complete** (10 servers implemented)
+- [x] ✅ **Type safety foundation established** (Zero MyPy errors)
+- [ ] 🎯 **Test coverage ≥ 80%** (currently 79.03%, need +0.97%)
+- [ ] 📊 **Performance baseline established**
+- [ ] 🔒 **Expression security hardened** (pandas.eval() restrictions)
 
 ### Key Tasks
 
-#### 1.1 Test Coverage Expansion
+#### 1.1 Coverage Completion (HIGH PRIORITY)
 
-- Critical Modules requiring improvement:
-  - `prompts/data_prompts.py` (0% → 90%)
-  - `csv_resources.py` (34% → 85%)
-  - `history_operations.py` (58% → 80%)
-  - `validators.py` (55% → 85%)
-  - `csv_session.py` (69% → 80%)
+- Target remaining coverage gaps in high-impact modules:
+  - `transformation_operations.py`: 43.55% → 80% (+295 lines)
+  - `statistics_service.py`: 69.94% → 80% (+33 lines)
+  - `io_server.py`: 78.39% → 80% (+85 lines)
 
-#### 1.2 Security Hardening
+#### 1.2 Security Hardening (CRITICAL)
 
-- Comprehensive input validation audit
-- Path traversal protection enhancement
-- Sanitization layer for all user inputs
-- Security testing framework implementation
+- **[GitHub Issue #46]** Fix pandas.eval() security concerns in column
+  operations
+- Implement expression allowlisting or safer evaluation alternatives
+- Complete security audit of user input handling
 
-#### 1.3 Critical Bug Resolution
+#### 1.3 Performance Establishment
 
-- Progress reporting system completion
-- Edge case handling in data operations
-- Memory leak prevention in large file processing
-
-#### 1.4 Live Server Testing Infrastructure (NEW PRIORITY)
-
-- Live FastMCP Server Testing Framework: Implement comprehensive testing
-  strategy that validates MCP protocol compliance through actual client-server
-  interactions
-  - Server lifecycle management (startup/shutdown across all transports)
-  - Transport protocol validation (stdio, HTTP, SSE)
-  - MCP specification compliance testing
-  - End-to-end tool workflow validation through live protocol
-  - Performance benchmarks under realistic load conditions
-- Integration with CI/CD pipeline for continuous validation
-- Documentation: See `planning/live-server-testing-strategy.md` for detailed
-  implementation plan
-- Benefits: Ensures production readiness, catches protocol-level issues,
-  validates real-world performance characteristics
-
-#### 1.5 Performance Baseline
-
-- Benchmark suite development
-- Memory usage profiling
-- Operation timing instrumentation
-- Performance regression testing
+- **[GitHub Issue #41]** Add performance benchmarks to CI pipeline
+- **[GitHub Issue #42]** Implement memory monitoring in health checks
+- Establish baseline metrics for regression detection
 
 ### Deliverables
 
-- Comprehensive test suite with 80%+ coverage
-- Live server testing framework with MCP protocol validation
-- Security audit report with remediation
-- Performance benchmark baseline
-- Production deployment guide
+- 80%+ test coverage with comprehensive edge case testing
+- Security-hardened expression evaluation
+- Performance monitoring and benchmarking infrastructure
+- Production deployment documentation
 
 ______________________________________________________________________
 
-## Phase 2: Architecture Refinement (v1.2.0)
+## Phase 2: Architecture Enhancement (v1.2.0)
 
 Priority: High | Duration: 3-4 weeks
 
 ### Objectives
 
-Improve maintainability and type safety while reducing technical debt.
+Complete type safety improvements and enhance developer experience.
 
 ### Success Criteria
 
-- [ ] Monolithic modules broken into focused components
-- [ ] `Any` type usage reduced by 70%
-- [ ] Clear module boundaries established
-- [ ] Dependency injection implemented
+- [ ] **Type safety enhancement complete** (`Any` usage reduced by 70%)
+- [ ] **Dependency injection implemented** across server modules
+- [ ] **Comprehensive E2E testing** for server composition
+- [ ] **Configuration centralization** complete
 
 ### Key Tasks
 
-#### 2.1 Module Refactoring
+#### 2.1 Type Safety Completion
 
-- Break down `transformations.py` (1,940 lines):
-  - Extract column operations � `column_operations.py`
-  - Extract row operations � `row_operations.py`
-  - Extract aggregation logic � `aggregations.py`
-  - Extract utility functions � `transform_utils.py`
+- **[GitHub Issue #45]** Run python-type-optimizer agent for remaining Any usage
+- **[GitHub Issue #44]** Complete DataFrame access migration to type-safe
+  patterns
+- Replace `dict[str, Any]` with specific TypedDict definitions
 
-#### 2.3 Data Source Abstraction Layer
+#### 2.2 Architecture Improvements
 
-- DataSource Protocol: Create format-agnostic data source interface
-- Tool Registration System: Implement `@register_mcp_tool` decorator
-- Format Constants Consolidation: Single source of truth for supported formats
-- Session Factory Pattern: Format-appropriate session creation
-- Plugin Architecture Foundation: Extensible format support system
+- **[GitHub Issue #51]** Implement dependency injection patterns
+- **[GitHub Issue #52]** Add configuration centralization
+- **[GitHub Issue #50]** Add server health monitoring endpoints
 
-#### 2.4 Dependency Management
+#### 2.3 Testing Enhancement
 
-- Implement dependency injection container
-- Decouple session management from business logic
-- Extract configuration management
-- Create service layer abstractions
+- **[GitHub Issue #48]** Add comprehensive E2E tests for server modules
+- **[GitHub Issue #49]** Consolidate duplicate test files
+- **[GitHub Issue #47]** Complete io_server coverage improvements
 
-#### 2.5 Error Handling Improvements
+#### 2.4 Error Handling & Observability
 
-- Standardize exception hierarchy
-- Implement context-aware error messages
-- Add error recovery mechanisms
-- Create debugging utilities
+- **[GitHub Issue #53]** Enhance error message specificity
+- **[GitHub Issue #54]** Add async context handling improvements
+- **[GitHub Issue #61]** Implement operation timeout configuration
 
 ### Deliverables
 
-- Refactored module structure
-- Enhanced type annotation coverage
-- Dependency injection framework
-- Improved error handling system
+- Type-safe codebase with minimal Any usage
+- Comprehensive server monitoring and health checks
+- Complete E2E testing coverage
+- Enhanced error handling and observability
 
 ______________________________________________________________________
 
-## Phase 3: Feature Completeness (v1.3.0)
+## Phase 3: Advanced Features (v1.3.0)
 
-Priority: High | Duration: 3-4 weeks
+Priority: Medium | Duration: 4-5 weeks
 
 ### Objectives
 
-Complete partial implementations and add high-value features for production use.
+Add advanced capabilities and multi-format support.
 
 ### Success Criteria
 
-- [ ] All planned storage backends implemented
-- [ ] Advanced analytics capabilities available
-- [ ] Real-time collaboration features functional
-- [ ] Enhanced export/import capabilities
+- [ ] **Excel workbook support** with multi-sheet operations
+- [ ] **Advanced analytics capabilities** (ML integration)
+- [ ] **Plugin architecture** foundation
+- [ ] **Enhanced export/import** capabilities
 
 ### Key Tasks
 
-#### 3.1 Storage System Completion
+#### 3.1 Multi-Format Support
 
-- Enhanced history backend with compression
-- Redis session storage option
-- Cloud storage integration (S3, Azure, GCS)
-- Backup and recovery mechanisms
+**Excel Integration**:
+
+- ExcelDataSource implementation with openpyxl
+- Multi-sheet operations and workbook metadata
+- Excel-specific MCP tools and session management
+
+**API Data Integration**:
+
+- REST API connectivity with authentication
+- JSON feeds and webhook support
+- API session management with request history
 
 #### 3.2 Advanced Analytics
 
-- Statistical analysis enhancements
-- Machine learning integration (optional)
-- Data profiling improvements
-- Anomaly detection algorithms
+- Machine learning integration (scikit-learn)
+- Enhanced statistical analysis capabilities
+- Advanced data profiling and quality assessment
+- Anomaly detection algorithm improvements
 
-#### 3.3 Collaboration Features
+#### 3.3 Storage & Processing
 
-- Multi-user session management
-- Concurrent editing support
-- Change tracking and conflict resolution
-- Real-time notifications
-
-#### 3.4 Enhanced I/O Operations
-
-- Streaming CSV processing for large files
-- Additional export formats (Avro, ORC)
-- Data format auto-detection
-- Compression support
+- **[GitHub Issue #58]** Streaming support for large export operations
+- Cloud storage integration (S3, Azure, GCS)
+- Enhanced history backend with compression
+- **[GitHub Issue #43]** Resource limits for validation operations
 
 ### Deliverables
 
-- Complete storage backend suite
-- Advanced analytics toolkit
-- Multi-user collaboration system
-- Enhanced data processing capabilities
+- Multi-format data processing capabilities
+- Advanced analytics and ML integration
+- Streaming and cloud storage support
+- Enhanced validation and quality tools
 
 ______________________________________________________________________
 
-## Phase 4: Performance Optimization (v1.4.0)
+## Phase 4: Developer Experience (v1.4.0)
 
 Priority: Medium | Duration: 2-3 weeks
 
 ### Objectives
 
-Optimize performance for production workloads and large datasets.
+Enhance development workflow and tooling.
 
 ### Success Criteria
 
-- [ ] 50% improvement in large file processing
-- [ ] Memory usage optimization for concurrent sessions
-- [ ] Caching layer reduces redundant operations by 60%
-- [ ] Sub-second response times for typical operations
+- [ ] **Complete debugging toolkit** available
+- [ ] **Development setup time** reduced to \<5 minutes
+- [ ] **Comprehensive documentation** and guides
+- [ ] **Advanced testing capabilities**
 
 ### Key Tasks
 
-#### 4.1 Caching Infrastructure
+#### 4.1 Development Tooling
 
-- Redis-based result caching
-- Session state caching
-- Query result memoization
-- Cache invalidation strategies
+- **[GitHub Issue #60]** Add development container support
+- **[GitHub Issue #66]** Create IDE configuration templates
+- **[GitHub Issue #67]** Enhance pre-commit hook coverage
 
-#### 4.2 Large Dataset Optimization
+#### 4.2 Advanced Testing
 
-- Chunked processing implementation
-- Streaming data transformations
-- Memory-efficient algorithms
-- Parallel processing capabilities
+- **[GitHub Issue #59]** Add mutation testing for test quality validation
+- **[GitHub Issue #64]** Consider property-based testing for data edge cases
+- **[GitHub Issue #65]** Implement test data factories
 
-#### 4.3 Database Performance
+#### 4.3 Performance & Optimization
 
-- Query optimization for history operations
-- Index strategy for session data
-- Connection pooling
-- Background cleanup processes
+- **[GitHub Issue #57]** Consider lazy loading for heavy dependencies
+- **[GitHub Issue #63]** Optimize DataFrame property access overhead
 
-#### 4.4 Monitoring and Observability
+#### 4.4 Documentation Enhancement
 
-- Performance metrics collection
-- Resource usage tracking
-- Operation profiling
-- Health check endpoints
+- **[GitHub Issue #55]** Document server mounting order requirements
+- **[GitHub Issue #56]** Create migration guides for API changes
+- **[GitHub Issue #62]** Add architecture decision records (ADRs)
 
 ### Deliverables
 
-- High-performance caching system
-- Optimized large dataset handling
-- Comprehensive monitoring dashboard
-- Performance optimization guide
+- Complete development environment setup
+- Advanced testing and quality assurance tools
+- Comprehensive documentation and guides
+- Performance optimization and monitoring
 
 ______________________________________________________________________
 
-## Phase 5: Developer Experience (v1.5.0)
-
-Priority: Medium | Duration: 2-3 weeks
-
-### Objectives
-
-Enhance development workflow and debugging capabilities.
-
-### Success Criteria
-
-- [ ] Complete debugging toolkit available
-- [ ] Development setup time reduced to \<5 minutes
-- [ ] Comprehensive development documentation
-- [ ] Automated code quality enforcement
-
-### Key Tasks
-
-#### 5.1 Debugging and Development Tools
-
-- Interactive data explorer
-- Session state inspector
-- Operation replay capability
-- Performance profiling tools
-
-#### 5.2 Development Workflow Enhancement
-
-- Enhanced pre-commit hooks
-- Automated dependency updates
-- Development container support
-- IDE configuration templates
-
-#### 5.3 Documentation Improvements
-
-- Architecture decision records
-- API design guidelines
-- Troubleshooting runbooks
-- Performance tuning guides
-
-#### 5.4 Quality Assurance Automation
-
-- Automated security scanning
-- Performance regression detection
-- Code complexity monitoring
-- Documentation freshness checks
-
-### Deliverables
-
-- Comprehensive debugging toolkit
-- Streamlined development environment
-- Enhanced documentation suite
-- Automated quality assurance pipeline
-
-______________________________________________________________________
-
-## Phase 6: Multi-Format Support (v1.6.0)
-
-Priority: High | Duration: 4-5 weeks
-
-### Objectives
-
-Transform DataBeak from CSV-focused to comprehensive multi-format data platform.
-
-### Success Criteria
-
-- [ ] Excel workbook support with multi-sheet operations
-- [ ] Enhanced data integration capabilities
-- [ ] Cross-format workflow capabilities
-- [ ] Streaming processing for large datasets
-
-### Key Tasks
-
-#### 6.1 Excel Integration
-
-- ExcelDataSource Implementation: Full .xlsx support with openpyxl
-- Multi-sheet Operations: Load, switch, and analyze multiple sheets
-- Excel-specific MCP Tools:
-  - `load_excel`, `list_excel_sheets`, `switch_excel_sheet`
-  - `export_to_excel`, `merge_excel_sheets`
-- ExcelSession Type: Sheet-aware session management
-- Workbook Metadata Extraction: Schema and structure analysis
-
-#### 6.2 API Data Integration
-
-- REST API connectivity with authentication
-- Core API Operations:
-  - `connect_api`, `fetch_data_from_api`
-  - `list_api_endpoints`, `describe_api_schema`
-  - `export_to_api`
-- API Query Builder: Safe parameter construction
-- Data Sources: REST APIs, JSON feeds, webhook support
-- APISession Type: Request history and authentication management
-
-#### 6.3 Cross-Format Workflows
-
-- Format Bridge Operations: Transfer data between different session types
-- Analysis Pipelines: Multi-source data integration
-- Streaming Processing: Memory-efficient large dataset handling
-- Format Conversion Utilities: Seamless data format transitions
-
-#### 6.4 Enhanced Configuration
-
-- Multi-format Settings: Excel, API, and cross-format configurations
-- Security Framework: API authentication and data validation
-- Performance Optimization: Connection pooling and request optimization
-
-### Deliverables
-
-- Complete Excel workbook processing system
-- Multi-source data connectivity framework
-- Cross-format data processing capabilities
-- Streaming large dataset support
-
-______________________________________________________________________
-
-## Phase 7: Advanced Features (v2.0.0)
+## Phase 5: Enterprise Features (v2.0.0)
 
 Priority: Low | Duration: 4-5 weeks
 
 ### Objectives
 
-Add advanced capabilities that differentiate DataBeak in the market.
+Add enterprise-grade capabilities and advanced integrations.
 
 ### Success Criteria
 
-- [ ] Advanced data transformation capabilities
-- [ ] Advanced visualization capabilities
-- [ ] Plugin architecture implemented
-- [ ] Enterprise-grade security features
+- [ ] **Multi-user collaboration** features
+- [ ] **Enterprise security** implementation
+- [ ] **Advanced visualization** capabilities
+- [ ] **Plugin ecosystem** foundation
 
 ### Key Tasks
 
-#### 7.1 Advanced Data Transformations
+#### 5.1 Collaboration Features
 
-- Complex data transformation pipelines
-- Custom transformation functions
-- Multi-step operation workflows
-- Advanced data joining and merging
+- Multi-user session management
+- Concurrent editing support with conflict resolution
+- Real-time notifications and updates
+- Role-based access control
 
-#### 7.2 Visualization and Reporting
+#### 5.2 Enterprise Security
 
-- Chart generation capabilities
+- Audit logging system
+- Data governance tools
+- Compliance reporting capabilities
+- Enhanced authentication and authorization
+
+#### 5.3 Visualization & Reporting
+
+- Chart generation capabilities with matplotlib/plotly
 - Report template system
 - Dashboard creation tools
 - Export to presentation formats
 
-#### 7.3 Extensibility Framework
+#### 5.4 Extensibility
 
 - Plugin architecture implementation
 - Custom tool development SDK
 - Third-party integration APIs
 - Extension marketplace preparation
 
-#### 7.4 Enterprise Features
-
-- Role-based access control
-- Audit logging system
-- Data governance tools
-- Compliance reporting
-
 ### Deliverables
 
-- Advanced transformation engine
-- Visualization and reporting system
-- Plugin development framework
-- Enterprise security suite
+- Multi-user collaboration system
+- Enterprise security and governance suite
+- Visualization and reporting framework
+- Complete plugin development ecosystem
 
 ______________________________________________________________________
 
@@ -445,27 +295,27 @@ ______________________________________________________________________
 
 ### High-Risk Areas
 
-1. **Large Module Refactoring**: May introduce regressions
-   - *Mitigation*: Comprehensive test coverage before refactoring
 1. **Performance Optimization**: Could destabilize existing functionality
-   - *Mitigation*: Feature flags and gradual rollout
+   - *Mitigation*: Comprehensive benchmarking and gradual rollout
 1. **Multi-user Features**: Complex concurrency challenges
    - *Mitigation*: Phased implementation with extensive testing
+1. **Plugin Architecture**: Security and compatibility concerns
+   - *Mitigation*: Sandboxing and strict validation requirements
 
 ### Dependencies and Blockers
 
-- External Dependencies: FastMCP, Pandas version compatibility
-- Infrastructure: Testing environment for performance optimization
+- External Dependencies: FastMCP framework evolution, pandas compatibility
+- Infrastructure: Performance testing environment, multi-user testing setup
 - Resources: Development capacity for parallel workstreams
 
 ## Success Metrics
 
 ### Technical Metrics
 
-- Test coverage: 63.99% � 90%
-- Type safety: 85%+ � 95% (significantly improved with 29 Pydantic models)
-- Performance: Baseline � 50% improvement
-- Security: Basic � Enterprise-grade
+- **Test coverage**: 79.03% → 85%+ (comprehensive coverage)
+- **Type safety**: 98%+ (minimal Any usage)
+- **Performance**: Establish baseline → 50% improvement target
+- **Security**: Production-grade with comprehensive audit
 
 ### Business Metrics
 
@@ -480,22 +330,34 @@ ______________________________________________________________________
 
 ### Branch Strategy
 
-- Each phase uses dedicated feature branches
-- Pull requests target main branch after phase completion
-- Release candidates for each minor version
+- Feature branches for each major work item
+- Pull requests with comprehensive testing and review
+- Version releases aligned with phase completion
 - Hotfix branches for critical issues
 
 ### Quality Gates
 
-- All tests must pass
-- Code coverage threshold met
+- All tests must pass (80%+ coverage maintained)
+- Zero linting violations
+- MyPy type checking clean
 - Security scan clean
-- Performance benchmarks maintained
-- Documentation updated
+- Performance benchmarks met
 
-### Communication Plan
+### Issue Tracking
 
-- Weekly progress updates
-- Phase completion announcements
-- Community feedback incorporation
-- Stakeholder review sessions
+**GitHub Issues**: All roadmap items with deferred work are tracked in GitHub
+issues with appropriate labels:
+
+- 🔥 **High Priority**: Issues #41-49 (Performance, Security, Coverage)
+- 🟡 **Medium Priority**: Issues #50-62 (Architecture, Documentation)
+- 🟢 **Low Priority**: Issues #63-67 (Optimization, Advanced Features)
+
+**View Issues**:
+[DataBeak Backlog Issues](https://github.com/jonpspri/databeak/issues?q=is%3Aissue+is%3Aopen+label%3Abacklog)
+
+______________________________________________________________________
+
+*This roadmap reflects the current mature state of DataBeak (v1.0.5) with
+comprehensive server architecture, high test coverage, and production-ready
+foundations. Future phases focus on advanced features and optimizations rather
+than foundational work.*
