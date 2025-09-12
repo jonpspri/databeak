@@ -1,6 +1,6 @@
 {
   "name": "@jonpspri/databeak",
-  "version": "1.0.2",
+  "version": "1.0.5",
   "description": "DataBeak: MCP server for comprehensive CSV file operations",
   "keywords": [
     "mcp",
