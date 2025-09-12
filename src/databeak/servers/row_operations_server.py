@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -122,46 +122,23 @@ class ColumnDataRequest(BaseModel):
 # ============================================================================
 
 
+# Implementation: validates row/column bounds, handles column name or index
+# Preserves original data types, converts pandas NaN to None for JSON serialization
+# Records operation in session history for audit trail
 def get_cell_value(
-    session_id: str,
-    row_index: int,
-    column: str | int,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve cell from")],
+    column: Annotated[
+        str | int, Field(description="Column name or column index (0-based) to retrieve")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> CellValueResult:
-    """Get the value of a specific cell with precise coordinate targeting and comprehensive
-    metadata.
+    """Get value of specific cell with coordinate targeting.
 
-    Essential tool for AI assistants to inspect individual cell values with full coordinate
-    context. Part of the inspection workflow: get_data_summary → get_row_data → get_cell_value.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Row index using 0-based indexing (0 = first row, N-1 = last row)
-        column: Column targeting options:
-                - String: Column name (e.g., "name", "email", "status") - preferred for clarity
-                - Integer: Column index 0-based (0 = first column, N-1 = last column)
-        ctx: FastMCP context
-
-    Returns:
-        Detailed cell information containing:
-        - success: bool operation status
-        - value: Actual cell value (None if null/NaN, preserves original type)
-        - coordinates: {"row": index, "column": actual_column_name}
-        - data_type: Column data type (int64, float64, object, datetime64, etc.)
-
-    Examples:
-        # Read by column name (recommended)
-        get_cell_value("session123", 0, "name")    # → "John Doe"
-        get_cell_value("session123", 5, "email")   # → "john@example.com" or None
-
-        # Read by column index
-        get_cell_value("session123", 2, 1)        # Third row, second column
-
-        # Null value handling
-        get_cell_value("session123", 1, "phone")  # → None if cell is empty/null
-
-    Raises:
-        ToolError: If session invalid, row/column out of bounds, or other errors
+    Supports column name or index targeting. Returns value with coordinates and data type
+    information.
     """
     try:
         session, df = get_session_data(session_id)
@@ -218,55 +195,27 @@ def get_cell_value(
         raise ToolError(f"Error getting cell value: {e!s}") from e
 
 
+# Implementation: validates coordinates, tracks old/new values for audit
+# Supports column name or index, handles type conversion and null values
+# Records operation in session history and auto-saves if enabled
 def set_cell_value(
-    session_id: str,
-    row_index: int,
-    column: str | int,
-    value: CellValue,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to update cell in")],
+    column: Annotated[
+        str | int, Field(description="Column name or column index (0-based) to update")
+    ],
+    value: Annotated[
+        CellValue,
+        Field(description="New value to set in the cell (str, int, float, bool, or None)"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> SetCellResult:
-    """Set the value of a specific cell with precise coordinate targeting and null value support.
+    """Set value of specific cell with coordinate targeting.
 
-    This function provides pixel-perfect cell editing capabilities optimized for AI assistants
-    working with tabular data. Supports both column names and indices for flexible targeting.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Row index using 0-based indexing (0 = first row, N-1 = last row)
-        column: Column targeting options:
-                - String: Column name (e.g., "name", "email", "status")
-                - Integer: Column index 0-based (0 = first column, N-1 = last column)
-        value: New cell value with full type support:
-               - Strings: "text", "email@example.com", ""
-               - Numbers: 42, 3.14, -100
-               - Booleans: true, false
-               - Null: null/None for missing data
-               - Automatically preserves type based on column context
-        ctx: FastMCP context
-
-    Returns:
-        Detailed operation result containing:
-        - success: bool operation status
-        - coordinates: {"row": index, "column": actual_column_name}
-        - old_value: Previous cell value (None if was null)
-        - new_value: New cell value (None if setting to null)
-        - data_type: Column data type information
-
-    Examples:
-        # Set by column name
-        set_cell_value("session123", 0, "name", "Jane Smith")
-
-        # Set by column index
-        set_cell_value("session123", 2, 1, 25)
-
-        # Set to null value
-        set_cell_value("session123", 1, "email", None)
-
-        # Update status fields
-        set_cell_value("session123", 3, "status", "completed")
-
-    Raises:
-        ToolError: If session invalid, row/column out of bounds, or other errors
+    Supports column name or index, tracks old and new values. Returns operation result with
+    coordinates and data type.
     """
     try:
         session, df = get_session_data(session_id)
@@ -333,40 +282,24 @@ def set_cell_value(
         raise ToolError(f"Error setting cell value: {e!s}") from e
 
 
+# Implementation: validates row bounds, optional column filtering
+# Converts pandas types to JSON-serializable values, handles NaN values
+# Records operation in session history for audit trail
 def get_row_data(
-    session_id: str,
-    row_index: int,
-    columns: list[str] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve data from")],
+    columns: Annotated[
+        list[str] | None,
+        Field(description="Optional list of column names to retrieve (all columns if None)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> RowDataResult:
-    """Get data from a specific row, optionally filtered by columns.
+    """Get data from specific row with optional column filtering.
 
-    Retrieves complete row data with optional column filtering for focused analysis.
-    Essential for inspecting row context and validating data integrity.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Row index using 0-based indexing (0 = first row, N-1 = last row)
-        columns: Optional list of column names to include (None for all columns)
-        ctx: FastMCP context
-
-    Returns:
-        RowDataResult containing:
-        - success: bool operation status
-        - session_id: Session identifier for continued operations
-        - row_index: The row that was retrieved
-        - data: Dictionary mapping column names to values
-        - columns: List of column names included in the result
-
-    Examples:
-        # Get all data from first row
-        get_row_data("session123", 0)
-
-        # Get specific columns from second row
-        get_row_data("session123", 1, ["name", "age"])
-
-    Raises:
-        ToolError: If session invalid, row out of bounds, or column not found
+    Returns complete row data or filtered by column list. Converts pandas types for JSON
+    serialization.
     """
     try:
         session, df = get_session_data(session_id)
@@ -420,47 +353,25 @@ def get_row_data(
         raise ToolError(f"Error getting row data: {e!s}") from e
 
 
+# Implementation: validates column exists and row range bounds
+# Supports optional row slicing with start_row (inclusive) and end_row (exclusive)
+# Converts pandas types to JSON-serializable values, handles NaN conversion
 def get_column_data(
-    session_id: str,
-    column: str,
-    start_row: int | None = None,
-    end_row: int | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to retrieve data from")],
+    start_row: Annotated[
+        int | None, Field(description="Starting row index (inclusive, 0-based) for data slice")
+    ] = None,
+    end_row: Annotated[
+        int | None, Field(description="Ending row index (exclusive, 0-based) for data slice")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ColumnDataResult:
-    """Get data from a specific column, optionally sliced by row range.
+    """Get data from specific column with optional row range slicing.
 
-    Retrieves column data with optional row range filtering for focused analysis.
-    Useful for inspecting column patterns, distributions, and data quality.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        column: Column name to retrieve data from
-        start_row: Starting row index (0-based, inclusive). None for beginning
-        end_row: Ending row index (0-based, exclusive). None for end
-        ctx: FastMCP context
-
-    Returns:
-        ColumnDataResult containing:
-        - success: bool operation status
-        - session_id: Session identifier for continued operations
-        - column: Column name that was retrieved
-        - values: List of column values in the specified range
-        - total_values: Number of values returned
-        - start_row: Starting row index used (None if from beginning)
-        - end_row: Ending row index used (None if to end)
-
-    Examples:
-        # Get all values from "age" column
-        get_column_data("session123", "age")
-
-        # Get first 5 values from "name" column
-        get_column_data("session123", "name", 0, 5)
-
-        # Get values from row 10 onwards
-        get_column_data("session123", "email", 10)
-
-    Raises:
-        ToolError: If session invalid, column not found, or invalid row range
+    Supports row range filtering for focused analysis. Returns column values with range metadata.
     """
     try:
         session, df = get_session_data(session_id)
@@ -522,57 +433,25 @@ def get_column_data(
         raise ToolError(f"Error getting column data: {e!s}") from e
 
 
+# Implementation: supports dict, list, and JSON string data formats
+# Validates row_index bounds (-1 for append), auto-parses JSON strings from Claude Code
+# Handles null values, missing dict keys filled with None, records operation history
 def insert_row(
-    session_id: str,
-    row_index: int,
-    data: RowData | str,  # Accept string for Claude Code compatibility
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[
+        int, Field(description="Index to insert row at (0-based, -1 to append at end)")
+    ],
+    data: Annotated[
+        RowData | str, Field(description="Row data as dict, list, or JSON string")
+    ],  # Accept string for Claude Code compatibility
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> InsertRowResult:
-    """Insert a new row at the specified index with comprehensive null value and JSON string
-    support.
+    """Insert new row at specified index with multiple data formats.
 
-    This function is optimized for AI assistants and supports multiple data input formats including
-    automatic JSON string parsing for Claude Code compatibility.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Index where to insert the row (0-based indexing). Use -1 to append at end
-        data: Row data in multiple formats:
-              - Dict: {"column_name": value, ...} with all or partial columns
-              - List: [value1, value2, ...] matching column order exactly
-              - JSON string: Automatically parsed from Claude Code serialization
-
-              All formats support null/None values:
-              - JSON null → Python None → pandas NaN
-              - Missing dict keys → filled with None
-              - Explicit None values → preserved as pandas NaN
-        ctx: FastMCP context
-
-    Returns:
-        Comprehensive operation result containing:
-        - success: bool indicating operation status
-        - operation: "insert_row" for tracking
-        - row_index: Actual insertion index used
-        - rows_before/rows_after: Data size changes
-        - data_inserted: The actual row data that was inserted
-        - columns: Current column list
-        - session_id: Session identifier for continued operations
-
-    Examples:
-        # Standard dictionary insertion
-        insert_row("session123", 1, {"name": "Alice", "age": 28, "city": "Boston"})
-
-        # List insertion (append)
-        insert_row("session123", -1, ["David", 40, "Miami"])
-
-        # Null value support
-        insert_row("session123", 0, {"name": "John", "age": None, "city": "NYC"})
-
-        # Claude Code JSON string (automatically handled)
-        insert_row("session123", 1, '{"name": "Alice", "email": null, "status": "active"}')
-
-    Raises:
-        ToolError: If session invalid, row index out of range, or data format errors
+    Supports dict, list, and JSON string input with null value handling. Returns insertion result
+    with before/after statistics.
     """
     try:
         # Handle Claude Code's JSON string serialization
@@ -665,42 +544,20 @@ def insert_row(
         raise ToolError(f"Error inserting row: {e!s}") from e
 
 
+# Implementation: validates row_index bounds, captures deleted data for undo
+# Updates DataFrame indexes after deletion, records operation in session history
+# Provides comprehensive tracking with before/after row counts
 def delete_row(
-    session_id: str,
-    row_index: int,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to delete")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> DeleteRowResult:
-    """Delete a row at the specified index.
+    """Delete row at specified index with comprehensive tracking.
 
-    Removes a row from the dataset with comprehensive tracking and validation.
-    Provides detailed information about the deleted data for undo operations.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Row index to delete using 0-based indexing (0 = first row, N-1 = last row)
-        ctx: FastMCP context
-
-    Returns:
-        DeleteRowResult containing:
-        - success: bool operation status
-        - session_id: Session identifier for continued operations
-        - operation: "delete_row" for tracking
-        - row_index: The row that was deleted
-        - rows_before/rows_after: Data size changes
-        - deleted_data: Dictionary containing the deleted row data
-
-    Examples:
-        # Delete second row (index 1)
-        delete_row("session123", 1)
-
-        # Delete first row (index 0)
-        delete_row("session123", 0)
-
-        # Delete last row
-        delete_row("session123", len(df) - 1)
-
-    Raises:
-        ToolError: If session invalid or row index out of bounds
+    Captures deleted data for undo operations. Returns operation result with before/after
+    statistics.
     """
     try:
         session, df = get_session_data(session_id)
@@ -752,52 +609,24 @@ def delete_row(
         raise ToolError(f"Error deleting row: {e!s}") from e
 
 
+# Implementation: validates row bounds, supports dict and JSON string data
+# Selective column updates with change tracking (old/new values)
+# Auto-parses JSON strings from Claude Code, records operation in session history
 def update_row(
-    session_id: str,
-    row_index: int,
-    data: dict[str, CellValue] | str,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to update")],
+    data: Annotated[
+        dict[str, CellValue] | str,
+        Field(description="Column updates as dict mapping column names to values, or JSON string"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> UpdateRowResult:
-    """Update specific columns in a row with comprehensive null value and Claude Code JSON string
-    support.
+    """Update specific columns in row with selective updates.
 
-    Provides selective column updates within a single row, supporting partial updates and
-    automatic JSON string parsing. Optimized for AI assistants with detailed change tracking.
-
-    Args:
-        session_id: Session identifier for the active CSV data session
-        row_index: Row index using 0-based indexing (0 = first row, N-1 = last row)
-        data: Row update data in multiple formats:
-              - Dict: {"column_name": new_value, ...} for partial column updates
-              - JSON string: Automatically parsed from Claude Code serialization
-
-              All formats support null/None values:
-              - JSON null → Python None → pandas NaN
-              - Explicit None values → preserved as pandas NaN
-        ctx: FastMCP context
-
-    Returns:
-        Detailed update result containing:
-        - success: bool operation status
-        - operation: "update_row" for tracking
-        - row_index: The row that was updated
-        - columns_updated: List of column names that were changed
-        - old_values: Previous values for changed columns (None if was null)
-        - new_values: New values for changed columns (None if set to null)
-        - changes_made: Number of columns updated
-
-    Examples:
-        # Standard dictionary update
-        update_row("session123", 0, {"age": 31, "city": "Boston"})
-
-        # Set values to null
-        update_row("session123", 1, {"phone": None, "email": None})
-
-        # Partial update (only specified columns changed)
-        update_row("session123", 2, {"status": "completed"})
-
-    Raises:
-        ToolError: If session invalid, row out of bounds, or column not found
+    Supports partial column updates with change tracking. Returns old/new values for updated
+    columns.
     """
     try:
         # Handle Claude Code's JSON string serialization

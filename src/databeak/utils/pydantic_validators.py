@@ -1,4 +1,4 @@
-"""Shared Pydantic validators for DataBeak models."""
+"""Pydantic validators for JSON string parsing compatibility."""
 
 from __future__ import annotations
 
@@ -8,18 +8,9 @@ from typing import Any, TypeVar
 T = TypeVar("T")
 
 
+# Implementation: JSON string to dict parsing with error handling for Claude Code compatibility
 def parse_json_string_to_dict(v: dict[str, Any] | str) -> dict[str, Any]:
-    """Parse JSON string to dictionary for Claude Code compatibility.
-
-    Args:
-        v: Either a dictionary or JSON string that should parse to a dictionary
-
-    Returns:
-        Dictionary data
-
-    Raises:
-        ValueError: If JSON string is invalid or doesn't parse to dict
-    """
+    """Parse JSON string to dictionary with validation."""
     if isinstance(v, str):
         try:
             parsed = json.loads(v)
@@ -31,20 +22,11 @@ def parse_json_string_to_dict(v: dict[str, Any] | str) -> dict[str, Any]:
     return v
 
 
+# Implementation: JSON string to dict or list parsing with type validation
 def parse_json_string_to_dict_or_list(
     v: dict[str, Any] | list[Any] | str,
 ) -> dict[str, Any] | list[Any]:
-    """Parse JSON string to dictionary or list for Claude Code compatibility.
-
-    Args:
-        v: Dictionary, list, or JSON string that should parse to dict or list
-
-    Returns:
-        Dictionary or list data
-
-    Raises:
-        ValueError: If JSON string is invalid or doesn't parse to dict/list
-    """
+    """Parse JSON string to dictionary or list with validation."""
     if isinstance(v, str):
         try:
             parsed = json.loads(v)
@@ -56,18 +38,9 @@ def parse_json_string_to_dict_or_list(
     return v
 
 
+# Implementation: JSON string to list parsing with type validation
 def parse_json_string_to_list(v: list[Any] | str) -> list[Any]:
-    """Parse JSON string to list for Claude Code compatibility.
-
-    Args:
-        v: Either a list or JSON string that should parse to a list
-
-    Returns:
-        List data
-
-    Raises:
-        ValueError: If JSON string is invalid or doesn't parse to list
-    """
+    """Parse JSON string to list with validation."""
     if isinstance(v, str):
         try:
             parsed = json.loads(v)

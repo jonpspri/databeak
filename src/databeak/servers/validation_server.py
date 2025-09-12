@@ -26,17 +26,33 @@ class ValidationError(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    error: str
-    message: str
-    actual_type: str | None = None
-    null_count: int | None = None
-    null_indices: list[int] | None = None
-    violation_count: int | None = None
-    min_found: float | None = None
-    max_found: float | None = None
-    sample_violations: list[str] | None = None
-    invalid_values: list[str] | None = None
-    duplicate_count: int | None = None
+    error: str = Field(description="Type of validation error encountered")
+    message: str = Field(description="Human-readable error message")
+    actual_type: str | None = Field(
+        default=None, description="Actual data type found (for type mismatch errors)"
+    )
+    null_count: int | None = Field(default=None, description="Number of null/missing values found")
+    null_indices: list[int] | None = Field(
+        default=None, description="Row indices where null values occur (limited to 100)"
+    )
+    violation_count: int | None = Field(
+        default=None, description="Number of values violating the rule"
+    )
+    min_found: float | None = Field(
+        default=None, description="Minimum value found (for min/max violations)"
+    )
+    max_found: float | None = Field(
+        default=None, description="Maximum value found (for min/max violations)"
+    )
+    sample_violations: list[str] | None = Field(
+        default=None, description="Sample of values that violated the rule"
+    )
+    invalid_values: list[str] | None = Field(
+        default=None, description="List of invalid values found"
+    )
+    duplicate_count: int | None = Field(
+        default=None, description="Number of duplicate values found"
+    )
 
 
 class ValidationSummary(BaseModel):
@@ -44,43 +60,51 @@ class ValidationSummary(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    total_columns: int
-    valid_columns: int
-    invalid_columns: int
-    missing_columns: list[str]
-    extra_columns: list[str]
+    total_columns: int = Field(description="Total number of columns in schema")
+    valid_columns: int = Field(description="Number of columns that passed validation")
+    invalid_columns: int = Field(description="Number of columns that failed validation")
+    missing_columns: list[str] = Field(
+        description="Columns defined in schema but missing from data"
+    )
+    extra_columns: list[str] = Field(description="Columns in data but not defined in schema")
 
 
 class ValidateSchemaResult(BaseModel):
     """Response model for schema validation operations."""
 
-    session_id: str
-    valid: bool
-    errors: list[ValidationError]
-    summary: ValidationSummary
-    validation_errors: dict[str, list[ValidationError]]
+    session_id: str = Field(description="Session identifier")
+    valid: bool = Field(description="Whether validation passed overall")
+    errors: list[ValidationError] = Field(description="All validation errors found")
+    summary: ValidationSummary = Field(description="Summary of validation results")
+    validation_errors: dict[str, list[ValidationError]] = Field(
+        description="Validation errors grouped by column name"
+    )
 
 
 class QualityIssue(BaseModel):
     """Individual quality issue details."""
 
-    type: str
-    severity: str
-    column: str | None = None
-    message: str
-    affected_rows: int
-    metric_value: float
-    threshold: float
+    type: str = Field(description="Type of quality issue identified")
+    severity: str = Field(description="Severity level: low, medium, high, or critical")
+    column: str | None = Field(
+        default=None, description="Column name where issue was found (None for dataset-wide issues)"
+    )
+    message: str = Field(description="Human-readable description of the quality issue")
+    affected_rows: int = Field(description="Number of rows affected by this issue")
+    metric_value: float = Field(description="Measured metric value that triggered the issue")
+    threshold: float = Field(description="Threshold value that was exceeded or not met")
 
 
 class QualityRuleResult(BaseModel):
     """Result of a single quality rule check."""
 
-    rule_type: str
-    passed: bool
-    score: float
-    issues: list[QualityIssue]
-    column: str | None = None
+    rule_type: str = Field(description="Type of quality rule that was checked")
+    passed: bool = Field(description="Whether the quality rule passed")
+    score: float = Field(description="Quality score for this rule (0-100)")
+    issues: list[QualityIssue] = Field(description="List of quality issues found by this rule")
+    column: str | None = Field(
+        default=None, description="Column name if rule applies to specific column"
+    )
 
 
 class QualityResults(BaseModel):
@@ -88,41 +112,43 @@ class QualityResults(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    overall_score: float
-    passed_rules: int
-    failed_rules: int
-    total_issues: int
-    rule_results: list[QualityRuleResult]
-    issues: list[QualityIssue]
-    recommendations: list[str]
+    overall_score: float = Field(description="Overall data quality score (0-100)")
+    passed_rules: int = Field(description="Number of quality rules that passed")
+    failed_rules: int = Field(description="Number of quality rules that failed")
+    total_issues: int = Field(description="Total number of quality issues found")
+    rule_results: list[QualityRuleResult] = Field(
+        description="Detailed results for each quality rule"
+    )
+    issues: list[QualityIssue] = Field(description="All quality issues found across all rules")
+    recommendations: list[str] = Field(description="Suggested actions to improve data quality")
 
 
 class DataQualityResult(BaseModel):
     """Response model for data quality check operations."""
 
-    session_id: str
-    quality_results: QualityResults
+    session_id: str = Field(description="Session identifier")
+    quality_results: QualityResults = Field(description="Comprehensive quality assessment results")
 
 
 class StatisticalAnomaly(BaseModel):
     """Statistical anomaly detection result."""
 
-    anomaly_count: int
-    anomaly_indices: list[int]
-    anomaly_values: list[float]
-    mean: float
-    std: float
-    lower_bound: float
-    upper_bound: float
+    anomaly_count: int = Field(description="Number of statistical anomalies detected")
+    anomaly_indices: list[int] = Field(description="Row indices where anomalies were found")
+    anomaly_values: list[float] = Field(description="Sample of anomalous values found")
+    mean: float = Field(description="Mean value of the column")
+    std: float = Field(description="Standard deviation of the column")
+    lower_bound: float = Field(description="Lower bound for normal values")
+    upper_bound: float = Field(description="Upper bound for normal values")
 
 
 class PatternAnomaly(BaseModel):
     """Pattern-based anomaly detection result."""
 
-    anomaly_count: int
-    anomaly_indices: list[int]
-    sample_values: list[str]
-    expected_patterns: list[str]
+    anomaly_count: int = Field(description="Number of pattern anomalies detected")
+    anomaly_indices: list[int] = Field(description="Row indices where pattern anomalies were found")
+    sample_values: list[str] = Field(description="Sample values that don't match expected patterns")
+    expected_patterns: list[str] = Field(description="List of expected patterns that were violated")
 
 
 class MissingAnomaly(BaseModel):
@@ -161,9 +187,11 @@ class MissingAnomaly(BaseModel):
 class AnomalySummary(BaseModel):
     """Summary of anomaly detection results."""
 
-    total_anomalies: int
-    affected_rows: int
-    affected_columns: list[str]
+    total_anomalies: int = Field(description="Total number of anomalies found across all columns")
+    affected_rows: int = Field(description="Number of rows containing at least one anomaly")
+    affected_columns: list[str] = Field(
+        description="Names of columns where anomalies were detected"
+    )
 
 
 class AnomalyResults(BaseModel):
@@ -171,19 +199,25 @@ class AnomalyResults(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    summary: AnomalySummary
-    by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]
-    by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]]
+    summary: AnomalySummary = Field(description="Summary statistics of anomaly detection results")
+    by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly] = Field(
+        description="Anomalies organized by column name"
+    )
+    by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]] = Field(
+        description="Anomalies organized by detection method"
+    )
 
 
 class FindAnomaliesResult(BaseModel):
     """Response model for anomaly detection operations."""
 
-    session_id: str
-    anomalies: AnomalyResults
-    columns_analyzed: list[str]
-    methods_used: list[str]
-    sensitivity: float
+    session_id: str = Field(description="Session identifier")
+    anomalies: AnomalyResults = Field(description="Comprehensive anomaly detection results")
+    columns_analyzed: list[str] = Field(
+        description="Names of columns that were analyzed for anomalies"
+    )
+    methods_used: list[str] = Field(description="Detection methods that were applied")
+    sensitivity: float = Field(description="Sensitivity threshold used for detection (0.0-1.0)")
 
 
 # ============================================================================
@@ -197,14 +231,14 @@ class ColumnValidationRules(BaseModel):
     type: Literal["int", "float", "str", "bool", "datetime"] | None = Field(
         None, description="Expected data type: int, float, str, bool, datetime"
     )
-    nullable: bool = Field(True, description="Whether null values are allowed")
-    min: int | float | None = Field(None, description="Minimum value for numeric columns")
-    max: int | float | None = Field(None, description="Maximum value for numeric columns")
-    pattern: str | None = Field(None, description="Regex pattern for string validation")
-    values: list[str] | None = Field(None, description="List of allowed values")
-    unique: bool = Field(False, description="Whether values must be unique")
-    min_length: int | None = Field(None, description="Minimum string length")
-    max_length: int | None = Field(None, description="Maximum string length")
+    nullable: bool = Field(default=True, description="Whether null values are allowed")
+    min: int | float | None = Field(default=None, description="Minimum value for numeric columns")
+    max: int | float | None = Field(default=None, description="Maximum value for numeric columns")
+    pattern: str | None = Field(default=None, description="Regex pattern for string validation")
+    values: list[str] | None = Field(default=None, description="List of allowed values")
+    unique: bool = Field(default=False, description="Whether values must be unique")
+    min_length: int | None = Field(default=None, description="Minimum string length")
+    max_length: int | None = Field(default=None, description="Maximum string length")
 
     @field_validator("pattern")
     @classmethod
@@ -227,51 +261,68 @@ class QualityRule(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    type: str
+    type: str = Field(description="Type of quality rule")
 
 
 class CompletenessRule(QualityRule):
     """Rule for checking data completeness."""
 
-    type: Literal["completeness"] = "completeness"
-    threshold: float = Field(0.95, ge=0.0, le=1.0)
-    columns: list[str] | None = None
+    type: Literal["completeness"] = Field(
+        default="completeness", description="Rule type identifier"
+    )
+    threshold: float = Field(
+        default=0.95, ge=0.0, le=1.0, description="Minimum completeness ratio required (0.0-1.0)"
+    )
+    columns: list[str] | None = Field(
+        default=None, description="Specific columns to check (None for all columns)"
+    )
 
 
 class DuplicatesRule(QualityRule):
     """Rule for checking duplicate rows."""
 
-    type: Literal["duplicates"] = "duplicates"
-    threshold: float = Field(0.01, ge=0.0, le=1.0)
-    columns: list[str] | None = None
+    type: Literal["duplicates"] = Field(default="duplicates", description="Rule type identifier")
+    threshold: float = Field(
+        default=0.01, ge=0.0, le=1.0, description="Maximum allowable duplicate ratio (0.0-1.0)"
+    )
+    columns: list[str] | None = Field(
+        default=None,
+        description="Columns to consider for duplicate detection (None for all columns)",
+    )
 
 
 class UniquenessRule(QualityRule):
     """Rule for checking column uniqueness."""
 
-    type: Literal["uniqueness"] = "uniqueness"
-    column: str
-    expected_unique: bool = True
+    type: Literal["uniqueness"] = Field(default="uniqueness", description="Rule type identifier")
+    column: str = Field(description="Column name to check for uniqueness")
+    expected_unique: bool = Field(
+        default=True, description="Whether column values are expected to be unique"
+    )
 
 
 class DataTypesRule(QualityRule):
     """Rule for checking data type consistency."""
 
-    type: Literal["data_types"] = "data_types"
+    type: Literal["data_types"] = Field(default="data_types", description="Rule type identifier")
 
 
 class OutliersRule(QualityRule):
     """Rule for checking outliers in numeric columns."""
 
-    type: Literal["outliers"] = "outliers"
-    threshold: float = Field(0.05, ge=0.0, le=1.0)
+    type: Literal["outliers"] = Field(default="outliers", description="Rule type identifier")
+    threshold: float = Field(
+        default=0.05, ge=0.0, le=1.0, description="Maximum allowable outlier ratio (0.0-1.0)"
+    )
 
 
 class ConsistencyRule(QualityRule):
     """Rule for checking data consistency between columns."""
 
-    type: Literal["consistency"] = "consistency"
-    columns: list[str] = Field(default_factory=list)
+    type: Literal["consistency"] = Field(default="consistency", description="Rule type identifier")
+    columns: list[str] = Field(
+        default_factory=list, description="Column pairs to check for consistency"
+    )
 
 
 class ValidationSchema(RootModel[dict[str, ColumnValidationRules]]):
@@ -298,10 +349,14 @@ def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missin
 class AnomalyDetectionParams(BaseModel):
     """Parameters for anomaly detection."""
 
-    columns: list[str] | None = None
-    sensitivity: float = Field(0.95, ge=0.0, le=1.0)
+    columns: list[str] | None = Field(
+        None, description="Specific columns to analyze (None for all columns)"
+    )
+    sensitivity: float = Field(
+        0.95, ge=0.0, le=1.0, description="Detection sensitivity threshold (higher = more strict)"
+    )
     methods: list[Literal["statistical", "pattern", "missing"]] = Field(
-        default_factory=_default_anomaly_methods
+        default_factory=_default_anomaly_methods, description="Anomaly detection methods to apply"
     )
 
 
@@ -311,9 +366,13 @@ class AnomalyDetectionParams(BaseModel):
 
 
 def validate_schema(
-    session_id: str,
-    schema: ValidationSchema,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    schema: Annotated[
+        ValidationSchema, Field(description="Schema definition with column validation rules")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition."""
     try:
@@ -548,9 +607,14 @@ def validate_schema(
 
 
 def check_data_quality(
-    session_id: str,
-    rules: list[QualityRuleType] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    rules: Annotated[
+        list[QualityRuleType] | None,
+        Field(description="List of quality rules to check (None = use default rules)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules."""
     try:
@@ -882,11 +946,20 @@ def check_data_quality(
 
 
 def find_anomalies(
-    session_id: str,
-    columns: list[str] | None = None,
-    sensitivity: float = 0.95,
-    methods: list[Literal["statistical", "pattern", "missing"]] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str] | None, Field(description="List of columns to analyze (None = all columns)")
+    ] = None,
+    sensitivity: Annotated[
+        float, Field(description="Sensitivity threshold for anomaly detection (0-1)")
+    ] = 0.95,
+    methods: Annotated[
+        list[Literal["statistical", "pattern", "missing"]] | None,
+        Field(description="Detection methods to use (None = all methods)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods."""
     try:

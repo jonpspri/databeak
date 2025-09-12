@@ -8,12 +8,13 @@ correlation analysis with optimized mathematical processing.
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import numpy as np
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
+from pydantic import Field
 
 # Import session management and data models from the main package
 from ..exceptions import (
@@ -61,10 +62,17 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 
 async def get_statistics(
-    session_id: str,
-    columns: list[str] | None = None,
-    include_percentiles: bool = True,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str] | None,
+        Field(description="List of specific columns to analyze (None = all numeric columns)"),
+    ] = None,
+    include_percentiles: Annotated[
+        bool, Field(description="Whether to include 25th, 50th, 75th percentiles")
+    ] = True,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
@@ -197,9 +205,11 @@ async def get_statistics(
 
 
 async def get_column_statistics(
-    session_id: str,
-    column: str,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Name of the column to analyze in detail")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ColumnStatisticsResult:
     """Get detailed statistical analysis for a single column.
 
@@ -354,11 +364,21 @@ async def get_column_statistics(
 
 
 async def get_correlation_matrix(
-    session_id: str,
-    method: Literal["pearson", "spearman", "kendall"] = "pearson",
-    columns: list[str] | None = None,
-    min_correlation: float | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    method: Annotated[
+        Literal["pearson", "spearman", "kendall"],
+        Field(description="Correlation method: pearson (linear), spearman (rank), kendall (rank)"),
+    ] = "pearson",
+    columns: Annotated[
+        list[str] | None,
+        Field(description="List of columns to include (None = all numeric columns)"),
+    ] = None,
+    min_correlation: Annotated[
+        float | None, Field(description="Minimum correlation threshold to include in results")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
 
@@ -480,13 +500,21 @@ async def get_correlation_matrix(
 
 
 async def get_value_counts(
-    session_id: str,
-    column: str,
-    normalize: bool = False,
-    sort: bool = True,
-    ascending: bool = False,
-    top_n: int | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Name of the column to analyze value distribution")],
+    normalize: Annotated[
+        bool, Field(description="Return percentages instead of raw counts")
+    ] = False,
+    sort: Annotated[bool, Field(description="Sort results by frequency")] = True,
+    ascending: Annotated[
+        bool, Field(description="Sort in ascending order (False = descending)")
+    ] = False,
+    top_n: Annotated[
+        int | None, Field(description="Maximum number of values to return (None = all values)")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
 

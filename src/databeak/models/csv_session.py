@@ -1,4 +1,4 @@
-"""Session management for DataBeak MCP Server."""
+"""Session management with auto-save and history features."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from ..exceptions import HistoryError, HistoryNotEnabledError
@@ -24,13 +25,17 @@ logger = logging.getLogger(__name__)
 
 
 class DataBeakSettings(BaseSettings):
-    """Configuration settings for DataBeak sessions."""
+    """Configuration settings for session management."""
 
-    csv_history_dir: str = "."  # Default to current directory
-    max_file_size_mb: int = 1024  # Default to 1024 MB
-    session_timeout: int = 3600  # Default to 3600 seconds
-    chunk_size: int = 10000  # Default to 10000 rows
-    auto_save: bool = True  # Default to enabled
+    csv_history_dir: str = Field(
+        default=".", description="Directory for storing session history files"
+    )
+    max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
+    session_timeout: int = Field(default=3600, description="Session timeout in seconds")
+    chunk_size: int = Field(
+        default=10000, description="Default chunk size for processing large datasets"
+    )
+    auto_save: bool = Field(default=True, description="Enable auto-save functionality by default")
 
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
@@ -39,8 +44,9 @@ class DataBeakSettings(BaseSettings):
 _settings: DataBeakSettings | None = None
 
 
+# Implementation: Singleton pattern for global settings with environment variable support
 def get_csv_settings() -> DataBeakSettings:
-    """Get or create the global DataBeak settings."""
+    """Get global DataBeak settings instance."""
     global _settings
     if _settings is None:
         _settings = DataBeakSettings()
@@ -48,8 +54,9 @@ def get_csv_settings() -> DataBeakSettings:
 
 
 class CSVSession:
-    """Represents a single CSV editing session with focused responsibilities."""
+    """CSV editing session with auto-save and history management."""
 
+    # Implementation: Session initialization with TTL, auto-save, and persistent history components
     def __init__(
         self,
         session_id: str | None = None,
@@ -58,7 +65,7 @@ class CSVSession:
         enable_history: bool = True,
         history_storage: HistoryStorage = HistoryStorage.JSON,
     ):
-        """Initialize a new CSV session."""
+        """Initialize CSV session with components."""
         self.session_id = session_id or str(uuid4())
         self.operations_history: list[dict[str, Any]] = []  # Keep for backward compatibility
 
@@ -435,10 +442,11 @@ class CSVSession:
 
 
 class SessionManager:
-    """Manages multiple CSV sessions."""
+    """Manages multiple CSV sessions with lifecycle and cleanup."""
 
+    # Implementation: Session manager with capacity limits and TTL management
     def __init__(self, max_sessions: int = 100, ttl_minutes: int = 60):
-        """Initialize the session manager."""
+        """Initialize session manager with limits."""
         self.sessions: dict[str, CSVSession] = {}
         self.max_sessions = max_sessions
         self.ttl_minutes = ttl_minutes
@@ -524,8 +532,9 @@ class SessionManager:
 _session_manager: SessionManager | None = None
 
 
+# Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
-    """Get or create the global session manager."""
+    """Get global session manager instance."""
     global _session_manager
     if _session_manager is None:
         _session_manager = SessionManager()

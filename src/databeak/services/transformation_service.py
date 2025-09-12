@@ -1,9 +1,4 @@
-"""Transformation service for DataBeak providing data manipulation operations.
-
-This module provides internal transformation services used by the MCP tool wrappers. It includes
-column operations, row operations, cell operations, and string transformations with robust error
-handling and proper Pydantic models.
-"""
+"""Data transformation operations with filtering, sorting, and column manipulation."""
 
 from __future__ import annotations
 
@@ -37,7 +32,7 @@ RowData = dict[str, CsvCellValue] | list[CsvCellValue]
 
 
 class TransformationResult(BaseToolResponse):
-    """Base response for transformation operations."""
+    """Base transformation operation response."""
 
     session_id: str
     operation: str
@@ -47,7 +42,7 @@ class TransformationResult(BaseToolResponse):
 
 
 class FilterResult(BaseToolResponse):
-    """Response for filter operations."""
+    """Filter operation response."""
 
     session_id: str
     rows_before: int
@@ -57,7 +52,7 @@ class FilterResult(BaseToolResponse):
 
 
 class SortResult(BaseToolResponse):
-    """Response for sort operations."""
+    """Sort operation response."""
 
     session_id: str
     sorted_by: list[str]
@@ -66,7 +61,7 @@ class SortResult(BaseToolResponse):
 
 
 class ColumnTransformResult(BaseToolResponse):
-    """Response for column transformation operations."""
+    """Column transformation response."""
 
     session_id: str
     column: str
@@ -77,7 +72,7 @@ class ColumnTransformResult(BaseToolResponse):
 
 
 class DuplicateRemovalResult(BaseToolResponse):
-    """Response for duplicate removal operations."""
+    """Duplicate removal response."""
 
     session_id: str
     rows_before: int
@@ -88,7 +83,7 @@ class DuplicateRemovalResult(BaseToolResponse):
 
 
 class FillMissingResult(BaseToolResponse):
-    """Response for fill missing values operations."""
+    """Fill missing values response."""
 
     session_id: str
     strategy: str
@@ -99,7 +94,7 @@ class FillMissingResult(BaseToolResponse):
 
 
 class StringOperationResult(BaseToolResponse):
-    """Response for string operations."""
+    """String operation response."""
 
     session_id: str
     column: str
@@ -114,8 +109,9 @@ class StringOperationResult(BaseToolResponse):
 # ============================================================================
 
 
+# Implementation: Session retrieval with validation and error handling
 def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
+    """Get session and DataFrame with validation."""
     manager = get_session_manager()
     session = manager.get_session(session_id)
 
@@ -135,26 +131,13 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 # ============================================================================
 
 
+# Implementation: Multi-condition filtering with logical operators (==, !=, >, <, contains, etc.)
 async def filter_rows_with_pydantic(
     session_id: str,
     conditions: list[dict[str, Any]],
     mode: Literal["and", "or"] = "and",
 ) -> FilterResult:
-    """Filter DataFrame rows based on flexible conditions.
-
-    Supports multiple operators and logical combinations for comprehensive data filtering.
-
-    Args:
-        session_id: Session identifier
-        conditions: List of filter conditions with column, operator, and value
-        mode: Logical combination mode ('and' or 'or')
-
-    Returns:
-        FilterResult with filtering statistics
-
-    Raises:
-        ToolError: If session not found, no data loaded, or invalid conditions
-    """
+    """Filter DataFrame rows with multiple conditions."""
     try:
         session, df = _get_session_data(session_id)
         rows_before = len(df)
@@ -244,21 +227,13 @@ async def filter_rows_with_pydantic(
         raise ToolError(f"Filter operation failed: {e!s}") from e
 
 
+# Implementation: Multi-column sorting with flexible column specification and sort order
 async def sort_data_with_pydantic(
     session_id: str,
     columns: list[str] | list[dict[str, Any]],
     ascending: bool | list[bool] = True,
 ) -> SortResult:
-    """Sort DataFrame by one or more columns.
-
-    Args:
-        session_id: Session identifier
-        columns: Column names to sort by (string list or dict list with 'column' and 'ascending')
-        ascending: Sort order (single bool or list of bools)
-
-    Returns:
-        SortResult with sorting details
-    """
+    """Sort DataFrame by one or more columns."""
     try:
         session, df = _get_session_data(session_id)
 
@@ -307,21 +282,13 @@ async def sort_data_with_pydantic(
         raise ToolError(f"Sort operation failed: {e!s}") from e
 
 
+# Implementation: Duplicate row removal with column subset and keep strategy options
 async def remove_duplicates_with_pydantic(
     session_id: str,
     subset: list[str] | None = None,
     keep: Literal["first", "last", False] = "first",
 ) -> DuplicateRemovalResult:
-    """Remove duplicate rows from the DataFrame.
-
-    Args:
-        session_id: Session identifier
-        subset: Columns to consider for duplicates (None = all columns)
-        keep: Which duplicates to keep ('first', 'last', or False to drop all)
-
-    Returns:
-        DuplicateRemovalResult with duplicate removal statistics
-    """
+    """Remove duplicate rows from DataFrame."""
     try:
         session, df = _get_session_data(session_id)
         rows_before = len(df)
@@ -367,23 +334,14 @@ async def remove_duplicates_with_pydantic(
 # ============================================================================
 
 
+# Implementation: Missing value handling with multiple strategies (drop, fill, forward, backward, mean, median, mode)
 async def fill_missing_values_with_pydantic(
     session_id: str,
     columns: list[str] | None = None,
     strategy: Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"] = "drop",
     value: CsvCellValue = None,
 ) -> FillMissingResult:
-    """Fill or remove missing values in specified columns.
-
-    Args:
-        session_id: Session identifier
-        columns: Columns to process (None = all columns)
-        strategy: Strategy for handling missing values
-        value: Value to use when strategy is 'fill'
-
-    Returns:
-        FillMissingResult with operation statistics
-    """
+    """Fill or remove missing values in columns."""
     try:
         session, df = _get_session_data(session_id)
 
@@ -457,21 +415,13 @@ async def fill_missing_values_with_pydantic(
         raise ToolError(f"Failed to fill missing values: {e!s}") from e
 
 
+# Implementation: Text case transformation (upper, lower, title, capitalize)
 async def transform_column_case_with_pydantic(
     session_id: str,
     column: str,
     transform: Literal["upper", "lower", "title", "capitalize"],
 ) -> StringOperationResult:
-    """Transform text case in a column.
-
-    Args:
-        session_id: Session identifier
-        column: Column name to transform
-        transform: Case transformation to apply
-
-    Returns:
-        StringOperationResult with transformation details
-    """
+    """Transform text case in column."""
     try:
         session, df = _get_session_data(session_id)
 
@@ -518,19 +468,12 @@ async def transform_column_case_with_pydantic(
         raise ToolError(f"Failed to transform column case: {e!s}") from e
 
 
+# Implementation: Whitespace removal from string values
 async def strip_column_with_pydantic(
     session_id: str,
     column: str,
 ) -> StringOperationResult:
-    """Strip whitespace from string values in a column.
-
-    Args:
-        session_id: Session identifier
-        column: Column name to strip
-
-    Returns:
-        StringOperationResult with operation details
-    """
+    """Strip whitespace from column values."""
     try:
         session, df = _get_session_data(session_id)
 

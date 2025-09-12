@@ -1,4 +1,4 @@
-"""Custom exceptions for DataBeak MCP Server."""
+"""Custom exceptions for DataBeak operations."""
 
 from __future__ import annotations
 
@@ -6,17 +6,17 @@ from typing import Any
 
 
 class DatabeakError(Exception):
-    """Base exception for DataBeak operations."""
+    """Base exception with error details and serialization."""
 
     def __init__(self, message: str, error_code: str | None = None, details: dict | None = None):
-        """Initialize DataBeak error."""
+        """Initialize with message, code, and details."""
         super().__init__(message)
         self.message = message
         self.error_code = error_code
         self.details = details or {}
 
     def to_dict(self) -> dict:
-        """Convert error to dictionary for API responses."""
+        """Convert to dictionary for serialization."""
         return {
             "type": self.__class__.__name__,
             "message": self.message,
@@ -26,11 +26,11 @@ class DatabeakError(Exception):
 
 
 class SessionError(DatabeakError):
-    """Session-related errors."""
+    """Session management errors."""
 
 
 class SessionNotFoundError(SessionError):
-    """Session does not exist."""
+    """Session not found or expired."""
 
     def __init__(self, session_id: str):
         """Initialize with session ID."""
@@ -54,11 +54,11 @@ class SessionExpiredError(SessionError):
 
 
 class DataError(DatabeakError):
-    """Data-related errors."""
+    """Data validation and processing errors."""
 
 
 class NoDataLoadedError(DataError):
-    """No data has been loaded in the session."""
+    """No data loaded in session."""
 
     def __init__(self, session_id: str):
         """Initialize with session ID."""
@@ -70,7 +70,7 @@ class NoDataLoadedError(DataError):
 
 
 class ColumnNotFoundError(DataError):
-    """Column does not exist in the dataset."""
+    """Column not found in dataset."""
 
     def __init__(self, column_name: str, available_columns: list[str] | None = None):
         """Initialize with column name and available columns."""
@@ -109,7 +109,7 @@ class DataValidationError(DataError):
 
 
 class FileError(DatabeakError):
-    """File operation errors."""
+    """File access and format errors."""
 
 
 class FileNotFoundError(FileError):
@@ -149,7 +149,7 @@ class FileFormatError(FileError):
 
 
 class OperationError(DatabeakError):
-    """Operation execution errors."""
+    """Data operation execution errors."""
 
 
 class InvalidOperationError(OperationError):
@@ -165,7 +165,7 @@ class InvalidOperationError(OperationError):
 
 
 class ParameterError(DatabeakError):
-    """Parameter validation errors."""
+    """Function parameter validation errors."""
 
 
 class InvalidParameterError(ParameterError):
@@ -197,7 +197,7 @@ class MissingParameterError(ParameterError):
 
 
 class HistoryError(DatabeakError):
-    """History management errors."""
+    """Operation history management errors."""
 
 
 class HistoryNotEnabledError(HistoryError):
@@ -225,7 +225,7 @@ class InvalidHistoryOperationError(HistoryError):
 
 
 class AutoSaveError(DatabeakError):
-    """Auto-save operation errors."""
+    """Auto-save configuration and execution errors."""
 
 
 class AutoSaveConfigError(AutoSaveError):

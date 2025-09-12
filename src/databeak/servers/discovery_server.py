@@ -9,13 +9,13 @@ analysis with specialized algorithms for data insights.
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal, cast
+from typing import Annotated, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..exceptions import (
     ColumnNotFoundError,
@@ -80,44 +80,48 @@ logger = logging.getLogger(__name__)
 class OutlierInfo(BaseModel):
     """Information about a detected outlier."""
 
-    row_index: int
-    value: float
-    z_score: float | None = None
-    iqr_score: float | None = None
+    row_index: int = Field(description="Row index where outlier was detected")
+    value: float = Field(description="Outlier value found")
+    z_score: float | None = Field(default=None, description="Z-score if using z-score method")
+    iqr_score: float | None = Field(default=None, description="IQR score if using IQR method")
 
 
 class ProfileInfo(BaseModel):
     """Data profiling information for a column."""
 
-    column_name: str
-    data_type: str
-    null_count: int
-    null_percentage: float
-    unique_count: int
-    unique_percentage: float
-    most_frequent: Any = None
-    frequency: int | None = None
+    column_name: str = Field(description="Name of the profiled column")
+    data_type: str = Field(description="Pandas data type of the column")
+    null_count: int = Field(description="Number of null/missing values")
+    null_percentage: float = Field(description="Percentage of null values (0-100)")
+    unique_count: int = Field(description="Number of unique values")
+    unique_percentage: float = Field(description="Percentage of unique values (0-100)")
+    most_frequent: Any = Field(None, description="Most frequently occurring value")
+    frequency: int | None = Field(None, description="Frequency count of most common value")
 
 
 class GroupStatistics(BaseModel):
     """Statistics for a grouped data segment."""
 
-    count: int
-    mean: float | None = None
-    sum: float | None = None
-    min: float | None = None
-    max: float | None = None
-    std: float | None = None
+    count: int = Field(description="Number of records in this group")
+    mean: float | None = Field(default=None, description="Mean value for numeric columns")
+    sum: float | None = Field(default=None, description="Sum of values for numeric columns")
+    min: float | None = Field(default=None, description="Minimum value in the group")
+    max: float | None = Field(default=None, description="Maximum value in the group")
+    std: float | None = Field(default=None, description="Standard deviation for numeric columns")
 
 
 class OutliersResult(BaseToolResponse):
     """Response model for outlier detection analysis."""
 
-    session_id: str
-    outliers_found: int
-    outliers_by_column: dict[str, list[OutlierInfo]]
-    method: Literal["zscore", "iqr", "isolation_forest"]
-    threshold: float
+    session_id: str = Field(description="Session identifier")
+    outliers_found: int = Field(description="Total number of outliers detected")
+    outliers_by_column: dict[str, list[OutlierInfo]] = Field(
+        description="Outliers grouped by column name"
+    )
+    method: Literal["zscore", "iqr", "isolation_forest"] = Field(
+        description="Detection method used"
+    )
+    threshold: float = Field(description="Threshold value used for detection")
 
 
 class ProfileResult(BaseToolResponse):
@@ -202,11 +206,20 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 
 async def detect_outliers(
-    session_id: str,
-    columns: list[str] | None = None,
-    method: str = "iqr",
-    threshold: float = 1.5,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str] | None,
+        Field(description="List of numerical columns to analyze for outliers (None = all numeric)"),
+    ] = None,
+    method: Annotated[
+        str, Field(description="Detection algorithm: zscore, iqr, or isolation_forest")
+    ] = "iqr",
+    threshold: Annotated[
+        float, Field(description="Sensitivity threshold (higher = less sensitive)")
+    ] = 1.5,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> OutliersResult:
     """Detect outliers in numerical columns using various algorithms.
 
@@ -364,10 +377,16 @@ async def detect_outliers(
 
 
 async def profile_data(
-    session_id: str,
-    include_correlations: bool = True,
-    include_outliers: bool = True,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    include_correlations: Annotated[
+        bool, Field(description="Include correlation analysis in profile")
+    ] = True,
+    include_outliers: Annotated[
+        bool, Field(description="Include outlier detection in profile")
+    ] = True,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ProfileResult:
     """Generate comprehensive data profile with statistical insights.
 
@@ -479,10 +498,17 @@ async def profile_data(
 
 
 async def group_by_aggregate(
-    session_id: str,
-    group_by: list[str],
-    aggregations: dict[str, list[str]],
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    group_by: Annotated[
+        list[str], Field(description="List of columns to group by for segmentation analysis")
+    ],
+    aggregations: Annotated[
+        dict[str, list[str]],
+        Field(description="Dict mapping column names to list of aggregation functions"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> GroupAggregateResult:
     """Group data and compute aggregations for analytical insights.
 
@@ -602,11 +628,17 @@ async def group_by_aggregate(
 
 
 async def find_cells_with_value(
-    session_id: str,
-    value: Any,
-    columns: list[str] | None = None,
-    exact_match: bool = True,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    value: Annotated[Any, Field(description="The value to search for (any data type)")],
+    columns: Annotated[
+        list[str] | None, Field(description="List of columns to search (None = all columns)")
+    ] = None,
+    exact_match: Annotated[
+        bool, Field(description="True for exact match, False for substring search")
+    ] = True,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> FindCellsResult:
     """Find all cells containing a specific value for data discovery.
 
@@ -727,10 +759,16 @@ async def find_cells_with_value(
 
 
 async def get_data_summary(
-    session_id: str,
-    include_preview: bool = True,
-    max_preview_rows: int = 10,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    include_preview: Annotated[
+        bool, Field(description="Include sample data rows in summary")
+    ] = True,
+    max_preview_rows: Annotated[
+        int, Field(description="Maximum number of preview rows to include")
+    ] = 10,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> DataSummaryResult:
     """Get comprehensive data overview and structural summary.
 
@@ -869,11 +907,15 @@ async def get_data_summary(
 
 
 async def inspect_data_around(
-    session_id: str,
-    row: int,
-    column_name: str,
-    radius: int = 2,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row: Annotated[int, Field(description="Row index to center the inspection (0-based)")],
+    column_name: Annotated[str, Field(description="Name of the column to center on")],
+    radius: Annotated[
+        int, Field(description="Number of rows/columns to include around center point")
+    ] = 2,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> InspectDataResult:
     """Inspect data around a specific coordinate for contextual analysis.
 

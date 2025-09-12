@@ -1,4 +1,4 @@
-"""History management for CSV operations with persistence and undo/redo capabilities."""
+"""Operation history management with undo/redo and persistence."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class HistoryStorage(str, Enum):
-    """History storage strategies."""
+    """Storage strategies for operation history."""
 
     MEMORY = "memory"  # In-memory only (lost on session end)
     JSON = "json"  # Save as JSON file
@@ -25,7 +25,7 @@ class HistoryStorage(str, Enum):
 
 
 class OperationHistory:
-    """Represents a single operation in history."""
+    """Single operation record with snapshot and metadata."""
 
     def __init__(
         self,

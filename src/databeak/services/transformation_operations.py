@@ -1,4 +1,4 @@
-"""Data transformation tools for CSV manipulation."""
+"""Data transformation operations for CSV manipulation."""
 
 from __future__ import annotations
 
@@ -44,8 +44,9 @@ RowData = dict[str, CellValue] | list[CellValue]
 logger = logging.getLogger(__name__)
 
 
+# Implementation: Session validation and DataFrame retrieval with error handling
 def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
+    """Get validated session and DataFrame."""
     manager = get_session_manager()
     session = manager.get_session(session_id)
 
@@ -60,26 +61,14 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
     return session, df
 
 
+# Implementation: Multi-condition row filtering with logical operators and comprehensive comparison support
 async def filter_rows(
     session_id: str,
     conditions: list[dict[str, str | CellValue]],
     mode: str = "and",
     ctx: Context | None = None,  # noqa: ARG001
 ) -> FilterOperationResult:
-    """Filter rows based on conditions.
-
-    Args:
-        session_id: Session identifier
-        conditions: List of filter conditions, each with:
-            - column: Column name
-            - operator: One of '==', '!=', '>', '<', '>=', '<=', 'contains', 'starts_with', 'ends_with', 'in', 'not_in', 'is_null', 'not_null'
-            - value: Value to compare (not needed for is_null/not_null)
-        mode: 'and' or 'or' to combine multiple conditions
-        ctx: FastMCP context
-
-    Returns:
-        Dict with success status and filtered row count
-    """
+    """Filter DataFrame rows based on conditions."""
     try:
         session, df = _get_session_data(session_id)
         # Initialize mask based on mode: AND starts True, OR starts False
@@ -168,21 +157,13 @@ async def filter_rows(
         raise ToolError(f"Unexpected error: {e}") from e
 
 
+# Implementation: Multi-column DataFrame sorting with flexible column specification
 async def sort_data(
     session_id: str,
     columns: list[str | dict[str, str]],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> SortDataResult:
-    """Sort data by one or more columns.
-
-    Args:
-        session_id: Session identifier
-        columns: List of column names or dicts with 'column' and 'ascending' keys
-        ctx: FastMCP context
-
-    Returns:
-        Dict with success status
-    """
+    """Sort DataFrame by one or more columns."""
     try:
         session, df = _get_session_data(session_id)
 
