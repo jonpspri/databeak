@@ -355,9 +355,13 @@ class AnomalyDetectionParams(BaseModel):
 
 
 def validate_schema(
-    session_id: str,
-    schema: ValidationSchema,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    schema: Annotated[
+        ValidationSchema, Field(description="Schema definition with column validation rules")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition."""
     try:
@@ -592,9 +596,14 @@ def validate_schema(
 
 
 def check_data_quality(
-    session_id: str,
-    rules: list[QualityRuleType] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    rules: Annotated[
+        list[QualityRuleType] | None,
+        Field(description="List of quality rules to check (None = use default rules)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules."""
     try:
@@ -926,11 +935,20 @@ def check_data_quality(
 
 
 def find_anomalies(
-    session_id: str,
-    columns: list[str] | None = None,
-    sensitivity: float = 0.95,
-    methods: list[Literal["statistical", "pattern", "missing"]] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str] | None, Field(description="List of columns to analyze (None = all columns)")
+    ] = None,
+    sensitivity: Annotated[
+        float, Field(description="Sensitivity threshold for anomaly detection (0-1)")
+    ] = 0.95,
+    methods: Annotated[
+        list[Literal["statistical", "pattern", "missing"]] | None,
+        Field(description="Detection methods to use (None = all methods)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods."""
     try:

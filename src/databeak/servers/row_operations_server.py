@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -126,10 +126,14 @@ class ColumnDataRequest(BaseModel):
 # Preserves original data types, converts pandas NaN to None for JSON serialization
 # Records operation in session history for audit trail
 def get_cell_value(
-    session_id: str,
-    row_index: int,
-    column: str | int,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve cell from")],
+    column: Annotated[
+        str | int, Field(description="Column name or column index (0-based) to retrieve")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> CellValueResult:
     """Get value of specific cell with coordinate targeting.
 
@@ -195,11 +199,18 @@ def get_cell_value(
 # Supports column name or index, handles type conversion and null values
 # Records operation in session history and auto-saves if enabled
 def set_cell_value(
-    session_id: str,
-    row_index: int,
-    column: str | int,
-    value: CellValue,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to update cell in")],
+    column: Annotated[
+        str | int, Field(description="Column name or column index (0-based) to update")
+    ],
+    value: Annotated[
+        CellValue,
+        Field(description="New value to set in the cell (str, int, float, bool, or None)"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> SetCellResult:
     """Set value of specific cell with coordinate targeting.
 
@@ -275,10 +286,15 @@ def set_cell_value(
 # Converts pandas types to JSON-serializable values, handles NaN values
 # Records operation in session history for audit trail
 def get_row_data(
-    session_id: str,
-    row_index: int,
-    columns: list[str] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve data from")],
+    columns: Annotated[
+        list[str] | None,
+        Field(description="Optional list of column names to retrieve (all columns if None)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> RowDataResult:
     """Get data from specific row with optional column filtering.
 
@@ -341,11 +357,17 @@ def get_row_data(
 # Supports optional row slicing with start_row (inclusive) and end_row (exclusive)
 # Converts pandas types to JSON-serializable values, handles NaN conversion
 def get_column_data(
-    session_id: str,
-    column: str,
-    start_row: int | None = None,
-    end_row: int | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to retrieve data from")],
+    start_row: Annotated[
+        int | None, Field(description="Starting row index (inclusive, 0-based) for data slice")
+    ] = None,
+    end_row: Annotated[
+        int | None, Field(description="Ending row index (exclusive, 0-based) for data slice")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnDataResult:
     """Get data from specific column with optional row range slicing.
 
@@ -415,10 +437,16 @@ def get_column_data(
 # Validates row_index bounds (-1 for append), auto-parses JSON strings from Claude Code
 # Handles null values, missing dict keys filled with None, records operation history
 def insert_row(
-    session_id: str,
-    row_index: int,
-    data: RowData | str,  # Accept string for Claude Code compatibility
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[
+        int, Field(description="Index to insert row at (0-based, -1 to append at end)")
+    ],
+    data: Annotated[
+        RowData | str, Field(description="Row data as dict, list, or JSON string")
+    ],  # Accept string for Claude Code compatibility
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> InsertRowResult:
     """Insert new row at specified index with multiple data formats.
 
@@ -520,9 +548,11 @@ def insert_row(
 # Updates DataFrame indexes after deletion, records operation in session history
 # Provides comprehensive tracking with before/after row counts
 def delete_row(
-    session_id: str,
-    row_index: int,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to delete")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> DeleteRowResult:
     """Delete row at specified index with comprehensive tracking.
 
@@ -583,10 +613,15 @@ def delete_row(
 # Selective column updates with change tracking (old/new values)
 # Auto-parses JSON strings from Claude Code, records operation in session history
 def update_row(
-    session_id: str,
-    row_index: int,
-    data: dict[str, CellValue] | str,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    row_index: Annotated[int, Field(description="Row index (0-based) to update")],
+    data: Annotated[
+        dict[str, CellValue] | str,
+        Field(description="Column updates as dict mapping column names to values, or JSON string"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> UpdateRowResult:
     """Update specific columns in row with selective updates.
 

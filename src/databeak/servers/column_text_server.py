@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -67,12 +67,17 @@ class SplitConfig(BaseModel):
 
 
 async def replace_in_column(
-    session_id: str,
-    column: str,
-    pattern: str,
-    replacement: str,
-    regex: bool = True,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to apply pattern replacement in")],
+    pattern: Annotated[str, Field(description="Pattern to search for (regex or literal string)")],
+    replacement: Annotated[str, Field(description="Replacement text to use for matches")],
+    regex: Annotated[
+        bool,
+        Field(description="Whether to treat pattern as regex (True) or literal string (False)"),
+    ] = True,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
@@ -160,11 +165,15 @@ async def replace_in_column(
 
 
 async def extract_from_column(
-    session_id: str,
-    column: str,
-    pattern: str,
-    expand: bool = False,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to extract patterns from")],
+    pattern: Annotated[str, Field(description="Regex pattern with capturing groups to extract")],
+    expand: Annotated[
+        bool, Field(description="Whether to expand multiple groups into separate columns")
+    ] = False,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
 
@@ -276,13 +285,21 @@ async def extract_from_column(
 
 
 async def split_column(
-    session_id: str,
-    column: str,
-    delimiter: str = " ",
-    part_index: int | None = None,
-    expand_to_columns: bool = False,
-    new_columns: list[str] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to split values in")],
+    delimiter: Annotated[str, Field(description="String delimiter to split on")] = " ",
+    part_index: Annotated[
+        int | None, Field(description="Which part to keep (0-based index, None for first part)")
+    ] = None,
+    expand_to_columns: Annotated[
+        bool, Field(description="Whether to expand splits into multiple columns")
+    ] = False,
+    new_columns: Annotated[
+        list[str] | None, Field(description="Names for new columns when expanding")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
 
@@ -429,10 +446,15 @@ async def split_column(
 
 
 async def transform_column_case(
-    session_id: str,
-    column: str,
-    transform: Literal["upper", "lower", "title", "capitalize"],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to transform text case in")],
+    transform: Annotated[
+        Literal["upper", "lower", "title", "capitalize"],
+        Field(description="Case transformation: upper, lower, title, or capitalize"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
@@ -528,10 +550,15 @@ async def transform_column_case(
 
 
 async def strip_column(
-    session_id: str,
-    column: str,
-    chars: str | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to strip characters from")],
+    chars: Annotated[
+        str | None,
+        Field(description="Characters to strip (None for whitespace, string for specific chars)"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Strip whitespace or specified characters from column values.
 
@@ -610,10 +637,12 @@ async def strip_column(
 
 
 async def fill_column_nulls(
-    session_id: str,
-    column: str,
-    value: Any,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to fill null values in")],
+    value: Annotated[Any, Field(description="Value to use for filling null/NaN values")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
 

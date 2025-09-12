@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -66,10 +66,17 @@ class SortColumn(BaseModel):
 
 
 def filter_rows(
-    session_id: str,
-    conditions: list[FilterCondition | dict[str, Any]],
-    mode: Literal["and", "or"] = "and",
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    conditions: Annotated[
+        list[FilterCondition | dict[str, Any]],
+        Field(description="List of filter conditions with column, operator, and value"),
+    ],
+    mode: Annotated[
+        Literal["and", "or"], Field(description="Logic for combining conditions (and/or)")
+    ] = "and",
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value and text matching
     support.
@@ -199,9 +206,16 @@ def filter_rows(
 
 
 def sort_data(
-    session_id: str,
-    columns: list[str | SortColumn | dict[str, Any]],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str | SortColumn | dict[str, Any]],
+        Field(
+            description="Column specifications for sorting (strings, SortColumn objects, or dicts)"
+        ),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> SortDataResult:
     """Sort data by one or more columns with comprehensive error handling.
 
@@ -297,10 +311,18 @@ def sort_data(
 
 
 def remove_duplicates(
-    session_id: str,
-    subset: list[str] | None = None,
-    keep: Literal["first", "last", "none"] = "first",
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    subset: Annotated[
+        list[str] | None,
+        Field(description="Columns to consider for duplicates (None = all columns)"),
+    ] = None,
+    keep: Annotated[
+        Literal["first", "last", "none"],
+        Field(description="Which duplicates to keep: first, last, or none"),
+    ] = "first",
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Remove duplicate rows from the dataframe with comprehensive validation.
 
@@ -381,11 +403,20 @@ def remove_duplicates(
 
 
 def fill_missing_values(
-    session_id: str,
-    strategy: Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"] = "drop",
-    value: Any = None,
-    columns: list[str] | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    strategy: Annotated[
+        Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"],
+        Field(
+            description="Strategy for handling missing values (drop, fill, forward, backward, mean, median, mode)"
+        ),
+    ] = "drop",
+    value: Annotated[Any, Field(description="Value to use when strategy is 'fill'")] = None,
+    columns: Annotated[
+        list[str] | None, Field(description="Columns to process (None = all columns)")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Fill or remove missing values with comprehensive strategy support.
 

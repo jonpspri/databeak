@@ -151,9 +151,11 @@ _get_session_data = get_session_data
 # Implementation: validates column existence, reorders columns by selection order
 # Creates new DataFrame copy with selected columns, records operation in session history
 async def select_columns(
-    session_id: str,
-    columns: list[str],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[list[str], Field(description="List of column names to select and keep")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> SelectColumnsResult:
     """Select specific columns from dataframe, removing all others.
 
@@ -199,9 +201,13 @@ async def select_columns(
 # Implementation: validates old column names exist in mapping keys, checks for naming conflicts
 # Updates DataFrame columns in-place using pandas rename, records operation in session history
 async def rename_columns(
-    session_id: str,
-    mapping: dict[str, str],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    mapping: Annotated[
+        dict[str, str], Field(description="Dictionary mapping old column names to new names")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
@@ -256,11 +262,19 @@ async def rename_columns(
 # Implementation: validates column name doesn't exist, supports single value, list, or pandas eval formula
 # Handles list length validation, formula evaluation with error handling, records operation
 async def add_column(
-    session_id: str,
-    name: str,
-    value: CellValue | list[CellValue] = None,
-    formula: str | None = None,
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    name: Annotated[str, Field(description="Name for the new column to add")],
+    value: Annotated[
+        CellValue | list[CellValue],
+        Field(description="Single value for all rows or list of values (one per row)"),
+    ] = None,
+    formula: Annotated[
+        str | None,
+        Field(description="Python expression to compute column values (e.g., 'col1 + col2')"),
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
 
@@ -341,9 +355,13 @@ async def add_column(
 # Implementation: validates columns exist before removal, prevents removing all columns
 # Uses DataFrame drop with error handling, records operation in session history
 async def remove_columns(
-    session_id: str,
-    columns: list[str],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    columns: Annotated[
+        list[str], Field(description="List of column names to remove from the dataframe")
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
@@ -397,11 +415,21 @@ async def remove_columns(
 # Implementation: validates column exists, maps dtype to pandas types
 # Uses pandas astype with error handling (raise/coerce), preserves original on failure
 async def change_column_type(
-    session_id: str,
-    column: str,
-    dtype: Literal["int", "float", "str", "bool", "datetime"],
-    errors: Literal["raise", "coerce"] = "coerce",
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to change data type for")],
+    dtype: Annotated[
+        Literal["int", "float", "str", "bool", "datetime"],
+        Field(description="Target data type (int, float, str, bool, datetime)"),
+    ],
+    errors: Annotated[
+        Literal["raise", "coerce"],
+        Field(
+            description="Error handling: 'raise' for errors, 'coerce' to replace invalid values with NaN"
+        ),
+    ] = "coerce",
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Change the data type of a column.
 
@@ -508,10 +536,15 @@ async def change_column_type(
 
 
 async def update_column(
-    session_id: str,
-    column: str,
-    operation: UpdateOperationType | UpdateColumnRequest | dict[str, Any],
-    ctx: Context | None = None,  # noqa: ARG001
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    column: Annotated[str, Field(description="Column name to update values in")],
+    operation: Annotated[
+        UpdateOperationType | UpdateColumnRequest | dict[str, Any],
+        Field(description="Update operation specification (replace, map, apply, fillna)"),
+    ],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,  # noqa: ARG001
 ) -> ColumnOperationResult:
     """Update values in a column using various operations with discriminated unions.
 

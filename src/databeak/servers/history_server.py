@@ -8,7 +8,7 @@ functionality, and auto-save management with robust session lifecycle integratio
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
@@ -235,8 +235,10 @@ class ManualSaveResult(BaseModel):
 
 
 async def undo_operation(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> UndoResult:
     """Undo the last operation in a session.
 
@@ -319,8 +321,10 @@ async def undo_operation(
 
 
 async def redo_operation(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> RedoResult:
     """Redo a previously undone operation.
 
@@ -403,9 +407,13 @@ async def redo_operation(
 
 
 async def get_history(
-    session_id: str,
-    limit: int | None = None,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    limit: Annotated[
+        int | None, Field(description="Maximum number of operations to return (None = all)")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> HistoryResult:
     """Get comprehensive operation history for a session.
 
@@ -507,9 +515,11 @@ async def get_history(
 
 
 async def restore_to_operation(
-    session_id: str,
-    operation_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    operation_id: Annotated[str, Field(description="ID of the operation to restore to")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> RestoreResult:
     """Restore session data to a specific operation point.
 
@@ -583,8 +593,10 @@ async def restore_to_operation(
 
 
 async def clear_history(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ClearHistoryResult:
     """Clear all operation history for a session.
 
@@ -666,10 +678,14 @@ async def clear_history(
 
 
 async def export_history(
-    session_id: str,
-    file_path: str,
-    format: Literal["json", "csv"] = "json",
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    file_path: Annotated[str, Field(description="Output file path for history export")],
+    format: Annotated[
+        Literal["json", "csv"], Field(description="Export format: json or csv")
+    ] = "json",
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ExportHistoryResult:
     """Export operation history to a file for audit trails.
 
@@ -775,17 +791,32 @@ async def export_history(
 
 
 async def configure_auto_save(
-    session_id: str,
-    enabled: bool = True,
-    mode: Literal["disabled", "after_operation", "periodic", "hybrid"] = "after_operation",
-    strategy: Literal["overwrite", "backup", "versioned", "custom"] = "backup",
-    interval_seconds: int | None = None,
-    max_backups: int | None = None,
-    backup_dir: str | None = None,
-    custom_path: str | None = None,
-    format: Literal["csv", "tsv", "json", "excel", "parquet"] = "csv",
-    encoding: str = "utf-8",
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    enabled: Annotated[bool, Field(description="Whether to enable auto-save functionality")] = True,
+    mode: Annotated[
+        Literal["disabled", "after_operation", "periodic", "hybrid"],
+        Field(description="Auto-save trigger mode"),
+    ] = "after_operation",
+    strategy: Annotated[
+        Literal["overwrite", "backup", "versioned", "custom"],
+        Field(description="File saving strategy"),
+    ] = "backup",
+    interval_seconds: Annotated[
+        int | None, Field(description="Interval between periodic saves in seconds")
+    ] = None,
+    max_backups: Annotated[
+        int | None, Field(description="Maximum number of backup files to keep")
+    ] = None,
+    backup_dir: Annotated[str | None, Field(description="Directory for backup files")] = None,
+    custom_path: Annotated[str | None, Field(description="Custom file path for saves")] = None,
+    format: Annotated[
+        Literal["csv", "tsv", "json", "excel", "parquet"],
+        Field(description="Export format for saved files"),
+    ] = "csv",
+    encoding: Annotated[str, Field(description="Text encoding for saved files")] = "utf-8",
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> AutoSaveConfigResult:
     """Configure auto-save settings for a session.
 
@@ -923,8 +954,10 @@ async def configure_auto_save(
 
 
 async def disable_auto_save(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> AutoSaveDisableResult:
     """Disable auto-save for a session.
 
@@ -1016,8 +1049,10 @@ async def disable_auto_save(
 
 
 async def get_auto_save_status(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> AutoSaveStatusResult:
     """Get current auto-save configuration and status.
 
@@ -1113,8 +1148,10 @@ async def get_auto_save_status(
 
 
 async def trigger_manual_save(
-    session_id: str,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ManualSaveResult:
     """Manually trigger a save operation for the session.
 

@@ -13,7 +13,7 @@ import tempfile
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -269,14 +269,26 @@ def get_encoding_fallbacks(primary_encoding: str) -> list[str]:
 # Encoding fallback strategy with chardet detection and prioritized fallbacks
 # Progress reporting and comprehensive error handling with specific error messages
 async def load_csv(
-    file_path: str,
-    encoding: str = "utf-8",
-    delimiter: str = ",",
-    session_id: str | None = None,
-    header: int | None = 0,
-    na_values: list[str] | None = None,
-    parse_dates: list[str] | None = None,
-    ctx: Context | None = None,
+    file_path: Annotated[str, Field(description="Path to the CSV file to load")],
+    encoding: Annotated[
+        str, Field(description="Text encoding for file reading (utf-8, latin1, cp1252, etc.)")
+    ] = "utf-8",
+    delimiter: Annotated[
+        str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
+    ] = ",",
+    session_id: Annotated[
+        str | None, Field(description="Existing session ID or None for new session")
+    ] = None,
+    header: Annotated[
+        int | None, Field(description="Row number to use as header (0=first row, None=no header)")
+    ] = 0,
+    na_values: Annotated[
+        list[str] | None, Field(description="Additional strings to recognize as NA/NaN")
+    ] = None,
+    parse_dates: Annotated[list[str] | None, Field(description="Columns to parse as dates")] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> LoadResult:
     """Load CSV file into DataBeak session.
 
@@ -483,11 +495,19 @@ async def load_csv(
 # Uses same encoding fallback strategy as file loading
 # Timeout: URL_TIMEOUT_SECONDS, Max download: MAX_URL_SIZE_MB
 async def load_csv_from_url(
-    url: str,
-    encoding: str = "utf-8",
-    delimiter: str = ",",
-    session_id: str | None = None,
-    ctx: Context | None = None,
+    url: Annotated[str, Field(description="URL of the CSV file to download and load")],
+    encoding: Annotated[
+        str, Field(description="Text encoding for file reading (utf-8, latin1, cp1252, etc.)")
+    ] = "utf-8",
+    delimiter: Annotated[
+        str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
+    ] = ",",
+    session_id: Annotated[
+        str | None, Field(description="Existing session ID or None for new session")
+    ] = None,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> LoadResult:
     """Load CSV file from URL into DataBeak session.
 
@@ -678,11 +698,19 @@ async def load_csv_from_url(
 # Validates content not empty, handles malformed CSV with specific error messages
 # Supports header detection, quoted fields, automatic type inference
 async def load_csv_from_content(
-    content: str,
-    delimiter: str = ",",
-    session_id: str | None = None,
-    has_header: bool = True,
-    ctx: Context | None = None,
+    content: Annotated[str, Field(description="CSV data as string content")],
+    delimiter: Annotated[
+        str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
+    ] = ",",
+    session_id: Annotated[
+        str | None, Field(description="Existing session ID or None for new session")
+    ] = None,
+    has_header: Annotated[
+        bool, Field(description="Whether first row contains column headers")
+    ] = True,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> LoadResult:
     """Load CSV data from string content into DataBeak session.
 
@@ -748,12 +776,21 @@ async def load_csv_from_content(
 # Parquet (columnar), HTML (web table), Markdown (GitHub format)
 # Auto-cleanup on export errors, records operation in session history
 async def export_csv(
-    session_id: str,
-    file_path: str | None = None,
-    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"] = "csv",
-    encoding: str = "utf-8",
-    index: bool = False,
-    ctx: Context | None = None,
+    session_id: Annotated[str, Field(description="Session identifier containing data to export")],
+    file_path: Annotated[
+        str | None, Field(description="Output file path (auto-generated if not provided)")
+    ] = None,
+    format: Annotated[
+        Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"],
+        Field(description="Export format (csv, tsv, json, excel, parquet, html, markdown)"),
+    ] = "csv",
+    encoding: Annotated[
+        str, Field(description="Text encoding for output file (utf-8, latin1, cp1252, etc.)")
+    ] = "utf-8",
+    index: Annotated[bool, Field(description="Whether to include row index in output")] = False,
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
 ) -> ExportResult:
     """Export session data to various file formats.
 
@@ -904,7 +941,12 @@ async def export_csv(
 # Implementation: retrieves session metadata from session manager
 # Returns comprehensive info including timestamps, data status, auto-save config
 # Essential for workflow coordination and session state verification
-async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
+async def get_session_info(
+    session_id: Annotated[str, Field(description="Session identifier to retrieve information for")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
+) -> SessionInfoResult:
     """Get comprehensive information about a specific session.
 
     Returns session metadata, data status, and configuration. Essential for session management and
@@ -943,7 +985,11 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> Sessi
 # Implementation: retrieves all sessions from session manager with statistics
 # Counts active sessions (those with loaded data) vs total sessions
 # Returns empty list on error for consistency, essential for system monitoring
-async def list_sessions(ctx: Context | None = None) -> SessionListResult:
+async def list_sessions(
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
+) -> SessionListResult:
     """List all active sessions with details and statistics.
 
     Returns overview of all sessions including data status and timestamps. Essential for session
@@ -996,7 +1042,12 @@ async def list_sessions(ctx: Context | None = None) -> SessionListResult:
 # Memory deallocation for DataFrames, history cleanup, state finalization
 # Data is not preserved - use export_csv before closing to save data
 # Essential for preventing memory leaks in long-running processes
-async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
+async def close_session(
+    session_id: Annotated[str, Field(description="Session identifier to close and clean up")],
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
+) -> CloseSessionResult:
     """Close and clean up session with proper resource management.
 
     Safely closes session and releases memory.

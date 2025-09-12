@@ -8,9 +8,11 @@ status reporting with comprehensive error handling and AI-optimized responses.
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
+from pydantic import Field
 
 # Import version and session management from main package
 from .._version import __version__
@@ -30,7 +32,11 @@ logger = logging.getLogger(__name__)
 # - Checks memory usage and service availability
 # - Status levels: healthy (operational), degraded (constraints), unhealthy (critical issues)
 # - System checks: Session Manager availability, Active Sessions count, Memory Status, Service Status
-async def health_check(ctx: Context | None = None) -> HealthResult:
+async def health_check(
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
+) -> HealthResult:
     """Check DataBeak server health and availability.
 
     Returns server status, session capacity, and version information. Use before large operations to
@@ -103,7 +109,11 @@ async def health_check(ctx: Context | None = None) -> HealthResult:
 # - Capability categories: Data I/O, Manipulation, Analysis, Validation, Session Management, Null Handling
 # - Configuration info: File size limits, timeout settings, memory limits, session limits
 # - Used for capability discovery, format compatibility verification, resource limit awareness
-async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
+async def get_server_info(
+    ctx: Annotated[
+        Context | None, Field(description="FastMCP context for progress reporting")
+    ] = None,
+) -> ServerInfoResult:
     """Get DataBeak server capabilities and supported operations.
 
     Returns server version, available tools, supported file formats, and resource limits. Use to
