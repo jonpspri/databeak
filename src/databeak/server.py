@@ -1,5 +1,4 @@
 """Main FastMCP server for DataBeak."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -79,7 +78,8 @@ async def get_csv_data(session_id: str) -> dict[str, Any]:
 
     # Use enhanced preview for better AI accessibility
     df = session.df
-    assert df is not None  # Type guard since has_data() returned True
+    if df is None:  # Additional defensive check
+        return {"error": "No data available in session"}
 
     preview_data = create_data_preview_with_indices(df, 10)
 
@@ -104,7 +104,8 @@ async def get_csv_schema(session_id: str) -> dict[str, Any]:
         return {"error": "Session not found or no data loaded"}
 
     df = session.df
-    assert df is not None  # Type guard since has_data() returned True
+    if df is None:  # Additional defensive check
+        return {"error": "No data available in session"}
 
     return {
         "session_id": session_id,
@@ -166,7 +167,8 @@ async def get_csv_preview(session_id: str) -> dict[str, Any]:
         return {"error": "Session not found or no data loaded"}
 
     df = session.df
-    assert df is not None  # Type guard since has_data() returned True
+    if df is None:  # Additional defensive check
+        return {"error": "No data available in session"}
 
     preview_data = create_data_preview_with_indices(df, 10)
 

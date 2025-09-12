@@ -1,5 +1,4 @@
 """Data transformation tools for CSV manipulation."""
-# ruff: noqa: S101
 
 from __future__ import annotations
 
@@ -42,9 +41,6 @@ RowData = dict[str, CellValue] | list[CellValue]
 # Note: FilterCondition and OperationResult are imported from data_models.py when needed
 # To avoid conflicts with tool response models, use them as dict types in function signatures
 
-if TYPE_CHECKING:
-    from fastmcp import Context
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +55,8 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
         raise NoDataLoadedError(session_id)
 
     df = session.df
-    assert df is not None  # Type guard since has_data() was checked
+    if df is None:  # Additional defensive check
+        raise NoDataLoadedError(session_id)
     return session, df
 
 
