@@ -1,4 +1,4 @@
-"""Structured logging configuration with correlation IDs."""
+"""Structured logging with correlation IDs and JSON formatting."""
 
 from __future__ import annotations
 
@@ -14,16 +14,16 @@ correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
 
 
 class CorrelationFilter(logging.Filter):
-    """Logging filter to add correlation ID to log records."""
+    """Filter that adds correlation ID to log records."""
 
     def filter(self, record: logging.LogRecord) -> bool:
-        """Add correlation ID to the log record."""
+        """Add correlation ID to log record."""
         record.correlation_id = correlation_id.get() or "no-correlation"
         return True
 
 
 class StructuredFormatter(logging.Formatter):
-    """JSON formatter for structured logging."""
+    """JSON formatter for structured log output."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
@@ -53,8 +53,9 @@ class StructuredFormatter(logging.Formatter):
         return json.dumps(log_data, ensure_ascii=False)
 
 
+# Implementation: Structured logging setup with JSON formatter and correlation filter
 def setup_structured_logging(level: str = "INFO") -> None:
-    """Set up structured logging for the application."""
+    """Set up structured logging with JSON formatting."""
     # Create structured formatter
     formatter = StructuredFormatter()
 
@@ -78,12 +79,13 @@ def setup_structured_logging(level: str = "INFO") -> None:
 
 
 def get_correlation_id() -> str:
-    """Get the current correlation ID."""
+    """Get current correlation ID."""
     return correlation_id.get() or "no-correlation"
 
 
+# Implementation: Context variable correlation ID setting with UUID generation
 def set_correlation_id(corr_id: str | None = None) -> str:
-    """Set a correlation ID for the current context."""
+    """Set correlation ID for current context."""
     if corr_id is None:
         corr_id = str(uuid.uuid4())
     correlation_id.set(corr_id)

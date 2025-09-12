@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from ..exceptions import (
     ColumnNotFoundError,
@@ -80,44 +80,48 @@ logger = logging.getLogger(__name__)
 class OutlierInfo(BaseModel):
     """Information about a detected outlier."""
 
-    row_index: int
-    value: float
-    z_score: float | None = None
-    iqr_score: float | None = None
+    row_index: int = Field(description="Row index where outlier was detected")
+    value: float = Field(description="Outlier value found")
+    z_score: float | None = Field(None, description="Z-score if using z-score method")
+    iqr_score: float | None = Field(None, description="IQR score if using IQR method")
 
 
 class ProfileInfo(BaseModel):
     """Data profiling information for a column."""
 
-    column_name: str
-    data_type: str
-    null_count: int
-    null_percentage: float
-    unique_count: int
-    unique_percentage: float
-    most_frequent: Any = None
-    frequency: int | None = None
+    column_name: str = Field(description="Name of the profiled column")
+    data_type: str = Field(description="Pandas data type of the column")
+    null_count: int = Field(description="Number of null/missing values")
+    null_percentage: float = Field(description="Percentage of null values (0-100)")
+    unique_count: int = Field(description="Number of unique values")
+    unique_percentage: float = Field(description="Percentage of unique values (0-100)")
+    most_frequent: Any = Field(None, description="Most frequently occurring value")
+    frequency: int | None = Field(None, description="Frequency count of most common value")
 
 
 class GroupStatistics(BaseModel):
     """Statistics for a grouped data segment."""
 
-    count: int
-    mean: float | None = None
-    sum: float | None = None
-    min: float | None = None
-    max: float | None = None
-    std: float | None = None
+    count: int = Field(description="Number of records in this group")
+    mean: float | None = Field(None, description="Mean value for numeric columns")
+    sum: float | None = Field(None, description="Sum of values for numeric columns")
+    min: float | None = Field(None, description="Minimum value in the group")
+    max: float | None = Field(None, description="Maximum value in the group")
+    std: float | None = Field(None, description="Standard deviation for numeric columns")
 
 
 class OutliersResult(BaseToolResponse):
     """Response model for outlier detection analysis."""
 
-    session_id: str
-    outliers_found: int
-    outliers_by_column: dict[str, list[OutlierInfo]]
-    method: Literal["zscore", "iqr", "isolation_forest"]
-    threshold: float
+    session_id: str = Field(description="Session identifier")
+    outliers_found: int = Field(description="Total number of outliers detected")
+    outliers_by_column: dict[str, list[OutlierInfo]] = Field(
+        description="Outliers grouped by column name"
+    )
+    method: Literal["zscore", "iqr", "isolation_forest"] = Field(
+        description="Detection method used"
+    )
+    threshold: float = Field(description="Threshold value used for detection")
 
 
 class ProfileResult(BaseToolResponse):

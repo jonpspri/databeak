@@ -1,4 +1,4 @@
-"""Validation utilities for CSV Editor."""
+"""Validation utilities for file paths, URLs, and data integrity."""
 
 from __future__ import annotations
 
@@ -12,8 +12,9 @@ from urllib.parse import urlparse
 import pandas as pd
 
 
+# Implementation: File path security validation with existence checking and extension filtering
 def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, str]:
-    """Validate a file path for security and existence."""
+    """Validate file path for security and format requirements."""
     try:
         # Convert to Path object
         path = Path(file_path).resolve()
@@ -49,8 +50,9 @@ def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, s
         return False, f"Error validating path: {e!s}"
 
 
+# Implementation: URL security validation blocking private networks and local addresses
 def validate_url(url: str) -> tuple[bool, str]:
-    """Validate a URL for CSV download with security checks against private networks."""
+    """Validate URL with security checks against private networks."""
     try:
         parsed = urlparse(url)
 
@@ -117,8 +119,9 @@ def validate_url(url: str) -> tuple[bool, str]:
         return False, f"Invalid URL: {e!s}"
 
 
+# Implementation: Column name validation with regex pattern matching
 def validate_column_name(column_name: str) -> tuple[bool, str]:
-    """Validate a column name."""
+    """Validate column name format and characters."""
     if not column_name or not isinstance(column_name, str):
         return False, "Column name must be a non-empty string"
 
@@ -132,8 +135,9 @@ def validate_column_name(column_name: str) -> tuple[bool, str]:
         )
 
 
+# Implementation: Comprehensive DataFrame validation checking shape, duplicates, types, cardinality
 def validate_dataframe(df: pd.DataFrame) -> dict[str, Any]:
-    """Validate a DataFrame for common issues."""
+    """Validate DataFrame for common data quality issues."""
     issues: dict[str, Any] = {"errors": [], "warnings": [], "info": {}}
 
     # Check if empty
@@ -185,8 +189,9 @@ def validate_dataframe(df: pd.DataFrame) -> dict[str, Any]:
     return issues
 
 
+# Implementation: Expression safety validation blocking dangerous operations and functions
 def validate_expression(expression: str, allowed_vars: list[str]) -> tuple[bool, str]:
-    """Validate a calculation expression for safety."""
+    """Validate calculation expression for safety."""
     # Remove whitespace
     expr = expression.replace(" ", "")
 
@@ -224,8 +229,9 @@ def validate_expression(expression: str, allowed_vars: list[str]) -> tuple[bool,
     return True, expression
 
 
+# Implementation: Filename sanitization removing invalid characters and path components
 def sanitize_filename(filename: str) -> str:
-    """Sanitize a filename for safe file operations."""
+    """Sanitize filename for safe file operations."""
     # Remove path components
     filename = Path(filename).name
 
@@ -243,18 +249,9 @@ def sanitize_filename(filename: str) -> str:
     return name + ext
 
 
+# Implementation: Pandas NA to None conversion for Pydantic compatibility
 def convert_pandas_na_to_none(value: Any) -> Any:
-    """Convert pandas NA values to Python None for Pydantic serialization.
-
-    This function handles the conversion of pandas nullable data types' NA values
-    to Python None, which is compatible with Pydantic models.
-
-    Args:
-        value: Any value that might be a pandas NA
-
-    Returns:
-        The original value if not pandas NA, otherwise None
-    """
+    """Convert pandas NA values to Python None for serialization."""
     import pandas as pd
 
     # Handle pandas NA values (from nullable dtypes)
@@ -263,13 +260,7 @@ def convert_pandas_na_to_none(value: Any) -> Any:
     return value
 
 
+# Implementation: List processing for pandas NA to None conversion
 def convert_pandas_na_list(values: list[Any]) -> list[Any]:
-    """Convert a list of values that may contain pandas NA values to Python None.
-
-    Args:
-        values: List of values that may contain pandas NA
-
-    Returns:
-        List with pandas NA values converted to None
-    """
+    """Convert list of pandas NA values to Python None."""
     return [convert_pandas_na_to_none(val) for val in values]

@@ -25,51 +25,16 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 
+# Health check implementation details:
+# - Performs comprehensive system assessment including session management
+# - Checks memory usage and service availability
+# - Status levels: healthy (operational), degraded (constraints), unhealthy (critical issues)
+# - System checks: Session Manager availability, Active Sessions count, Memory Status, Service Status
 async def health_check(ctx: Context | None = None) -> HealthResult:
-    """Check the health status of DataBeak server.
+    """Check DataBeak server health and availability.
 
-    Performs comprehensive system health assessment including session management,
-    memory usage, and service availability. Essential for monitoring DataBeak
-    server status and ensuring reliable operation.
-
-    Args:
-        ctx: FastMCP context for progress reporting and logging
-
-    Returns:
-        Comprehensive health status information including:
-        - overall status (healthy/degraded/unhealthy)
-        - server version information
-        - active session count and limits
-        - session timeout configuration
-        - system resource status
-
-    Health Status Levels:
-        🟢 healthy: All systems operational, resources available
-        🟡 degraded: Minor issues or resource constraints
-        🔴 unhealthy: Critical issues requiring attention
-
-    System Checks:
-        ✅ Session Manager: Availability and configuration
-        ✅ Active Sessions: Count and resource usage
-        ✅ Memory Status: Available resources
-        ✅ Service Status: Core functionality availability
-
-    Examples:
-        # Basic health check
-        health = await health_check()
-        print(f"Status: {health.status}")
-        print(f"Active sessions: {health.active_sessions}/{health.max_sessions}")
-
-        # Health monitoring in workflows
-        if health.status == "healthy":
-            proceed_with_operations()
-
-    AI Workflow Integration:
-        1. System status verification before large operations
-        2. Resource availability assessment
-        3. Session capacity planning
-        4. Automated monitoring and alerting
-        5. Performance baseline establishment
+    Returns server status, session capacity, and version information. Use before large operations to
+    verify system readiness.
     """
     try:
         if ctx:
@@ -134,58 +99,15 @@ async def health_check(ctx: Context | None = None) -> HealthResult:
         )
 
 
+# Server info implementation details:
+# - Capability categories: Data I/O, Manipulation, Analysis, Validation, Session Management, Null Handling
+# - Configuration info: File size limits, timeout settings, memory limits, session limits
+# - Used for capability discovery, format compatibility verification, resource limit awareness
 async def get_server_info(ctx: Context | None = None) -> ServerInfoResult:
-    """Get comprehensive information about DataBeak server capabilities.
+    """Get DataBeak server capabilities and supported operations.
 
-    Provides detailed server information including supported operations, file formats,
-    configuration limits, and feature capabilities. Essential for client applications
-    to understand DataBeak's functionality and plan optimal usage.
-
-    Args:
-        ctx: FastMCP context for logging and progress reporting
-
-    Returns:
-        Complete server capability information including:
-        - server identification (name, version, description)
-        - operational capabilities grouped by function
-        - supported file formats and extensions
-        - configuration limits and constraints
-        - feature availability matrix
-
-    Capability Categories:
-        📊 Data I/O: Loading, exporting, format conversion
-        🔧 Data Manipulation: Filtering, sorting, transformations
-        📈 Data Analysis: Statistics, correlations, profiling
-        ✅ Data Validation: Schema checks, quality assessment
-        🗂️ Session Management: Multi-session support, isolation
-        🔢 Null Handling: Comprehensive null value operations
-
-    Configuration Information:
-        📏 File Size Limits: Maximum supported file sizes
-        ⏱️ Timeout Settings: Session and operation timeouts
-        💾 Memory Limits: Resource usage constraints
-        📊 Session Limits: Concurrent session capabilities
-
-    Examples:
-        # Get server capabilities
-        info = await get_server_info()
-        print(f"Server: {info.name} v{info.version}")
-        print(f"Formats: {info.supported_formats}")
-
-        # Check specific capabilities
-        if "correlation_matrix" in info.capabilities.get("data_analysis", []):
-            perform_correlation_analysis()
-
-        # Validate file size before upload
-        if file_size_mb <= info.max_file_size_mb:
-            proceed_with_upload()
-
-    AI Workflow Integration:
-        1. Capability discovery for dynamic workflow planning
-        2. Format compatibility verification
-        3. Resource limit awareness for operation planning
-        4. Feature availability checking before usage
-        5. Client configuration and optimization
+    Returns server version, available tools, supported file formats, and resource limits. Use to
+    discover what operations are available before planning workflows.
     """
     try:
         if ctx:

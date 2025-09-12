@@ -1,8 +1,4 @@
-"""Statistics service with dependency injection for improved testability.
-
-This module implements statistical operations using the SessionService pattern to reduce coupling
-with session management and improve testability.
-"""
+"""Statistics service for numerical analysis operations."""
 
 from __future__ import annotations
 
@@ -27,28 +23,20 @@ logger = logging.getLogger(__name__)
 
 
 class StatisticsService(SessionService):
-    """Service for statistical operations with dependency injection."""
+    """Service for statistical analysis operations."""
 
     def get_service_name(self) -> str:
-        """Get the name of this service."""
+        """Get service name."""
         return "StatisticsService"
 
+    # Implementation: Calculate mean, std, min, max, percentiles for numeric columns
     async def get_statistics(
         self,
         session_id: str,
         columns: list[str] | None = None,
         include_percentiles: bool = True,
     ) -> StatisticsResult:
-        """Get comprehensive statistical summary of numerical columns.
-
-        Args:
-            session_id: Session ID containing loaded data
-            columns: Optional list of specific columns to analyze
-            include_percentiles: Whether to include percentiles
-
-        Returns:
-            Comprehensive statistical analysis with per-column summaries
-        """
+        """Get statistical summary of numerical columns."""
         try:
             session, df = self.get_session_and_data(session_id)
 
@@ -114,20 +102,13 @@ class StatisticsService(SessionService):
             logger.error(f"Error getting statistics: {e}")
             raise ToolError(f"Error getting statistics: {e}") from e
 
+    # Implementation: Single column analysis with dtype mapping and statistics calculation
     async def get_column_statistics(
         self,
         session_id: str,
         column: str,
     ) -> ColumnStatisticsResult:
-        """Get detailed statistical analysis for a single column.
-
-        Args:
-            session_id: Session ID containing loaded data
-            column: Name of the column to analyze
-
-        Returns:
-            Detailed statistical analysis for the specified column
-        """
+        """Get detailed statistics for single column."""
         try:
             session, df = self.get_session_and_data(session_id)
 
@@ -219,6 +200,7 @@ class StatisticsService(SessionService):
             logger.error(f"Column statistics failed: {e}")
             raise ToolError(f"Failed to analyze column '{column}': {e}") from e
 
+    # Implementation: Pairwise correlation calculation with method selection and threshold filtering
     async def get_correlation_matrix(
         self,
         session_id: str,
@@ -226,17 +208,7 @@ class StatisticsService(SessionService):
         columns: list[str] | None = None,
         min_correlation: float | None = None,
     ) -> CorrelationResult:
-        """Calculate correlation matrix for numerical columns.
-
-        Args:
-            session_id: Session ID containing loaded data
-            method: Correlation method
-            columns: Optional list of columns to include
-            min_correlation: Minimum correlation threshold to include
-
-        Returns:
-            Correlation matrix with pairwise correlation coefficients
-        """
+        """Calculate correlation matrix for numerical columns."""
         try:
             session, df = self.get_session_and_data(session_id)
 
@@ -297,6 +269,7 @@ class StatisticsService(SessionService):
             logger.error(f"Correlation analysis failed: {e}")
             raise ToolError(f"Failed to compute correlation matrix: {e}") from e
 
+    # Implementation: Value frequency analysis with sorting and normalization options
     async def get_value_counts(
         self,
         session_id: str,
@@ -306,19 +279,7 @@ class StatisticsService(SessionService):
         ascending: bool = False,
         top_n: int | None = None,
     ) -> ValueCountsResult:
-        """Get frequency distribution of values in a column.
-
-        Args:
-            session_id: Session ID containing loaded data
-            column: Name of the column to analyze
-            normalize: If True, return percentages instead of counts
-            sort: Sort results by frequency
-            ascending: Sort order
-            top_n: Maximum number of values to return
-
-        Returns:
-            Frequency distribution with counts/percentages for each unique value
-        """
+        """Get frequency distribution of column values."""
         try:
             session, df = self.get_session_and_data(session_id)
 

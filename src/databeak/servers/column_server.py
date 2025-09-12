@@ -56,7 +56,7 @@ class UpdateOperation(BaseModel):
     """Base class for update operations."""
 
     model_config = ConfigDict(extra="forbid")
-    type: str
+    type: str = Field(description="Type of update operation")
 
 
 class ReplaceOperation(UpdateOperation):
@@ -148,27 +148,17 @@ _get_session_data = get_session_data
 # =============================================================================
 
 
+# Implementation: validates column existence, reorders columns by selection order
+# Creates new DataFrame copy with selected columns, records operation in session history
 async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
 ) -> SelectColumnsResult:
-    """Select specific columns from the dataframe, removing all others.
+    """Select specific columns from dataframe, removing all others.
 
-    Args:
-        session_id: Session identifier
-        columns: List of column names to keep
-        ctx: FastMCP context
-
-    Returns:
-        Dict with selection details
-
-    Examples:
-        # Keep only specific columns
-        select_columns(session_id, ["name", "age", "email"])
-
-        # Reorder columns by selection order
-        select_columns(session_id, ["id", "date", "amount", "status"])
+    Validates column existence and reorders by selection order. Returns selection details with
+    before/after column counts.
     """
     try:
         session, df = _get_session_data(session_id)
@@ -206,6 +196,8 @@ async def select_columns(
         raise ToolError(f"Failed to select columns: {e}") from e
 
 
+# Implementation: validates old column names exist in mapping keys, checks for naming conflicts
+# Updates DataFrame columns in-place using pandas rename, records operation in session history
 async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
@@ -261,6 +253,8 @@ async def rename_columns(
         raise ToolError(f"Failed to rename columns: {e}") from e
 
 
+# Implementation: validates column name doesn't exist, supports single value, list, or pandas eval formula
+# Handles list length validation, formula evaluation with error handling, records operation
 async def add_column(
     session_id: str,
     name: str,
@@ -344,6 +338,8 @@ async def add_column(
         raise ToolError(f"Failed to add column: {e}") from e
 
 
+# Implementation: validates columns exist before removal, prevents removing all columns
+# Uses DataFrame drop with error handling, records operation in session history
 async def remove_columns(
     session_id: str,
     columns: list[str],
@@ -398,6 +394,8 @@ async def remove_columns(
         raise ToolError(f"Failed to remove columns: {e}") from e
 
 
+# Implementation: validates column exists, maps dtype to pandas types
+# Uses pandas astype with error handling (raise/coerce), preserves original on failure
 async def change_column_type(
     session_id: str,
     column: str,

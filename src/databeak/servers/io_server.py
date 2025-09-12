@@ -49,71 +49,73 @@ CsvCellValue = str | int | float | bool | None
 class SessionInfo(BaseModel):
     """Session information in list results."""
 
-    session_id: str
-    created_at: str
-    last_accessed: str
-    row_count: int
-    column_count: int
-    columns: list[str]
-    memory_usage_mb: float
-    file_path: str | None = None
+    session_id: str = Field(description="Unique session identifier")
+    created_at: str = Field(description="Session creation timestamp (ISO format)")
+    last_accessed: str = Field(description="Last access timestamp (ISO format)")
+    row_count: int = Field(description="Number of rows in dataset")
+    column_count: int = Field(description="Number of columns in dataset")
+    columns: list[str] = Field(description="List of column names")
+    memory_usage_mb: float = Field(description="Memory usage in megabytes")
+    file_path: str | None = Field(None, description="Original file path if loaded from file")
 
 
 class DataPreview(BaseModel):
     """Data preview with row samples."""
 
-    rows: list[dict[str, CsvCellValue]]
-    row_count: int
-    column_count: int
-    truncated: bool = False
+    rows: list[dict[str, CsvCellValue]] = Field(description="Sample rows from dataset")
+    row_count: int = Field(description="Total number of rows in dataset")
+    column_count: int = Field(description="Total number of columns in dataset")
+    truncated: bool = Field(False, description="Whether preview is truncated")
 
 
 class LoadResult(BaseToolResponse):
     """Response model for data loading operations."""
 
-    session_id: str
-    rows_affected: int
-    columns_affected: list[str]
-    data: DataPreview | None = None
-    memory_usage_mb: float | None = None
+    session_id: str = Field(description="Session identifier for subsequent operations")
+    rows_affected: int = Field(description="Number of rows loaded")
+    columns_affected: list[str] = Field(description="List of column names detected")
+    data: DataPreview | None = Field(None, description="Sample of loaded data")
+    memory_usage_mb: float | None = Field(None, description="Memory usage in megabytes")
 
 
 class ExportResult(BaseToolResponse):
     """Response model for data export operations."""
 
-    session_id: str
-    file_path: str
-    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"]
-    rows_exported: int
-    file_size_mb: float | None = None
+    session_id: str = Field(description="Session identifier that was exported")
+    file_path: str = Field(description="Path to exported file")
+    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"] = Field(
+        description="Export format used"
+    )
+    rows_exported: int = Field(description="Number of rows exported")
+    file_size_mb: float | None = Field(None, description="Size of exported file in megabytes")
 
 
 class SessionInfoResult(BaseToolResponse):
     """Response model for session information."""
 
-    session_id: str
-    created_at: str
-    last_modified: str
-    data_loaded: bool
-    row_count: int | None = None
-    column_count: int | None = None
-    auto_save_enabled: bool
+    session_id: str = Field(description="Session identifier")
+    created_at: str = Field(description="Creation timestamp (ISO format)")
+    last_modified: str = Field(description="Last modification timestamp (ISO format)")
+    data_loaded: bool = Field(description="Whether session has data loaded")
+    row_count: int | None = Field(None, description="Number of rows if data loaded")
+    column_count: int | None = Field(None, description="Number of columns if data loaded")
+    auto_save_enabled: bool = Field(description="Whether auto-save is enabled")
 
 
 class SessionListResult(BaseToolResponse):
     """Response model for listing all sessions."""
 
-    sessions: list[SessionInfo]
-    total_sessions: int
-    active_sessions: int
+    sessions: list[SessionInfo] = Field(description="List of all sessions")
+    total_sessions: int = Field(description="Total number of sessions")
+    active_sessions: int = Field(description="Number of sessions with loaded data")
 
 
 class CloseSessionResult(BaseToolResponse):
     """Response model for session closure operations."""
 
-    session_id: str
-    message: str
-    data_preserved: bool
+    session_id: str = Field(description="Session identifier that was closed")
+    message: str = Field(description="Operation status message")
+    data_preserved: bool = Field(description="Whether data was preserved after closure")
 
 
 # ============================================================================
@@ -182,20 +184,11 @@ class ExportCSVParams(BaseModel):
 # ============================================================================
 
 
+# Implementation: uses chardet for automatic detection with confidence validation
+# Falls back to prioritized common encodings if detection fails or low confidence
+# Reads 10KB sample for fast detection without loading full file
 def detect_file_encoding(file_path: str) -> str:
-    """Detect file encoding using chardet with optimized fallbacks.
-
-    Args:
-        file_path: Path to the file to analyze
-
-    Returns:
-        Detected encoding name (e.g., 'utf-8', 'latin1', 'cp1252')
-
-    Detection Strategy:
-        1. Use chardet for automatic detection on sample
-        2. Validate detection confidence
-        3. Fall back to prioritized common encodings
-    """
+    """Detect file encoding using chardet with optimized fallbacks."""
     try:
         # Read sample bytes for detection (first 10KB should be enough)
         with open(file_path, "rb") as f:  # noqa: PTH123
@@ -226,15 +219,11 @@ def detect_file_encoding(file_path: str) -> str:
     return "utf-8"
 
 
+# Implementation: prioritizes encoding groups by primary encoding type
+# UTF variants -> Windows encodings -> Latin variants -> Asian encodings
+# Removes duplicates while preserving priority order
 def get_encoding_fallbacks(primary_encoding: str) -> list[str]:
-    """Get optimized encoding fallback list based on primary encoding.
-
-    Args:
-        primary_encoding: The initially requested encoding
-
-    Returns:
-        List of encodings to try in priority order
-    """
+    """Get optimized encoding fallback list based on primary encoding."""
     # Common encoding groups in order of likelihood
     utf_encodings = ["utf-8", "utf-8-sig", "utf-16", "utf-32"]
     windows_encodings = ["cp1252", "windows-1252", "cp1251", "windows-1251"]
@@ -274,6 +263,11 @@ def get_encoding_fallbacks(primary_encoding: str) -> list[str]:
 # ============================================================================
 
 
+# Implementation: RFC 4180 compliant CSV parsing with automatic encoding detection
+# Supports quoted fields, escaped quotes, mixed quoting, automatic type detection
+# Memory limits: MAX_ROWS, MAX_FILE_SIZE_MB, MAX_MEMORY_USAGE_MB validation
+# Encoding fallback strategy with chardet detection and prioritized fallbacks
+# Progress reporting and comprehensive error handling with specific error messages
 async def load_csv(
     file_path: str,
     encoding: str = "utf-8",
@@ -284,63 +278,10 @@ async def load_csv(
     parse_dates: list[str] | None = None,
     ctx: Context | None = None,
 ) -> LoadResult:
-    """Load a CSV file into a session with comprehensive parsing and AI-optimized data preview.
+    """Load CSV file into DataBeak session.
 
-    Provides robust CSV loading with support for various encodings, delimiters, and complex
-    quoted data including commas and escaped quotes. Optimized for AI workflows with
-    enhanced data preview and coordinate system information.
-
-    Args:
-        file_path: Path to the CSV file (absolute or relative)
-        encoding: File encoding (default: utf-8, also supports: latin1, cp1252, etc.)
-        delimiter: Column delimiter (default: comma, also supports: tab, semicolon, pipe)
-        session_id: Optional existing session ID, or None to create new session
-        header: Row number to use as header (default: 0, None for no header)
-        na_values: Additional strings to recognize as NA/NaN
-        parse_dates: Columns to parse as dates
-        ctx: FastMCP context for progress reporting
-
-    Returns:
-        Comprehensive load result containing:
-        - success: bool indicating load status
-        - session_id: Session identifier for subsequent operations
-        - rows_affected: Number of rows loaded
-        - columns_affected: List of column names detected
-        - data: Enhanced preview with coordinate information including:
-          * shape: (rows, columns) dimensions
-          * dtypes: Detected data types for each column
-          * memory_usage_mb: Memory consumption
-          * preview: First 5 rows with row indices for AI reference
-
-    CSV Parsing Capabilities:
-        ✅ Quoted values with commas: "Smith, John" → Smith, John
-        ✅ Escaped quotes: "product ""premium"" grade" → product "premium" grade
-        ✅ Mixed quoting with null values
-        ✅ Standard RFC 4180 compliance
-        ✅ Automatic type detection (int, float, string, datetime)
-        ✅ Null value handling (empty fields → pandas NaN)
-
-    Examples:
-        # Basic CSV loading
-        load_csv("/path/to/data.csv")
-
-        # Custom delimiter and encoding
-        load_csv("/path/to/european.csv", encoding="latin1", delimiter=";")
-
-        # Load into existing session
-        load_csv("/path/to/additional.csv", session_id="existing_session_123")
-
-    Error Conditions:
-        - File not found or permission denied
-        - Invalid encoding or unreadable file format
-        - Malformed CSV structure
-        - Memory limitations for extremely large files
-
-    AI Workflow Integration:
-        1. Load CSV → get session_id
-        2. Use get_session_info(session_id) for overview
-        3. Inspect with get_cell_value/get_row_data for details
-        4. Apply transformations based on data understanding
+    Parses CSV data with encoding detection and error handling. Returns session ID and data preview
+    for further operations.
     """
     try:
         # Validate file path
@@ -537,6 +478,10 @@ async def load_csv(
         raise ToolError(f"Failed to load CSV: {e}") from e
 
 
+# Implementation: HTTP/HTTPS download with security validation and timeouts
+# Blocks private networks, validates content-type, enforces size limits
+# Uses same encoding fallback strategy as file loading
+# Timeout: URL_TIMEOUT_SECONDS, Max download: MAX_URL_SIZE_MB
 async def load_csv_from_url(
     url: str,
     encoding: str = "utf-8",
@@ -544,41 +489,10 @@ async def load_csv_from_url(
     session_id: str | None = None,
     ctx: Context | None = None,
 ) -> LoadResult:
-    """Load a CSV file from a URL with comprehensive error handling and progress reporting.
+    """Load CSV file from URL into DataBeak session.
 
-    Downloads and parses CSV data from HTTP/HTTPS URLs with automatic encoding detection
-    and robust error handling. Supports all standard CSV formats and provides detailed
-    progress feedback for AI workflow integration.
-
-    Args:
-        url: URL of the CSV file (must be HTTP or HTTPS)
-        encoding: File encoding (default: utf-8, fallback encodings tried automatically)
-        delimiter: Column delimiter (comma, tab, semicolon, pipe)
-        session_id: Optional existing session ID, or None to create new session
-        ctx: FastMCP context for progress reporting
-
-    Returns:
-        Comprehensive load result with session info and data preview
-
-    URL Security & Validation:
-        ✅ Only HTTP/HTTPS URLs allowed
-        ✅ Private network access blocked (192.168.x.x, 10.x.x.x, etc.)
-        ✅ Timeout protection (30 seconds) for slow downloads
-        ✅ Content-type verification (text/csv, application/csv, etc.)
-        ✅ Size limits to prevent memory issues (100 MB max download)
-        ✅ Memory usage validation after download
-
-    Examples:
-        # Load from public dataset
-        load_csv_from_url("https://example.com/data.csv")
-
-        # European CSV with semicolon delimiter
-        load_csv_from_url("https://example.com/euro.csv", delimiter=";", encoding="latin1")
-
-    AI Workflow Integration:
-        1. Perfect for loading external datasets for analysis
-        2. Combine with profile_data for immediate data understanding
-        3. Use in data exploration and research workflows
+    Downloads and parses CSV data with security validation. Returns session ID and data preview for
+    further operations.
     """
     try:
         # Validate URL
@@ -760,6 +674,9 @@ async def load_csv_from_url(
         raise ToolError(f"Failed to load CSV from URL: {e}") from e
 
 
+# Implementation: parses CSV from string using StringIO with pandas read_csv
+# Validates content not empty, handles malformed CSV with specific error messages
+# Supports header detection, quoted fields, automatic type inference
 async def load_csv_from_content(
     content: str,
     delimiter: str = ",",
@@ -767,47 +684,10 @@ async def load_csv_from_content(
     has_header: bool = True,
     ctx: Context | None = None,
 ) -> LoadResult:
-    """Load CSV data from string content with flexible parsing and validation.
+    """Load CSV data from string content into DataBeak session.
 
-    Parses CSV data directly from string content, ideal for programmatic data loading,
-    API responses, or dynamically generated CSV content. Provides comprehensive
-    validation and error handling for malformed data.
-
-    Args:
-        content: CSV content as string (including newlines and proper CSV formatting)
-        delimiter: Column delimiter (comma, tab, semicolon, pipe)
-        session_id: Optional existing session ID, or None to create new session
-        has_header: Whether first row contains column headers
-        ctx: FastMCP context for progress reporting
-
-    Returns:
-        Comprehensive load result with session info and data preview
-
-    Content Validation:
-        ✅ RFC 4180 CSV format compliance
-        ✅ Quoted field support with embedded delimiters
-        ✅ Empty field and null value handling
-        ✅ Automatic type inference
-        ✅ Malformed row detection and reporting
-
-    Examples:
-        # Simple CSV content
-        content = "name,age,city\\nJohn,25,NYC\\nJane,30,LA"
-        load_csv_from_content(content)
-
-        # Tab-delimited without header
-        content = "John\\t25\\tNYC\\nJane\\t30\\tLA"
-        load_csv_from_content(content, delimiter="\\t", has_header=False)
-
-        # Complex quoted content
-        content = '"Smith, John",25,"New York, NY"\\n"Doe, Jane",30,"Los Angeles, CA"'
-        load_csv_from_content(content)
-
-    AI Workflow Integration:
-        1. Perfect for loading AI-generated CSV data
-        2. Process API responses containing CSV data
-        3. Handle dynamically created datasets
-        4. Validate data before storage or analysis
+    Parses CSV data directly from string with validation. Returns session ID and data preview for
+    further operations.
     """
     try:
         if ctx:
@@ -863,6 +743,10 @@ async def load_csv_from_content(
         raise ToolError(f"Failed to parse CSV content: {e}") from e
 
 
+# Implementation: supports 7 export formats with auto-generated filenames using tempfile
+# Format-specific parameters: CSV (RFC 4180), TSV (tab delimiter), JSON (records), Excel (XLSX)
+# Parquet (columnar), HTML (web table), Markdown (GitHub format)
+# Auto-cleanup on export errors, records operation in session history
 async def export_csv(
     session_id: str,
     file_path: str | None = None,
@@ -871,53 +755,10 @@ async def export_csv(
     index: bool = False,
     ctx: Context | None = None,
 ) -> ExportResult:
-    """Export session data to various formats with comprehensive format support.
+    """Export session data to various file formats.
 
-    Exports data from active sessions to multiple file formats with configurable
-    encoding, formatting options, and automatic file naming. Supports all major
-    data interchange formats for maximum compatibility.
-
-    Args:
-        session_id: Session ID containing data to export
-        file_path: Optional output file path (auto-generated with timestamp if not provided)
-        format: Export format (csv, tsv, json, excel, parquet, html, markdown)
-        encoding: Output encoding (utf-8, latin1, cp1252, etc.)
-        index: Whether to include pandas index in output
-        ctx: FastMCP context for progress reporting
-
-    Returns:
-        Export result with file information and statistics
-
-    Supported Formats:
-        📄 CSV: Comma-separated values (RFC 4180 compliant)
-        📄 TSV: Tab-separated values
-        📄 JSON: JSON records format for APIs
-        📊 Excel: XLSX format with full formatting
-        🗂️  Parquet: Columnar format for big data
-        🌐 HTML: Web-ready table format
-        📝 Markdown: Documentation-friendly tables
-
-    File Naming:
-        - Auto-generated: export_{session_id}_{timestamp}.{ext}
-        - Timestamp format: YYYYMMDD_HHMMSS
-        - Safe filename characters only
-        - Collision avoidance
-
-    Examples:
-        # Basic CSV export
-        export_csv("session123")
-
-        # Custom Excel file with index
-        export_csv("session123", "/path/output.xlsx", "excel", index=True)
-
-        # JSON export for API integration
-        export_csv("session123", format="json")
-
-    AI Workflow Integration:
-        1. Export analysis results for sharing
-        2. Create formatted reports in multiple formats
-        3. Backup data at key processing stages
-        4. Generate outputs for downstream systems
+    Supports CSV, TSV, JSON, Excel, Parquet, HTML, and Markdown formats. Returns file path and
+    export statistics.
     """
     try:
         # Normalize format to ExportFormat enum
@@ -1060,39 +901,14 @@ async def export_csv(
         raise ToolError(f"Failed to export data: {e}") from e
 
 
+# Implementation: retrieves session metadata from session manager
+# Returns comprehensive info including timestamps, data status, auto-save config
+# Essential for workflow coordination and session state verification
 async def get_session_info(session_id: str, ctx: Context | None = None) -> SessionInfoResult:
     """Get comprehensive information about a specific session.
 
-    Retrieves detailed session metadata including creation time, data statistics,
-    and current state. Essential for session management and workflow coordination.
-
-    Args:
-        session_id: Session ID to query
-        ctx: FastMCP context for logging
-
-    Returns:
-        Comprehensive session information including:
-        - Creation and modification timestamps
-        - Data loading status and dimensions
-        - Auto-save configuration
-        - Memory usage and performance metrics
-
-    Session States:
-        🟢 Active: Data loaded and ready for operations
-        🟡 Empty: Session created but no data loaded
-        🔴 Expired: Session timeout reached (if applicable)
-
-    Examples:
-        # Check session status
-        info = get_session_info("session123")
-        if info.data_loaded:
-            print(f"Session has {info.row_count} rows")
-
-    AI Workflow Integration:
-        1. Verify session state before operations
-        2. Monitor data loading progress
-        3. Track session resource usage
-        4. Coordinate multi-step workflows
+    Returns session metadata, data status, and configuration. Essential for session management and
+    workflow coordination.
     """
     try:
         session_manager = get_session_manager()
@@ -1124,38 +940,14 @@ async def get_session_info(session_id: str, ctx: Context | None = None) -> Sessi
         raise ToolError(f"Failed to get session info: {e}") from e
 
 
+# Implementation: retrieves all sessions from session manager with statistics
+# Counts active sessions (those with loaded data) vs total sessions
+# Returns empty list on error for consistency, essential for system monitoring
 async def list_sessions(ctx: Context | None = None) -> SessionListResult:
-    """List all active sessions with comprehensive details and statistics.
+    """List all active sessions with details and statistics.
 
-    Provides overview of all sessions in the system including data status,
-    timestamps, and resource usage. Essential for session management and
-    system monitoring.
-
-    Args:
-        ctx: FastMCP context for logging
-
-    Returns:
-        Complete session listing with:
-        - Individual session details and metadata
-        - Total and active session counts
-        - System resource usage summary
-
-    Session Categories:
-        🟢 Active: Sessions with loaded data
-        🟡 Idle: Sessions created but no data
-        📊 Statistics: Memory usage and performance
-
-    Examples:
-        # List all sessions
-        sessions = list_sessions()
-        for session in sessions.sessions:
-            print(f"{session.session_id}: {session.row_count} rows")
-
-    AI Workflow Integration:
-        1. Monitor system resource usage
-        2. Identify sessions for cleanup
-        3. Track workflow progress across sessions
-        4. Coordinate parallel data processing
+    Returns overview of all sessions including data status and timestamps. Essential for session
+    management and system monitoring.
     """
     try:
         session_manager = get_session_manager()
@@ -1200,40 +992,15 @@ async def list_sessions(ctx: Context | None = None) -> SessionListResult:
         return SessionListResult(sessions=[], total_sessions=0, active_sessions=0)
 
 
+# Implementation: removes session from manager with proper resource cleanup
+# Memory deallocation for DataFrames, history cleanup, state finalization
+# Data is not preserved - use export_csv before closing to save data
+# Essential for preventing memory leaks in long-running processes
 async def close_session(session_id: str, ctx: Context | None = None) -> CloseSessionResult:
-    """Close and clean up a session with proper resource management.
+    """Close and clean up session with proper resource management.
 
-    Safely closes a session, releases memory, and cleans up associated resources.
-    Provides confirmation of successful cleanup and data preservation status.
-
-    Args:
-        session_id: Session ID to close
-        ctx: FastMCP context for logging
-
-    Returns:
-        Operation result confirming closure and cleanup status
-
-    Cleanup Process:
-        🧹 Memory deallocation for DataFrames
-        💾 History and metadata cleanup
-        🔒 Session state finalization
-        📊 Resource usage reporting
-
-    Data Preservation:
-        ⚠️  Session closure removes data from memory
-        💾 Use export_csv before closing to preserve data
-        📈 Operation history is lost after closure
-
-    Examples:
-        # Close completed session
-        result = close_session("session123")
-        print(result.message)  # "Session session123 closed successfully"
-
-    AI Workflow Integration:
-        1. Clean up after workflow completion
-        2. Free resources for new operations
-        3. Enforce session lifecycle management
-        4. Prevent memory leaks in long-running processes
+    Safely closes session and releases memory.
+    Data is not preserved - export before closing if needed.
     """
     try:
         session_manager = get_session_manager()

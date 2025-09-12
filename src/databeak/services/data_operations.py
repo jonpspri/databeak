@@ -1,4 +1,4 @@
-"""Core data operations and utilities for CSV Editor."""
+"""Core data operations and utilities for CSV data manipulation."""
 
 from __future__ import annotations
 
@@ -10,8 +10,9 @@ from ..exceptions import InvalidRowIndexError, NoDataLoadedError, SessionNotFoun
 from ..models import get_session_manager
 
 
+# Implementation: Convert DataFrame to structured preview with row indices and type handling
 def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dict[str, Any]:
-    """Create a data preview with row indices for AI accessibility."""
+    """Create data preview with row indices and metadata."""
     preview_df = df.head(num_rows)
 
     # Create records with row indices
@@ -44,8 +45,9 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
     }
 
 
+# Implementation: Comprehensive data analysis including shape, types, memory usage, nulls
 def get_data_summary(session_id: str) -> dict[str, Any]:
-    """Get a summary of the data in a session."""
+    """Get comprehensive data summary for session."""
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
 
@@ -67,22 +69,25 @@ def get_data_summary(session_id: str) -> dict[str, Any]:
     }
 
 
+# Implementation: Boundary check for DataFrame row access
 def validate_row_index(df: pd.DataFrame, row_index: int) -> None:
-    """Validate that a row index is within bounds."""
+    """Validate row index is within DataFrame bounds."""
     if row_index < 0 or row_index >= len(df):
         raise InvalidRowIndexError(row_index, len(df) - 1)
 
 
+# Implementation: Column existence check with error handling
 def validate_column_exists(df: pd.DataFrame, column: str) -> None:
-    """Validate that a column exists in the dataframe."""
+    """Validate column exists in DataFrame."""
     from ..exceptions import ColumnNotFoundError
 
     if column not in df.columns:
         raise ColumnNotFoundError(column, df.columns.tolist())
 
 
+# Implementation: Type conversion with error handling for int, float, string, datetime, boolean
 def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
-    """Safely convert a pandas Series to a target type."""
+    """Convert pandas Series to target type with error handling."""
     try:
         if target_type == "int":
             return pd.to_numeric(series, errors="coerce").astype("Int64")

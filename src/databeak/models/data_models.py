@@ -1,4 +1,4 @@
-"""Data models for CSV Editor MCP Server."""
+"""Core data models and enums for DataBeak operations."""
 
 from __future__ import annotations
 
