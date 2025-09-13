@@ -11,6 +11,7 @@ from src.databeak.servers.column_server import (
     update_column,
 )
 from src.databeak.servers.io_server import load_csv_from_content
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -23,7 +24,8 @@ async def update_session():
 4,Item D,Category 2,400,
 5,Item E,Category 3,500,inactive"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -35,7 +37,9 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = ReplaceOperation(pattern="Category 1", replacement="Cat-1")
 
         result = await update_column(
-            session_id=update_session, column="category", operation=operation
+            create_mock_context_with_session_data(update_session),
+            column="category",
+            operation=operation,
         )
 
         assert result.success is True
@@ -48,7 +52,9 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = MapOperation(mapping={"active": 1, "inactive": 0})
 
         result = await update_column(
-            session_id=update_session, column="status", operation=operation
+            create_mock_context_with_session_data(update_session),
+            column="status",
+            operation=operation,
         )
 
         assert result.success is True
@@ -59,7 +65,11 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test update_column with ApplyOperation object."""
         operation = ApplyOperation(expression="x * 2")
 
-        result = await update_column(session_id=update_session, column="value", operation=operation)
+        result = await update_column(
+            create_mock_context_with_session_data(update_session),
+            column="value",
+            operation=operation,
+        )
 
         assert result.success is True
         assert "value" in result.columns_affected
@@ -69,7 +79,11 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test update_column with FillNaOperation object."""
         operation = FillNaOperation(value=0)
 
-        result = await update_column(session_id=update_session, column="value", operation=operation)
+        result = await update_column(
+            create_mock_context_with_session_data(update_session),
+            column="value",
+            operation=operation,
+        )
 
         assert result.success is True
         assert "value" in result.columns_affected
@@ -79,7 +93,11 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test update_column with replace operation as dict."""
         operation = {"type": "replace", "pattern": "Item A", "replacement": "Product A"}
 
-        result = await update_column(session_id=update_session, column="name", operation=operation)
+        result = await update_column(
+            create_mock_context_with_session_data(update_session),
+            column="name",
+            operation=operation,
+        )
 
         assert result.success is True
         assert result.operation == "update_replace"
@@ -92,7 +110,9 @@ class TestUpdateColumnDiscriminatedUnions:
         }
 
         result = await update_column(
-            session_id=update_session, column="category", operation=operation
+            create_mock_context_with_session_data(update_session),
+            column="category",
+            operation=operation,
         )
 
         assert result.success is True
@@ -103,7 +123,9 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"type": "apply", "expression": "x.upper()"}
 
         result = await update_column(
-            session_id=update_session, column="status", operation=operation
+            create_mock_context_with_session_data(update_session),
+            column="status",
+            operation=operation,
         )
 
         assert result.success is True
@@ -114,7 +136,9 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"type": "fillna", "value": "unknown"}
 
         result = await update_column(
-            session_id=update_session, column="status", operation=operation
+            create_mock_context_with_session_data(update_session),
+            column="status",
+            operation=operation,
         )
 
         assert result.success is True
@@ -127,21 +151,33 @@ class TestUpdateColumnDiscriminatedUnions:
         )
 
         with pytest.raises(ToolError, match="Invalid value for parameter"):
-            await update_column(session_id=update_session, column="value", operation=operation)
+            await update_column(
+                create_mock_context_with_session_data(update_session),
+                column="value",
+                operation=operation,
+            )
 
     async def test_invalid_operation_type_dict(self, update_session):
         """Test with invalid operation type in dict."""
         operation = {"type": "invalid_op", "value": 123}
 
         with pytest.raises(ToolError, match="Invalid value for parameter"):
-            await update_column(session_id=update_session, column="value", operation=operation)
+            await update_column(
+                create_mock_context_with_session_data(update_session),
+                column="value",
+                operation=operation,
+            )
 
     async def test_legacy_fillna_format(self, update_session):
         """Test legacy fillna format (backward compatibility)."""
         # Legacy format without type field
         operation = {"operation": "fillna", "value": -1}
 
-        result = await update_column(session_id=update_session, column="value", operation=operation)
+        result = await update_column(
+            create_mock_context_with_session_data(update_session),
+            column="value",
+            operation=operation,
+        )
 
         assert result.success is True
         assert result.operation == "update_fillna"
@@ -152,20 +188,24 @@ class TestUpdateColumnDiscriminatedUnions:
 
         with pytest.raises(ToolError, match="Column 'nonexistent' not found"):
             await update_column(
-                session_id=update_session, column="nonexistent", operation=operation
+                create_mock_context_with_session_data(update_session),
+                column="nonexistent",
+                operation=operation,
             )
 
     async def test_mixed_operations_sequence(self, update_session):
         """Test sequence of different operations."""
         # First, fill nulls
         result1 = await update_column(
-            session_id=update_session, column="value", operation=FillNaOperation(value=0)
+            create_mock_context_with_session_data(update_session),
+            column="value",
+            operation=FillNaOperation(value=0),
         )
         assert result1.success is True
 
         # Then apply transformation
         result2 = await update_column(
-            session_id=update_session,
+            create_mock_context_with_session_data(update_session),
             column="value",
             operation=ApplyOperation(expression="x * 1.1"),
         )
@@ -173,7 +213,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         # Finally, map categories
         result3 = await update_column(
-            session_id=update_session,
+            create_mock_context_with_session_data(update_session),
             column="category",
             operation=MapOperation(
                 mapping={"Category 1": "Premium", "Category 2": "Standard", "Category 3": "Basic"}

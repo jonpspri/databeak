@@ -6,6 +6,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src.databeak.servers.system_server import get_server_info, health_check
+from tests.test_mock_context import create_mock_context
 
 
 class TestHealthCheck:
@@ -22,7 +23,7 @@ class TestHealthCheck:
             mock_session_manager.ttl_minutes = 60
             mock_manager.return_value = mock_session_manager
 
-            result = await health_check()
+            result = await health_check(create_mock_context())
 
             assert result.success is True
             assert result.status == "healthy"
@@ -43,7 +44,7 @@ class TestHealthCheck:
             mock_session_manager.ttl_minutes = 60
             mock_manager.return_value = mock_session_manager
 
-            result = await health_check()
+            result = await health_check(create_mock_context())
 
             assert result.success is True
             assert result.status == "degraded"
@@ -104,7 +105,7 @@ class TestHealthCheck:
         ):
             mock_manager.side_effect = Exception("Critical failure")
 
-            result = await health_check()
+            result = await health_check(create_mock_context())
 
             # Should return unhealthy status rather than raise exception
             assert result.success is True  # Base model default
@@ -121,7 +122,7 @@ class TestHealthCheck:
             mock_session_manager.ttl_minutes = 120
             mock_manager.return_value = mock_session_manager
 
-            result = await health_check()
+            result = await health_check(create_mock_context())
 
             # Verify all required fields are present
             assert hasattr(result, "success")
@@ -151,7 +152,7 @@ class TestServerInfo:
             mock_config.session_timeout = 3600  # 1 hour in seconds
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             # Verify basic server information
             assert result.success is True
@@ -173,7 +174,7 @@ class TestServerInfo:
             mock_config.session_timeout = 1800
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             # Verify capability categories exist
             expected_categories = [
@@ -199,7 +200,7 @@ class TestServerInfo:
             mock_config.session_timeout = 7200
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             data_io_caps = result.capabilities["data_io"]
             expected_io_caps = [
@@ -222,7 +223,7 @@ class TestServerInfo:
             mock_config.session_timeout = 1200
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             expected_formats = [
                 "csv",
@@ -286,7 +287,7 @@ class TestServerInfo:
             mock_config.session_timeout = 5400
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             null_caps = result.capabilities["null_handling"]
             expected_null_caps = [
@@ -309,7 +310,7 @@ class TestServerInfo:
             mock_config.session_timeout = 3000
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             manipulation_caps = result.capabilities["data_manipulation"]
             expected_caps = [
@@ -337,7 +338,7 @@ class TestServerInfo:
             mock_config.session_timeout = 7200
             mock_settings.return_value = mock_config
 
-            result = await get_server_info()
+            result = await get_server_info(create_mock_context())
 
             # Test that the result can be serialized (Pydantic validation)
             result_dict = result.model_dump()

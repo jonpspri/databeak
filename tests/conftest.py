@@ -47,9 +47,11 @@ async def test_session() -> str:
     """Create a test session."""
     from src.databeak.models import get_session_manager
     from src.databeak.servers.io_server import load_csv_from_content
+    from tests.test_mock_context import create_mock_context
 
     # Create session with sample data
     result = await load_csv_from_content(
+        create_mock_context(),
         content="""product,price,quantity
 Laptop,999.99,10
 Mouse,29.99,50

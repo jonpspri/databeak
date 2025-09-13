@@ -22,7 +22,7 @@ from src.databeak.servers.row_operations_server import (
     set_cell_value,
     update_row,
 )
-from tests.mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture

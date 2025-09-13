@@ -17,7 +17,7 @@ from src.databeak.servers.statistics_server import (
     get_statistics,
     get_value_counts,
 )
-from tests.mock_context import create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context_with_session_data
 
 
 @pytest.fixture

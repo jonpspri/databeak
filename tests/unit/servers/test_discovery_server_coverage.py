@@ -21,7 +21,7 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
     profile_data,
 )
-from tests.mock_context import create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context_with_session_data
 
 
 @pytest.fixture

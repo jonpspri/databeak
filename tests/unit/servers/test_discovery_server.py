@@ -12,7 +12,7 @@ from src.databeak.servers.discovery_server import (
     profile_data,
 )
 from src.databeak.servers.io_server import load_csv_from_content
-from tests.mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -179,7 +179,7 @@ class TestProfileData:
     async def test_profile_with_data(self):
         """Test profiling with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         ctx_profile = create_mock_context_with_session_data(result.session_id)
         profile = await profile_data(ctx_profile)
@@ -245,10 +245,12 @@ B,30
 B,
 A,
 C,40"""
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         agg_result = await group_by_aggregate(
-            result.session_id, group_by=["category"], aggregations={"value": ["mean", "count"]}
+            create_mock_context_with_session_data(result.session_id),
+            group_by=["category"],
+            aggregations={"value": ["mean", "count"]},
         )
 
         assert agg_result.success is True
@@ -258,14 +260,18 @@ C,40"""
         """Test groupby with invalid column."""
         with pytest.raises(ToolError, match="not found"):
             await group_by_aggregate(
-                grouped_session, group_by=["fake_column"], aggregations={"salary": ["mean"]}
+                create_mock_context_with_session_data(grouped_session),
+                group_by=["fake_column"],
+                aggregations={"salary": ["mean"]},
             )
 
     async def test_groupby_invalid_aggregation(self, grouped_session):
         """Test groupby with invalid aggregation."""
         # Server ignores invalid aggregations and uses defaults
         result = await group_by_aggregate(
-            grouped_session, group_by=["department"], aggregations={"salary": ["invalid_func"]}
+            create_mock_context_with_session_data(grouped_session),
+            group_by=["department"],
+            aggregations={"salary": ["invalid_func"]},
         )
         assert result.success is True
 
@@ -344,9 +350,11 @@ class TestFindCellsWithValue:
     async def test_find_null_values(self):
         """Test finding null values."""
         csv_content = "col1,col2\nA,1\nB,\n,3\nD,4"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
-        null_result = await find_cells_with_value(result.session_id, None)
+        null_result = await find_cells_with_value(
+            create_mock_context_with_session_data(result.session_id), None
+        )
         assert null_result.success is True
         assert null_result.matches_found == 2
 
@@ -373,7 +381,10 @@ class TestInspectDataAround:
         """Test inspection at edges of DataFrame."""
         # Top-left corner
         result = await inspect_data_around(
-            discovery_session, row=0, column_name="customer_id", radius=3
+            create_mock_context_with_session_data(discovery_session),
+            row=0,
+            column_name="customer_id",
+            radius=3,
         )
 
         assert result.success is True
@@ -381,7 +392,10 @@ class TestInspectDataAround:
 
         # Bottom-right area
         result = await inspect_data_around(
-            discovery_session, row=9, column_name="is_premium", radius=2
+            create_mock_context_with_session_data(discovery_session),
+            row=9,
+            column_name="is_premium",
+            radius=2,
         )
 
         assert result.success is True
@@ -389,7 +403,10 @@ class TestInspectDataAround:
     async def test_inspect_large_radius(self, discovery_session):
         """Test with large radius."""
         result = await inspect_data_around(
-            discovery_session, row=5, column_name="category", radius=10
+            create_mock_context_with_session_data(discovery_session),
+            row=5,
+            column_name="category",
+            radius=10,
         )
 
         assert result.success is True
@@ -405,7 +422,12 @@ class TestInspectDataAround:
 
         # Invalid column should still raise error
         with pytest.raises(ToolError, match="not found"):
-            await inspect_data_around(discovery_session, row=0, column_name="nonexistent", radius=1)
+            await inspect_data_around(
+                create_mock_context_with_session_data(discovery_session),
+                row=0,
+                column_name="nonexistent",
+                radius=1,
+            )
 
 
 @pytest.mark.asyncio
@@ -470,9 +492,9 @@ A,1,
 B,,2
 ,3,3
 D,4,"""
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
-        summary = await get_data_summary(result.session_id)
+        summary = await get_data_summary(create_mock_context_with_session_data(result.session_id))
         assert summary.success is True
         assert summary.missing_data.total_missing > 0
         assert summary.missing_data.missing_percentage > 0
@@ -504,46 +526,57 @@ class TestIntegrationAndEdgeCases:
     async def test_with_actual_data(self):
         """Test all functions with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
         session_id = result.session_id
 
         # Profile should work
-        profile = await profile_data(session_id)
+        profile = await profile_data(create_mock_context_with_session_data(session_id))
         assert profile.success is True
         assert profile.total_rows == 2
 
         # Summary should work
-        summary = await get_data_summary(session_id)
+        summary = await get_data_summary(create_mock_context_with_session_data(session_id))
         assert summary.success is True
         assert summary.shape["rows"] == 2
 
         # Find should return results
-        find_result = await find_cells_with_value(session_id, 1)
+        find_result = await find_cells_with_value(
+            create_mock_context_with_session_data(session_id), 1
+        )
         assert find_result.success is True
         assert find_result.matches_found == 1
 
     async def test_single_row_operations(self):
         """Test with single row DataFrame."""
         csv_content = "name,value\nTest,42"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
         session_id = result.session_id
 
         # Inspect should work
-        inspect = await inspect_data_around(session_id, 0, "name", radius=2)
+        inspect = await inspect_data_around(
+            create_mock_context_with_session_data(session_id), 0, "name", radius=2
+        )
         assert inspect.success is True
         assert len(inspect.surrounding_data.rows) == 1
 
         # Find should work
-        find_result = await find_cells_with_value(session_id, 42)
+        find_result = await find_cells_with_value(
+            create_mock_context_with_session_data(session_id), 42
+        )
         assert find_result.success is True
         assert find_result.matches_found == 1
 
     async def test_large_radius_inspect(self):
         """Test inspect with radius larger than DataFrame."""
         csv_content = "a,b\n1,2\n3,4"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
-        inspect = await inspect_data_around(result.session_id, row=0, column_name="a", radius=100)
+        inspect = await inspect_data_around(
+            create_mock_context_with_session_data(result.session_id),
+            row=0,
+            column_name="a",
+            radius=100,
+        )
 
         assert inspect.success is True
         assert len(inspect.surrounding_data.rows) == 2  # All rows
@@ -556,7 +589,7 @@ class TestIntegrationAndEdgeCases:
             await detect_outliers(invalid_id)
 
         with pytest.raises(ToolError):
-            await profile_data(invalid_id)
+            await profile_data(create_mock_context_with_session_data(invalid_id))
 
         with pytest.raises(ToolError):
             await group_by_aggregate(invalid_id, group_by=["col"], aggregations={"val": ["mean"]})
@@ -565,7 +598,9 @@ class TestIntegrationAndEdgeCases:
             await find_cells_with_value(invalid_id, "value")
 
         with pytest.raises(ToolError):
-            await inspect_data_around(invalid_id, 0, "col", 1)
+            await inspect_data_around(
+                create_mock_context_with_session_data(invalid_id), 0, "col", 1
+            )
 
         with pytest.raises(ToolError):
-            await get_data_summary(invalid_id)
+            await get_data_summary(create_mock_context_with_session_data(invalid_id))

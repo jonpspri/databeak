@@ -16,7 +16,7 @@ from src.databeak.servers.validation_server import (
     find_anomalies,
     validate_schema,
 )
-from tests.mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture

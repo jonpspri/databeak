@@ -18,7 +18,7 @@ from src.databeak.servers.transformation_server import (
     remove_duplicates,
     sort_data,
 )
-from tests.mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture

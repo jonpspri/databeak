@@ -18,7 +18,7 @@ from src.databeak.servers.column_server import (
     update_column,
 )
 from src.databeak.servers.io_server import load_csv_from_content
-from tests.mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture

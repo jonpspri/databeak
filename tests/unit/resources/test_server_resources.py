@@ -7,6 +7,7 @@ import pytest  # type: ignore[import-not-found]
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp
 from src.databeak.servers.io_server import load_csv_from_content
+from tests.test_mock_context import create_mock_context
 
 
 class TestServerInstructions:
@@ -31,7 +32,7 @@ class TestServerInstructions:
     def test_load_instructions_generic_error(self):
         """Test instruction loading with generic error."""
         with patch("pathlib.Path.read_text") as mock_read:
-            mock_read.side_effect = Exception("Generic error")
+            mock_read.side_effect = OSError("Generic error")
 
             instructions = _load_instructions()
             assert isinstance(instructions, str)
@@ -80,7 +81,7 @@ class TestServerSessionHandling:
     async def test_session_with_data_operations(self):
         """Test session operations with data."""
         # Create session with data
-        result = await load_csv_from_content("name,age\nJohn,30\nJane,25")
+        result = await load_csv_from_content(create_mock_context(), "name,age\nJohn,30\nJane,25")
         session_id = result.session_id
 
         session_manager = get_session_manager()

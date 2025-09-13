@@ -12,6 +12,7 @@ from src.databeak.servers.io_server import (
     list_sessions,
     load_csv_from_content,
 )
+from tests.test_mock_context import create_mock_context
 
 
 class TestSessionManagement:
@@ -25,7 +26,7 @@ class TestSessionManagement:
         session_manager = get_session_manager()
         session_manager.sessions.clear()
 
-        result = await list_sessions()
+        result = await list_sessions(create_mock_context())
 
         assert result.total_sessions == 0
         assert result.active_sessions == 0
@@ -35,9 +36,9 @@ class TestSessionManagement:
         """Test listing sessions with active sessions."""
         # Create a session with data
         csv_content = "col1,col2\n1,2\n3,4"
-        load_result = await load_csv_from_content(csv_content)
+        load_result = await load_csv_from_content(create_mock_context(), csv_content)
 
-        result = await list_sessions()
+        result = await list_sessions(create_mock_context())
 
         assert result.total_sessions >= 1
         assert result.active_sessions >= 1
@@ -53,9 +54,9 @@ class TestSessionManagement:
         """Test getting info for a valid session."""
         # Create a session
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(csv_content)
+        load_result = await load_csv_from_content(create_mock_context(), csv_content)
 
-        info = await get_session_info(load_result.session_id)
+        info = await get_session_info(create_mock_context(load_result.session_id))
 
         assert info.success is True
         assert info.session_id == load_result.session_id
@@ -67,7 +68,7 @@ class TestSessionManagement:
     async def test_get_session_info_invalid(self):
         """Test getting info for invalid session."""
         with pytest.raises(ToolError, match="Session not found"):
-            await get_session_info("invalid-session-id")
+            await get_session_info(create_mock_context())
 
 
 class TestCsvLoadingEdgeCases:
@@ -76,17 +77,17 @@ class TestCsvLoadingEdgeCases:
     async def test_load_csv_empty_content(self):
         """Test loading empty CSV content."""
         with pytest.raises(ToolError, match="CSV"):
-            await load_csv_from_content("")
+            await load_csv_from_content(create_mock_context(), "")
 
     async def test_load_csv_only_whitespace(self):
         """Test loading CSV with only whitespace."""
         with pytest.raises(ToolError, match="CSV"):
-            await load_csv_from_content("   \n  \n  ")
+            await load_csv_from_content(create_mock_context(), "   \n  \n  ")
 
     async def test_load_csv_single_column(self):
         """Test loading CSV with single column."""
         csv_content = "single_col\nvalue1\nvalue2\nvalue3"
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 3
         assert result.columns_affected == ["single_col"]
@@ -94,7 +95,7 @@ class TestCsvLoadingEdgeCases:
     async def test_load_csv_with_quotes(self):
         """Test loading CSV with quoted values."""
         csv_content = 'name,description\n"John Doe","A person, with comma"\n"Jane","Normal"'
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 2
         assert result.columns_affected == ["name", "description"]
@@ -102,7 +103,7 @@ class TestCsvLoadingEdgeCases:
     async def test_load_csv_with_different_delimiter(self):
         """Test loading CSV with semicolon delimiter."""
         csv_content = "col1;col2;col3\n1;2;3\n4;5;6"
-        result = await load_csv_from_content(csv_content, delimiter=";")
+        result = await load_csv_from_content(create_mock_context(), csv_content, delimiter=";")
 
         assert result.rows_affected == 2
         assert len(result.columns_affected) == 3
@@ -114,7 +115,7 @@ class TestCsvLoadingEdgeCases:
 2,Bob,200,false,2024-01-02
 3,Charlie,,true,"""
 
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 3
         assert len(result.columns_affected) == 5
@@ -124,7 +125,7 @@ class TestCsvLoadingEdgeCases:
         csv_content = "col,col,col\n1,2,3\n4,5,6"
 
         # Should handle duplicate columns by renaming them
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 2
         # Pandas renames duplicates like col, col.1, col.2
@@ -138,13 +139,15 @@ class TestExportFunctionality:
         """Test basic CSV export."""
         # Create a session with data
         csv_content = "name,value\ntest1,100\ntest2,200"
-        load_result = await load_csv_from_content(csv_content)
+        load_result = await load_csv_from_content(create_mock_context(), csv_content)
 
         # Export to a temporary file
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            export_result = await export_csv(session_id=load_result.session_id, file_path=tmp.name)
+            export_result = await export_csv(
+                create_mock_context(load_result.session_id), file_path=tmp.name
+            )
 
             assert export_result.success is True
             assert export_result.file_path == tmp.name
@@ -163,12 +166,14 @@ class TestExportFunctionality:
     async def test_export_csv_with_subset(self):
         """Test exporting a subset of columns."""
         csv_content = "col1,col2,col3,col4\n1,2,3,4\n5,6,7,8"
-        load_result = await load_csv_from_content(csv_content)
+        load_result = await load_csv_from_content(create_mock_context(), csv_content)
 
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            export_result = await export_csv(session_id=load_result.session_id, file_path=tmp.name)
+            export_result = await export_csv(
+                create_mock_context(load_result.session_id), file_path=tmp.name
+            )
 
             assert export_result.rows_exported == 2
 
@@ -185,7 +190,7 @@ class TestExportFunctionality:
         """Test exporting with invalid session."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             with pytest.raises(ToolError, match="Session not found"):
-                await export_csv(session_id="invalid-session", file_path=tmp.name)
+                await export_csv(create_mock_context(), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
 
@@ -194,11 +199,11 @@ class TestExportFunctionality:
         from src.databeak.models import get_session_manager
 
         session_manager = get_session_manager()
-        session_id = session_manager.create_session()
+        session_manager.create_session()
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             with pytest.raises(ToolError, match="no data loaded"):
-                await export_csv(session_id=session_id, file_path=tmp.name)
+                await export_csv(create_mock_context(), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
 
@@ -214,7 +219,7 @@ class TestMemoryAndPerformance:
         row = ",".join(str(i) for i in range(100))
         csv_content = f"{header}\n{row}\n{row}"
 
-        result = await load_csv_from_content(csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert len(result.columns_affected) == 100
         assert result.rows_affected == 2
@@ -223,8 +228,8 @@ class TestMemoryAndPerformance:
         """Test that memory usage is tracked."""
         csv_content = "col1,col2,col3\n" + "\n".join(f"{i},{i + 1},{i + 2}" for i in range(100))
 
-        load_result = await load_csv_from_content(csv_content)
-        info = await get_session_info(load_result.session_id)
+        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        info = await get_session_info(create_mock_context(load_result.session_id))
 
         # SessionInfoResult doesn't have memory_usage_mb field
         # Just check that session has data loaded
