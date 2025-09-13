@@ -80,12 +80,15 @@ class TestDataOperations:
     async def test_load_csv_from_content(self) -> None:
         """Test loading CSV from string content."""
         from src.databeak.servers.io_server import load_csv_from_content
+        from tests.test_mock_context import create_mock_context
 
         csv_content = """a,b,c
 1,2,3
 4,5,6"""
 
-        result = await load_csv_from_content(content=csv_content, delimiter=",")
+        result = await load_csv_from_content(
+            create_mock_context(), content=csv_content, delimiter=","
+        )
 
         assert result.session_id is not None
         assert result.rows_affected == 2

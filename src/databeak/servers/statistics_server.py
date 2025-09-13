@@ -62,7 +62,7 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 
 async def get_statistics(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str] | None,
         Field(description="List of specific columns to analyze (None = all numeric columns)"),
@@ -70,9 +70,6 @@ async def get_statistics(
     include_percentiles: Annotated[
         bool, Field(description="Whether to include 25th, 50th, 75th percentiles")
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
@@ -81,10 +78,9 @@ async def get_statistics(
     AI workflows with clear statistical insights and data understanding.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         columns: Optional list of specific columns to analyze (default: all numeric)
         include_percentiles: Whether to include 25th, 50th, 75th percentiles
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Comprehensive statistical analysis with per-column summaries
@@ -113,6 +109,8 @@ async def get_statistics(
         4. Provides context for outlier detection thresholds
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Select numeric columns
@@ -205,11 +203,8 @@ async def get_statistics(
 
 
 async def get_column_statistics(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Name of the column to analyze in detail")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnStatisticsResult:
     """Get detailed statistical analysis for a single column.
 
@@ -218,9 +213,8 @@ async def get_column_statistics(
     statistics when applicable.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         column: Name of the column to analyze
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Detailed statistical analysis for the specified column
@@ -233,10 +227,10 @@ async def get_column_statistics(
 
     Examples:
         # Analyze a price column
-        stats = await get_column_statistics("session_123", "price")
+        stats = await get_column_statistics(ctx, "price")
 
         # Analyze a categorical column
-        stats = await get_column_statistics("session_123", "category")
+        stats = await get_column_statistics(ctx, "category")
 
     AI Workflow Integration:
         1. Deep dive analysis for specific columns of interest
@@ -245,6 +239,8 @@ async def get_column_statistics(
         4. Validation of data transformations
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -364,7 +360,7 @@ async def get_column_statistics(
 
 
 async def get_correlation_matrix(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     method: Annotated[
         Literal["pearson", "spearman", "kendall"],
         Field(description="Correlation method: pearson (linear), spearman (rank), kendall (rank)"),
@@ -376,9 +372,6 @@ async def get_correlation_matrix(
     min_correlation: Annotated[
         float | None, Field(description="Minimum correlation threshold to include in results")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
 
@@ -387,11 +380,10 @@ async def get_correlation_matrix(
     variables and feature selection in analytical workflows.
 
     Args:
-        session_id: Session ID containing loaded data
-        columns: Optional list of columns to include (default: all numeric)
+        ctx: FastMCP context for session access
         method: Correlation method - pearson (linear), spearman (rank), kendall (rank)
+        columns: Optional list of columns to include (default: all numeric)
         min_correlation: Minimum correlation threshold to include in results
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Correlation matrix with pairwise correlation coefficients
@@ -403,15 +395,15 @@ async def get_correlation_matrix(
 
     Examples:
         # Basic correlation analysis
-        corr = await get_correlation_matrix("session_123")
+        corr = await get_correlation_matrix(ctx)
 
         # Analyze specific columns with Spearman correlation
-        corr = await get_correlation_matrix("session_123",
+        corr = await get_correlation_matrix(ctx,
                                           columns=["price", "rating", "sales"],
                                           method="spearman")
 
         # Filter correlations above threshold
-        corr = await get_correlation_matrix("session_123", min_correlation=0.5)
+        corr = await get_correlation_matrix(ctx, min_correlation=0.5)
 
     AI Workflow Integration:
         1. Feature selection and dimensionality reduction
@@ -420,6 +412,8 @@ async def get_correlation_matrix(
         4. Data validation and quality assessment
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Select numeric columns
@@ -500,7 +494,7 @@ async def get_correlation_matrix(
 
 
 async def get_value_counts(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Name of the column to analyze value distribution")],
     normalize: Annotated[
         bool, Field(description="Return percentages instead of raw counts")
@@ -512,9 +506,6 @@ async def get_value_counts(
     top_n: Annotated[
         int | None, Field(description="Maximum number of values to return (None = all values)")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
 
@@ -523,13 +514,12 @@ async def get_value_counts(
     understanding categorical data and identifying common patterns.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         column: Name of the column to analyze
         normalize: If True, return percentages instead of counts
         sort: Sort results by frequency
         ascending: Sort in ascending order (default: False for descending)
         top_n: Maximum number of values to return (default: all)
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Frequency distribution with counts/percentages for each unique value
@@ -542,14 +532,14 @@ async def get_value_counts(
 
     Examples:
         # Basic value counts
-        counts = await get_value_counts("session_123", "category")
+        counts = await get_value_counts(ctx, "category")
 
         # Get percentages for top 10 values
-        counts = await get_value_counts("session_123", "status",
+        counts = await get_value_counts(ctx, "status",
                                       normalize=True, top_n=10)
 
         # Sort in ascending order
-        counts = await get_value_counts("session_123", "grade", ascending=True)
+        counts = await get_value_counts(ctx, "grade", ascending=True)
 
     AI Workflow Integration:
         1. Categorical data analysis and encoding decisions
@@ -558,6 +548,8 @@ async def get_value_counts(
         4. Feature engineering insights for categorical variables
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:

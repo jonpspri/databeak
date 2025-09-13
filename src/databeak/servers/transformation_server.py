@@ -66,7 +66,7 @@ class SortColumn(BaseModel):
 
 
 def filter_rows(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     conditions: Annotated[
         list[FilterCondition | dict[str, Any]],
         Field(description="List of filter conditions with column, operator, and value"),
@@ -74,9 +74,6 @@ def filter_rows(
     mode: Annotated[
         Literal["and", "or"], Field(description="Logic for combining conditions (and/or)")
     ] = "and",
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value and text matching
     support.
@@ -85,31 +82,31 @@ def filter_rows(
     multiple operators, logical combinations, and comprehensive null value handling.
 
     Args:
-        session_id: Session identifier for the active CSV data session
+        ctx: FastMCP context for session access
         conditions: List of filter conditions with column, operator, and value
         mode: Logic for combining conditions ("and" or "or")
-        ctx: FastMCP context
 
     Returns:
         FilterOperationResult with filtering statistics
 
     Examples:
         # Numeric filtering
-        filter_rows(session_id, [{"column": "age", "operator": ">", "value": 25}])
+        filter_rows(ctx, [{"column": "age", "operator": ">", "value": 25}])
 
         # Text filtering with null handling
-        filter_rows(session_id, [
+        filter_rows(ctx, [
             {"column": "name", "operator": "contains", "value": "Smith"},
             {"column": "email", "operator": "is_not_null"}
         ], mode="and")
 
         # Multiple conditions with OR logic
-        filter_rows(session_id, [
+        filter_rows(ctx, [
             {"column": "status", "operator": "==", "value": "active"},
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
     """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -206,16 +203,13 @@ def filter_rows(
 
 
 def sort_data(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str | SortColumn | dict[str, Any]],
         Field(
             description="Column specifications for sorting (strings, SortColumn objects, or dicts)"
         ),
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> SortDataResult:
     """Sort data by one or more columns with comprehensive error handling.
 
@@ -224,30 +218,30 @@ def sort_data(
     data integrity throughout the sorting process.
 
     Args:
-        session_id: Session identifier for the active CSV data session
+        ctx: FastMCP context for session access
         columns: Column specifications - can be strings, SortColumn objects, or dicts
-        ctx: FastMCP context
 
     Returns:
         SortDataResult with sorting details and statistics
 
     Examples:
         # Simple single column sort
-        sort_data(session_id, ["age"])
+        sort_data(ctx, ["age"])
 
         # Multi-column sort with different directions
-        sort_data(session_id, [
+        sort_data(ctx, [
             {"column": "department", "ascending": True},
             {"column": "salary", "ascending": False}
         ])
 
         # Using SortColumn objects for type safety
-        sort_data(session_id, [
+        sort_data(ctx, [
             SortColumn(column="name", ascending=True),
             SortColumn(column="age", ascending=False)
         ])
     """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -311,7 +305,7 @@ def sort_data(
 
 
 def remove_duplicates(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     subset: Annotated[
         list[str] | None,
         Field(description="Columns to consider for duplicates (None = all columns)"),
@@ -320,9 +314,6 @@ def remove_duplicates(
         Literal["first", "last", "none"],
         Field(description="Which duplicates to keep: first, last, or none"),
     ] = "first",
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Remove duplicate rows from the dataframe with comprehensive validation.
 
@@ -331,28 +322,28 @@ def remove_duplicates(
     statistics about the deduplication process.
 
     Args:
-        session_id: Session identifier for the active CSV data session
+        ctx: FastMCP context for session access
         subset: Columns to consider for duplicates (None = all columns)
         keep: Which duplicates to keep ("first", "last", or "none" to drop all)
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with duplicate removal statistics
 
     Examples:
         # Remove exact duplicate rows
-        remove_duplicates(session_id)
+        remove_duplicates(ctx)
 
         # Remove duplicates based on specific columns
-        remove_duplicates(session_id, subset=["email", "name"])
+        remove_duplicates(ctx, subset=["email", "name"])
 
         # Keep last occurrence instead of first
-        remove_duplicates(session_id, subset=["id"], keep="last")
+        remove_duplicates(ctx, subset=["id"], keep="last")
 
         # Remove all duplicates (keep none)
-        remove_duplicates(session_id, subset=["email"], keep="none")
+        remove_duplicates(ctx, subset=["email"], keep="none")
     """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -403,7 +394,7 @@ def remove_duplicates(
 
 
 def fill_missing_values(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     strategy: Annotated[
         Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"],
         Field(
@@ -414,9 +405,6 @@ def fill_missing_values(
     columns: Annotated[
         list[str] | None, Field(description="Columns to process (None = all columns)")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Fill or remove missing values with comprehensive strategy support.
 
@@ -425,7 +413,7 @@ def fill_missing_values(
     strategy compatibility with column types.
 
     Args:
-        session_id: Session identifier for the active CSV data session
+        ctx: FastMCP context for session access
         strategy: Strategy for handling missing values:
             - "drop": Remove rows with missing values
             - "fill": Fill with a specific value
@@ -436,25 +424,25 @@ def fill_missing_values(
             - "mode": Fill with most common value
         value: Value to use when strategy is "fill"
         columns: Columns to process (None = all columns)
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with operation statistics
 
     Examples:
         # Drop rows with any missing values
-        fill_missing_values(session_id, strategy="drop")
+        fill_missing_values(ctx, strategy="drop")
 
         # Fill missing values with 0
-        fill_missing_values(session_id, strategy="fill", value=0)
+        fill_missing_values(ctx, strategy="fill", value=0)
 
         # Forward fill specific columns
-        fill_missing_values(session_id, strategy="forward", columns=["price", "quantity"])
+        fill_missing_values(ctx, strategy="forward", columns=["price", "quantity"])
 
         # Fill with column mean for numeric columns
-        fill_missing_values(session_id, strategy="mean", columns=["age", "salary"])
+        fill_missing_values(ctx, strategy="mean", columns=["age", "salary"])
     """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 

@@ -23,6 +23,7 @@ from src.databeak.servers.io_server import (
     load_csv_from_content,
     load_csv_from_url,
 )
+from tests.test_mock_context import create_mock_context
 
 
 @pytest.mark.asyncio
@@ -32,7 +33,7 @@ class TestErrorConditions:
     async def test_load_csv_file_not_found(self):
         """Test loading non-existent CSV file."""
         with pytest.raises(ToolError, match="Invalid file path"):
-            await load_csv("/nonexistent/path/file.csv")
+            await load_csv(create_mock_context(), "/nonexistent/path/file.csv")
 
     async def test_load_csv_invalid_extension(self):
         """Test loading file with invalid extension."""
@@ -42,7 +43,7 @@ class TestErrorConditions:
 
         try:
             with pytest.raises(ToolError, match="Invalid file path.*Invalid file extension"):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -63,7 +64,7 @@ class TestErrorConditions:
                 patch("pandas.read_csv", side_effect=mock_read_csv),
                 pytest.raises(ToolError, match="Encoding error with all attempted encodings"),
             ):
-                await load_csv(temp_path, encoding="utf-8")
+                await load_csv(create_mock_context(), temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -83,7 +84,7 @@ class TestErrorConditions:
                 patch("pandas.read_csv", return_value=large_data),
                 pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
             ):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -107,7 +108,7 @@ class TestErrorConditions:
                 patch("pandas.DataFrame.memory_usage", side_effect=mock_memory_usage),
                 pytest.raises(ToolError, match="File too large.*MB exceeds memory limit"),
             ):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -123,12 +124,12 @@ class TestErrorConditions:
 
         for url in private_urls:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
-                await load_csv_from_url(url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_export_csv_session_not_found(self):
         """Test export with non-existent session."""
         with pytest.raises(ToolError, match="Session not found"):
-            await export_csv("nonexistent-session-id")
+            await export_csv(create_mock_context())
 
     async def test_export_csv_no_data_loaded(self):
         """Test export from session with no data."""
@@ -153,7 +154,7 @@ class TestErrorConditions:
                 patch("pathlib.Path.stat", return_value=mock_stat_obj),
                 pytest.raises(ToolError, match="File size.*exceeds limit"),
             ):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -170,7 +171,7 @@ class TestEdgeCases:
 
         try:
             with pytest.raises(ToolError, match="CSV format error.*No columns to parse"):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -182,7 +183,7 @@ class TestEdgeCases:
 
         try:
             # Loading CSV with only headers is valid - creates empty DataFrame with columns
-            result = await load_csv(temp_path)
+            result = await load_csv(create_mock_context(), temp_path)
             assert result.rows_affected == 0
         finally:
             Path(temp_path).unlink()
@@ -199,7 +200,7 @@ class TestEdgeCases:
             temp_path = f.name
 
         try:
-            result = await load_csv(temp_path)
+            result = await load_csv(create_mock_context(), temp_path)
             assert result.success
             assert result.rows_affected == 2
             assert "José García" in str(result.data.rows)
@@ -215,7 +216,7 @@ class TestEdgeCases:
 
         try:
             with pytest.raises(ToolError, match="CSV format error"):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -223,20 +224,20 @@ class TestEdgeCases:
         """Test content loading with different delimiters."""
         # Tab-separated
         content = "name\tage\tcity\nJohn\t30\tNYC\nJane\t25\tLA"
-        result = await load_csv_from_content(content, delimiter="\t")
+        result = await load_csv_from_content(create_mock_context(), content, delimiter="\t")
         assert result.success
         assert result.rows_affected == 2
 
         # Semicolon-separated
         content = "name;age;city\nJohn;30;NYC\nJane;25;LA"
-        result = await load_csv_from_content(content, delimiter=";")
+        result = await load_csv_from_content(create_mock_context(), content, delimiter=";")
         assert result.success
         assert result.rows_affected == 2
 
     async def test_load_csv_from_content_no_header(self):
         """Test content loading without headers."""
         content = "John,30,NYC\nJane,25,LA"
-        result = await load_csv_from_content(content, has_header=False)
+        result = await load_csv_from_content(create_mock_context(), content, has_header=False)
         assert result.success
         assert result.rows_affected == 2
         # Should have auto-generated column names like "0", "1", "2"
@@ -253,19 +254,19 @@ class TestIntegrationWithSessions:
             temp_path = f.name
 
         try:
-            result = await load_csv(temp_path)
+            result = await load_csv(create_mock_context(), temp_path)
             assert result.success
             assert result.session_id is not None
             assert result.rows_affected == 2
 
             # Verify session exists and has data
-            session_info = await get_session_info(result.session_id)
+            session_info = await get_session_info(create_mock_context(result.session_id))
             assert session_info.data_loaded
             assert session_info.row_count == 2
             assert session_info.column_count == 2
 
             # Clean up session
-            await close_session(result.session_id)
+            await close_session(create_mock_context(result.session_id))
         finally:
             Path(temp_path).unlink()
 
@@ -277,7 +278,7 @@ class TestIntegrationWithSessions:
             temp_path1 = f.name
 
         try:
-            result1 = await load_csv(temp_path1)
+            result1 = await load_csv(create_mock_context(), temp_path1)
             session_id = result1.session_id
 
             # Second load into same session
@@ -286,19 +287,19 @@ class TestIntegrationWithSessions:
                 temp_path2 = f.name
 
             try:
-                result2 = await load_csv(temp_path2, session_id=session_id)
+                result2 = await load_csv(create_mock_context(session_id), temp_path2)
                 assert result2.session_id == session_id
                 assert result2.rows_affected == 2
 
                 # Verify session now has the new data
-                session_info = await get_session_info(session_id)
+                session_info = await get_session_info(create_mock_context(session_id))
                 assert session_info.row_count == 2
                 assert session_info.column_count == 3
             finally:
                 Path(temp_path2).unlink()
 
             # Clean up session
-            await close_session(session_id)
+            await close_session(create_mock_context(session_id))
         finally:
             Path(temp_path1).unlink()
 
@@ -306,22 +307,22 @@ class TestIntegrationWithSessions:
         """Test complete session lifecycle: create, use, export, close."""
         # Load data
         content = "name,age,salary\nAlice,25,50000\nBob,30,60000\nCharlie,35,70000"
-        load_result = await load_csv_from_content(content)
+        load_result = await load_csv_from_content(create_mock_context(), content)
         session_id = load_result.session_id
 
         try:
             # Get session info
-            info = await get_session_info(session_id)
+            info = await get_session_info(create_mock_context(session_id))
             assert info.data_loaded
             assert info.row_count == 3
 
             # List sessions should include our session
-            sessions_list = await list_sessions()
+            sessions_list = await list_sessions(create_mock_context(session_id))
             session_ids = [s.session_id for s in sessions_list.sessions]
             assert session_id in session_ids
 
             # Export the data
-            export_result = await export_csv(session_id, format="json")
+            export_result = await export_csv(create_mock_context(session_id), format="json")
             assert export_result.session_id == session_id
             assert export_result.rows_exported == 3
             assert Path(export_result.file_path).exists()
@@ -331,7 +332,7 @@ class TestIntegrationWithSessions:
 
         finally:
             # Close session
-            close_result = await close_session(session_id)
+            close_result = await close_session(create_mock_context(session_id))
             assert close_result.session_id == session_id
             assert not close_result.data_preserved
 
@@ -344,7 +345,7 @@ class TestTempFileCleanup:
         """Test temp file cleanup when export format fails."""
         # Load some data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(content)
+        load_result = await load_csv_from_content(create_mock_context(), content)
         session_id = load_result.session_id
 
         try:
@@ -353,13 +354,13 @@ class TestTempFileCleanup:
                 patch("pandas.DataFrame.to_excel", side_effect=Exception("Mock export error")),
                 pytest.raises(ToolError, match="Export failed"),
             ):
-                await export_csv(session_id, format="excel")
+                await export_csv(create_mock_context(session_id), format="excel")
 
             # Verify no temp files were left behind
             # (This is implicit - if cleanup failed, we'd see orphaned files)
 
         finally:
-            await close_session(session_id)
+            await close_session(create_mock_context(session_id))
 
     async def test_export_csv_cleanup_on_session_error(self):
         """Test temp file cleanup when session validation fails."""
@@ -368,18 +369,18 @@ class TestTempFileCleanup:
             mock_manager.side_effect = Exception("Mock session error")
 
             with pytest.raises(ToolError, match="Failed to export data"):
-                await export_csv("any-session", format="csv")
+                await export_csv(create_mock_context(), format="csv")
 
     async def test_export_csv_temp_file_naming(self):
         """Test temp file naming patterns and uniqueness."""
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(content)
+        load_result = await load_csv_from_content(create_mock_context(), content)
         session_id = load_result.session_id
 
         try:
             # Export multiple times to check uniqueness
-            export1 = await export_csv(session_id, format="csv")
-            export2 = await export_csv(session_id, format="json")
+            export1 = await export_csv(create_mock_context(session_id), format="csv")
+            export2 = await export_csv(create_mock_context(session_id), format="json")
 
             assert export1.file_path != export2.file_path
             assert export1.file_path.endswith(".csv")
@@ -391,7 +392,7 @@ class TestTempFileCleanup:
             Path(export1.file_path).unlink()
             Path(export2.file_path).unlink()
         finally:
-            await close_session(session_id)
+            await close_session(create_mock_context(session_id))
 
 
 @pytest.mark.asyncio
@@ -410,7 +411,7 @@ class TestURLValidationSecurity:
 
         for url in private_networks:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
-                await load_csv_from_url(url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_localhost_hostname_blocking(self):
         """Test blocking of localhost hostnames."""
@@ -421,7 +422,7 @@ class TestURLValidationSecurity:
 
         for url in localhost_urls:
             with pytest.raises(ToolError, match="Invalid URL.*Local addresses not allowed"):
-                await load_csv_from_url(url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_invalid_url_schemes(self):
         """Test rejection of non-HTTP schemes."""
@@ -434,7 +435,7 @@ class TestURLValidationSecurity:
 
         for url in invalid_schemes:
             with pytest.raises(ToolError, match="Only HTTP/HTTPS URLs are supported"):
-                await load_csv_from_url(url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_url_timeout_handling(self):
         """Test URL download timeout handling."""
@@ -443,7 +444,7 @@ class TestURLValidationSecurity:
             mock_urlopen.side_effect = TimeoutError("Connection timed out")
 
             with pytest.raises(ToolError, match="Network error"):
-                await load_csv_from_url("https://example.com/data.csv")
+                await load_csv_from_url(create_mock_context(), "https://example.com/data.csv")
 
     async def test_url_content_type_validation(self):
         """Test content-type verification for URLs."""
@@ -469,7 +470,7 @@ class TestURLValidationSecurity:
             mock_urlopen.return_value.__enter__.return_value = mock_response
 
             with pytest.raises(ToolError, match="Download too large.*exceeds limit"):
-                await load_csv_from_url("https://example.com/large_file.csv")
+                await load_csv_from_url(create_mock_context(), "https://example.com/large_file.csv")
 
     async def test_url_http_error_handling(self):
         """Test HTTP error handling (404, 403, etc.)."""
@@ -479,7 +480,7 @@ class TestURLValidationSecurity:
             )
 
             with pytest.raises(ToolError, match="Network error"):
-                await load_csv_from_url("https://example.com/notfound.csv")
+                await load_csv_from_url(create_mock_context(), "https://example.com/notfound.csv")
 
 
 @pytest.mark.asyncio
@@ -490,10 +491,10 @@ class TestExportFormats:
     async def session_with_data(self):
         """Create session with test data."""
         content = "name,age,salary,active\nAlice,25,50000,true\nBob,30,60000,false"
-        result = await load_csv_from_content(content)
+        result = await load_csv_from_content(create_mock_context(), content)
         yield result.session_id
         try:
-            await close_session(result.session_id)
+            await close_session(create_mock_context())
         except Exception as e:
             # Log but don't fail if session cleanup fails
             import logging
@@ -502,7 +503,7 @@ class TestExportFormats:
 
     async def test_export_csv_format(self, session_with_data):
         """Test CSV export format."""
-        result = await export_csv(session_with_data, format="csv")
+        result = await export_csv(create_mock_context(session_with_data), format="csv")
         assert result.format == "csv"
         assert result.file_path.endswith(".csv")
         assert result.rows_exported == 2
@@ -518,7 +519,7 @@ class TestExportFormats:
 
     async def test_export_tsv_format(self, session_with_data):
         """Test TSV export format."""
-        result = await export_csv(session_with_data, format="tsv")
+        result = await export_csv(create_mock_context(session_with_data), format="tsv")
         assert result.format == "tsv"
         assert result.file_path.endswith(".tsv")
 
@@ -531,7 +532,7 @@ class TestExportFormats:
 
     async def test_export_json_format(self, session_with_data):
         """Test JSON export format."""
-        result = await export_csv(session_with_data, format="json")
+        result = await export_csv(create_mock_context(session_with_data), format="json")
         assert result.format == "json"
         assert result.file_path.endswith(".json")
 
@@ -551,7 +552,7 @@ class TestExportFormats:
         """Test export with user-specified file path."""
         with tempfile.TemporaryDirectory() as temp_dir:
             custom_path = str(Path(temp_dir) / "my_export.csv")
-            result = await export_csv(session_with_data, file_path=custom_path)
+            result = await export_csv(create_mock_context(session_with_data), file_path=custom_path)
 
             assert result.file_path == custom_path
             assert Path(custom_path).exists()
@@ -574,7 +575,7 @@ class TestEncodingAndFallback:
 
         try:
             # Try to load with UTF-8 first, should fallback to latin1
-            result = await load_csv(temp_path, encoding="utf-8")
+            result = await load_csv(create_mock_context(), temp_path, encoding="utf-8")
             assert result.success
             assert result.rows_affected == 1
         finally:
@@ -587,7 +588,7 @@ class TestEncodingAndFallback:
             temp_path = f.name
 
         try:
-            result = await load_csv(temp_path, na_values=["MISSING", "N/A"])
+            result = await load_csv(create_mock_context(), temp_path, na_values=["MISSING", "N/A"])
             assert result.success
             # Verify NA values were handled properly (would need to check actual data)
         finally:
@@ -610,7 +611,9 @@ class TestEncodingAndFallback:
                 mock_detect.return_value = {"encoding": "ISO-8859-1", "confidence": 0.85}
 
                 # Should use detected encoding instead of falling back
-                result = await load_csv(temp_path, encoding="utf-8")  # Will trigger fallback
+                result = await load_csv(
+                    create_mock_context(), temp_path, encoding="utf-8"
+                )  # Will trigger fallback
                 assert result.success
                 assert result.rows_affected == 2
         finally:
@@ -645,7 +648,7 @@ class TestEncodingAndFallback:
 
                 mock_read_csv.side_effect = mock_read_side_effect
 
-                result = await load_csv(temp_path, encoding="utf-8")
+                result = await load_csv(create_mock_context(), temp_path, encoding="utf-8")
                 assert result.success
                 # Verify multiple attempts were made
                 assert mock_read_csv.call_count >= 3
@@ -666,14 +669,14 @@ class TestSessionManagement:
     async def test_list_sessions_empty(self):
         """Test listing sessions when none exist."""
         # This would require clearing all sessions first
-        sessions = await list_sessions()
+        sessions = await list_sessions(create_mock_context())
         assert isinstance(sessions.sessions, list)
         assert sessions.total_sessions >= 0
 
     async def test_close_session_nonexistent(self):
         """Test closing non-existent session."""
         with pytest.raises(ToolError, match="Session not found"):
-            await close_session("nonexistent-session-id")
+            await close_session(create_mock_context())
 
 
 @pytest.mark.asyncio
@@ -694,7 +697,7 @@ class TestMemoryAndPerformance:
                 patch("pandas.read_csv", return_value=large_df),
                 pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
             ):
-                await load_csv(temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -728,7 +731,7 @@ class TestMemoryAndPerformance:
                     patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                     pytest.raises(ToolError, match="exceeds memory limit"),
                 ):
-                    await load_csv(temp_path, encoding="utf-8")
+                    await load_csv(create_mock_context(), temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -741,6 +744,7 @@ class TestProgressReporting:
         """Test loading CSV with FastMCP context for progress reporting."""
         # Mock context
         mock_ctx = AsyncMock()
+        mock_ctx.session_id = "test_context_session"
 
         content = "name,age\nJohn,30"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -748,7 +752,7 @@ class TestProgressReporting:
             temp_path = f.name
 
         try:
-            result = await load_csv(temp_path, ctx=mock_ctx)
+            result = await load_csv(mock_ctx, temp_path)
             assert result.success
 
             # Verify context methods were called
@@ -756,7 +760,7 @@ class TestProgressReporting:
             mock_ctx.report_progress.assert_called()
         finally:
             Path(temp_path).unlink()
-            await close_session(result.session_id)
+            await close_session(create_mock_context(result.session_id))
 
     async def test_export_csv_with_context(self):
         """Test export with context reporting."""
@@ -764,11 +768,12 @@ class TestProgressReporting:
 
         # Load data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(content)
+        load_result = await load_csv_from_content(create_mock_context(), content)
         session_id = load_result.session_id
+        mock_ctx.session_id = session_id
 
         try:
-            result = await export_csv(session_id, ctx=mock_ctx)
+            result = await export_csv(mock_ctx)
 
             # Verify context methods were called
             mock_ctx.info.assert_called()
@@ -777,7 +782,7 @@ class TestProgressReporting:
             # Cleanup
             Path(result.file_path).unlink()
         finally:
-            await close_session(session_id)
+            await close_session(mock_ctx)
 
 
 # Helper function to fix nullable dtypes for test compatibility

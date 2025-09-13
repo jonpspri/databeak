@@ -547,7 +547,7 @@ class TestOperationLogging:
 
     def test_log_operation_start_with_session_id(self):
         """Test logging operation start with session ID."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -564,7 +564,7 @@ class TestOperationLogging:
 
     def test_log_operation_start_without_session_id(self):
         """Test logging operation start without session ID."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -579,7 +579,7 @@ class TestOperationLogging:
 
     def test_log_operation_end_success(self):
         """Test logging successful operation end."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -597,7 +597,7 @@ class TestOperationLogging:
 
     def test_log_operation_end_failure(self):
         """Test logging failed operation end."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -614,7 +614,7 @@ class TestOperationLogging:
 
     def test_log_operation_end_default_success(self):
         """Test logging operation end with default success=True."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -634,7 +634,7 @@ class TestSessionLogging:
 
     def test_log_session_event(self):
         """Test logging session events."""
-        with patch("databeak.utils.logging_config.get_logger") as mock_get_logger:
+        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
             mock_logger = MagicMock()
             mock_get_logger.return_value = mock_logger
 
@@ -655,14 +655,14 @@ class TestBackwardCompatibility:
 
     def test_setup_logging_calls_setup_structured_logging(self):
         """Test setup_logging calls setup_structured_logging for backward compatibility."""
-        with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
+        with patch("src.databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging("WARNING")
 
             mock_setup.assert_called_once_with("WARNING")
 
     def test_setup_logging_default_level(self):
         """Test setup_logging with default level."""
-        with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
+        with patch("src.databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging()
 
             mock_setup.assert_called_once_with("INFO")

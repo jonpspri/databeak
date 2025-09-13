@@ -151,11 +151,8 @@ _get_session_data = get_session_data
 # Implementation: validates column existence, reorders columns by selection order
 # Creates new DataFrame copy with selected columns, records operation in session history
 async def select_columns(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[list[str], Field(description="List of column names to select and keep")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> SelectColumnsResult:
     """Select specific columns from dataframe, removing all others.
 
@@ -163,6 +160,8 @@ async def select_columns(
     before/after column counts.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -201,36 +200,34 @@ async def select_columns(
 # Implementation: validates old column names exist in mapping keys, checks for naming conflicts
 # Updates DataFrame columns in-place using pandas rename, records operation in session history
 async def rename_columns(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     mapping: Annotated[
         dict[str, str], Field(description="Dictionary mapping old column names to new names")
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         mapping: Dict of old_name -> new_name
-        ctx: FastMCP context
 
     Returns:
         Dict with rename details
 
     Examples:
         # Using dictionary mapping
-        rename_columns(session_id, {"old_col1": "new_col1", "old_col2": "new_col2"})
+        rename_columns(ctx, {"old_col1": "new_col1", "old_col2": "new_col2"})
 
         # Rename multiple columns
-        rename_columns(session_id, {
+        rename_columns(ctx, {
             "FirstName": "first_name",
             "LastName": "last_name",
             "EmailAddress": "email"
         })
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -262,7 +259,7 @@ async def rename_columns(
 # Implementation: validates column name doesn't exist, supports single value, list, or pandas eval formula
 # Handles list length validation, formula evaluation with error handling, records operation
 async def add_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     name: Annotated[str, Field(description="Name for the new column to add")],
     value: Annotated[
         CellValue | list[CellValue],
@@ -272,36 +269,34 @@ async def add_column(
         str | None,
         Field(description="Python expression to compute column values (e.g., 'col1 + col2')"),
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         name: Name for the new column
         value: Single value for all rows, or list of values (one per row)
         formula: Python expression to compute values (e.g., "col1 + col2")
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with operation details
 
     Examples:
         # Add column with constant value
-        add_column(session_id, "status", "active")
+        add_column(ctx, "status", "active")
 
         # Add column with list of values
-        add_column(session_id, "scores", [85, 90, 78, 92, 88])
+        add_column(ctx, "scores", [85, 90, 78, 92, 88])
 
         # Add computed column
-        add_column(session_id, "total", formula="price * quantity")
+        add_column(ctx, "total", formula="price * quantity")
 
         # Add column with complex formula
-        add_column(session_id, "full_name", formula="first_name + ' ' + last_name")
+        add_column(ctx, "full_name", formula="first_name + ' ' + last_name")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if name in df.columns:
@@ -355,35 +350,33 @@ async def add_column(
 # Implementation: validates columns exist before removal, prevents removing all columns
 # Uses DataFrame drop with error handling, records operation in session history
 async def remove_columns(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str], Field(description="List of column names to remove from the dataframe")
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         columns: List of column names to remove
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with removal details
 
     Examples:
         # Remove single column
-        remove_columns(session_id, ["temp_column"])
+        remove_columns(ctx, ["temp_column"])
 
         # Remove multiple columns
-        remove_columns(session_id, ["col1", "col2", "col3"])
+        remove_columns(ctx, ["col1", "col2", "col3"])
 
         # Clean up after analysis
-        remove_columns(session_id, ["_temp", "_backup", "old_value"])
+        remove_columns(ctx, ["_temp", "_backup", "old_value"])
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Validate columns exist
@@ -415,7 +408,7 @@ async def remove_columns(
 # Implementation: validates column exists, maps dtype to pandas types
 # Uses pandas astype with error handling (raise/coerce), preserves original on failure
 async def change_column_type(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to change data type for")],
     dtype: Annotated[
         Literal["int", "float", "str", "bool", "datetime"],
@@ -427,38 +420,36 @@ async def change_column_type(
             description="Error handling: 'raise' for errors, 'coerce' to replace invalid values with NaN"
         ),
     ] = "coerce",
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Change the data type of a column.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to convert
         dtype: Target data type
         errors: How to handle conversion errors:
             - "raise": Raise an error if conversion fails
             - "coerce": Convert invalid values to NaN/None
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with conversion details
 
     Examples:
         # Convert string numbers to integers
-        change_column_type(session_id, "age", "int")
+        change_column_type(ctx, "age", "int")
 
         # Convert to float, replacing errors with NaN
-        change_column_type(session_id, "price", "float", errors="coerce")
+        change_column_type(ctx, "price", "float", errors="coerce")
 
         # Convert to datetime
-        change_column_type(session_id, "date", "datetime")
+        change_column_type(ctx, "date", "datetime")
 
         # Convert to boolean
-        change_column_type(session_id, "is_active", "bool")
+        change_column_type(ctx, "is_active", "bool")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -536,54 +527,52 @@ async def change_column_type(
 
 
 async def update_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to update values in")],
     operation: Annotated[
         UpdateOperationType | UpdateColumnRequest | dict[str, Any],
         Field(description="Update operation specification (replace, map, apply, fillna)"),
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Update values in a column using various operations with discriminated unions.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to update
         operation: Update operation specification (discriminated union or legacy dict)
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with update details
 
     Examples:
         # Using discriminated union - Replace operation
-        update_column(session_id, "status", {
+        update_column(ctx, "status", {
             "type": "replace",
             "pattern": "N/A",
             "replacement": "Unknown"
         })
 
         # Using discriminated union - Map operation
-        update_column(session_id, "code", {
+        update_column(ctx, "code", {
             "type": "map",
             "mapping": {"A": "Alpha", "B": "Beta"}
         })
 
         # Using discriminated union - Fill operation
-        update_column(session_id, "score", {
+        update_column(ctx, "score", {
             "type": "fillna",
             "value": 0
         })
 
         # Legacy format still supported
-        update_column(session_id, "score", {
+        update_column(ctx, "score", {
             "operation": "fillna",
             "value": 0
         })
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:

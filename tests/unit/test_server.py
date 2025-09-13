@@ -59,7 +59,7 @@ class TestLoadInstructions:
         from src.databeak.server import _load_instructions
 
         mock_instructions_file = MagicMock()
-        mock_instructions_file.read_text.side_effect = Exception("Permission denied")
+        mock_instructions_file.read_text.side_effect = OSError("Generic error")
 
         mock_parent = MagicMock()
         mock_parent.__truediv__.return_value = mock_instructions_file

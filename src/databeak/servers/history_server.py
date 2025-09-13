@@ -261,10 +261,7 @@ class ManualSaveResult(BaseModel):
 
 
 async def undo_operation(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> UndoResult:
     """Undo the last operation in a session.
 
@@ -273,8 +270,7 @@ async def undo_operation(
     need to experiment with transformations safely.
 
     Args:
-        session_id: Session ID containing operation history
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Detailed result of the undo operation including new history state
@@ -300,14 +296,16 @@ async def undo_operation(
         4. Comparison workflows (apply → analyze → undo → try alternative)
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Performing undo operation for session {session_id}")
+        await ctx.info(f"Performing undo operation for session {session_id}")
 
         result = await session.undo()
 
@@ -320,10 +318,7 @@ async def undo_operation(
         can_redo = history_info.get("can_redo", False)
         position = history_info.get("current_position", 0)
 
-        if ctx:
-            await ctx.info(
-                f"Successfully undid operation: {result.get('message', 'Operation undone')}"
-            )
+        await ctx.info(f"Successfully undid operation: {result.get('message', 'Operation undone')}")
 
         return UndoResult(
             session_id=session_id,
@@ -341,16 +336,12 @@ async def undo_operation(
         raise
     except Exception as e:
         logger.error(f"Error in undo operation: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to undo operation: {e!s}")
+        await ctx.error(f"Failed to undo operation: {e!s}")
         raise ToolError(f"Error performing undo operation: {e}") from e
 
 
 async def redo_operation(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> RedoResult:
     """Redo a previously undone operation.
 
@@ -359,8 +350,7 @@ async def redo_operation(
     timeline for optimal workflow experimentation.
 
     Args:
-        session_id: Session ID containing operation history
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Detailed result of the redo operation including new history state
@@ -386,14 +376,16 @@ async def redo_operation(
         4. Collaborative workflows where multiple paths are explored
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Performing redo operation for session {session_id}")
+        await ctx.info(f"Performing redo operation for session {session_id}")
 
         result = await session.redo()
 
@@ -406,10 +398,7 @@ async def redo_operation(
         can_redo = history_info.get("can_redo", False)
         position = history_info.get("current_position", 0)
 
-        if ctx:
-            await ctx.info(
-                f"Successfully redid operation: {result.get('message', 'Operation redone')}"
-            )
+        await ctx.info(f"Successfully redid operation: {result.get('message', 'Operation redone')}")
 
         return RedoResult(
             session_id=session_id,
@@ -427,18 +416,14 @@ async def redo_operation(
         raise
     except Exception as e:
         logger.error(f"Error in redo operation: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to redo operation: {e!s}")
+        await ctx.error(f"Failed to redo operation: {e!s}")
         raise ToolError(f"Error performing redo operation: {e}") from e
 
 
 async def get_history(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     limit: Annotated[
         int | None, Field(description="Maximum number of operations to return (None = all)")
-    ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
     ] = None,
 ) -> HistoryResult:
     """Get comprehensive operation history for a session.
@@ -448,9 +433,8 @@ async def get_history(
     Essential for understanding data provenance and workflow documentation.
 
     Args:
-        session_id: Session ID containing operation history
+        ctx: FastMCP context for session access
         limit: Maximum number of operations to return (default: all)
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Complete operation history with summary statistics and navigation info
@@ -479,14 +463,16 @@ async def get_history(
         4. Debugging complex multi-step data processing pipelines
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Retrieving operation history for session {session_id}")
+        await ctx.info(f"Retrieving operation history for session {session_id}")
 
         result = session.get_history(limit)
 
@@ -517,8 +503,7 @@ async def get_history(
             history_enabled=result.get("history_enabled", True),
         )
 
-        if ctx:
-            await ctx.info(f"Retrieved {len(operations)} operations from history")
+        await ctx.info(f"Retrieved {len(operations)} operations from history")
 
         return HistoryResult(
             session_id=session_id,
@@ -535,17 +520,13 @@ async def get_history(
         raise
     except Exception as e:
         logger.error(f"Error retrieving history: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to retrieve history: {e!s}")
+        await ctx.error(f"Failed to retrieve history: {e!s}")
         raise ToolError(f"Error retrieving operation history: {e}") from e
 
 
 async def restore_to_operation(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     operation_id: Annotated[str, Field(description="ID of the operation to restore to")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> RestoreResult:
     """Restore session data to a specific operation point.
 
@@ -554,9 +535,8 @@ async def restore_to_operation(
     for jumping to known good states or comparing results at different stages.
 
     Args:
-        session_id: Session ID containing operation history
+        ctx: FastMCP context for session access
         operation_id: Target operation ID to restore to
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Detailed result of the restore operation including steps taken
@@ -581,22 +561,23 @@ async def restore_to_operation(
         4. Comparative analysis at different transformation stages
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Restoring session {session_id} to operation {operation_id}")
+        await ctx.info(f"Restoring session {session_id} to operation {operation_id}")
 
         result = await session.restore_to_operation(operation_id)
 
         if not result["success"]:
             raise ToolError(f"Restore operation failed: {result.get('error', 'Unknown error')}")
 
-        if ctx:
-            await ctx.info(f"Successfully restored to operation {operation_id}")
+        await ctx.info(f"Successfully restored to operation {operation_id}")
 
         return RestoreResult(
             session_id=session_id,
@@ -613,16 +594,12 @@ async def restore_to_operation(
         raise
     except Exception as e:
         logger.error(f"Error in restore operation: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to restore to operation: {e!s}")
+        await ctx.error(f"Failed to restore to operation: {e!s}")
         raise ToolError(f"Error restoring to operation: {e}") from e
 
 
 async def clear_history(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> ClearHistoryResult:
     """Clear all operation history for a session.
 
@@ -631,8 +608,7 @@ async def clear_history(
     history storage becomes large. Current data remains unchanged.
 
     Args:
-        session_id: Session ID containing operation history
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Result of the clear operation including count of operations removed
@@ -662,6 +638,9 @@ async def clear_history(
         will be lost, though current data remains unchanged.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -672,8 +651,7 @@ async def clear_history(
         if not session.history_manager:
             raise ToolError("History is not enabled for this session")
 
-        if ctx:
-            await ctx.info(f"Clearing operation history for session {session_id}")
+        await ctx.info(f"Clearing operation history for session {session_id}")
 
         # Get current operation count before clearing
         history_info = session.get_history()
@@ -682,8 +660,7 @@ async def clear_history(
         # Clear the history
         session.history_manager.clear_history()
 
-        if ctx:
-            await ctx.info(f"Cleared {operations_count} operations from history")
+        await ctx.info(f"Cleared {operations_count} operations from history")
 
         return ClearHistoryResult(
             session_id=session_id,
@@ -698,20 +675,16 @@ async def clear_history(
         raise
     except Exception as e:
         logger.error(f"Error clearing history: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to clear history: {e!s}")
+        await ctx.error(f"Failed to clear history: {e!s}")
         raise ToolError(f"Error clearing operation history: {e}") from e
 
 
 async def export_history(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[str, Field(description="Output file path for history export")],
     format: Annotated[
         Literal["json", "csv"], Field(description="Export format: json or csv")
     ] = "json",
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ExportHistoryResult:
     """Export operation history to a file for audit trails.
 
@@ -720,10 +693,9 @@ async def export_history(
     governance, reproducibility, and workflow documentation.
 
     Args:
-        session_id: Session ID containing operation history
+        ctx: FastMCP context for session access
         file_path: Path where history file will be saved
         format: Export format - 'json' (detailed) or 'csv' (tabular)
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Result of export operation including file details and operation count
@@ -756,6 +728,9 @@ async def export_history(
         - Parameters and configuration used
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -765,8 +740,7 @@ async def export_history(
         if not session.history_manager:
             raise ToolError("History is not enabled for this session")
 
-        if ctx:
-            await ctx.info(f"Exporting history for session {session_id} to {file_path}")
+        await ctx.info(f"Exporting history for session {session_id} to {file_path}")
 
         # Export the history
         success = session.history_manager.export_history(file_path, format)
@@ -788,8 +762,7 @@ async def export_history(
             # File size is optional, continue without it
             logger.debug(f"Could not get file size for {file_path}: {e}")
 
-        if ctx:
-            await ctx.info(f"Successfully exported {operations_count} operations to {file_path}")
+        await ctx.info(f"Successfully exported {operations_count} operations to {file_path}")
 
         return ExportHistoryResult(
             session_id=session_id,
@@ -806,8 +779,7 @@ async def export_history(
         raise
     except Exception as e:
         logger.error(f"Error exporting history: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to export history: {e!s}")
+        await ctx.error(f"Failed to export history: {e!s}")
         raise ToolError(f"Error exporting operation history: {e}") from e
 
 
@@ -817,7 +789,7 @@ async def export_history(
 
 
 async def configure_auto_save(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     enabled: Annotated[bool, Field(description="Whether to enable auto-save functionality")] = True,
     mode: Annotated[
         Literal["disabled", "after_operation", "periodic", "hybrid"],
@@ -840,9 +812,6 @@ async def configure_auto_save(
         Field(description="Export format for saved files"),
     ] = "csv",
     encoding: Annotated[str, Field(description="Text encoding for saved files")] = "utf-8",
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> AutoSaveConfigResult:
     """Configure auto-save settings for a session.
 
@@ -851,7 +820,7 @@ async def configure_auto_save(
     modes to balance data safety with performance requirements.
 
     Args:
-        session_id: Session ID to configure auto-save for
+        ctx: FastMCP context for session access
         enabled: Whether auto-save functionality is active
         mode: When to trigger saves (after_operation, periodic, hybrid, disabled)
         strategy: How to handle save files (overwrite, backup, versioned, custom)
@@ -861,7 +830,6 @@ async def configure_auto_save(
         custom_path: Fixed path for saves (when strategy='custom')
         format: File format for saves (csv, tsv, json, excel, parquet)
         encoding: Text encoding for output files
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Configuration result with current and previous settings
@@ -906,14 +874,16 @@ async def configure_auto_save(
         4. Automated backup for critical business analysis
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Configuring auto-save for session {session_id}")
+        await ctx.info(f"Configuring auto-save for session {session_id}")
 
         # Get previous configuration
         previous_status = session.get_auto_save_status()
@@ -954,8 +924,7 @@ async def configure_auto_save(
                 f"Failed to configure auto-save: {result.get('error', 'Unknown error')}"
             )
 
-        if ctx:
-            await ctx.info(f"Auto-save configured: {mode} mode, {strategy} strategy")
+        await ctx.info(f"Auto-save configured: {mode} mode, {strategy} strategy")
 
         # Check if configuration actually changed
         config_changed = previous_config != new_config
@@ -974,16 +943,12 @@ async def configure_auto_save(
         raise
     except Exception as e:
         logger.error(f"Error configuring auto-save: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to configure auto-save: {e!s}")
+        await ctx.error(f"Failed to configure auto-save: {e!s}")
         raise ToolError(f"Error configuring auto-save: {e}") from e
 
 
 async def disable_auto_save(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> AutoSaveDisableResult:
     """Disable auto-save for a session.
 
@@ -993,8 +958,7 @@ async def disable_auto_save(
     performance.
 
     Args:
-        session_id: Session ID to disable auto-save for
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Result of disable operation including whether final save was performed
@@ -1024,6 +988,9 @@ async def disable_auto_save(
         a manual save before performing risky operations.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -1034,8 +1001,7 @@ async def disable_auto_save(
         current_status = session.get_auto_save_status()
         was_enabled = current_status.get("enabled", False)
 
-        if ctx:
-            await ctx.info(f"Disabling auto-save for session {session_id}")
+        await ctx.info(f"Disabling auto-save for session {session_id}")
 
         # Disable auto-save
         result = await session.disable_auto_save()
@@ -1047,13 +1013,12 @@ async def disable_auto_save(
         final_save_performed = result.get("final_save_performed", False)
         final_save_path = result.get("final_save_path")
 
-        if ctx:
-            if was_enabled:
-                await ctx.info("Auto-save disabled successfully")
-                if final_save_performed:
-                    await ctx.info(f"Final save completed: {final_save_path}")
-            else:
-                await ctx.info("Auto-save was already disabled")
+        if was_enabled:
+            await ctx.info("Auto-save disabled successfully")
+            if final_save_performed:
+                await ctx.info(f"Final save completed: {final_save_path}")
+        else:
+            await ctx.info("Auto-save was already disabled")
 
         return AutoSaveDisableResult(
             session_id=session_id,
@@ -1069,16 +1034,12 @@ async def disable_auto_save(
         raise
     except Exception as e:
         logger.error(f"Error disabling auto-save: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to disable auto-save: {e!s}")
+        await ctx.error(f"Failed to disable auto-save: {e!s}")
         raise ToolError(f"Error disabling auto-save: {e}") from e
 
 
 async def get_auto_save_status(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> AutoSaveStatusResult:
     """Get current auto-save configuration and status.
 
@@ -1087,8 +1048,7 @@ async def get_auto_save_status(
     Essential for understanding current data protection policies.
 
     Args:
-        session_id: Session ID to check auto-save status for
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Complete auto-save status including configuration and timing information
@@ -1119,14 +1079,16 @@ async def get_auto_save_status(
         5. Optimizing save policies based on usage patterns
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Retrieving auto-save status for session {session_id}")
+        await ctx.info(f"Retrieving auto-save status for session {session_id}")
 
         # Get current status from session
         status_dict = session.get_auto_save_status()
@@ -1148,13 +1110,12 @@ async def get_auto_save_status(
             next_scheduled_save=status_dict.get("next_scheduled_save"),
         )
 
-        if ctx:
-            if status.enabled:
-                await ctx.info(
-                    f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode"
-                )
-            else:
-                await ctx.info("Auto-save is currently disabled")
+        if status.enabled:
+            await ctx.info(
+                f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode"
+            )
+        else:
+            await ctx.info("Auto-save is currently disabled")
 
         return AutoSaveStatusResult(
             session_id=session_id,
@@ -1168,16 +1129,12 @@ async def get_auto_save_status(
         raise
     except Exception as e:
         logger.error(f"Error getting auto-save status: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to get auto-save status: {e!s}")
+        await ctx.error(f"Failed to get auto-save status: {e!s}")
         raise ToolError(f"Error retrieving auto-save status: {e}") from e
 
 
 async def trigger_manual_save(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> ManualSaveResult:
     """Manually trigger a save operation for the session.
 
@@ -1186,8 +1143,7 @@ async def trigger_manual_save(
     format and location, or defaults if auto-save is disabled.
 
     Args:
-        session_id: Session ID to save
-        ctx: FastMCP context for progress reporting
+        ctx: FastMCP context for session access
 
     Returns:
         Result of save operation including file details and data statistics
@@ -1220,14 +1176,16 @@ async def trigger_manual_save(
         operation.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
 
-        if ctx:
-            await ctx.info(f"Triggering manual save for session {session_id}")
+        await ctx.info(f"Triggering manual save for session {session_id}")
 
         # Trigger manual save
         result = await session.manual_save()
@@ -1248,8 +1206,7 @@ async def trigger_manual_save(
             rows_saved = len(session.df)
             columns_saved = len(session.df.columns)
 
-        if ctx:
-            await ctx.info(f"Manual save completed: {save_path}")
+        await ctx.info(f"Manual save completed: {save_path}")
 
         return ManualSaveResult(
             session_id=session_id,
@@ -1268,8 +1225,7 @@ async def trigger_manual_save(
         raise
     except Exception as e:
         logger.error(f"Error in manual save: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to trigger manual save: {e!s}")
+        await ctx.error(f"Failed to trigger manual save: {e!s}")
         raise ToolError(f"Error triggering manual save: {e}") from e
 
 

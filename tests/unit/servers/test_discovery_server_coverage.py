@@ -21,6 +21,7 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
     profile_data,
 )
+from tests.test_mock_context import create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -69,7 +70,8 @@ class TestDetectOutliers:
 
     async def test_outliers_iqr_method(self, mock_manager):
         """Test outlier detection using IQR method."""
-        result = await detect_outliers("test-session", columns=["values"], method="iqr")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, columns=["values"], method="iqr")
 
         assert isinstance(result, OutliersResult)
         assert result.success is True
@@ -86,9 +88,8 @@ class TestDetectOutliers:
 
     async def test_outliers_zscore_method(self, mock_manager):
         """Test outlier detection using z-score method."""
-        result = await detect_outliers(
-            "test-session", columns=["values"], method="zscore", threshold=3.0
-        )
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, columns=["values"], method="zscore", threshold=3.0)
 
         assert result.success is True
         assert result.method == "zscore"
@@ -98,15 +99,17 @@ class TestDetectOutliers:
     async def test_outliers_isolation_forest(self, mock_manager):
         """Test that isolation_forest method is not supported."""
         with pytest.raises(ToolError, match="Unknown method: isolation_forest"):
+            ctx = create_mock_context_with_session_data("test-session")
             await detect_outliers(
-                "test-session",
+                ctx,
                 columns=["values", "values2"],
                 method="isolation_forest",
             )
 
     async def test_outliers_all_columns(self, mock_manager):
         """Test outlier detection on all numeric columns."""
-        result = await detect_outliers("test-session", method="iqr")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, method="iqr")
 
         assert result.success is True
         # Should process all numeric columns
@@ -116,12 +119,14 @@ class TestDetectOutliers:
     async def test_outliers_invalid_method(self, mock_manager):
         """Test outlier detection with invalid method."""
         with pytest.raises(ToolError, match="Unknown method: invalid_method"):
-            await detect_outliers("test-session", method="invalid_method")
+            ctx = create_mock_context_with_session_data("test-session")
+            await detect_outliers(ctx, method="invalid_method")
 
     async def test_outliers_non_numeric_columns(self, mock_manager):
         """Test outlier detection on non-numeric columns."""
         with pytest.raises(ToolError, match="No numeric columns found"):
-            await detect_outliers("test-session", columns=["text"])
+            ctx = create_mock_context_with_session_data("test-session")
+            await detect_outliers(ctx, columns=["text"])
 
     async def test_outliers_no_outliers_found(self, mock_manager):
         """Test when no outliers are found."""
@@ -134,31 +139,30 @@ class TestDetectOutliers:
         )
         session._df = uniform_df
 
-        result = await detect_outliers("test-session", columns=["uniform"], method="iqr")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, columns=["uniform"], method="iqr")
         assert result.success is True
         assert result.outliers_found == 0
         assert result.outliers_found == 0
 
     async def test_outliers_with_nulls(self, mock_manager):
         """Test outlier detection with null values."""
-        result = await detect_outliers("test-session", columns=["nulls"], method="zscore")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, columns=["nulls"], method="zscore")
 
         assert result.success is True
         # Should handle nulls gracefully
 
     async def test_outliers_custom_threshold(self, mock_manager):
         """Test outlier detection with custom threshold."""
-        result = await detect_outliers(
-            "test-session", columns=["values"], method="zscore", threshold=2.0
-        )
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx, columns=["values"], method="zscore", threshold=2.0)
 
         assert result.success is True
         assert result.threshold == 2.0
 
         # Lower threshold should find more outliers
-        result2 = await detect_outliers(
-            "test-session", columns=["values"], method="zscore", threshold=4.0
-        )
+        result2 = await detect_outliers(ctx, columns=["values"], method="zscore", threshold=4.0)
         assert result.outliers_found >= result2.outliers_found
 
 
@@ -168,7 +172,8 @@ class TestProfileData:
 
     async def test_profile_all_columns(self, mock_manager):
         """Test profiling all columns."""
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         assert isinstance(result, ProfileResult)
         assert result.success is True
@@ -188,7 +193,8 @@ class TestProfileData:
     async def test_profile_specific_columns(self, mock_manager):
         """Test profiling specific columns."""
         # profile_data doesn't support columns parameter - it profiles all columns
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         assert result.success is True
         # Check that the expected columns are in the profile
@@ -199,7 +205,8 @@ class TestProfileData:
     async def test_profile_include_sample_values(self, mock_manager):
         """Test profile with sample values."""
         # profile_data doesn't support columns or include_sample_values parameters
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         assert result.success is True
         profile = result.profile["category"]
@@ -209,7 +216,8 @@ class TestProfileData:
 
     async def test_profile_numeric_columns(self, mock_manager):
         """Test profiling numeric columns."""
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         profile = result.profile["values"]
         assert profile.data_type == "float64"
@@ -219,7 +227,8 @@ class TestProfileData:
 
     async def test_profile_categorical_columns(self, mock_manager):
         """Test profiling categorical columns."""
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         profile = result.profile["category"]
         assert profile.data_type == "object"
@@ -229,7 +238,8 @@ class TestProfileData:
 
     async def test_profile_datetime_columns(self, mock_manager):
         """Test profiling datetime columns."""
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         profile = result.profile["dates"]
         assert "datetime" in profile.data_type
@@ -237,7 +247,8 @@ class TestProfileData:
 
     async def test_profile_mixed_type_columns(self, mock_manager):
         """Test profiling mixed type columns."""
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         profile = result.profile["mixed"]
         assert profile.data_type == "object"
@@ -246,7 +257,8 @@ class TestProfileData:
     async def test_profile_quality_metrics(self, mock_manager):
         """Test profile with quality metrics."""
         # profile_data doesn't support include_quality_metrics parameter
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
 
         assert result.success is True
         # Quality metrics are not part of ProfileResult
@@ -256,7 +268,8 @@ class TestProfileData:
         """Test profiling empty dataframe."""
         mock_manager.return_value.get_session.return_value._df = pd.DataFrame()
 
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
         assert result.success is True
         assert result.total_rows == 0
         assert result.total_columns == 0
@@ -269,8 +282,9 @@ class TestGroupByAggregate:
 
     async def test_group_by_single_column(self, mock_manager):
         """Test grouping by single column."""
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session",
+            ctx,
             group_by=["category"],
             aggregations={"values": ["mean", "sum", "count"]},
         )
@@ -288,8 +302,9 @@ class TestGroupByAggregate:
 
     async def test_group_by_multiple_columns(self, mock_manager):
         """Test grouping by multiple columns."""
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session",
+            ctx,
             group_by=["category", "subcategory"],
             aggregations={"values": ["mean"]},
         )
@@ -300,8 +315,9 @@ class TestGroupByAggregate:
 
     async def test_group_by_multiple_aggregations(self, mock_manager):
         """Test multiple aggregation functions."""
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session",
+            ctx,
             group_by=["category"],
             aggregations={
                 "values": ["mean", "median", "std", "min", "max"],
@@ -324,22 +340,25 @@ class TestGroupByAggregate:
     async def test_group_by_invalid_column(self, mock_manager):
         """Test grouping by invalid column."""
         with pytest.raises(ToolError, match="not found"):
+            ctx = create_mock_context_with_session_data("test-session")
             await group_by_aggregate(
-                "test-session", group_by=["invalid_col"], aggregations={"values": ["mean"]}
+                ctx, group_by=["invalid_col"], aggregations={"values": ["mean"]}
             )
 
     async def test_group_by_invalid_aggregation(self, mock_manager):
         """Test invalid aggregation function."""
         # Server ignores invalid aggregations and uses defaults
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session", group_by=["category"], aggregations={"values": ["invalid_agg"]}
+            ctx, group_by=["category"], aggregations={"values": ["invalid_agg"]}
         )
         assert result.success is True
 
     async def test_group_by_non_numeric_aggregation(self, mock_manager):
         """Test aggregating non-numeric columns."""
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session", group_by=["category"], aggregations={"text": ["count", "nunique"]}
+            ctx, group_by=["category"], aggregations={"text": ["count", "nunique"]}
         )
 
         assert result.success is True
@@ -347,8 +366,9 @@ class TestGroupByAggregate:
 
     async def test_group_by_with_nulls(self, mock_manager):
         """Test grouping with null values."""
+        ctx = create_mock_context_with_session_data("test-session")
         result = await group_by_aggregate(
-            "test-session", group_by=["category"], aggregations={"nulls": ["mean", "count"]}
+            ctx, group_by=["category"], aggregations={"nulls": ["mean", "count"]}
         )
 
         assert result.success is True
@@ -361,7 +381,8 @@ class TestFindCellsWithValue:
 
     async def test_find_exact_match(self, mock_manager):
         """Test finding cells with exact match."""
-        result = await find_cells_with_value("test-session", "A", columns=["category"])
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "A", columns=["category"])
 
         assert isinstance(result, FindCellsResult)
         assert result.success is True
@@ -381,16 +402,16 @@ class TestFindCellsWithValue:
         df = mock_manager.return_value.get_session.return_value.df
         target_value = df["values"].iloc[0]
 
-        result = await find_cells_with_value("test-session", target_value, columns=["values"])
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, target_value, columns=["values"])
 
         assert result.success is True
         assert result.matches_found >= 1
 
     async def test_find_partial_match(self, mock_manager):
         """Test finding cells with partial match."""
-        result = await find_cells_with_value(
-            "test-session", "item", columns=["text"], exact_match=False
-        )
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "item", columns=["text"], exact_match=False)
 
         assert result.success is True
         assert result.matches_found == 100  # All text values contain "item"
@@ -399,30 +420,32 @@ class TestFindCellsWithValue:
         """Test case-insensitive search."""
         # find_cells_with_value doesn't support case_sensitive parameter
         # It does exact matching by default
-        result = await find_cells_with_value(
-            "test-session", "A", columns=["category"], exact_match=True
-        )
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "A", columns=["category"], exact_match=True)
 
         assert result.success is True
         assert result.matches_found > 0
 
     async def test_find_in_all_columns(self, mock_manager):
         """Test finding value in all columns."""
-        result = await find_cells_with_value("test-session", "A")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "A")
 
         assert result.success is True
         # Should search all columns
 
     async def test_find_null_values(self, mock_manager):
         """Test finding null values."""
-        result = await find_cells_with_value("test-session", None, columns=["nulls"])
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, None, columns=["nulls"])
 
         assert result.success is True
         assert result.matches_found == 10  # Every 10th value is null
 
     async def test_find_no_matches(self, mock_manager):
         """Test when no matches are found."""
-        result = await find_cells_with_value("test-session", "NONEXISTENT")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "NONEXISTENT")
 
         assert result.success is True
         assert result.matches_found == 0
@@ -431,7 +454,8 @@ class TestFindCellsWithValue:
     async def test_find_max_results(self, mock_manager):
         """Test limiting maximum results."""
         # find_cells_with_value doesn't support max_results parameter
-        result = await find_cells_with_value("test-session", "A", columns=["category"])
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await find_cells_with_value(ctx, "A", columns=["category"])
 
         assert result.success is True
         # Since max_results is not supported, check all matches are returned
@@ -444,7 +468,8 @@ class TestGetDataSummary:
 
     async def test_data_summary_default(self, mock_manager):
         """Test getting default data summary."""
-        result = await get_data_summary("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await get_data_summary(ctx)
 
         assert isinstance(result, DataSummaryResult)
         assert result.success is True
@@ -469,7 +494,8 @@ class TestGetDataSummary:
     async def test_data_summary_with_statistics(self, mock_manager):
         """Test data summary with basic statistics."""
         # get_data_summary doesn't have include_statistics parameter
-        result = await get_data_summary("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await get_data_summary(ctx)
 
         assert result.success is True
         # basic_stats is not a field in DataSummaryResult
@@ -477,7 +503,8 @@ class TestGetDataSummary:
 
     async def test_data_summary_max_preview_rows(self, mock_manager):
         """Test data summary with custom preview size."""
-        result = await get_data_summary("test-session", max_preview_rows=20)
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await get_data_summary(ctx, max_preview_rows=20)
 
         assert result.success is True
         assert len(result.preview.rows) <= 20
@@ -486,7 +513,8 @@ class TestGetDataSummary:
         """Test data summary for empty dataframe."""
         mock_manager.return_value.get_session.return_value._df = pd.DataFrame()
 
-        result = await get_data_summary("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await get_data_summary(ctx)
         assert result.success is True
         assert result.shape["rows"] == 0
         assert result.shape["columns"] == 0
@@ -496,7 +524,8 @@ class TestGetDataSummary:
         large_df = pd.DataFrame(np.random.randn(10000, 100))
         mock_manager.return_value.get_session.return_value._df = large_df
 
-        result = await get_data_summary("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await get_data_summary(ctx)
         assert result.success is True
         assert result.shape["rows"] == 10000
         assert result.shape["columns"] == 100
@@ -509,7 +538,8 @@ class TestInspectDataAround:
 
     async def test_inspect_around_cell(self, mock_manager):
         """Test inspecting data around a specific cell."""
-        result = await inspect_data_around("test-session", 50, "values", radius=5)
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await inspect_data_around(ctx, 50, "values", radius=5)
 
         assert isinstance(result, InspectDataResult)
         assert result.success is True
@@ -523,7 +553,8 @@ class TestInspectDataAround:
 
     async def test_inspect_around_edge_cell(self, mock_manager):
         """Test inspecting around edge cells."""
-        result = await inspect_data_around("test-session", 0, "values", radius=5)
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await inspect_data_around(ctx, 0, "values", radius=5)
 
         assert result.success is True
         assert result.center_coordinates["row"] == 0
@@ -533,18 +564,21 @@ class TestInspectDataAround:
     async def test_inspect_around_invalid_row(self, mock_manager):
         """Test inspecting around invalid row."""
         # Function doesn't validate row bounds, just returns empty data
-        result = await inspect_data_around("test-session", 1000, "values")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await inspect_data_around(ctx, 1000, "values")
         assert result.success is True
         assert len(result.surrounding_data.rows) == 0  # No rows in range
 
     async def test_inspect_around_invalid_column(self, mock_manager):
         """Test inspecting around invalid column."""
         with pytest.raises(ToolError, match="Column"):
-            await inspect_data_around("test-session", 50, "invalid_col")
+            ctx = create_mock_context_with_session_data("test-session")
+            await inspect_data_around(ctx, 50, "invalid_col")
 
     async def test_inspect_around_large_radius(self, mock_manager):
         """Test inspecting with large radius."""
-        result = await inspect_data_around("test-session", 50, "values", radius=100)
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await inspect_data_around(ctx, 50, "values", radius=100)
 
         assert result.success is True
         # Should cap at dataframe boundaries
@@ -552,7 +586,8 @@ class TestInspectDataAround:
 
     async def test_inspect_around_with_context(self, mock_manager):
         """Test inspect with context information."""
-        result = await inspect_data_around("test-session", 50, "values", radius=3)
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await inspect_data_around(ctx, 50, "values", radius=3)
 
         assert result.success is True
         # Should include all columns in surrounding data
@@ -570,15 +605,16 @@ class TestErrorHandling:
             manager.return_value.get_session.return_value = None
 
             with pytest.raises(ToolError, match="Invalid session"):
-                await detect_outliers("invalid-session")
+                ctx = create_mock_context_with_session_data("invalid-session")
+                await detect_outliers(ctx)
 
             with pytest.raises(ToolError, match="Invalid session"):
-                await profile_data("invalid-session")
+                ctx = create_mock_context_with_session_data("invalid-session")
+                await profile_data(ctx)
 
             with pytest.raises(ToolError, match="Invalid session"):
-                await group_by_aggregate(
-                    "invalid-session", group_by=["col"], aggregations={"val": ["mean"]}
-                )
+                ctx = create_mock_context_with_session_data("invalid-session")
+                await group_by_aggregate(ctx, group_by=["col"], aggregations={"val": ["mean"]})
 
     async def test_no_data_loaded(self):
         """Test all functions when no data is loaded."""
@@ -588,10 +624,12 @@ class TestErrorHandling:
             manager.return_value.get_session.return_value = session
 
             with pytest.raises(ToolError, match="Invalid session or no data"):
-                await detect_outliers("no-data")
+                ctx = create_mock_context_with_session_data("no-data")
+                await detect_outliers(ctx)
 
             with pytest.raises(ToolError, match="Invalid session or no data"):
-                await profile_data("no-data")
+                ctx = create_mock_context_with_session_data("no-data")
+                await profile_data(ctx)
 
     async def test_edge_cases(self, mock_manager):
         """Test various edge cases."""
@@ -599,7 +637,8 @@ class TestErrorHandling:
         single_row_df = pd.DataFrame({"col": [1]})
         mock_manager.return_value.get_session.return_value.df = single_row_df
 
-        result = await profile_data("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await profile_data(ctx)
         assert result.success is True
         assert result.total_rows == 1
 
@@ -607,5 +646,6 @@ class TestErrorHandling:
         single_col_df = pd.DataFrame({"only_col": range(100)})
         mock_manager.return_value.get_session.return_value.df = single_col_df
 
-        result = await detect_outliers("test-session")
+        ctx = create_mock_context_with_session_data("test-session")
+        result = await detect_outliers(ctx)
         assert result.success is True

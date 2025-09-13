@@ -366,16 +366,22 @@ class AnomalyDetectionParams(BaseModel):
 
 
 def validate_schema(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     schema: Annotated[
         ValidationSchema, Field(description="Schema definition with column validation rules")
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ValidateSchemaResult:
-    """Validate data against a schema definition."""
+    """Validate data against a schema definition.
+
+    Args:
+        ctx: FastMCP context for session access
+        schema: Schema definition with column validation rules
+
+    Returns:
+        ValidateSchemaResult with validation status and detailed error information
+    """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -607,17 +613,23 @@ def validate_schema(
 
 
 def check_data_quality(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     rules: Annotated[
         list[QualityRuleType] | None,
         Field(description="List of quality rules to check (None = use default rules)"),
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> DataQualityResult:
-    """Check data quality based on predefined or custom rules."""
+    """Check data quality based on predefined or custom rules.
+
+    Args:
+        ctx: FastMCP context for session access
+        rules: List of quality rules to check (None = use default rules)
+
+    Returns:
+        DataQualityResult with comprehensive quality assessment results
+    """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -946,7 +958,7 @@ def check_data_quality(
 
 
 def find_anomalies(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str] | None, Field(description="List of columns to analyze (None = all columns)")
     ] = None,
@@ -957,12 +969,20 @@ def find_anomalies(
         list[Literal["statistical", "pattern", "missing"]] | None,
         Field(description="Detection methods to use (None = all methods)"),
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> FindAnomaliesResult:
-    """Find anomalies in the data using multiple detection methods."""
+    """Find anomalies in the data using multiple detection methods.
+
+    Args:
+        ctx: FastMCP context for session access
+        columns: List of columns to analyze (None = all columns)
+        sensitivity: Sensitivity threshold for anomaly detection (0-1)
+        methods: Detection methods to use (None = all methods)
+
+    Returns:
+        FindAnomaliesResult with comprehensive anomaly detection results
+    """
     try:
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
