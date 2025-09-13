@@ -15,6 +15,7 @@ from src.databeak.servers.statistics_server import (
     get_statistics,
     get_value_counts,
 )
+from tests.mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -29,7 +30,8 @@ Desk,599.99,5,Furniture,4.1
 Phone,799.99,20,Electronics,4.7
 Table,399.99,8,Furniture,3.9"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -40,37 +42,44 @@ class TestAnalyticsErrorHandling:
     async def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session."""
         with pytest.raises(ToolError):
-            await get_statistics("invalid-session")
+            ctx = create_mock_context("invalid-session")
+            await get_statistics(ctx)
 
     async def test_get_statistics_invalid_columns(self, analytics_test_session):
         """Test statistics with invalid column names."""
         with pytest.raises(ToolError, match="not found"):
-            await get_statistics(analytics_test_session, ["nonexistent_column"])
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await get_statistics(ctx, ["nonexistent_column"])
 
     async def test_get_column_statistics_invalid_session(self):
         """Test column statistics with invalid session."""
         with pytest.raises(ToolError):
-            await get_column_statistics("invalid-session", "price")
+            ctx = create_mock_context("invalid-session")
+            await get_column_statistics(ctx, "price")
 
     async def test_get_column_statistics_invalid_column(self, analytics_test_session):
         """Test column statistics with invalid column."""
         with pytest.raises(ToolError, match="not found"):
-            await get_column_statistics(analytics_test_session, "nonexistent")
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await get_column_statistics(ctx, "nonexistent")
 
     async def test_detect_outliers_invalid_session(self):
         """Test outlier detection with invalid session."""
         with pytest.raises(ToolError):
-            await detect_outliers("invalid-session", ["price"])
+            ctx = create_mock_context("invalid-session")
+            await detect_outliers(ctx, ["price"])
 
     async def test_detect_outliers_invalid_columns(self, analytics_test_session):
         """Test outlier detection with invalid columns."""
         with pytest.raises(ToolError, match="not found"):
-            await detect_outliers(analytics_test_session, ["nonexistent"])
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await detect_outliers(ctx, ["nonexistent"])
 
     async def test_detect_outliers_non_numeric(self, analytics_test_session):
         """Test outlier detection on non-numeric columns."""
         with pytest.raises(ToolError, match="numeric"):
-            await detect_outliers(analytics_test_session, ["category"])
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await detect_outliers(ctx, ["category"])
 
 
 @pytest.mark.asyncio
@@ -79,7 +88,8 @@ class TestGetColumnStatistics:
 
     async def test_get_column_statistics_numeric_success(self, analytics_test_session):
         """Test column statistics with numeric column."""
-        result = await get_column_statistics(analytics_test_session, "price")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_column_statistics(ctx, "price")
         assert result.success is True
         assert result.session_id == analytics_test_session
         assert result.column == "price"
@@ -103,7 +113,8 @@ class TestGetColumnStatistics:
 
     async def test_get_column_statistics_integer_column(self, analytics_test_session):
         """Test column statistics with integer column."""
-        result = await get_column_statistics(analytics_test_session, "quantity")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_column_statistics(ctx, "quantity")
         assert result.success is True
         assert result.column == "quantity"
         assert result.data_type == "int64"
@@ -116,7 +127,8 @@ class TestGetColumnStatistics:
 
     async def test_get_column_statistics_string_column(self, analytics_test_session):
         """Test column statistics with string/object column."""
-        result = await get_column_statistics(analytics_test_session, "category")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_column_statistics(ctx, "category")
         assert result.success is True
         assert result.column == "category"
         assert result.data_type == "object"
@@ -131,10 +143,12 @@ class TestGetColumnStatistics:
     async def test_get_column_statistics_with_nulls(self):
         """Test column statistics with null values."""
         csv_content = "values\n10\n20\n\n30\n40\n"  # One null value
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        stats_result = await get_column_statistics(session_id, "values")
+        ctx = create_mock_context_with_session_data(session_id)
+        stats_result = await get_column_statistics(ctx, "values")
         assert stats_result.success is True
         assert stats_result.statistics.count == 4  # Should exclude null
         assert stats_result.non_null_count == 4
@@ -147,10 +161,12 @@ class TestGetColumnStatistics:
     async def test_get_column_statistics_single_value(self):
         """Test column statistics with single value."""
         csv_content = "single\n42"
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        stats_result = await get_column_statistics(session_id, "single")
+        ctx = create_mock_context_with_session_data(session_id)
+        stats_result = await get_column_statistics(ctx, "single")
         assert stats_result.success is True
         assert stats_result.statistics.count == 1
         assert stats_result.statistics.mean == 42.0
@@ -165,12 +181,14 @@ class TestGetColumnStatistics:
 
         # Update test to expect validation error for truly empty data
         with pytest.raises(ToolError, match="Parsed CSV contains no data rows"):
-            await load_csv_from_content(csv_content)
+            ctx = create_mock_context()
+            await load_csv_from_content(ctx, csv_content)
 
     async def test_get_column_statistics_data_accuracy(self, analytics_test_session):
         """Test accuracy of calculated statistics against known data."""
         # Use 'rating' column which should have known values: [4.5, 4.2, 4.0, 3.8, 4.1, 4.7, 3.9]
-        result = await get_column_statistics(analytics_test_session, "rating")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_column_statistics(ctx, "rating")
         assert result.success is True
 
         # Verify basic statistical properties
@@ -183,10 +201,12 @@ class TestGetColumnStatistics:
     async def test_get_column_statistics_boolean_column(self):
         """Test column statistics with boolean column."""
         csv_content = "flag\nTrue\nFalse\nTrue\nFalse"
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        stats_result = await get_column_statistics(session_id, "flag")
+        ctx = create_mock_context_with_session_data(session_id)
+        stats_result = await get_column_statistics(ctx, "flag")
         assert stats_result.success is True
         assert stats_result.column == "flag"
         assert stats_result.data_type == "bool"
@@ -203,9 +223,8 @@ class TestAnalyticsAdvancedFeatures:
 
     async def test_get_correlation_matrix_success(self, analytics_test_session):
         """Test correlation matrix calculation."""
-        result = await get_correlation_matrix(
-            analytics_test_session, columns=["price", "quantity", "rating"]
-        )
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_correlation_matrix(ctx, columns=["price", "quantity", "rating"])
         assert result.success is True
         assert hasattr(result, "correlation_matrix")
         assert len(result.correlation_matrix) == 3
@@ -213,12 +232,14 @@ class TestAnalyticsAdvancedFeatures:
     async def test_get_correlation_matrix_insufficient_columns(self, analytics_test_session):
         """Test correlation matrix with insufficient numeric columns."""
         with pytest.raises(ToolError, match="numeric columns"):
-            await get_correlation_matrix(analytics_test_session, columns=["category"])
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await get_correlation_matrix(ctx, columns=["category"])
 
     async def test_group_by_aggregate_success(self, analytics_test_session):
         """Test group by aggregation."""
+        ctx = create_mock_context_with_session_data(analytics_test_session)
         result = await group_by_aggregate(
-            analytics_test_session,
+            ctx,
             group_by=["category"],
             aggregations={"price": ["mean", "max"], "quantity": ["sum"]},
         )
@@ -230,15 +251,17 @@ class TestAnalyticsAdvancedFeatures:
     async def test_group_by_aggregate_invalid_columns(self, analytics_test_session):
         """Test group by with invalid columns."""
         with pytest.raises(ToolError, match="not found"):
+            ctx = create_mock_context_with_session_data(analytics_test_session)
             await group_by_aggregate(
-                analytics_test_session,
+                ctx,
                 group_by=["nonexistent"],
                 aggregations={"price": ["mean"]},
             )
 
     async def test_get_value_counts_success(self, analytics_test_session):
         """Test value counts functionality."""
-        result = await get_value_counts(analytics_test_session, "category")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await get_value_counts(ctx, "category")
         assert result.success is True
         assert hasattr(result, "value_counts")
         assert "Electronics" in result.value_counts
@@ -247,11 +270,13 @@ class TestAnalyticsAdvancedFeatures:
     async def test_get_value_counts_invalid_column(self, analytics_test_session):
         """Test value counts with invalid column."""
         with pytest.raises(ToolError, match="not found"):
-            await get_value_counts(analytics_test_session, "nonexistent")
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await get_value_counts(ctx, "nonexistent")
 
     async def test_profile_data_success(self, analytics_test_session):
         """Test data profiling functionality."""
-        result = await profile_data(analytics_test_session)
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result = await profile_data(ctx)
         assert result.success is True
         assert hasattr(result, "profile")
         # Profile is a dict mapping column names to ProfileInfo objects
@@ -261,7 +286,8 @@ class TestAnalyticsAdvancedFeatures:
     async def test_profile_data_invalid_session(self):
         """Test data profiling with invalid session."""
         with pytest.raises(ToolError):
-            await profile_data("invalid-session")
+            ctx = create_mock_context("invalid-session")
+            await profile_data(ctx)
 
 
 @pytest.mark.asyncio
@@ -272,16 +298,19 @@ class TestAnalyticsEdgeCases:
         """Test statistics validation with empty dataframe."""
         # Header-only CSV is now rejected by validation (as it should be)
         with pytest.raises(ToolError, match="Parsed CSV contains no data rows"):
-            await load_csv_from_content("name,age\n")  # Header only
+            ctx = create_mock_context()
+            await load_csv_from_content(ctx, "name,age\n")  # Header only
 
     async def test_outliers_with_identical_values(self):
         """Test outlier detection with identical values."""
         # Create data with identical values (no outliers)
         csv_content = "value\n100\n100\n100\n100\n100"
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        outliers_result = await detect_outliers(session_id, ["value"])
+        ctx = create_mock_context_with_session_data(session_id)
+        outliers_result = await detect_outliers(ctx, ["value"])
         assert outliers_result.success is True
         assert hasattr(outliers_result, "outliers_by_column")
         # With identical values, there should be minimal outliers
@@ -292,10 +321,12 @@ class TestAnalyticsEdgeCases:
         """Test correlation with constant column."""
         # Create data where one column is constant
         csv_content = "var1,constant,var2\n1,100,10\n2,100,20\n3,100,30"
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        corr_result = await get_correlation_matrix(session_id)
+        ctx = create_mock_context_with_session_data(session_id)
+        corr_result = await get_correlation_matrix(ctx)
         assert corr_result.success is True
         # Constant column should have NaN correlations
 
@@ -307,23 +338,28 @@ class TestAnalyticsDataTypes:
     async def test_statistics_mixed_types(self):
         """Test statistics on mixed data types."""
         csv_content = "text,number,boolean\nHello,123,True\nWorld,456,False"
-        result = await load_csv_from_content(csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = result.session_id
 
-        stats_result = await get_statistics(session_id)
+        ctx = create_mock_context_with_session_data(session_id)
+        stats_result = await get_statistics(ctx)
         assert stats_result.success is True
         assert hasattr(stats_result, "statistics")
 
     async def test_outliers_different_methods(self, analytics_test_session):
         """Test different outlier detection methods."""
         # Test IQR method
-        result_iqr = await detect_outliers(analytics_test_session, ["price"], method="iqr")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result_iqr = await detect_outliers(ctx, ["price"], method="iqr")
         assert result_iqr.success is True
 
         # Test Z-score method
-        result_zscore = await detect_outliers(analytics_test_session, ["price"], method="zscore")
+        ctx = create_mock_context_with_session_data(analytics_test_session)
+        result_zscore = await detect_outliers(ctx, ["price"], method="zscore")
         assert result_zscore.success is True
 
         # Test invalid method
         with pytest.raises(ToolError, match="method"):
-            await detect_outliers(analytics_test_session, ["price"], method="invalid")
+            ctx = create_mock_context_with_session_data(analytics_test_session)
+            await detect_outliers(ctx, ["price"], method="invalid")

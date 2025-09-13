@@ -33,9 +33,7 @@ logger = logging.getLogger(__name__)
 # - Status levels: healthy (operational), degraded (constraints), unhealthy (critical issues)
 # - System checks: Session Manager availability, Active Sessions count, Memory Status, Service Status
 async def health_check(
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for progress reporting")],
 ) -> HealthResult:
     """Check DataBeak server health and availability.
 
@@ -43,8 +41,7 @@ async def health_check(
     verify system readiness.
     """
     try:
-        if ctx:
-            await ctx.info("Performing DataBeak health check")
+        await ctx.info("Performing DataBeak health check")
 
         session_manager = get_session_manager()
         active_sessions = len(session_manager.sessions)
@@ -59,10 +56,9 @@ async def health_check(
                 f"Session capacity warning: {active_sessions}/{session_manager.max_sessions}"
             )
 
-        if ctx:
-            await ctx.info(
-                f"Health check complete - Status: {status}, Active sessions: {active_sessions}"
-            )
+        await ctx.info(
+            f"Health check complete - Status: {status}, Active sessions: {active_sessions}"
+        )
 
         return HealthResult(
             status=status,
@@ -75,8 +71,7 @@ async def health_check(
     except (ImportError, AttributeError, ValueError, TypeError) as e:
         # Handle specific configuration/import issues - return unhealthy
         logger.error(f"Health check failed due to configuration issue: {e!s}")
-        if ctx:
-            await ctx.error(f"Health check failed: {e!s}")
+        await ctx.error(f"Health check failed: {e!s}")
 
         return HealthResult(
             status="unhealthy",
@@ -88,8 +83,7 @@ async def health_check(
     except Exception as e:
         # Treat unexpected session manager errors as recoverable - return unhealthy
         logger.error(f"Health check failed: {e!s}")
-        if ctx:
-            await ctx.error(f"Health check failed: {e!s}")
+        await ctx.error(f"Health check failed: {e!s}")
 
         try:
             version = str(__version__)
@@ -110,9 +104,7 @@ async def health_check(
 # - Configuration info: File size limits, timeout settings, memory limits, session limits
 # - Used for capability discovery, format compatibility verification, resource limit awareness
 async def get_server_info(
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for progress reporting")],
 ) -> ServerInfoResult:
     """Get DataBeak server capabilities and supported operations.
 
@@ -120,8 +112,7 @@ async def get_server_info(
     discover what operations are available before planning workflows.
     """
     try:
-        if ctx:
-            await ctx.info("Retrieving DataBeak server information")
+        await ctx.info("Retrieving DataBeak server information")
 
         # Get current configuration settings
         settings = get_csv_settings()
@@ -189,15 +180,13 @@ async def get_server_info(
             session_timeout_minutes=settings.session_timeout // 60,
         )
 
-        if ctx:
-            await ctx.info("Server information retrieved successfully")
+        await ctx.info("Server information retrieved successfully")
 
         return server_info
 
     except Exception as e:
         logger.error(f"Failed to get server information: {e!s}")
-        if ctx:
-            await ctx.error(f"Failed to get server information: {e!s}")
+        await ctx.error(f"Failed to get server information: {e!s}")
         raise ToolError(f"Failed to get server information: {e}") from e
 
 

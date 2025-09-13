@@ -16,6 +16,7 @@ from src.databeak.servers.validation_server import (
     find_anomalies,
     validate_schema,
 )
+from tests.mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -33,7 +34,8 @@ async def validation_test_session():
 9,Henry Ford,150,henry@cars.com,200000,2023-09-30,retired
 10,Ivan Petrov,27,ivan@russian.ru,58000,2023-10-15,active"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -45,7 +47,8 @@ async def clean_test_session():
 2,Jane,30,jane@test.com
 3,Bob,35,bob@company.org"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -65,7 +68,8 @@ async def problematic_test_session():
 9,Grace,45,102.5,D
 10,Henry,32,91.0,A"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -83,7 +87,8 @@ class TestSchemaValidation:
         }
         schema = ValidationSchema(schema_dict)
 
-        result = validate_schema(clean_test_session, schema)
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = validate_schema(ctx, schema)
         assert result.valid is True
         assert len(result.errors) == 0
 
@@ -94,7 +99,8 @@ class TestSchemaValidation:
             "salary": {"type": "bool"},  # Salary is float in data
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         assert len(result.validation_errors) > 0
         assert "age" in result.validation_errors
@@ -105,7 +111,8 @@ class TestSchemaValidation:
             "email": {"nullable": False},  # But data has null email
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         assert "email" in result.validation_errors
 
@@ -116,7 +123,8 @@ class TestSchemaValidation:
             "salary": {"type": "int", "min": 30000},
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         # Should catch negative age and zero salary
 
@@ -127,7 +135,8 @@ class TestSchemaValidation:
             "status": {"pattern": r"^(active|inactive)$"},  # Specific values only
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
 
     async def test_validate_schema_allowed_values(self, validation_test_session):
@@ -136,7 +145,8 @@ class TestSchemaValidation:
             "status": {"values": ["active", "inactive"]},  # Excludes "pending", "retired"
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         assert "status" in result.validation_errors
 
@@ -146,7 +156,8 @@ class TestSchemaValidation:
             "id": {"unique": True},
         }
 
-        result = validate_schema(problematic_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         assert "id" in result.validation_errors
 
@@ -157,7 +168,8 @@ class TestSchemaValidation:
             "email": {"min_length": 8},
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         # Some names might be too short - should have validation errors
         assert isinstance(result.valid, bool)
 
@@ -168,7 +180,8 @@ class TestSchemaValidation:
             "nonexistent": {"type": "str"},
         }
 
-        result = validate_schema(clean_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         assert result.valid is False
         assert "nonexistent" in result.validation_errors
         assert len(result.summary.missing_columns) > 0
@@ -192,11 +205,13 @@ class TestSchemaValidation:
         schema = {"id": {"type": "int"}}
 
         with pytest.raises(ToolError):
-            validate_schema("invalid-session", ValidationSchema(schema))
+            ctx = create_mock_context("invalid-session")
+            validate_schema(ctx, ValidationSchema(schema))
 
     async def test_validate_schema_empty_schema(self, clean_test_session):
         """Test schema validation with empty schema."""
-        result = validate_schema(clean_test_session, ValidationSchema({}))
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = validate_schema(ctx, ValidationSchema({}))
         assert result.valid is True
 
 
@@ -206,7 +221,8 @@ class TestDataQualityChecking:
 
     async def test_check_data_quality_default_rules(self, problematic_test_session):
         """Test data quality check with default rules."""
-        result = check_data_quality(problematic_test_session)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx)
         assert hasattr(result, "quality_results")
         assert hasattr(result.quality_results, "overall_score")
         assert hasattr(result.quality_results, "rule_results")
@@ -216,7 +232,8 @@ class TestDataQualityChecking:
         """Test data quality completeness check."""
         rules = [CompletenessRule(threshold=0.8)]
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         # Should find completeness issues in problematic data
@@ -227,7 +244,8 @@ class TestDataQualityChecking:
         """Test data quality duplicate detection."""
         rules = [DuplicatesRule(threshold=0.0)]  # No duplicates allowed
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         # Should find duplicate rows
@@ -239,7 +257,8 @@ class TestDataQualityChecking:
         """Test data quality uniqueness check."""
         rules = [UniquenessRule(column="id", expected_unique=True)]
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         uniqueness_checks = [c for c in quality.rule_results if c.rule_type == "uniqueness"]
@@ -249,7 +268,8 @@ class TestDataQualityChecking:
         """Test data quality data type consistency."""
         rules = [DataTypesRule()]
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         type_checks = [c for c in quality.rule_results if c.rule_type == "data_type_consistency"]
@@ -259,7 +279,8 @@ class TestDataQualityChecking:
         """Test data quality outlier detection."""
         rules = [OutliersRule(threshold=0.1)]
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         outlier_checks = [c for c in quality.rule_results if c.rule_type == "outliers"]
@@ -269,7 +290,8 @@ class TestDataQualityChecking:
         """Test data quality consistency check."""
         rules = [ConsistencyRule(columns=["join_date"])]
 
-        result = check_data_quality(validation_test_session, rules)
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = check_data_quality(ctx, rules)
         # Consistency rules may not generate results for all datasets
         assert hasattr(result, "quality_results")
 
@@ -278,11 +300,13 @@ class TestDataQualityChecking:
         from fastmcp.exceptions import ToolError
 
         with pytest.raises(ToolError):
-            check_data_quality("invalid-session")
+            ctx = create_mock_context("invalid-session")
+            check_data_quality(ctx)
 
     async def test_check_data_quality_clean_data(self, clean_test_session):
         """Test data quality check on clean data."""
-        result = check_data_quality(clean_test_session)
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = check_data_quality(ctx)
         quality = result.quality_results
 
         # Clean data should have high quality score
@@ -290,7 +314,8 @@ class TestDataQualityChecking:
 
     async def test_check_data_quality_score_calculation(self, problematic_test_session):
         """Test quality score calculation."""
-        result = check_data_quality(problematic_test_session)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx)
         quality = result.quality_results
 
         # Should have issues and lower score
@@ -304,7 +329,8 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_statistical(self, problematic_test_session):
         """Test statistical anomaly detection."""
-        result = find_anomalies(problematic_test_session, methods=["statistical"], sensitivity=0.95)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = find_anomalies(ctx, methods=["statistical"], sensitivity=0.95)
         assert hasattr(result, "anomalies")
         assert hasattr(result.anomalies, "by_method")
 
@@ -315,17 +341,20 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_pattern(self, problematic_test_session):
         """Test pattern anomaly detection."""
-        result = find_anomalies(problematic_test_session, methods=["pattern"], sensitivity=0.8)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = find_anomalies(ctx, methods=["pattern"], sensitivity=0.8)
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_missing(self, problematic_test_session):
         """Test missing value anomaly detection."""
-        result = find_anomalies(problematic_test_session, methods=["missing"], sensitivity=0.9)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = find_anomalies(ctx, methods=["missing"], sensitivity=0.9)
         assert hasattr(result, "anomalies")
 
     async def test_find_anomalies_all_methods(self, problematic_test_session):
         """Test anomaly detection with all methods."""
-        result = find_anomalies(problematic_test_session)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = find_anomalies(ctx)
         anomalies = result.anomalies
 
         assert hasattr(anomalies, "summary")
@@ -335,14 +364,16 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_specific_columns(self, problematic_test_session):
         """Test anomaly detection on specific columns."""
-        result = find_anomalies(problematic_test_session, columns=["age", "score"])
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = find_anomalies(ctx, columns=["age", "score"])
         assert result.columns_analyzed == ["age", "score"]
 
     async def test_find_anomalies_sensitivity_levels(self, problematic_test_session):
         """Test different sensitivity levels."""
         # High sensitivity should find more anomalies
-        high_sens = find_anomalies(problematic_test_session, sensitivity=0.99)
-        low_sens = find_anomalies(problematic_test_session, sensitivity=0.5)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        high_sens = find_anomalies(ctx, sensitivity=0.99)
+        low_sens = find_anomalies(ctx, sensitivity=0.5)
 
         # Both should succeed
         high_count = high_sens.anomalies.summary.total_anomalies
@@ -353,7 +384,8 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_clean_data(self, clean_test_session):
         """Test anomaly detection on clean data."""
-        result = find_anomalies(clean_test_session)
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = find_anomalies(ctx)
 
         # Clean data should have few or no anomalies
         anomalies = result.anomalies
@@ -364,18 +396,21 @@ class TestAnomalyDetection:
         from fastmcp.exceptions import ToolError
 
         with pytest.raises(ToolError):
-            find_anomalies(clean_test_session, columns=["nonexistent"])
+            ctx = create_mock_context_with_session_data(clean_test_session)
+            find_anomalies(ctx, columns=["nonexistent"])
 
     async def test_find_anomalies_invalid_session(self):
         """Test anomaly detection with invalid session."""
         from fastmcp.exceptions import ToolError
 
         with pytest.raises(ToolError):
-            find_anomalies("invalid-session")
+            ctx = create_mock_context("invalid-session")
+            find_anomalies(ctx)
 
     async def test_find_anomalies_empty_methods(self, clean_test_session):
         """Test anomaly detection with empty methods list."""
-        result = find_anomalies(clean_test_session, methods=[])
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = find_anomalies(ctx, methods=[])
         # Should still work but find no anomalies
         assert result.anomalies.summary.total_anomalies == 0
 
@@ -388,7 +423,8 @@ class TestValidationEdgeCases:
         """Test schema validation on empty dataframe."""
         # load_csv_from_content now rejects empty CSVs
         with pytest.raises(ToolError, match="no data rows"):
-            await load_csv_from_content("id,name\n")  # Header only
+            ctx = create_mock_context()
+            await load_csv_from_content(ctx, "id,name\n")  # Header only
 
     async def test_schema_validation_all_types(self, validation_test_session):
         """Test schema validation with all supported data types."""
@@ -400,13 +436,15 @@ class TestValidationEdgeCases:
             # Note: bool and datetime types would need appropriate test data
         }
 
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         # Should complete validation
         assert hasattr(result, "valid")
 
     async def test_data_quality_empty_rules(self, clean_test_session):
         """Test data quality check with empty rules."""
-        result = check_data_quality(clean_test_session, [])
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = check_data_quality(ctx, [])
         assert hasattr(result, "quality_results")
         assert result.quality_results.overall_score > 0
         # Should use default rules
@@ -418,7 +456,8 @@ class TestValidationEdgeCases:
             DuplicatesRule(threshold=0.5),  # Allow many duplicates
         ]
 
-        result = check_data_quality(problematic_test_session, rules)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx, rules)
         quality = result.quality_results
 
         # With lenient thresholds, score should be higher
@@ -433,10 +472,12 @@ class TestValidationEdgeCases:
 100,40,400
 5,50,500"""
 
-        result = await load_csv_from_content(numeric_csv)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, numeric_csv)
         session_id = result.session_id
 
-        anomaly_result = find_anomalies(session_id, methods=["statistical"])
+        ctx_with_data = create_mock_context_with_session_data(session_id)
+        anomaly_result = find_anomalies(ctx_with_data, methods=["statistical"])
         # Should complete without errors
         assert hasattr(anomaly_result, "anomalies")
 
@@ -449,10 +490,12 @@ C,Standard entry,active
 Z,OUTLIER DATA,DIFFERENT
 D,Another normal,active"""
 
-        result = await load_csv_from_content(string_csv)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, string_csv)
         session_id = result.session_id
 
-        anomaly_result = find_anomalies(session_id, methods=["pattern"])
+        ctx_with_data = create_mock_context_with_session_data(session_id)
+        anomaly_result = find_anomalies(ctx_with_data, methods=["pattern"])
         # Should complete without errors
         assert hasattr(anomaly_result, "anomalies")
 
@@ -471,13 +514,15 @@ class TestValidationIntegration:
 
         # Then validate
         schema = {"email": {"nullable": False}}
-        result = validate_schema(validation_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(validation_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         # After dropping nulls, email should be non-null
         assert hasattr(result, "valid")
 
     async def test_quality_check_recommendations(self, problematic_test_session):
         """Test that quality check provides useful recommendations."""
-        result = check_data_quality(problematic_test_session)
+        ctx = create_mock_context_with_session_data(problematic_test_session)
+        result = check_data_quality(ctx)
 
         quality = result.quality_results
         if quality.overall_score < 85:
@@ -487,13 +532,15 @@ class TestValidationIntegration:
         """Test that validation operations work with session management."""
         # Perform validation
         schema = {"id": {"type": "int"}}
-        result = validate_schema(clean_test_session, ValidationSchema(schema))
+        ctx = create_mock_context_with_session_data(clean_test_session)
+        result = validate_schema(ctx, ValidationSchema(schema))
         # Should complete validation
         assert hasattr(result, "valid")
 
         # Check if session info can be retrieved (verifies session still exists)
         from src.databeak.servers.io_server import get_session_info
 
-        info_result = await get_session_info(clean_test_session)
+        ctx_info = create_mock_context_with_session_data(clean_test_session)
+        info_result = await get_session_info(ctx_info)
         assert info_result.success is True
         assert info_result.data_loaded is True

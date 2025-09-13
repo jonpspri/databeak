@@ -4,7 +4,6 @@ This module provides a complete Discovery server implementation following DataBe
 architecture pattern. It focuses on data exploration, profiling, pattern detection, and outlier
 analysis with specialized algorithms for data insights.
 """
-# ruff: noqa: ARG001
 
 from __future__ import annotations
 
@@ -206,7 +205,7 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 
 async def detect_outliers(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str] | None,
         Field(description="List of numerical columns to analyze for outliers (None = all numeric)"),
@@ -217,9 +216,6 @@ async def detect_outliers(
     threshold: Annotated[
         float, Field(description="Sensitivity threshold (higher = less sensitive)")
     ] = 1.5,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> OutliersResult:
     """Detect outliers in numerical columns using various algorithms.
 
@@ -228,7 +224,7 @@ async def detect_outliers(
     assessment and anomaly detection in analytical workflows.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         columns: List of numerical columns to analyze for outliers
         method: Detection algorithm (zscore, iqr, isolation_forest)
         threshold: Sensitivity threshold (higher = less sensitive)
@@ -244,10 +240,10 @@ async def detect_outliers(
 
     Examples:
         # Basic outlier detection
-        outliers = await detect_outliers("session_123", ["price", "quantity"])
+        outliers = await detect_outliers(ctx, ["price", "quantity"])
 
         # Use IQR method with custom threshold
-        outliers = await detect_outliers("session_123", ["sales"],
+        outliers = await detect_outliers(ctx, ["sales"],
                                         method="iqr", threshold=2.5)
 
     AI Workflow Integration:
@@ -257,6 +253,8 @@ async def detect_outliers(
         4. Understanding data distribution characteristics
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -377,16 +375,13 @@ async def detect_outliers(
 
 
 async def profile_data(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     include_correlations: Annotated[
         bool, Field(description="Include correlation analysis in profile")
     ] = True,
     include_outliers: Annotated[
         bool, Field(description="Include outlier detection in profile")
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ProfileResult:
     """Generate comprehensive data profile with statistical insights.
 
@@ -395,7 +390,7 @@ async def profile_data(
     Provides holistic data understanding for analytical workflows.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         include_correlations: Include correlation analysis in profile
         include_outliers: Include outlier detection in profile
         ctx: FastMCP context for progress reporting
@@ -412,10 +407,10 @@ async def profile_data(
 
     Examples:
         # Full data profile
-        profile = await profile_data("session_123")
+        profile = await profile_data(ctx)
 
         # Quick profile without expensive computations
-        profile = await profile_data("session_123",
+        profile = await profile_data(ctx,
                                    include_correlations=False,
                                    include_outliers=False)
 
@@ -426,6 +421,8 @@ async def profile_data(
         4. Data preprocessing strategy development
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -498,7 +495,7 @@ async def profile_data(
 
 
 async def group_by_aggregate(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     group_by: Annotated[
         list[str], Field(description="List of columns to group by for segmentation analysis")
     ],
@@ -506,9 +503,6 @@ async def group_by_aggregate(
         dict[str, list[str]],
         Field(description="Dict mapping column names to list of aggregation functions"),
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> GroupAggregateResult:
     """Group data and compute aggregations for analytical insights.
 
@@ -517,7 +511,7 @@ async def group_by_aggregate(
     across different data groups.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         group_by: List of columns to group by
         aggregations: Dict mapping column names to list of aggregation functions
         ctx: FastMCP context for progress reporting
@@ -533,12 +527,12 @@ async def group_by_aggregate(
 
     Examples:
         # Sales analysis by region
-        result = await group_by_aggregate("session_123",
+        result = await group_by_aggregate(ctx,
                                         group_by=["region"],
                                         aggregations={"sales": ["sum", "mean", "count"]})
 
         # Multi-dimensional grouping
-        result = await group_by_aggregate("session_123",
+        result = await group_by_aggregate(ctx,
                                         group_by=["category", "region"],
                                         aggregations={
                                             "price": ["mean", "std"],
@@ -552,6 +546,8 @@ async def group_by_aggregate(
         4. Understanding group-based patterns and trends
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         manager = get_session_manager()
         session = manager.get_session(session_id)
 
@@ -628,7 +624,7 @@ async def group_by_aggregate(
 
 
 async def find_cells_with_value(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     value: Annotated[Any, Field(description="The value to search for (any data type)")],
     columns: Annotated[
         list[str] | None, Field(description="List of columns to search (None = all columns)")
@@ -636,9 +632,6 @@ async def find_cells_with_value(
     exact_match: Annotated[
         bool, Field(description="True for exact match, False for substring search")
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> FindCellsResult:
     """Find all cells containing a specific value for data discovery.
 
@@ -647,7 +640,7 @@ async def find_cells_with_value(
     checking, and understanding data patterns.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         value: The value to search for (any data type)
         columns: Optional list of columns to search (default: all)
         exact_match: If True, require exact match; if False, substring search
@@ -664,10 +657,10 @@ async def find_cells_with_value(
 
     Examples:
         # Find all cells with value "ERROR"
-        results = await find_cells_with_value("session_123", "ERROR")
+        results = await find_cells_with_value(ctx, "ERROR")
 
         # Substring search in specific columns
-        results = await find_cells_with_value("session_123", "john",
+        results = await find_cells_with_value(ctx, "john",
                                             columns=["name", "email"],
                                             exact_match=False)
 
@@ -678,6 +671,8 @@ async def find_cells_with_value(
         4. Data cleaning and preprocessing guidance
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
         matches = []
 
@@ -759,16 +754,13 @@ async def find_cells_with_value(
 
 
 async def get_data_summary(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     include_preview: Annotated[
         bool, Field(description="Include sample data rows in summary")
     ] = True,
     max_preview_rows: Annotated[
         int, Field(description="Maximum number of preview rows to include")
     ] = 10,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> DataSummaryResult:
     """Get comprehensive data overview and structural summary.
 
@@ -777,7 +769,7 @@ async def get_data_summary(
     planning workflows.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         include_preview: Include sample data rows in summary
         ctx: FastMCP context for progress reporting
 
@@ -793,10 +785,10 @@ async def get_data_summary(
 
     Examples:
         # Full data summary with preview
-        summary = await get_data_summary("session_123")
+        summary = await get_data_summary(ctx)
 
         # Structure summary without preview data
-        summary = await get_data_summary("session_123", include_preview=False)
+        summary = await get_data_summary(ctx, include_preview=False)
 
     AI Workflow Integration:
         1. Initial data exploration and understanding
@@ -805,6 +797,8 @@ async def get_data_summary(
         4. Data quality initial assessment
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Create coordinate system
@@ -907,15 +901,12 @@ async def get_data_summary(
 
 
 async def inspect_data_around(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     row: Annotated[int, Field(description="Row index to center the inspection (0-based)")],
     column_name: Annotated[str, Field(description="Name of the column to center on")],
     radius: Annotated[
         int, Field(description="Number of rows/columns to include around center point")
     ] = 2,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> InspectDataResult:
     """Inspect data around a specific coordinate for contextual analysis.
 
@@ -924,7 +915,7 @@ async def inspect_data_around(
     and understanding local data patterns.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         row: Row index to center the inspection (0-based)
         column_name: Name of the column to center on
         radius: Number of rows/columns to include around center point
@@ -941,11 +932,11 @@ async def inspect_data_around(
 
     Examples:
         # Inspect around a specific data point
-        context = await inspect_data_around("session_123", row=50,
+        context = await inspect_data_around(ctx, row=50,
                                           column_name="price", radius=3)
 
         # Minimal context view
-        context = await inspect_data_around("session_123", row=10,
+        context = await inspect_data_around(ctx, row=10,
                                           column_name="status", radius=1)
 
     AI Workflow Integration:
@@ -955,6 +946,8 @@ async def inspect_data_around(
         4. Validation of data transformations and corrections
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Handle column specification

@@ -269,6 +269,7 @@ def get_encoding_fallbacks(primary_encoding: str) -> list[str]:
 # Encoding fallback strategy with chardet detection and prioritized fallbacks
 # Progress reporting and comprehensive error handling with specific error messages
 async def load_csv(
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[str, Field(description="Path to the CSV file to load")],
     encoding: Annotated[
         str, Field(description="Text encoding for file reading (utf-8, latin1, cp1252, etc.)")
@@ -276,9 +277,6 @@ async def load_csv(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
-    session_id: Annotated[
-        str | None, Field(description="Existing session ID or None for new session")
-    ] = None,
     header: Annotated[
         int | None, Field(description="Row number to use as header (0=first row, None=no header)")
     ] = 0,
@@ -286,9 +284,6 @@ async def load_csv(
         list[str] | None, Field(description="Additional strings to recognize as NA/NaN")
     ] = None,
     parse_dates: Annotated[list[str] | None, Field(description="Columns to parse as dates")] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> LoadResult:
     """Load CSV file into DataBeak session.
 
@@ -296,29 +291,29 @@ async def load_csv(
     for further operations.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         # Validate file path
         is_valid, validated_path = validate_file_path(file_path)
         if not is_valid:
             raise ToolError(f"Invalid file path: {validated_path}")
 
-        if ctx:
-            await ctx.info(f"Loading CSV file: {validated_path}")
-            await ctx.report_progress(0.1)
+        await ctx.info(f"Loading CSV file: {validated_path}")
+        await ctx.report_progress(0.1)
 
         # Check file size before attempting to load
         file_size_mb = Path(validated_path).stat().st_size / (1024 * 1024)
         if file_size_mb > MAX_FILE_SIZE_MB:
             raise ToolError(f"File size {file_size_mb:.1f}MB exceeds limit of {MAX_FILE_SIZE_MB}MB")
 
-        if ctx:
-            await ctx.info(f"File size: {file_size_mb:.2f} MB")
+        await ctx.info(f"File size: {file_size_mb:.2f} MB")
 
         # Get or create session
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
 
-        if ctx:
-            await ctx.report_progress(0.3)
+        await ctx.report_progress(0.3)
 
         # Build pandas read_csv parameters
         # Using dict[str, Any] due to pandas read_csv's complex overloaded signature
@@ -358,16 +353,14 @@ async def load_csv(
             df = None
             last_error = e
 
-            if ctx:
-                await ctx.info("Encoding error detected, trying automatic detection...")
+            await ctx.info("Encoding error detected, trying automatic detection...")
 
             # First, try automatic encoding detection
             try:
                 detected_encoding = detect_file_encoding(validated_path)
                 if detected_encoding != encoding:
                     logger.info(f"Auto-detected encoding: {detected_encoding}")
-                    if ctx:
-                        await ctx.info(f"Auto-detected encoding: {detected_encoding}")
+                    await ctx.info(f"Auto-detected encoding: {detected_encoding}")
 
                     read_params["encoding"] = detected_encoding
                     df = pd.read_csv(**read_params)
@@ -417,10 +410,9 @@ async def load_csv(
                             logger.warning(
                                 f"Used fallback encoding {alt_encoding} instead of {encoding}"
                             )
-                            if ctx:
-                                await ctx.info(
-                                    f"Used fallback encoding {alt_encoding} due to encoding error"
-                                )
+                            await ctx.info(
+                                f"Used fallback encoding {alt_encoding} due to encoding error"
+                            )
                             break
                         except UnicodeDecodeError as fallback_error:
                             last_error = fallback_error
@@ -440,15 +432,13 @@ async def load_csv(
                     f"Failed to load CSV with any encoding: {last_error}"
                 ) from last_error
 
-        if ctx:
-            await ctx.report_progress(0.8)
+        await ctx.report_progress(0.8)
 
         # Load into session
         session.load_data(df, validated_path)
 
-        if ctx:
-            await ctx.report_progress(1.0)
-            await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns")
+        await ctx.report_progress(1.0)
+        await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns")
 
         # Create comprehensive data preview with indices
         preview_data = create_data_preview_with_indices(df, 5)
@@ -469,24 +459,20 @@ async def load_csv(
 
     except OSError as e:
         logger.error(f"File I/O error while loading CSV: {e}")
-        if ctx:
-            await ctx.error(f"File access error: {e!s}")
+        await ctx.error(f"File access error: {e!s}")
         raise ToolError(f"File access error: {e}") from e
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
         logger.error(f"CSV parsing error: {e}")
-        if ctx:
-            await ctx.error(f"CSV format error: {e!s}")
+        await ctx.error(f"CSV format error: {e!s}")
         raise ToolError(f"CSV format error: {e}") from e
     except MemoryError as e:
         logger.error(f"Insufficient memory to load CSV: {e}")
-        if ctx:
-            await ctx.error("File too large - insufficient memory")
+        await ctx.error("File too large - insufficient memory")
         raise ToolError("File too large - insufficient memory") from e
     except Exception as e:
         # Fallback for unexpected errors - more specific logging
         logger.error(f"Unexpected error while loading CSV: {type(e).__name__}: {e}")
-        if ctx:
-            await ctx.error(f"Unexpected error: {e!s}")
+        await ctx.error(f"Unexpected error: {e!s}")
         raise ToolError(f"Failed to load CSV: {e}") from e
 
 
@@ -495,6 +481,7 @@ async def load_csv(
 # Uses same encoding fallback strategy as file loading
 # Timeout: URL_TIMEOUT_SECONDS, Max download: MAX_URL_SIZE_MB
 async def load_csv_from_url(
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     url: Annotated[str, Field(description="URL of the CSV file to download and load")],
     encoding: Annotated[
         str, Field(description="Text encoding for file reading (utf-8, latin1, cp1252, etc.)")
@@ -502,12 +489,6 @@ async def load_csv_from_url(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
-    session_id: Annotated[
-        str | None, Field(description="Existing session ID or None for new session")
-    ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> LoadResult:
     """Load CSV file from URL into DataBeak session.
 
@@ -515,20 +496,21 @@ async def load_csv_from_url(
     further operations.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         # Validate URL
         is_valid, validated_url = validate_url(url)
         if not is_valid:
             raise ToolError(f"Invalid URL: {validated_url}")
 
-        if ctx:
-            await ctx.info(f"Loading CSV from URL: {url}")
-            await ctx.report_progress(0.1)
+        await ctx.info(f"Loading CSV from URL: {url}")
+        await ctx.report_progress(0.1)
 
         # Download with timeout and content-type verification
         try:
             # Pre-download validation with timeout and content-type checking
-            if ctx:
-                await ctx.info("Verifying URL and downloading content...")
+            await ctx.info("Verifying URL and downloading content...")
 
             # Set socket timeout for all operations
             socket.setdefaulttimeout(URL_TIMEOUT_SECONDS)
@@ -549,10 +531,7 @@ async def load_csv_from_url(
 
                 if content_type and not any(ct in content_type for ct in valid_content_types):
                     logger.warning(f"Unexpected content-type: {content_type}. Proceeding anyway.")
-                    if ctx:
-                        await ctx.info(
-                            f"Warning: Content-type is {content_type}, expected CSV format"
-                        )
+                    await ctx.info(f"Warning: Content-type is {content_type}, expected CSV format")
 
                 # Check content length
                 if content_length:
@@ -562,9 +541,8 @@ async def load_csv_from_url(
                             f"Download too large: {size_mb:.1f} MB exceeds limit of {MAX_URL_SIZE_MB} MB"
                         )
 
-                if ctx:
-                    await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
-                    await ctx.report_progress(0.3)
+                await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
+                await ctx.report_progress(0.3)
 
             # Download and parse CSV using pandas with timeout
             df = pd.read_csv(url, encoding=encoding, delimiter=delimiter)
@@ -583,16 +561,14 @@ async def load_csv_from_url(
 
         except (TimeoutError, URLError, HTTPError) as e:
             logger.error(f"Network error downloading URL: {e}")
-            if ctx:
-                await ctx.error(f"Network error: {e!s}")
+            await ctx.error(f"Network error: {e!s}")
             raise ToolError(f"Network error: {e}") from e
         except UnicodeDecodeError as e:
             # Use optimized encoding fallbacks for URL downloads
             df = None
             last_error = e
 
-            if ctx:
-                await ctx.info("URL encoding error, trying optimized fallbacks...")
+            await ctx.info("URL encoding error, trying optimized fallbacks...")
 
             # Use the same optimized fallback strategy
             fallback_encodings = get_encoding_fallbacks(encoding)
@@ -617,10 +593,9 @@ async def load_csv_from_url(
                         logger.warning(
                             f"Used fallback encoding {alt_encoding} instead of {encoding}"
                         )
-                        if ctx:
-                            await ctx.info(
-                                f"Used fallback encoding {alt_encoding} due to encoding error"
-                            )
+                        await ctx.info(
+                            f"Used fallback encoding {alt_encoding} due to encoding error"
+                        )
                         break
                     except UnicodeDecodeError as fallback_error:
                         last_error = fallback_error
@@ -639,8 +614,7 @@ async def load_csv_from_url(
                     f"Failed to download CSV with any encoding: {last_error}"
                 ) from last_error
 
-        if ctx:
-            await ctx.report_progress(0.8)
+        await ctx.report_progress(0.8)
 
         # Get or create session
         session_manager = get_session_manager()
@@ -651,9 +625,8 @@ async def load_csv_from_url(
 
         session.load_data(df, url)
 
-        if ctx:
-            await ctx.report_progress(1.0)
-            await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from URL")
+        await ctx.report_progress(1.0)
+        await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from URL")
 
         # Create data preview with indices
         preview_data = create_data_preview_with_indices(df, 5)
@@ -674,23 +647,19 @@ async def load_csv_from_url(
 
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
         logger.error(f"CSV parsing error from URL: {e}")
-        if ctx:
-            await ctx.error(f"CSV format error from URL: {e!s}")
+        await ctx.error(f"CSV format error from URL: {e!s}")
         raise ToolError(f"CSV format error from URL: {e}") from e
     except OSError as e:
         logger.error(f"Network/file error while loading from URL: {e}")
-        if ctx:
-            await ctx.error(f"Network error: {e!s}")
+        await ctx.error(f"Network error: {e!s}")
         raise ToolError(f"Network error: {e}") from e
     except MemoryError as e:
         logger.error(f"Insufficient memory to load CSV from URL: {e}")
-        if ctx:
-            await ctx.error("Downloaded file too large - insufficient memory")
+        await ctx.error("Downloaded file too large - insufficient memory")
         raise ToolError("Downloaded file too large - insufficient memory") from e
     except Exception as e:
         logger.error(f"Unexpected error while loading CSV from URL: {type(e).__name__}: {e}")
-        if ctx:
-            await ctx.error(f"Unexpected error: {e!s}")
+        await ctx.error(f"Unexpected error: {e!s}")
         raise ToolError(f"Failed to load CSV from URL: {e}") from e
 
 
@@ -698,19 +667,14 @@ async def load_csv_from_url(
 # Validates content not empty, handles malformed CSV with specific error messages
 # Supports header detection, quoted fields, automatic type inference
 async def load_csv_from_content(
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     content: Annotated[str, Field(description="CSV data as string content")],
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
-    session_id: Annotated[
-        str | None, Field(description="Existing session ID or None for new session")
-    ] = None,
     has_header: Annotated[
         bool, Field(description="Whether first row contains column headers")
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> LoadResult:
     """Load CSV data from string content into DataBeak session.
 
@@ -718,8 +682,10 @@ async def load_csv_from_content(
     further operations.
     """
     try:
-        if ctx:
-            await ctx.info("Loading CSV from content string")
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
+        await ctx.info("Loading CSV from content string")
 
         if not content or not content.strip():
             raise ToolError("Content cannot be empty")
@@ -744,8 +710,7 @@ async def load_csv_from_content(
         session = session_manager.get_or_create_session(session_id)
         session.load_data(df, None)
 
-        if ctx:
-            await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from content")
+        await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from content")
 
         # Create data preview with indices
         preview_data = create_data_preview_with_indices(df, 5)
@@ -766,8 +731,7 @@ async def load_csv_from_content(
 
     except Exception as e:
         logger.error(f"Failed to parse CSV content: {e}")
-        if ctx:
-            await ctx.error(f"Failed to parse CSV content: {e!s}")
+        await ctx.error(f"Failed to parse CSV content: {e!s}")
         raise ToolError(f"Failed to parse CSV content: {e}") from e
 
 
@@ -776,7 +740,7 @@ async def load_csv_from_content(
 # Parquet (columnar), HTML (web table), Markdown (GitHub format)
 # Auto-cleanup on export errors, records operation in session history
 async def export_csv(
-    session_id: Annotated[str, Field(description="Session identifier containing data to export")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[
         str | None, Field(description="Output file path (auto-generated if not provided)")
     ] = None,
@@ -788,9 +752,6 @@ async def export_csv(
         str, Field(description="Text encoding for output file (utf-8, latin1, cp1252, etc.)")
     ] = "utf-8",
     index: Annotated[bool, Field(description="Whether to include row index in output")] = False,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ExportResult:
     """Export session data to various file formats.
 
@@ -798,6 +759,9 @@ async def export_csv(
     export statistics.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         # Normalize format to ExportFormat enum
         format_enum = ExportFormat(format)
 
@@ -808,9 +772,8 @@ async def export_csv(
         if not session or session.df is None:
             raise ToolError(f"Session not found or no data loaded: {session_id}")
 
-        if ctx:
-            await ctx.info(f"Exporting data in {format_enum.value} format")
-            await ctx.report_progress(0.1)
+        await ctx.info(f"Exporting data in {format_enum.value} format")
+        await ctx.report_progress(0.1)
 
         # Generate file path if not provided using proper temp file handling
         temp_file_path = None
@@ -849,8 +812,7 @@ async def export_csv(
 
             df = session.df
 
-            if ctx:
-                await ctx.report_progress(0.5)
+            await ctx.report_progress(0.5)
 
             # Export based on format with comprehensive options
             try:
@@ -902,9 +864,8 @@ async def export_csv(
                 {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
             )
 
-            if ctx:
-                await ctx.report_progress(1.0)
-                await ctx.info(f"Exported {len(df)} rows to {file_path}")
+            await ctx.report_progress(1.0)
+            await ctx.info(f"Exported {len(df)} rows to {file_path}")
 
             # Calculate file size
             file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
@@ -933,8 +894,7 @@ async def export_csv(
 
     except Exception as e:
         logger.error(f"Failed to export data: {e}")
-        if ctx:
-            await ctx.error(f"Failed to export data: {e!s}")
+        await ctx.error(f"Failed to export data: {e!s}")
         raise ToolError(f"Failed to export data: {e}") from e
 
 
@@ -942,10 +902,7 @@ async def export_csv(
 # Returns comprehensive info including timestamps, data status, auto-save config
 # Essential for workflow coordination and session state verification
 async def get_session_info(
-    session_id: Annotated[str, Field(description="Session identifier to retrieve information for")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> SessionInfoResult:
     """Get comprehensive information about a specific session.
 
@@ -953,14 +910,16 @@ async def get_session_info(
     workflow coordination.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         session_manager = get_session_manager()
         session = session_manager.get_session(session_id)
 
         if not session:
             raise ToolError(f"Session not found: {session_id}")
 
-        if ctx:
-            await ctx.info(f"Retrieved info for session {session_id}")
+        await ctx.info(f"Retrieved info for session {session_id}")
 
         # Get comprehensive session information
         info = session.get_info()
@@ -977,8 +936,7 @@ async def get_session_info(
 
     except Exception as e:
         logger.error(f"Failed to get session info: {e}")
-        if ctx:
-            await ctx.error(f"Failed to get session info: {e!s}")
+        await ctx.error(f"Failed to get session info: {e!s}")
         raise ToolError(f"Failed to get session info: {e}") from e
 
 
@@ -986,9 +944,7 @@ async def get_session_info(
 # Counts active sessions (those with loaded data) vs total sessions
 # Returns empty list on error for consistency, essential for system monitoring
 async def list_sessions(
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> SessionListResult:
     """List all active sessions with details and statistics.
 
@@ -999,8 +955,7 @@ async def list_sessions(
         session_manager = get_session_manager()
         sessions = session_manager.list_sessions()
 
-        if ctx:
-            await ctx.info(f"Found {len(sessions)} active sessions")
+        await ctx.info(f"Found {len(sessions)} active sessions")
 
         # Convert session info to SessionInfo objects for tool response
         session_infos = []
@@ -1032,8 +987,7 @@ async def list_sessions(
 
     except Exception as e:
         logger.error(f"Failed to list sessions: {e}")
-        if ctx:
-            await ctx.error(f"Failed to list sessions: {e!s}")
+        await ctx.error(f"Failed to list sessions: {e!s}")
         # Return empty list on error for consistency
         return SessionListResult(sessions=[], total_sessions=0, active_sessions=0)
 
@@ -1043,10 +997,7 @@ async def list_sessions(
 # Data is not preserved - use export_csv before closing to save data
 # Essential for preventing memory leaks in long-running processes
 async def close_session(
-    session_id: Annotated[str, Field(description="Session identifier to close and clean up")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
 ) -> CloseSessionResult:
     """Close and clean up session with proper resource management.
 
@@ -1054,14 +1005,16 @@ async def close_session(
     Data is not preserved - export before closing if needed.
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
+
         session_manager = get_session_manager()
         removed = await session_manager.remove_session(session_id)
 
         if not removed:
             raise ToolError(f"Session not found: {session_id}")
 
-        if ctx:
-            await ctx.info(f"Closed session {session_id}")
+        await ctx.info(f"Closed session {session_id}")
 
         return CloseSessionResult(
             session_id=session_id,
@@ -1071,8 +1024,7 @@ async def close_session(
 
     except Exception as e:
         logger.error(f"Failed to close session: {e}")
-        if ctx:
-            await ctx.error(f"Failed to close session: {e!s}")
+        await ctx.error(f"Failed to close session: {e!s}")
         raise ToolError(f"Failed to close session: {e}") from e
 
 

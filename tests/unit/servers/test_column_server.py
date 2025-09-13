@@ -18,6 +18,7 @@ from src.databeak.servers.column_server import (
     update_column,
 )
 from src.databeak.servers.io_server import load_csv_from_content
+from tests.mock_context import create_mock_context, create_mock_context_with_session_data
 
 
 @pytest.fixture
@@ -29,7 +30,8 @@ async def column_session():
 3,Bob,Johnson,35,bob@company.org,60000,false,2023-01-10
 4,Alice,Brown,28,alice@example.com,52000,true,2023-03-01"""
 
-    result = await load_csv_from_content(csv_content)
+    ctx = create_mock_context()
+    result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
 
@@ -63,7 +65,8 @@ class TestColumnServerSelect:
         self, column_session, columns, expected_count, description
     ):
         """Test various column selection scenarios."""
-        result = await select_columns(column_session, columns)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await select_columns(ctx, columns)
 
         assert result.session_id == column_session
         assert result.selected_columns == columns
@@ -74,7 +77,8 @@ class TestColumnServerSelect:
     async def test_select_nonexistent_column(self, column_session):
         """Test selecting non-existent column."""
         with pytest.raises(ToolError, match="not found"):
-            await select_columns(column_session, ["nonexistent", "first_name"])
+            ctx = create_mock_context_with_session_data(column_session)
+            await select_columns(ctx, ["nonexistent", "first_name"])
 
 
 @pytest.mark.asyncio
@@ -84,7 +88,8 @@ class TestColumnServerRename:
     async def test_rename_single_column(self, column_session):
         """Test renaming a single column."""
         mapping = {"first_name": "given_name"}
-        result = await rename_columns(column_session, mapping)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await rename_columns(ctx, mapping)
 
         assert result.session_id == column_session
         assert result.renamed == mapping
@@ -97,7 +102,8 @@ class TestColumnServerRename:
             "last_name": "family_name",
             "is_active": "active_status",
         }
-        result = await rename_columns(column_session, mapping)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await rename_columns(ctx, mapping)
 
         assert result.renamed == mapping
         assert len(result.columns) == len(mapping)
@@ -105,7 +111,8 @@ class TestColumnServerRename:
     async def test_rename_to_snake_case(self, column_session):
         """Test standardizing column names."""
         mapping = {"join_date": "join_timestamp", "is_active": "active_flag"}
-        result = await rename_columns(column_session, mapping)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await rename_columns(ctx, mapping)
 
         assert result.renamed == mapping
 
@@ -114,7 +121,8 @@ class TestColumnServerRename:
         mapping = {"nonexistent": "new_name"}
 
         with pytest.raises(ToolError, match="not found"):
-            await rename_columns(column_session, mapping)
+            ctx = create_mock_context_with_session_data(column_session)
+            await rename_columns(ctx, mapping)
 
 
 @pytest.mark.asyncio
@@ -123,7 +131,8 @@ class TestColumnServerAdd:
 
     async def test_add_constant_column(self, column_session):
         """Test adding column with constant value."""
-        result = await add_column(column_session, "department", "Engineering")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await add_column(ctx, "department", "Engineering")
 
         assert result.session_id == column_session
         assert result.operation == "add"
@@ -133,7 +142,8 @@ class TestColumnServerAdd:
     async def test_add_column_with_list(self, column_session):
         """Test adding column with list of values."""
         values = ["Senior", "Junior", "Mid", "Senior"]
-        result = await add_column(column_session, "level", value=values)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await add_column(ctx, "level", value=values)
 
         assert result.operation == "add"
         assert result.columns_affected == ["level"]
@@ -141,31 +151,36 @@ class TestColumnServerAdd:
     async def test_add_column_with_formula(self, column_session):
         """Test adding computed column with formula."""
         # Use a simpler formula that pandas.eval can handle
-        result = await add_column(column_session, "age_plus_10", formula="age + 10")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await add_column(ctx, "age_plus_10", formula="age + 10")
 
         assert result.operation == "add"
         assert result.columns_affected == ["age_plus_10"]
 
     async def test_add_column_numeric_formula(self, column_session):
         """Test adding column with numeric calculation."""
-        result = await add_column(column_session, "monthly_salary", formula="salary / 12")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await add_column(ctx, "monthly_salary", formula="salary / 12")
 
         assert result.operation == "add"
 
     async def test_add_duplicate_column_name(self, column_session):
         """Test adding column with existing name."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await add_column(column_session, "first_name", "test")
+            ctx = create_mock_context_with_session_data(column_session)
+            await add_column(ctx, "first_name", "test")
 
     async def test_add_column_invalid_formula(self, column_session):
         """Test adding column with invalid formula."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await add_column(column_session, "test", formula="invalid_syntax + ")
+            ctx = create_mock_context_with_session_data(column_session)
+            await add_column(ctx, "test", formula="invalid_syntax + ")
 
     async def test_add_column_mismatched_list_length(self, column_session):
         """Test adding column with wrong list length."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await add_column(column_session, "test", value=[1, 2])  # Only 2 values for 4 rows
+            ctx = create_mock_context_with_session_data(column_session)
+            await add_column(ctx, "test", value=[1, 2])  # Only 2 values for 4 rows
 
 
 @pytest.mark.asyncio
@@ -174,7 +189,8 @@ class TestColumnServerRemove:
 
     async def test_remove_single_column(self, column_session):
         """Test removing a single column."""
-        result = await remove_columns(column_session, ["join_date"])
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await remove_columns(ctx, ["join_date"])
 
         assert result.session_id == column_session
         assert result.operation == "remove"
@@ -184,14 +200,16 @@ class TestColumnServerRemove:
     async def test_remove_multiple_columns(self, column_session):
         """Test removing multiple columns."""
         columns_to_remove = ["salary", "is_active", "join_date"]
-        result = await remove_columns(column_session, columns_to_remove)
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await remove_columns(ctx, columns_to_remove)
 
         assert result.columns_affected == columns_to_remove
 
     async def test_remove_nonexistent_column(self, column_session):
         """Test removing non-existent column."""
         with pytest.raises(ToolError, match="not found"):
-            await remove_columns(column_session, ["nonexistent"])
+            ctx = create_mock_context_with_session_data(column_session)
+            await remove_columns(ctx, ["nonexistent"])
 
 
 @pytest.mark.asyncio
@@ -200,7 +218,8 @@ class TestColumnServerChangeType:
 
     async def test_change_to_int(self, column_session):
         """Test converting column to integer."""
-        result = await change_column_type(column_session, "age", "int")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "age", "int")
 
         assert result.session_id == column_session
         assert result.operation == "change_type_to_int"
@@ -208,43 +227,50 @@ class TestColumnServerChangeType:
 
     async def test_change_to_float(self, column_session):
         """Test converting column to float."""
-        result = await change_column_type(column_session, "salary", "float")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "salary", "float")
 
         assert result.operation == "change_type_to_float"
 
     async def test_change_to_string(self, column_session):
         """Test converting column to string."""
-        result = await change_column_type(column_session, "id", "str")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "id", "str")
 
         assert result.operation == "change_type_to_str"
 
     async def test_change_to_boolean(self, column_session):
         """Test converting column to boolean."""
-        result = await change_column_type(column_session, "is_active", "bool")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "is_active", "bool")
 
         assert result.operation == "change_type_to_bool"
 
     async def test_change_to_datetime(self, column_session):
         """Test converting column to datetime."""
-        result = await change_column_type(column_session, "join_date", "datetime")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "join_date", "datetime")
 
         assert result.operation == "change_type_to_datetime"
 
     async def test_change_type_with_coerce(self, column_session):
         """Test type conversion with error coercion."""
-        result = await change_column_type(column_session, "email", "int", errors="coerce")
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await change_column_type(ctx, "email", "int", errors="coerce")
 
         assert result.operation == "change_type_to_int"
 
     async def test_change_type_nonexistent_column(self, column_session):
         """Test changing type of non-existent column."""
         with pytest.raises(ToolError, match="not found"):
-            await change_column_type(column_session, "nonexistent", "int")
+            ctx = create_mock_context_with_session_data(column_session)
+            await change_column_type(ctx, "nonexistent", "int")
 
     async def test_change_type_invalid_type(self, column_session):
         """Test changing to invalid data type."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await change_column_type(column_session, "age", "invalid_type")
+            ctx = create_mock_context_with_session_data(column_session)
+            await change_column_type(ctx, "age", "invalid_type")
 
 
 @pytest.mark.asyncio
@@ -253,8 +279,9 @@ class TestColumnServerUpdate:
 
     async def test_update_replace_operation(self, column_session):
         """Test replace operation."""
+        ctx = create_mock_context_with_session_data(column_session)
         result = await update_column(
-            column_session,
+            ctx,
             "first_name",
             {"operation": "replace", "pattern": "John", "replacement": "Jonathan"},
         )
@@ -265,46 +292,42 @@ class TestColumnServerUpdate:
     async def test_update_map_operation(self, column_session):
         """Test map operation with dictionary."""
         mapping = {"John": "Jonathan", "Jane": "Janet"}
-        result = await update_column(
-            column_session, "first_name", {"operation": "map", "value": mapping}
-        )
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await update_column(ctx, "first_name", {"operation": "map", "value": mapping})
 
         assert result.operation == "update_map"
 
     async def test_update_fillna_operation(self, column_session):
         """Test fillna operation."""
-        result = await update_column(
-            column_session, "salary", {"operation": "fillna", "value": 50000}
-        )
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await update_column(ctx, "salary", {"operation": "fillna", "value": 50000})
 
         assert result.operation == "update_fillna"
 
     async def test_update_apply_operation(self, column_session):
         """Test apply operation with expression."""
-        result = await update_column(
-            column_session, "age", {"operation": "apply", "value": "x + 1"}
-        )
+        ctx = create_mock_context_with_session_data(column_session)
+        result = await update_column(ctx, "age", {"operation": "apply", "value": "x + 1"})
 
         assert result.operation == "update_apply"
 
     async def test_update_replace_missing_params(self, column_session):
         """Test replace operation with missing parameters."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await update_column(
-                column_session, "first_name", {"operation": "replace", "pattern": "test"}
-            )
+            ctx = create_mock_context_with_session_data(column_session)
+            await update_column(ctx, "first_name", {"operation": "replace", "pattern": "test"})
 
     async def test_update_map_invalid_value(self, column_session):
         """Test map operation with invalid value type."""
         with pytest.raises(ToolError, match="Invalid value"):
-            await update_column(
-                column_session, "first_name", {"operation": "map", "value": "not_a_dict"}
-            )
+            ctx = create_mock_context_with_session_data(column_session)
+            await update_column(ctx, "first_name", {"operation": "map", "value": "not_a_dict"})
 
     async def test_update_nonexistent_column(self, column_session):
         """Test updating non-existent column."""
         with pytest.raises(ToolError, match="not found"):
-            await update_column(column_session, "nonexistent", {"operation": "fillna", "value": 0})
+            ctx = create_mock_context_with_session_data(column_session)
+            await update_column(ctx, "nonexistent", {"operation": "fillna", "value": 0})
 
 
 @pytest.mark.asyncio
@@ -314,21 +337,22 @@ class TestColumnServerErrorHandling:
     async def test_operations_invalid_session(self):
         """Test operations with invalid session ID."""
         invalid_session = "invalid-session-id"
+        ctx = create_mock_context(invalid_session)
 
         with pytest.raises(ToolError, match="not found"):
-            await select_columns(invalid_session, ["test"])
+            await select_columns(ctx, ["test"])
 
         with pytest.raises(ToolError, match="not found"):
-            await rename_columns(invalid_session, {"old": "new"})
+            await rename_columns(ctx, {"old": "new"})
 
         with pytest.raises(ToolError, match="not found"):
-            await add_column(invalid_session, "test", "value")
+            await add_column(ctx, "test", "value")
 
         with pytest.raises(ToolError, match="not found"):
-            await remove_columns(invalid_session, ["test"])
+            await remove_columns(ctx, ["test"])
 
         with pytest.raises(ToolError, match="not found"):
-            await change_column_type(invalid_session, "test", "int")
+            await change_column_type(ctx, "test", "int")
 
         with pytest.raises(ToolError, match="not found"):
-            await update_column(invalid_session, "test", {"operation": "fillna", "value": 0})
+            await update_column(ctx, "test", {"operation": "fillna", "value": 0})

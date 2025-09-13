@@ -67,7 +67,7 @@ class SplitConfig(BaseModel):
 
 
 async def replace_in_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to apply pattern replacement in")],
     pattern: Annotated[str, Field(description="Pattern to search for (regex or literal string)")],
     replacement: Annotated[str, Field(description="Replacement text to use for matches")],
@@ -75,37 +75,35 @@ async def replace_in_column(
         bool,
         Field(description="Whether to treat pattern as regex (True) or literal string (False)"),
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to update
         pattern: Pattern to search for (regex or literal string)
         replacement: Replacement string
         regex: Whether to treat pattern as regex (default: True)
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with replacement details
 
     Examples:
         # Replace with regex
-        replace_in_column(session_id, "name", r"Mr\.", "Mister")
+        replace_in_column(ctx, "name", r"Mr\.", "Mister")
 
         # Remove non-digits from phone numbers
-        replace_in_column(session_id, "phone", r"\D", "", regex=True)
+        replace_in_column(ctx, "phone", r"\D", "", regex=True)
 
         # Simple string replacement
-        replace_in_column(session_id, "status", "N/A", "Unknown", regex=False)
+        replace_in_column(ctx, "status", "N/A", "Unknown", regex=False)
 
         # Replace multiple spaces with single space
-        replace_in_column(session_id, "description", r"\s+", " ")
+        replace_in_column(ctx, "description", r"\s+", " ")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -165,42 +163,40 @@ async def replace_in_column(
 
 
 async def extract_from_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to extract patterns from")],
     pattern: Annotated[str, Field(description="Regex pattern with capturing groups to extract")],
     expand: Annotated[
         bool, Field(description="Whether to expand multiple groups into separate columns")
     ] = False,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to extract from
         pattern: Regex pattern with capturing groups
         expand: Whether to expand multiple groups into separate columns
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with extraction details
 
     Examples:
         # Extract email parts
-        extract_from_column(session_id, "email", r"(.+)@(.+)")
+        extract_from_column(ctx, "email", r"(.+)@(.+)")
 
         # Extract code components
-        extract_from_column(session_id, "product_code", r"([A-Z]{2})-(\d+)")
+        extract_from_column(ctx, "product_code", r"([A-Z]{2})-(\d+)")
 
         # Extract and expand into multiple columns
-        extract_from_column(session_id, "full_name", r"(\w+)\s+(\w+)", expand=True)
+        extract_from_column(ctx, "full_name", r"(\w+)\s+(\w+)", expand=True)
 
         # Extract year from date string
-        extract_from_column(session_id, "date", r"\d{4}")
+        extract_from_column(ctx, "date", r"\d{4}")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -285,7 +281,7 @@ async def extract_from_column(
 
 
 async def split_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to split values in")],
     delimiter: Annotated[str, Field(description="String delimiter to split on")] = " ",
     part_index: Annotated[
@@ -297,39 +293,37 @@ async def split_column(
     new_columns: Annotated[
         list[str] | None, Field(description="Names for new columns when expanding")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to split
         delimiter: String to split on (default: space)
         part_index: Which part to keep (0-based). None keeps first part
         expand_to_columns: Whether to expand splits into multiple columns
         new_columns: Names for new columns when expanding
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with split details
 
     Examples:
         # Keep first part of split
-        split_column(session_id, "full_name", " ", part_index=0)
+        split_column(ctx, "full_name", " ", part_index=0)
 
         # Keep last part
-        split_column(session_id, "email", "@", part_index=1)
+        split_column(ctx, "email", "@", part_index=1)
 
         # Expand into multiple columns
-        split_column(session_id, "address", ",", expand_to_columns=True)
+        split_column(ctx, "address", ",", expand_to_columns=True)
 
         # Expand with custom column names
-        split_column(session_id, "name", " ", expand_to_columns=True,
+        split_column(ctx, "name", " ", expand_to_columns=True,
                     new_columns=["first_name", "last_name"])
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -446,45 +440,43 @@ async def split_column(
 
 
 async def transform_column_case(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to transform text case in")],
     transform: Annotated[
         Literal["upper", "lower", "title", "capitalize"],
         Field(description="Case transformation: upper, lower, title, or capitalize"),
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to transform
         transform: Type of case transformation:
             - "upper": Convert to UPPERCASE
             - "lower": Convert to lowercase
             - "title": Convert to Title Case
             - "capitalize": Capitalize first letter only
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with transformation details
 
     Examples:
         # Convert to uppercase
-        transform_column_case(session_id, "code", "upper")
+        transform_column_case(ctx, "code", "upper")
 
         # Convert names to title case
-        transform_column_case(session_id, "name", "title")
+        transform_column_case(ctx, "name", "title")
 
         # Convert to lowercase for comparison
-        transform_column_case(session_id, "email", "lower")
+        transform_column_case(ctx, "email", "lower")
 
         # Capitalize sentences
-        transform_column_case(session_id, "description", "capitalize")
+        transform_column_case(ctx, "description", "capitalize")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -550,41 +542,39 @@ async def transform_column_case(
 
 
 async def strip_column(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to strip characters from")],
     chars: Annotated[
         str | None,
         Field(description="Characters to strip (None for whitespace, string for specific chars)"),
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Strip whitespace or specified characters from column values.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to strip
         chars: Characters to strip (None for whitespace)
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with strip details
 
     Examples:
         # Remove leading/trailing whitespace
-        strip_column(session_id, "name")
+        strip_column(ctx, "name")
 
         # Remove specific characters
-        strip_column(session_id, "phone", "()")
+        strip_column(ctx, "phone", "()")
 
         # Clean currency values
-        strip_column(session_id, "price", "$,")
+        strip_column(ctx, "price", "$,")
 
         # Remove quotes
-        strip_column(session_id, "quoted_text", "'\"")
+        strip_column(ctx, "quoted_text", "'\"")
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
@@ -637,38 +627,36 @@ async def strip_column(
 
 
 async def fill_column_nulls(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to fill null values in")],
     value: Annotated[Any, Field(description="Value to use for filling null/NaN values")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
 
     Args:
-        session_id: Session identifier
+        ctx: FastMCP context for session access
         column: Column name to fill
         value: Value to use for filling nulls
-        ctx: FastMCP context
 
     Returns:
         ColumnOperationResult with fill details
 
     Examples:
         # Fill missing names with "Unknown"
-        fill_column_nulls(session_id, "name", "Unknown")
+        fill_column_nulls(ctx, "name", "Unknown")
 
         # Fill missing ages with 0
-        fill_column_nulls(session_id, "age", 0)
+        fill_column_nulls(ctx, "age", 0)
 
         # Fill missing status with default
-        fill_column_nulls(session_id, "status", "pending")
+        fill_column_nulls(ctx, "status", "pending")
 
         # Fill missing scores with -1
-        fill_column_nulls(session_id, "score", -1)
+        fill_column_nulls(ctx, "score", -1)
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
