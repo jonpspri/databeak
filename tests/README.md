@@ -191,10 +191,12 @@ async def test_async_function():
 
 ### Coverage Goals
 
-- **Overall**: 80% minimum
+- **Overall**: 80% minimum coverage requirement
+- **Success Rate**: 100% test pass rate in CI/CD pipeline
 - **Unit Tests**: Should cover all public APIs
 - **Integration Tests**: Should cover critical paths
 - **E2E Tests**: Should cover user workflows
+- **Skipped Tests**: Must be annotated with GitHub Issue # for implementation
 
 ### Viewing Coverage
 

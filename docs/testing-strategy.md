@@ -291,10 +291,13 @@ test-live-server:
 
 **Quality Targets:**
 
+- 100% test success rate in CI/CD pipeline
+- 80% minimum code coverage across all modules
 - Zero test flakiness in CI environment
 - Fast feedback cycles (\<3 minutes for full suite)
 - Clear failure diagnostics and reporting
 - Automated regression detection
+- Skipped tests must reference GitHub Issue # for implementation plan
 
 ## Risk Mitigation
 
