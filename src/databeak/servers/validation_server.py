@@ -370,9 +370,6 @@ def validate_schema(
     schema: Annotated[
         ValidationSchema, Field(description="Schema definition with column validation rules")
     ],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition."""
     try:
@@ -611,9 +608,6 @@ def check_data_quality(
     rules: Annotated[
         list[QualityRuleType] | None,
         Field(description="List of quality rules to check (None = use default rules)"),
-    ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
     ] = None,
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules."""
@@ -956,9 +950,6 @@ def find_anomalies(
     methods: Annotated[
         list[Literal["statistical", "pattern", "missing"]] | None,
         Field(description="Detection methods to use (None = all methods)"),
-    ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
     ] = None,
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods."""

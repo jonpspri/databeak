@@ -62,7 +62,7 @@ def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
 
 
 async def get_statistics(
-    session_id: Annotated[str, Field(description="Session identifier containing the target data")],
+    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
         list[str] | None,
         Field(description="List of specific columns to analyze (None = all numeric columns)"),
@@ -70,9 +70,6 @@ async def get_statistics(
     include_percentiles: Annotated[
         bool, Field(description="Whether to include 25th, 50th, 75th percentiles")
     ] = True,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
@@ -81,10 +78,9 @@ async def get_statistics(
     AI workflows with clear statistical insights and data understanding.
 
     Args:
-        session_id: Session ID containing loaded data
+        ctx: FastMCP context for session access
         columns: Optional list of specific columns to analyze (default: all numeric)
         include_percentiles: Whether to include 25th, 50th, 75th percentiles
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Comprehensive statistical analysis with per-column summaries
@@ -113,6 +109,8 @@ async def get_statistics(
         4. Provides context for outlier detection thresholds
     """
     try:
+        # Get session_id from FastMCP context
+        session_id = ctx.session_id
         session, df = _get_session_data(session_id)
 
         # Select numeric columns
@@ -207,9 +205,6 @@ async def get_statistics(
 async def get_column_statistics(
     session_id: Annotated[str, Field(description="Session identifier containing the target data")],
     column: Annotated[str, Field(description="Name of the column to analyze in detail")],
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ColumnStatisticsResult:
     """Get detailed statistical analysis for a single column.
 
@@ -220,7 +215,6 @@ async def get_column_statistics(
     Args:
         session_id: Session ID containing loaded data
         column: Name of the column to analyze
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Detailed statistical analysis for the specified column
@@ -376,9 +370,6 @@ async def get_correlation_matrix(
     min_correlation: Annotated[
         float | None, Field(description="Minimum correlation threshold to include in results")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
 
@@ -391,7 +382,6 @@ async def get_correlation_matrix(
         columns: Optional list of columns to include (default: all numeric)
         method: Correlation method - pearson (linear), spearman (rank), kendall (rank)
         min_correlation: Minimum correlation threshold to include in results
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Correlation matrix with pairwise correlation coefficients
@@ -512,9 +502,6 @@ async def get_value_counts(
     top_n: Annotated[
         int | None, Field(description="Maximum number of values to return (None = all values)")
     ] = None,
-    ctx: Annotated[
-        Context | None, Field(description="FastMCP context for progress reporting")
-    ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
 
@@ -529,7 +516,6 @@ async def get_value_counts(
         sort: Sort results by frequency
         ascending: Sort in ascending order (default: False for descending)
         top_n: Maximum number of values to return (default: all)
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Frequency distribution with counts/percentages for each unique value
