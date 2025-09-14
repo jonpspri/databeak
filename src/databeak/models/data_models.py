@@ -8,6 +8,8 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from .typed_dicts import ValidationResult
+
 # Type aliases for common data types
 CellValue = str | int | float | bool | None
 FilterValue = CellValue | list[CellValue]
@@ -161,7 +163,7 @@ class DataSchema(BaseModel):
     row_count: int | None = Field(default=None, description="Expected number of rows")
     primary_key: list[str] | None = Field(default=None, description="Primary key columns")
 
-    def validate_dataframe(self, df: pd.DataFrame) -> dict[str, Any]:
+    def validate_dataframe(self, df: pd.DataFrame) -> ValidationResult:
         """Validate a DataFrame against this schema."""
         errors = []
         warnings = []
@@ -199,7 +201,11 @@ class DataSchema(BaseModel):
                 if invalid.any():
                     errors.append(f"Column {col_schema.name} contains invalid values")
 
-        return {"valid": len(errors) == 0, "errors": errors, "warnings": warnings}
+        return ValidationResult(
+            valid=len(errors) == 0,
+            errors=errors,
+            warnings=warnings
+        )
 
 
 class DataQualityRule(BaseModel):

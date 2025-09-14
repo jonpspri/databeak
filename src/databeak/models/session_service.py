@@ -20,13 +20,10 @@ if TYPE_CHECKING:
 class SessionManagerProtocol(Protocol):
     """Protocol defining the session manager interface."""
 
-    def get_session(self, session_id: str) -> CSVSession | None:
-        """Get a session by ID."""
+    def get_session(self, session_id: str) -> CSVSession:
+        """Get or create a session by ID."""
         ...
 
-    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
-        """Get existing session or create new one."""
-        ...
 
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
@@ -141,25 +138,16 @@ class MockSessionManager:
         self.sessions: dict[str, CSVSession] = {}
         self.next_id = 1
 
-    def get_session(self, session_id: str) -> CSVSession | None:
-        """Get a session by ID."""
-        return self.sessions.get(session_id)
-
-    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
-        """Get existing session or create new one."""
-        if session_id and session_id in self.sessions:
-            return self.sessions[session_id]
-
-        # Create new session
-        if not session_id:
-            session_id = f"test_session_{self.next_id}"
-            self.next_id += 1
-
-        from .csv_session import CSVSession
-
-        session = CSVSession(session_id)
-        self.sessions[session_id] = session
+    def get_session(self, session_id: str) -> CSVSession:
+        """Get or create a session by ID."""
+        session = self.sessions.get(session_id)
+        if not session:
+            # Create new session like the real implementation
+            from .csv_session import CSVSession
+            session = CSVSession(session_id=session_id)
+            self.sessions[session_id] = session
         return session
+
 
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
@@ -191,5 +179,5 @@ class MockSessionManager:
 
     def add_test_data(self, session_id: str, df: pd.DataFrame) -> None:
         """Add test data to a session (for testing purposes)."""
-        session = self.get_or_create_session(session_id)
+        session = self.get_session(session_id)
         session.load_data(df, None)

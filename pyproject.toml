@@ -201,8 +201,12 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "S101", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, assert, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
+"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
+"src/databeak/servers/column_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/servers/column_text_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/servers/row_operations_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/services/transformation_operations.py" = ["S101"]  # Type safety assertions
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]
@@ -221,6 +225,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_any_unimported = false
+disallow_any_explicit = true
 no_implicit_optional = true
 check_untyped_defs = true
 warn_redundant_casts = true
@@ -247,8 +252,7 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
-disallow_untyped_defs = false
-ignore_errors = true
+
 
 [[tool.mypy.overrides]]
 module = "examples.*"

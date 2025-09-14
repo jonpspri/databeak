@@ -50,18 +50,22 @@ class TestSessionManager:
     async def test_create_session(self) -> None:
         """Test session creation."""
         manager = get_session_manager()
-        session_id = manager.create_session()
+        test_session_id = "test_session_123"
+        session = manager.create_session(test_session_id)
 
-        assert session_id is not None
-        assert manager.get_session(session_id) is not None
+        assert session is not None
+        assert session.session_id == test_session_id
+        assert manager.get_session(test_session_id) is not None
 
         # Cleanup
-        await manager.remove_session(session_id)
+        await manager.remove_session(test_session_id)
 
     async def test_session_cleanup(self) -> None:
         """Test session removal."""
         manager = get_session_manager()
-        session_id = manager.create_session()
+        test_session_id = "test_cleanup_456"
+        session = manager.create_session(test_session_id)
+        session_id = session.session_id
 
         # Session should exist
         assert manager.get_session(session_id) is not None
@@ -69,8 +73,8 @@ class TestSessionManager:
         # Remove session
         await manager.remove_session(session_id)
 
-        # Session should not exist
-        assert manager.get_session(session_id) is None
+        # Session should not exist (check sessions dict directly since get_session auto-creates)
+        assert session_id not in manager.sessions
 
 
 @pytest.mark.asyncio

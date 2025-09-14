@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from fastmcp import Context
@@ -17,7 +17,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models.csv_session import get_session_manager
+from ..models.csv_session import CSVSession, get_session_manager
 from ..models.data_models import OperationType
 from ..models.tool_responses import (
     CellValueResult,
@@ -31,6 +31,7 @@ from ..models.tool_responses import (
     SortDataResult,
     UpdateRowResult,
 )
+from ..models.typed_dicts import ColumnRenameResult, ColumnSelectionResult
 from ..utils.pydantic_validators import parse_json_string_to_dict
 from ..utils.secure_evaluator import _get_secure_evaluator
 from ..utils.validators import convert_pandas_na_list
@@ -46,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 
 # Implementation: Session validation and DataFrame retrieval with error handling
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get validated session and DataFrame."""
     manager = get_session_manager()
     session = manager.get_session(session_id)
@@ -72,6 +73,7 @@ async def filter_rows(
     """Filter DataFrame rows based on conditions."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
         # Initialize mask based on mode: AND starts True, OR starts False
         mask = pd.Series([mode == "and"] * len(df))
 
@@ -209,7 +211,7 @@ async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnSelectionResult:
     """Select specific columns from the dataframe.
 
     Args:
@@ -241,12 +243,12 @@ async def select_columns(
             },
         )
 
-        return {
-            "session_id": session_id,
-            "selected_columns": columns,
-            "columns_before": columns_before,
-            "columns_after": len(columns),
-        }
+        return ColumnSelectionResult(
+            session_id=session_id,
+            selected_columns=columns,
+            columns_before=columns_before,
+            columns_after=len(columns),
+        )
 
     except Exception as e:
         logger.error(f"Error selecting columns: {e!s}")
@@ -257,7 +259,7 @@ async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnRenameResult:
     """Rename columns in the dataframe.
 
     Args:
@@ -279,11 +281,11 @@ async def rename_columns(
         session.df = df.rename(columns=mapping)
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
-        return {
-            "session_id": session_id,
-            "renamed": mapping,
-            "columns": session.df.columns.tolist(),
-        }
+        return ColumnRenameResult(
+            session_id=session_id,
+            renamed=mapping,
+            columns=session.df.columns.tolist(),
+        )
 
     except Exception as e:
         logger.error(f"Error renaming columns: {e!s}")
@@ -1548,7 +1550,7 @@ async def update_row(
             raise ToolError(f"Columns not found: {invalid_cols}")
 
         # Get old values for tracking
-        old_values: dict[str, Any] = {}
+        old_values: dict[str, CellValue] = {}
         for col in data:
             old_val = df.iloc[row_index][col]
             if pd.isna(old_val):
@@ -1563,7 +1565,7 @@ async def update_row(
             session.df.iloc[row_index, session.df.columns.get_loc(column)] = value
 
         # Get new values for tracking
-        new_values: dict[str, Any] = {}
+        new_values: dict[str, CellValue] = {}
         for col in data:
             new_val = session.df.iloc[row_index][col]
             if pd.isna(new_val):

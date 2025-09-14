@@ -15,6 +15,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType, get_session_manager
+from ..models.csv_session import CSVSession
 from ..models.tool_responses import BaseToolResponse
 
 logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ class StringOperationResult(BaseToolResponse):
 
 
 # Implementation: Session retrieval with validation and error handling
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame with validation."""
     manager = get_session_manager()
     session = manager.get_session(session_id)

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
 from ..models import OperationType
+from ..models.csv_session import get_session
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -24,7 +25,6 @@ from ..models.tool_responses import (
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
 from ..utils.validators import convert_pandas_na_list
-from .server_utils import get_session_data
 
 if TYPE_CHECKING:
     pass
@@ -139,7 +139,11 @@ def get_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -214,7 +218,11 @@ def set_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -296,7 +304,11 @@ def get_row_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -366,7 +378,11 @@ def get_column_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate column exists
         if column not in df.columns:
@@ -451,7 +467,11 @@ def insert_row(
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
         rows_before = len(df)
 
         # Handle special case: append at end
@@ -498,7 +518,7 @@ def insert_row(
         session.df = df_new
 
         # Prepare inserted data for response (handle pandas types)
-        data_inserted: dict[str, Any] = {}
+        data_inserted: dict[str, CellValue] = {}
         for key, value in row_data.items():
             if pd.isna(value):
                 data_inserted[key] = None
@@ -548,7 +568,11 @@ def delete_row(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
         rows_before = len(df)
 
         # Validate row index
@@ -625,7 +649,11 @@ def update_row(
             raise ToolError("Update data must be a dictionary or JSON string")
 
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):

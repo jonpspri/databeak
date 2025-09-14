@@ -17,6 +17,7 @@ from .data_models import ExportFormat, OperationType, SessionInfo
 from .data_session import DataSession
 from .history_manager import HistoryManager, HistoryStorage
 from .session_lifecycle import SessionLifecycle
+from .typed_dicts import SessionHistoryExport
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -452,7 +453,7 @@ class SessionManager:
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def create_session(self) -> str:
+    def create_session(self, session_id: str) -> CSVSession:
         """Create a new session."""
         self._cleanup_expired()
 
@@ -461,21 +462,35 @@ class SessionManager:
             oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
             del self.sessions[oldest.session_id]
 
-        session = CSVSession(ttl_minutes=self.ttl_minutes)
+        session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
         self.sessions[session.session_id] = session
         logger.info(f"Created new session: {session.session_id}")
-        return session.session_id
+        return session
 
-    def get_session(self, session_id: str) -> CSVSession | None:
+    def get_session(self, session_id: str) -> CSVSession:
         """Get a session by ID."""
         session = self.sessions.get(session_id)
-        if session and not session.is_expired():
-            session.update_access_time()
-            return session
-        elif session and session.is_expired():
-            # Mark for cleanup but don't remove synchronously
-            self.sessions_to_cleanup.add(session_id)
-        return None
+        if not session:
+            return self.create_session(session_id)
+        session.update_access_time()
+        return session
+
+    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
+        """Get existing session or create new one (backward compatibility).
+
+        Args:
+            session_id: Session ID (if None, generates one)
+
+        Returns:
+            CSVSession
+        """
+        if session_id:
+            return self.get_session(session_id)
+        else:
+            # Generate a new session ID for backward compatibility
+            import uuid
+            new_session_id = str(uuid.uuid4())
+            return self.create_session(new_session_id)
 
     async def remove_session(self, session_id: str) -> bool:
         """Remove a session."""
@@ -504,28 +519,16 @@ class SessionManager:
             await self.remove_session(session_id)
             self.sessions_to_cleanup.discard(session_id)
 
-    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
-        """Get existing session or create new one."""
-        if session_id:
-            session = self.get_session(session_id)
-            if session:
-                return session
-
-        new_session_id = self.create_session()
-        return self.sessions[new_session_id]
-
-    def export_session_history(self, session_id: str) -> dict[str, Any] | None:
+    def export_session_history(self, session_id: str) -> SessionHistoryExport:
         """Export session history as JSON."""
         session = self.get_session(session_id)
-        if not session:
-            return None
 
-        return {
-            "session_id": session.session_id,
-            "created_at": session.lifecycle.created_at.isoformat(),
-            "operations": session.operations_history,
-            "metadata": session._data_session.metadata,
-        }
+        return SessionHistoryExport(
+            session_id=session.session_id,
+            created_at=session.lifecycle.created_at.isoformat(),
+            operations=session.operations_history,
+            metadata=session._data_session.metadata,
+        )
 
 
 # Global session manager instance
@@ -539,3 +542,26 @@ def get_session_manager() -> SessionManager:
     if _session_manager is None:
         _session_manager = SessionManager()
     return _session_manager
+
+
+def get_session(session_id: str) -> CSVSession:
+    """Get or create session with elegant interface.
+
+    Provides dictionary-like access: session = get_session(session_id)
+    Returns existing session or creates new empty session.
+
+    Args:
+        session_id: The session identifier
+
+    Returns:
+        CSVSession (existing or newly created)
+    """
+    manager = get_session_manager()
+    session = manager.get_session(session_id)
+
+    if not session:
+        # Create new session with the specified ID
+        session = CSVSession(session_id=session_id)
+        manager.sessions[session_id] = session
+
+    return session

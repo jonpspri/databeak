@@ -104,28 +104,28 @@ class CorrelatedLogger:
         """Initialize correlated logger."""
         self.logger = logging.getLogger(name)
 
-    def _log_with_context(self, level: int, msg: str, **kwargs: Any) -> None:
+    def _log_with_context(self, level: int, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: arbitrary logging context
         """Log message with additional context."""
         extra = {"correlation_id": get_correlation_id(), **kwargs}
         self.logger.log(level, msg, extra=extra)
 
-    def debug(self, msg: str, **kwargs: Any) -> None:
+    def debug(self, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: logging context
         """Log debug message with context."""
         self._log_with_context(logging.DEBUG, msg, **kwargs)
 
-    def info(self, msg: str, **kwargs: Any) -> None:
+    def info(self, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: logging context
         """Log info message with context."""
         self._log_with_context(logging.INFO, msg, **kwargs)
 
-    def warning(self, msg: str, **kwargs: Any) -> None:
+    def warning(self, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: logging context
         """Log warning message with context."""
         self._log_with_context(logging.WARNING, msg, **kwargs)
 
-    def error(self, msg: str, **kwargs: Any) -> None:
+    def error(self, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: logging context
         """Log error message with context."""
         self._log_with_context(logging.ERROR, msg, **kwargs)
 
-    def critical(self, msg: str, **kwargs: Any) -> None:
+    def critical(self, msg: str, **kwargs: Any) -> None:  # type: ignore[explicit-any]  # Any justified: logging context
         """Log critical message with context."""
         self._log_with_context(logging.CRITICAL, msg, **kwargs)
 
@@ -135,7 +135,7 @@ def get_logger(name: str) -> CorrelatedLogger:
     return CorrelatedLogger(name)
 
 
-def log_operation_start(operation: str, session_id: str | None = None, **context: Any) -> None:
+def log_operation_start(operation: str, session_id: str | None = None, **context: Any) -> None:  # type: ignore[explicit-any]
     """Log the start of an operation."""
     logger = get_logger("databeak.operations")
     logger.info(
@@ -147,7 +147,7 @@ def log_operation_start(operation: str, session_id: str | None = None, **context
     )
 
 
-def log_operation_end(
+def log_operation_end(  # type: ignore[explicit-any]
     operation: str, session_id: str | None = None, success: bool = True, **context: Any
 ) -> None:
     """Log the end of an operation."""
@@ -163,7 +163,7 @@ def log_operation_end(
     )
 
 
-def log_session_event(event: str, session_id: str, **context: Any) -> None:
+def log_session_event(event: str, session_id: str, **context: Any) -> None:  # type: ignore[explicit-any]
     """Log a session-related event."""
     logger = get_logger("databeak.sessions")
     logger.info(f"Session event: {event}", session_id=session_id, event_type=event, **context)

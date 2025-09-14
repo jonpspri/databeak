@@ -6,10 +6,12 @@ import logging
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 
+import pandas as pd
+
 from ..exceptions import NoDataLoadedError
 
 if TYPE_CHECKING:
-    import pandas as pd
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,7 @@ class DataSession:
         self.df: pd.DataFrame | None = None
         self.original_df: pd.DataFrame | None = None
         self.file_path: str | None = None
-        self.metadata: dict[str, Any] = {}
+        self.metadata: dict[str, Any] = {}  # type: ignore[explicit-any]  # Any justified: flexible session metadata
         self.created_at = datetime.now(timezone.utc)
         self.last_accessed = datetime.now(timezone.utc)
 
@@ -40,7 +42,7 @@ class DataSession:
                 "file_path": file_path,
                 "shape": df.shape,
                 "columns": [str(col) for col in df.columns.tolist()],  # Ensure columns are strings
-                "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
+                "dtypes": {str(col): str(dtype) for col, dtype in df.dtypes.items()},
                 "loaded_at": datetime.now(timezone.utc).isoformat(),
             }
         )
@@ -49,7 +51,7 @@ class DataSession:
         """Update the last accessed time."""
         self.last_accessed = datetime.now(timezone.utc)
 
-    def get_data_info(self) -> dict[str, Any]:
+    def get_data_info(self) -> dict[str, Any]:  # type: ignore[explicit-any]  # Any justified: flexible data info
         """Get information about the loaded data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
@@ -82,7 +84,7 @@ class DataSession:
         """Check if data is loaded."""
         return self.df is not None
 
-    def get_basic_stats(self) -> dict[str, Any]:
+    def get_basic_stats(self) -> dict[str, Any]:  # type: ignore[explicit-any]  # Any justified: flexible stats data
         """Get basic statistics about the data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)

@@ -68,7 +68,7 @@ mcp.mount(column_text_server)
 
 
 @mcp.resource("csv://{session_id}/data")
-async def get_csv_data(session_id: str) -> dict[str, Any]:
+async def get_csv_data(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get current CSV data from a session with enhanced indexing."""
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
@@ -95,7 +95,7 @@ async def get_csv_data(session_id: str) -> dict[str, Any]:
 
 
 @mcp.resource("csv://{session_id}/schema")
-async def get_csv_schema(session_id: str) -> dict[str, Any]:
+async def get_csv_schema(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get CSV schema information."""
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
@@ -116,7 +116,7 @@ async def get_csv_schema(session_id: str) -> dict[str, Any]:
 
 
 @mcp.resource("sessions://active")
-async def list_active_sessions() -> list[dict[str, Any]]:
+async def list_active_sessions() -> list[dict[str, Any]]:  # type: ignore[misc]  # Any justified: MCP resource list response
     """List all active CSV sessions."""
     session_manager = get_session_manager()
     sessions = session_manager.list_sessions()
@@ -124,7 +124,7 @@ async def list_active_sessions() -> list[dict[str, Any]]:
 
 
 @mcp.resource("csv://{session_id}/cell/{row_index}/{column}")
-async def get_csv_cell(session_id: str, row_index: str, column: str) -> dict[str, Any]:
+async def get_csv_cell(session_id: str, row_index: str, column: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get data for a specific cell with coordinate information."""
     try:
         row_idx = int(row_index)
@@ -144,7 +144,7 @@ async def get_csv_cell(session_id: str, row_index: str, column: str) -> dict[str
 
 
 @mcp.resource("csv://{session_id}/row/{row_index}")
-async def get_csv_row(session_id: str, row_index: str) -> dict[str, Any]:
+async def get_csv_row(session_id: str, row_index: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get data for a specific row with all column values."""
     try:
         row_idx = int(row_index)
@@ -158,7 +158,7 @@ async def get_csv_row(session_id: str, row_index: str) -> dict[str, Any]:
 
 
 @mcp.resource("csv://{session_id}/preview")
-async def get_csv_preview(session_id: str) -> dict[str, Any]:
+async def get_csv_preview(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get a preview of the CSV data with enhanced indexing and coordinate information."""
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
