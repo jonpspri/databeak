@@ -6,7 +6,7 @@ This server provides column selection, renaming, addition, removal, and type con
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal  # type: ignore[explicit-any]
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -65,7 +65,7 @@ class MapOperation(UpdateOperation):
     """Map operation specification."""
 
     type: Literal["map"] = "map"
-    mapping: dict[str, Any] = Field(description="Value mapping dictionary")
+    mapping: dict[str, CellValue] = Field(description="Value mapping dictionary")
 
 
 class ApplyOperation(UpdateOperation):
@@ -95,7 +95,7 @@ class UpdateColumnRequest(BaseModel):
     operation: Literal["replace", "map", "apply", "fillna"] = Field(
         description="Type of update operation"
     )
-    value: Any | None = Field(  # Any justified: operation-dependent type (CellValue|dict|str)
+    value: Any | None = Field(  # type: ignore[explicit-any]  # Any justified: operation-dependent type (CellValue|dict|str)
         None, description="Value for the operation (depends on operation type)"
     )
     pattern: str | None = Field(None, description="Pattern for replace operation")

@@ -221,6 +221,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_any_unimported = false
+disallow_any_explicit = true
 no_implicit_optional = true
 check_untyped_defs = true
 warn_redundant_casts = true
@@ -247,8 +248,7 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
-disallow_untyped_defs = false
-ignore_errors = true
+
 
 [[tool.mypy.overrides]]
 module = "examples.*"

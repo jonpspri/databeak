@@ -24,6 +24,13 @@ class ValidationResult(TypedDict):
     warnings: list[str]
 
 
+class DataValidationIssues(TypedDict):
+    """Issues found during DataFrame validation."""
+    errors: list[str]
+    warnings: list[str]
+    info: dict[str, Any]  # type: ignore[explicit-any]  # Flexible validation metadata
+
+
 class QualityCheckResult(TypedDict):
     """Result of data quality assessment."""
     rule_name: str

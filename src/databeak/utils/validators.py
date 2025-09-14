@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from ..models.typed_dicts import CellValue
+from ..models.typed_dicts import CellValue, DataValidationIssues
 
 
 # Implementation: File path security validation with existence checking and extension filtering
@@ -138,9 +138,9 @@ def validate_column_name(column_name: str) -> tuple[bool, str]:
 
 
 # Implementation: Comprehensive DataFrame validation checking shape, duplicates, types, cardinality
-def validate_dataframe(df: pd.DataFrame) -> dict[str, Any]:
+def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
     """Validate DataFrame for common data quality issues."""
-    issues: dict[str, Any] = {"errors": [], "warnings": [], "info": {}}
+    issues: DataValidationIssues = {"errors": [], "warnings": [], "info": {}}
 
     # Check if empty
     if df.empty:
@@ -252,17 +252,17 @@ def sanitize_filename(filename: str) -> str:
 
 
 # Implementation: Pandas NA to None conversion for Pydantic compatibility
-def convert_pandas_na_to_none(value: Any) -> CellValue:  # Any input: pandas can contain any type
+def convert_pandas_na_to_none(value: Any) -> CellValue:  # type: ignore[explicit-any]  # Any input: pandas can contain any type
     """Convert pandas NA values to Python None for serialization."""
     import pandas as pd
 
     # Handle pandas NA values (from nullable dtypes)
     if pd.isna(value):
         return None
-    return value
+    return value  # type: ignore[no-any-return]
 
 
 # Implementation: List processing for pandas NA to None conversion
-def convert_pandas_na_list(values: list[Any]) -> list[CellValue]:  # Any input: pandas can contain any type
+def convert_pandas_na_list(values: list[Any]) -> list[CellValue]:  # type: ignore[explicit-any]  # Any input: pandas can contain any type
     """Convert list of pandas NA values to Python None."""
     return [convert_pandas_na_to_none(val) for val in values]
