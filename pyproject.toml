@@ -196,7 +196,6 @@ ignore = [
     "E501",  # line too long (handled by ruff format)
     "B008",  # do not perform function calls in argument defaults
     "B905",  # `zip()` without an explicit `strict=` parameter
-    "S101",  # assert usage (used for type safety guards)
     "SIM105", # contextlib.suppress is slower
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
 ]

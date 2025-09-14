@@ -19,6 +19,7 @@ CellValue = str | int | float | bool | None
 # Validation and Quality Check Results
 class ValidationResult(TypedDict):
     """Result of DataFrame schema validation."""
+
     valid: bool
     errors: list[str]
     warnings: list[str]
@@ -26,6 +27,7 @@ class ValidationResult(TypedDict):
 
 class DataValidationIssues(TypedDict):
     """Issues found during DataFrame validation."""
+
     errors: list[str]
     warnings: list[str]
     info: dict[str, Any]  # type: ignore[explicit-any]  # Flexible validation metadata
@@ -33,6 +35,7 @@ class DataValidationIssues(TypedDict):
 
 class QualityCheckResult(TypedDict):
     """Result of data quality assessment."""
+
     rule_name: str
     passed: bool
     score: float
@@ -42,9 +45,10 @@ class QualityCheckResult(TypedDict):
 
 class DataStatistics(TypedDict):
     """Statistical summary of column data."""
+
     count: int
     mean: NotRequired[float]  # Only for numeric columns
-    std: NotRequired[float]   # Only for numeric columns
+    std: NotRequired[float]  # Only for numeric columns
     min: NotRequired[CellValue]
     max: NotRequired[CellValue]
     unique_count: int
@@ -54,6 +58,7 @@ class DataStatistics(TypedDict):
 
 class ColumnProfile(TypedDict):
     """Comprehensive column profiling information."""
+
     name: str
     dtype: str
     statistics: DataStatistics
@@ -64,6 +69,7 @@ class ColumnProfile(TypedDict):
 # Session and Operation Metadata
 class SessionMetadata(TypedDict):
     """Session state and configuration metadata."""
+
     created_at: str
     last_accessed: str
     auto_save_enabled: bool
@@ -71,8 +77,19 @@ class SessionMetadata(TypedDict):
     data_shape: NotRequired[tuple[int, int]]  # (rows, columns) if data loaded
 
 
+class DataSessionMetadata(TypedDict):
+    """Metadata stored in DataSession for loaded data."""
+
+    file_path: str | None
+    shape: tuple[int, int]
+    columns: list[str]
+    dtypes: dict[str, str]
+    loaded_at: str
+
+
 class OperationMetadata(TypedDict):
     """Metadata for tracking operations in session history."""
+
     operation_type: str
     timestamp: str
     parameters: dict[str, CellValue]
@@ -83,6 +100,7 @@ class OperationMetadata(TypedDict):
 
 class FilterConditionDict(TypedDict):
     """Filter condition as dictionary (for legacy compatibility)."""
+
     column: str
     operator: str
     value: CellValue
@@ -91,6 +109,7 @@ class FilterConditionDict(TypedDict):
 
 class SortSpecification(TypedDict):
     """Sort specification for column sorting."""
+
     column: str
     ascending: bool
 
@@ -98,6 +117,7 @@ class SortSpecification(TypedDict):
 # I/O and Data Processing
 class CsvReadParams(TypedDict):
     """Parameters for CSV reading operations."""
+
     sep: NotRequired[str]
     header: NotRequired[int | None]
     names: NotRequired[list[str]]
@@ -110,6 +130,7 @@ class CsvReadParams(TypedDict):
 
 class ExportOptions(TypedDict):
     """Options for data export operations."""
+
     format: str  # 'csv', 'json', 'excel', etc.
     include_index: bool
     encoding: NotRequired[str]
@@ -120,6 +141,7 @@ class ExportOptions(TypedDict):
 # Data Transformation Structures
 class TransformationStep(TypedDict):
     """Single step in a data transformation pipeline."""
+
     operation: str
     parameters: dict[str, CellValue]
     target_columns: NotRequired[list[str]]
@@ -127,6 +149,7 @@ class TransformationStep(TypedDict):
 
 class TransformationPipeline(TypedDict):
     """Complete transformation pipeline specification."""
+
     steps: list[TransformationStep]
     description: NotRequired[str]
     validation_rules: NotRequired[list[str]]
@@ -135,6 +158,7 @@ class TransformationPipeline(TypedDict):
 # Internal operation results (for legacy transformation functions)
 class ColumnSelectionResult(TypedDict):
     """Result of internal column selection operation."""
+
     session_id: str
     selected_columns: list[str]
     columns_before: int
@@ -143,6 +167,7 @@ class ColumnSelectionResult(TypedDict):
 
 class RowUpdateResult(TypedDict):
     """Result of internal row update operation."""
+
     session_id: str
     row_index: int
     updated_fields: dict[str, CellValue]
@@ -151,6 +176,7 @@ class RowUpdateResult(TypedDict):
 
 class ColumnRenameResult(TypedDict):
     """Result of internal column rename operation."""
+
     session_id: str
     renamed: dict[str, str]  # old_name -> new_name mapping
     columns: list[str]  # Final column list after rename
@@ -159,6 +185,7 @@ class ColumnRenameResult(TypedDict):
 # Tool Response Components
 class OperationResult(TypedDict):
     """Standard operation result structure."""
+
     success: bool
     operation_type: str
     rows_affected: int
@@ -169,6 +196,7 @@ class OperationResult(TypedDict):
 
 class ErrorDetails(TypedDict):
     """Detailed error information."""
+
     error_type: str
     message: str
     parameter: NotRequired[str]
@@ -178,6 +206,7 @@ class ErrorDetails(TypedDict):
 # Discovery and Analysis Results
 class ColumnAnalysis(TypedDict):
     """Analysis results for a single column."""
+
     column_name: str
     data_type: str
     unique_values: int
@@ -189,6 +218,7 @@ class ColumnAnalysis(TypedDict):
 
 class DataProfileResult(TypedDict):
     """Complete data profiling results."""
+
     total_rows: int
     total_columns: int
     memory_usage_mb: float
@@ -200,6 +230,7 @@ class DataProfileResult(TypedDict):
 # Configuration and Settings
 class ServerConfig(TypedDict):
     """Server configuration parameters."""
+
     host: str
     port: int
     debug: bool
@@ -210,6 +241,7 @@ class ServerConfig(TypedDict):
 
 class ToolConfig(TypedDict):
     """Individual tool configuration."""
+
     enabled: bool
     timeout_seconds: NotRequired[int]
     memory_limit_mb: NotRequired[int]
@@ -219,12 +251,14 @@ class ToolConfig(TypedDict):
 # Data Preview Structures
 class DataPreviewRecord(TypedDict):
     """Single record in data preview with row index."""
+
     __row_index__: int  # Original DataFrame row index
     # Additional fields are column data as CellValue
 
 
 class DataPreviewResult(TypedDict):
     """Complete data preview with metadata."""
+
     records: list[dict[str, CellValue]]  # Preview records with actual column data
     total_rows: int
     total_columns: int  # Required by io_server.py
@@ -234,6 +268,7 @@ class DataPreviewResult(TypedDict):
 
 class InternalDataSummary(TypedDict):
     """Internal data summary structure (not an MCP tool response)."""
+
     session_id: str
     shape: tuple[int, int]  # (rows, columns)
     columns: list[str]

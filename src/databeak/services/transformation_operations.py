@@ -74,7 +74,6 @@ async def filter_rows(
     try:
         session, df = _get_session_data(session_id)
         assert session.df is not None  # Guaranteed by _get_session_data validation
-        assert session.df is not None  # Guaranteed by _get_session_data validation
         # Initialize mask based on mode: AND starts True, OR starts False
         mask = pd.Series([mode == "and"] * len(df))
 
@@ -170,7 +169,6 @@ async def sort_data(
     """Sort DataFrame by one or more columns."""
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Parse columns into names and ascending flags
         sort_columns: list[str] = []
@@ -226,7 +224,6 @@ async def select_columns(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -275,7 +272,6 @@ async def rename_columns(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
@@ -317,7 +313,6 @@ async def add_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if name in df.columns:
             raise ToolError(f"Column '{name}' already exists")
@@ -378,7 +373,6 @@ async def remove_columns(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -421,7 +415,6 @@ async def change_column_type(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -487,7 +480,6 @@ async def fill_missing_values(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
@@ -569,7 +561,6 @@ async def update_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -662,7 +653,6 @@ async def remove_duplicates(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
         rows_before = len(df)
 
         if subset:
@@ -721,7 +711,6 @@ async def get_cell_value(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -783,7 +772,6 @@ async def set_cell_value(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -857,7 +845,6 @@ async def get_row_data(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -918,7 +905,6 @@ async def get_column_data(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate column exists
         if column not in df.columns:
@@ -992,7 +978,6 @@ async def replace_in_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1055,7 +1040,6 @@ async def extract_from_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1113,7 +1097,6 @@ async def split_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1189,7 +1172,6 @@ async def transform_column_case(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1251,7 +1233,6 @@ async def strip_column(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1312,7 +1293,6 @@ async def fill_column_nulls(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -1386,7 +1366,6 @@ async def insert_row(
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
         rows_before = len(df)
 
         # Handle append case
@@ -1482,7 +1461,6 @@ async def delete_row(
     """
     try:
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
         rows_before = len(df)
 
         # Validate row index
@@ -1557,7 +1535,6 @@ async def update_row(
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session, df = _get_session_data(session_id)
-        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
