@@ -20,6 +20,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType
+from ..models.csv_session import get_session
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 from ..utils.secure_evaluator import _get_secure_evaluator
@@ -132,8 +133,7 @@ class RenameColumnsResult(BaseToolResponse):
 # =============================================================================
 
 
-# Use shared implementation from server_utils
-from ..models.csv_session import get_session
+# Use elegant session access pattern
 _get_session_data = get_session
 
 

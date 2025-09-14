@@ -87,6 +87,15 @@ class DataSessionMetadata(TypedDict):
     loaded_at: str
 
 
+class SessionHistoryExport(TypedDict):
+    """Exported session history data."""
+
+    session_id: str
+    created_at: str
+    operations: list[dict[str, Any]]  # type: ignore[misc]  # Any justified: operation history flexible structure
+    metadata: dict[str, Any]  # type: ignore[misc]  # Any justified: session metadata flexible structure
+
+
 class OperationMetadata(TypedDict):
     """Metadata for tracking operations in session history."""
 

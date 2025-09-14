@@ -88,7 +88,6 @@ class DataSession:
         """Get basic statistics about the data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
-        assert self.df is not None  # Type guard: validated above
 
         return {
             "row_count": len(self.df),

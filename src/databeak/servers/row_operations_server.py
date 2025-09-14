@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
 from ..models import OperationType
+from ..models.csv_session import get_session
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -24,7 +25,6 @@ from ..models.tool_responses import (
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
 from ..utils.validators import convert_pandas_na_list
-from ..models.csv_session import get_session
 
 if TYPE_CHECKING:
     pass

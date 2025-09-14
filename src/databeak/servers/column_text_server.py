@@ -22,6 +22,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType
+from ..models.csv_session import get_session
 from ..models.tool_responses import ColumnOperationResult
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,7 @@ CellValue = str | int | float | bool | None
 # =============================================================================
 
 
-# Use shared implementation from server_utils
-from ..models.csv_session import get_session
+# Use elegant session access pattern
 _get_session_data = get_session
 
 
