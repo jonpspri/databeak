@@ -30,7 +30,7 @@ class DataValidationIssues(TypedDict):
 
     errors: list[str]
     warnings: list[str]
-    info: dict[str, Any]  # type: ignore[explicit-any]  # Flexible validation metadata
+    info: dict[str, Any]  # type: ignore[explicit-any]  # Any justified: flexible validation metadata
 
 
 class QualityCheckResult(TypedDict):
@@ -40,7 +40,7 @@ class QualityCheckResult(TypedDict):
     passed: bool
     score: float
     message: str
-    details: NotRequired[dict[str, Any]]  # Flexible for rule-specific data
+    details: NotRequired[dict[str, Any]]  # type: ignore[explicit-any]  # Any justified: flexible rule-specific data
 
 
 class DataStatistics(TypedDict):
