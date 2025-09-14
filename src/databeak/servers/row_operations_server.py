@@ -22,6 +22,12 @@ from ..models.tool_responses import (
     SetCellResult,
     UpdateRowResult,
 )
+from ..models.validation_models import (
+    validate_column_exists,
+    validate_columns_exist,
+    validate_row_bounds,
+    validate_session_and_data,
+)
 from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
 from ..utils.validators import convert_pandas_na_list
 from .server_utils import get_session_data
@@ -127,7 +133,7 @@ class ColumnDataRequest(BaseModel):
 # Records operation in session history for audit trail
 def get_cell_value(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve cell from")],
+    row_index: Annotated[int, Field(ge=0, description="Row index (0-based) to retrieve cell from")],
     column: Annotated[
         str | int, Field(description="Column name or column index (0-based) to retrieve")
     ],
@@ -138,12 +144,12 @@ def get_cell_value(
     information.
     """
     try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session_id, session = validate_session_and_data(ctx)
+        df = session.df
+        assert df is not None  # Guaranteed by validate_session_and_data
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+        # Validate row index bounds
+        validate_row_bounds(len(df), row_index)
 
         # Handle column specification
         if isinstance(column, int):
@@ -152,9 +158,8 @@ def get_cell_value(
                 raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
             column_name = df.columns[column]
         else:
-            # Column name
-            if column not in df.columns:
-                raise ColumnNotFoundError(column, list(df.columns))
+            # Column name - use centralized validation
+            validate_column_exists(list(df.columns), column)
             column_name = column
 
         # Get the cell value
@@ -198,7 +203,7 @@ def get_cell_value(
 # Records operation in session history and auto-saves if enabled
 def set_cell_value(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-    row_index: Annotated[int, Field(description="Row index (0-based) to update cell in")],
+    row_index: Annotated[int, Field(ge=0, description="Row index (0-based) to update cell in")],
     column: Annotated[
         str | int, Field(description="Column name or column index (0-based) to update")
     ],
@@ -213,12 +218,12 @@ def set_cell_value(
     coordinates and data type.
     """
     try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session_id, session = validate_session_and_data(ctx)
+        df = session.df
+        assert df is not None  # Guaranteed by validate_session_and_data
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+        # Validate row index bounds
+        validate_row_bounds(len(df), row_index)
 
         # Handle column specification
         if isinstance(column, int):
@@ -227,9 +232,8 @@ def set_cell_value(
                 raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
             column_name = df.columns[column]
         else:
-            # Column name
-            if column not in df.columns:
-                raise ColumnNotFoundError(column, list(df.columns))
+            # Column name - use centralized validation
+            validate_column_exists(list(df.columns), column)
             column_name = column
 
         # Get the old value for tracking
@@ -283,7 +287,7 @@ def set_cell_value(
 # Records operation in session history for audit trail
 def get_row_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-    row_index: Annotated[int, Field(description="Row index (0-based) to retrieve data from")],
+    row_index: Annotated[int, Field(ge=0, description="Row index (0-based) to retrieve data from")],
     columns: Annotated[
         list[str] | None,
         Field(description="Optional list of column names to retrieve (all columns if None)"),
@@ -295,12 +299,12 @@ def get_row_data(
     serialization.
     """
     try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session_id, session = validate_session_and_data(ctx)
+        df = session.df
+        assert df is not None  # Guaranteed by validate_session_and_data
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+        # Validate row index bounds
+        validate_row_bounds(len(df), row_index)
 
         # Handle column filtering
         if columns is None:
@@ -308,9 +312,7 @@ def get_row_data(
             row_data = df.iloc[row_index].to_dict()
         else:
             # Validate all columns exist
-            missing_columns = [col for col in columns if col not in df.columns]
-            if missing_columns:
-                raise ColumnNotFoundError(missing_columns[0], list(df.columns))
+            validate_columns_exist(list(df.columns), columns)
 
             selected_columns = columns
             row_data = df.iloc[row_index][columns].to_dict()
@@ -354,10 +356,11 @@ def get_column_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to retrieve data from")],
     start_row: Annotated[
-        int | None, Field(description="Starting row index (inclusive, 0-based) for data slice")
+        int | None,
+        Field(ge=0, description="Starting row index (inclusive, 0-based) for data slice"),
     ] = None,
     end_row: Annotated[
-        int | None, Field(description="Ending row index (exclusive, 0-based) for data slice")
+        int | None, Field(ge=0, description="Ending row index (exclusive, 0-based) for data slice")
     ] = None,
 ) -> ColumnDataResult:
     """Get data from specific column with optional row range slicing.
@@ -365,18 +368,14 @@ def get_column_data(
     Supports row range filtering for focused analysis. Returns column values with range metadata.
     """
     try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session_id, session = validate_session_and_data(ctx)
+        df = session.df
+        assert df is not None  # Guaranteed by validate_session_and_data
 
         # Validate column exists
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, list(df.columns))
+        validate_column_exists(list(df.columns), column)
 
-        # Validate and set row range
-        if start_row is not None and start_row < 0:
-            raise InvalidParameterError("start_row", start_row, "must be non-negative")
-        if end_row is not None and end_row < 0:
-            raise InvalidParameterError("end_row", end_row, "must be non-negative")
+        # Validate row range bounds (non-negative validation handled by Pydantic ge=0)
         if start_row is not None and start_row >= len(df):
             raise ToolError(f"start_row {start_row} out of range (0-{len(df) - 1})")
         if end_row is not None and end_row > len(df):
