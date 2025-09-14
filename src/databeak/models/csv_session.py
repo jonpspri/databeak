@@ -452,7 +452,7 @@ class SessionManager:
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def create_session(self) -> str:
+    def create_session(self, session_id:str) -> str:
         """Create a new session."""
         self._cleanup_expired()
 
@@ -461,7 +461,7 @@ class SessionManager:
             oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
             del self.sessions[oldest.session_id]
 
-        session = CSVSession(ttl_minutes=self.ttl_minutes)
+        session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
         self.sessions[session.session_id] = session
         logger.info(f"Created new session: {session.session_id}")
         return session.session_id
@@ -539,3 +539,26 @@ def get_session_manager() -> SessionManager:
     if _session_manager is None:
         _session_manager = SessionManager()
     return _session_manager
+
+
+def get_session(session_id: str) -> CSVSession:
+    """Get or create session with elegant interface.
+
+    Provides dictionary-like access: session = get_session(session_id)
+    Returns existing session or creates new empty session.
+
+    Args:
+        session_id: The session identifier
+
+    Returns:
+        CSVSession (existing or newly created)
+    """
+    manager = get_session_manager()
+    session = manager.get_session(session_id)
+
+    if not session:
+        # Create new session with the specified ID
+        session = CSVSession(session_id=session_id)
+        manager.sessions[session_id] = session
+
+    return session

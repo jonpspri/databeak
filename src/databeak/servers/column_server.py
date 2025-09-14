@@ -23,7 +23,6 @@ from ..models import OperationType
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 from ..utils.secure_evaluator import _get_secure_evaluator
-from .server_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +133,8 @@ class RenameColumnsResult(BaseToolResponse):
 
 
 # Use shared implementation from server_utils
-_get_session_data = get_session_data
+from ..models.csv_session import get_session
+_get_session_data = get_session
 
 
 # =============================================================================
@@ -156,7 +156,11 @@ async def select_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -222,7 +226,11 @@ async def rename_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
@@ -293,7 +301,11 @@ async def add_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         if name in df.columns:
             raise InvalidParameterError("name", name, f"Column '{name}' already exists")
@@ -379,7 +391,11 @@ async def remove_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -452,7 +468,11 @@ async def change_column_type(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -575,7 +595,11 @@ async def update_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        session = _get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
