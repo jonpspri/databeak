@@ -18,7 +18,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models.csv_session import get_session_manager
-from ..utils.secure_evaluator import SecureExpressionEvaluator
+from ..utils.secure_evaluator import _get_secure_evaluator
 from ..models.data_models import OperationType
 from ..models.tool_responses import (
     CellValueResult,
@@ -44,8 +44,6 @@ RowData = dict[str, CellValue] | list[CellValue]
 
 logger = logging.getLogger(__name__)
 
-# Global secure expression evaluator instance
-_secure_evaluator = SecureExpressionEvaluator()
 
 
 # Implementation: Session validation and DataFrame retrieval with error handling
@@ -321,7 +319,8 @@ async def add_column(
         if formula:
             # Evaluate formula using secure expression evaluator
             try:
-                result = _secure_evaluator.evaluate_simple_formula(formula, df)
+                evaluator = _get_secure_evaluator()
+                result = evaluator.evaluate_simple_formula(formula, df)
                 session.df[name] = result
             except Exception as e:
                 raise ToolError(f"Formula evaluation failed: {e}") from e

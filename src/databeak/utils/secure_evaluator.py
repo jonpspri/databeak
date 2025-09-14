@@ -476,8 +476,22 @@ class SecureExpressionEvaluator:
         return ["+", "-", "*", "/", "//", "%", "**", "<<", ">>", "|", "^", "&", "~"]
 
 
-# Global instance for easy access
-_secure_evaluator = SecureExpressionEvaluator()
+# Lazy initialization for global instance
+_secure_evaluator: SecureExpressionEvaluator | None = None
+
+
+def _get_secure_evaluator() -> SecureExpressionEvaluator:
+    """Get or create the global secure expression evaluator instance.
+
+    Uses lazy initialization to avoid expensive setup at module import time.
+
+    Returns:
+        SecureExpressionEvaluator: The global evaluator instance
+    """
+    global _secure_evaluator
+    if _secure_evaluator is None:
+        _secure_evaluator = SecureExpressionEvaluator()
+    return _secure_evaluator
 
 
 def evaluate_expression_safely(
@@ -496,7 +510,8 @@ def evaluate_expression_safely(
     Raises:
         InvalidParameterError: If expression is unsafe or evaluation fails
     """
-    return _secure_evaluator.evaluate_column_expression(expression, dataframe, column_context)
+    evaluator = _get_secure_evaluator()
+    return evaluator.evaluate_column_expression(expression, dataframe, column_context)
 
 
 def validate_expression_safety(expression: str) -> None:
@@ -508,4 +523,5 @@ def validate_expression_safety(expression: str) -> None:
     Raises:
         InvalidParameterError: If expression contains unsafe operations
     """
-    _secure_evaluator.validate_expression_syntax(expression)
+    evaluator = _get_secure_evaluator()
+    evaluator.validate_expression_syntax(expression)

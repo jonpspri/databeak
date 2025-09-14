@@ -22,13 +22,11 @@ from ..exceptions import (
 from ..models import OperationType
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
-from ..utils.secure_evaluator import SecureExpressionEvaluator
+from ..utils.secure_evaluator import _get_secure_evaluator
 from .server_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
-# Global secure expression evaluator instance
-_secure_evaluator = SecureExpressionEvaluator()
 
 # Type aliases
 CellValue = str | int | float | bool | None
@@ -314,7 +312,8 @@ async def add_column(
                     formula = SecureExpression(expression=formula)
 
                 # Use secure evaluator instead of pandas.eval
-                result = _secure_evaluator.evaluate_simple_formula(formula.expression, df)
+                evaluator = _get_secure_evaluator()
+                result = evaluator.evaluate_simple_formula(formula.expression, df)
                 df[name] = result
             except Exception as e:
                 raise InvalidParameterError("formula", formula, f"Invalid formula: {e}") from e
@@ -634,7 +633,8 @@ async def update_column(
                         # Create column context mapping for 'x' variable
                         column_context = {"x": column}
                         # Use secure evaluator instead of pandas.eval
-                        result = _secure_evaluator.evaluate_column_expression(
+                        evaluator = _get_secure_evaluator()
+                        result = evaluator.evaluate_column_expression(
                             expr, df, column_context
                         )
                         df[column] = result
@@ -697,7 +697,8 @@ async def update_column(
                                     # Create column context mapping for 'x' variable
                                     column_context = {"x": column}
                                     # Use secure evaluator instead of pandas.eval
-                                    result = _secure_evaluator.evaluate_column_expression(
+                                    evaluator = _get_secure_evaluator()
+                                    result = evaluator.evaluate_column_expression(
                                         expr, df, column_context
                                     )
                                     df[column] = result
@@ -782,7 +783,8 @@ async def update_column(
                                     # Create column context mapping for 'x' variable
                                     column_context = {"x": column}
                                     # Use secure evaluator instead of pandas.eval
-                                    result = _secure_evaluator.evaluate_column_expression(
+                                    evaluator = _get_secure_evaluator()
+                                    result = evaluator.evaluate_column_expression(
                                         expr, df, column_context
                                     )
                                     df[column] = result
