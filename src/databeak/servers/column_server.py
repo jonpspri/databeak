@@ -45,14 +45,6 @@ class ColumnMapping(BaseModel):
     new_name: str = Field(description="New column name")
 
 
-class ColumnFormula(BaseModel):
-    """Formula specification for computed columns."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    expression: str = Field(description="Python expression for computing values")
-    columns: list[str] = Field(default_factory=list, description="Columns referenced in expression")
-
 
 # Base class for update operations
 class UpdateOperation(BaseModel):

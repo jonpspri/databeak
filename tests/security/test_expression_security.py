@@ -15,11 +15,7 @@ import pandas as pd
 import pytest
 
 from src.databeak.exceptions import InvalidParameterError
-from src.databeak.models.expression_models import (
-    ApplyExpression,
-    ColumnFormula,
-    SecureExpression,
-)
+from src.databeak.models.expression_models import SecureExpression
 from src.databeak.utils.secure_evaluator import (
     SecureExpressionEvaluator,
     validate_expression_safety,
@@ -152,8 +148,8 @@ class TestExpressionSecurity:
             SecureExpression(expression="__import__('os').system('bad')")
 
     def test_apply_expression_model(self):
-        """Test ApplyExpression model functionality."""
-        apply_expr = ApplyExpression(expression=SecureExpression(expression="x * 2"))
+        """Test apply operation with unified SecureExpression."""
+        apply_expr = SecureExpression.apply_operation("x * 2")
 
         # Test column substitution
         substituted = apply_expr.get_expression_with_column("my_column")
@@ -293,21 +289,37 @@ class TestExpressionSecurity:
             assert func not in supported, f"Dangerous function {func} should not be supported"
 
 
-class TestColumnFormula:
-    """Test ColumnFormula model functionality."""
+class TestUnifiedExpression:
+    """Test unified SecureExpression functionality."""
 
-    def test_valid_formula_creation(self):
-        """Test creating valid ColumnFormula instances."""
-        formula = ColumnFormula(
-            formula=SecureExpression(expression="col1 + col2"), description="Sum of two columns"
-        )
+    def test_formula_creation(self):
+        """Test creating formulas with unified SecureExpression."""
+        formula = SecureExpression.formula("col1 + col2", "Sum of two columns")
         assert str(formula) == "col1 + col2"
         assert formula.description == "Sum of two columns"
 
-    def test_invalid_formula_blocked(self):
-        """Test that invalid formulas are blocked."""
+    def test_apply_operation_creation(self):
+        """Test creating apply operations with unified SecureExpression."""
+        apply_expr = SecureExpression.apply_operation("x * 2 + 1")
+        assert str(apply_expr) == "x * 2 + 1"
+        assert apply_expr.variable_name == "x"
+
+    def test_condition_creation(self):
+        """Test creating conditional expressions with unified SecureExpression."""
+        condition = SecureExpression.condition("col1 > 0", "Positive values")
+        assert str(condition) == "col1 > 0"
+        assert condition.description == "Positive values"
+
+    def test_invalid_expressions_blocked(self):
+        """Test that invalid expressions are blocked in all creation methods."""
         with pytest.raises(ValueError):
-            ColumnFormula(formula=SecureExpression(expression="exec('bad')"))
+            SecureExpression.formula("exec('bad')")
+
+        with pytest.raises(ValueError):
+            SecureExpression.apply_operation("exec('bad')")
+
+        with pytest.raises(ValueError):
+            SecureExpression.condition("exec('bad')")
 
 
 if __name__ == "__main__":

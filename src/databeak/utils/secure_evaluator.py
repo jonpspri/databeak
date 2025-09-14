@@ -269,7 +269,6 @@ class SecureExpressionEvaluator:
             InvalidParameterError: If the node contains unsafe operations
         """
         allowed_node_types = (
-            # Values (ast.Num, ast.Str, ast.NameConstant deprecated in favor of ast.Constant)
             ast.Constant,
             # Variables and names
             ast.Name,
