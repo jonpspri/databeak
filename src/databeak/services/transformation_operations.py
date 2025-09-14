@@ -32,6 +32,7 @@ from ..models.tool_responses import (
     UpdateRowResult,
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict
+from ..utils.secure_evaluator import _get_secure_evaluator
 from ..utils.validators import convert_pandas_na_list
 
 # Type aliases for better type safety (non-conflicting)
@@ -315,9 +316,11 @@ async def add_column(
             raise ToolError(f"Column '{name}' already exists")
 
         if formula:
-            # Evaluate formula in the context of the dataframe
+            # Evaluate formula using secure expression evaluator
             try:
-                session.df[name] = df.eval(formula)
+                evaluator = _get_secure_evaluator()
+                result = evaluator.evaluate_simple_formula(formula, df)
+                session.df[name] = result
             except Exception as e:
                 raise ToolError(f"Formula evaluation failed: {e}") from e
         elif isinstance(value, list):

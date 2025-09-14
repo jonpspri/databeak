@@ -20,10 +20,13 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType
+from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
+from ..utils.secure_evaluator import _get_secure_evaluator
 from .server_utils import get_session_data
 
 logger = logging.getLogger(__name__)
+
 
 # Type aliases
 CellValue = str | int | float | bool | None
@@ -40,15 +43,6 @@ class ColumnMapping(BaseModel):
 
     old_name: str = Field(description="Current column name")
     new_name: str = Field(description="New column name")
-
-
-class ColumnFormula(BaseModel):
-    """Formula specification for computed columns."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    expression: str = Field(description="Python expression for computing values")
-    columns: list[str] = Field(default_factory=list, description="Columns referenced in expression")
 
 
 # Base class for update operations
@@ -266,8 +260,10 @@ async def add_column(
         Field(description="Single value for all rows or list of values (one per row)"),
     ] = None,
     formula: Annotated[
-        str | None,
-        Field(description="Python expression to compute column values (e.g., 'col1 + col2')"),
+        SecureExpression | str | None,
+        Field(
+            description="Safe mathematical expression to compute column values (e.g., 'col1 + col2')"
+        ),
     ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
@@ -304,8 +300,14 @@ async def add_column(
 
         if formula:
             try:
-                # Use pandas eval to safely evaluate formula
-                df[name] = df.eval(formula)
+                # Convert string to SecureExpression if needed
+                if isinstance(formula, str):
+                    formula = SecureExpression(expression=formula)
+
+                # Use secure evaluator instead of pandas.eval
+                evaluator = _get_secure_evaluator()
+                result = evaluator.evaluate_simple_formula(formula.expression, df)
+                df[name] = result
             except Exception as e:
                 raise InvalidParameterError("formula", formula, f"Invalid formula: {e}") from e
         elif isinstance(value, list):
@@ -619,12 +621,14 @@ async def update_column(
                             "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                         )
                 else:
-                    # Use pandas.eval for mathematical expressions
+                    # Use secure evaluator for mathematical expressions
                     try:
-                        # Replace 'x' with the column reference for pandas.eval
-                        safe_expr = expr.replace("x", f"`{column}`")
-                        # pandas.eval is safe - it only allows mathematical operations
-                        df[column] = df.eval(safe_expr, engine="python")
+                        # Create column context mapping for 'x' variable
+                        column_context = {"x": column}
+                        # Use secure evaluator instead of pandas.eval
+                        evaluator = _get_secure_evaluator()
+                        result = evaluator.evaluate_column_expression(expr, df, column_context)
+                        df[column] = result
                     except Exception as e:
                         raise InvalidParameterError(
                             "expression",
@@ -679,12 +683,16 @@ async def update_column(
                                         "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                                     )
                             else:
-                                # Use pandas.eval for mathematical expressions
+                                # Use secure evaluator for mathematical expressions
                                 try:
-                                    # Replace 'x' with the column reference for pandas.eval
-                                    safe_expr = expr.replace("x", f"`{column}`")
-                                    # pandas.eval is safe - it only allows mathematical operations
-                                    df[column] = df.eval(safe_expr, engine="python")
+                                    # Create column context mapping for 'x' variable
+                                    column_context = {"x": column}
+                                    # Use secure evaluator instead of pandas.eval
+                                    evaluator = _get_secure_evaluator()
+                                    result = evaluator.evaluate_column_expression(
+                                        expr, df, column_context
+                                    )
+                                    df[column] = result
                                 except Exception as e:
                                     raise InvalidParameterError(
                                         "expression",
@@ -761,12 +769,16 @@ async def update_column(
                                         "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                                     )
                             else:
-                                # Use pandas.eval for mathematical expressions
+                                # Use secure evaluator for mathematical expressions
                                 try:
-                                    # Replace 'x' with the column reference for pandas.eval
-                                    safe_expr = expr.replace("x", f"`{column}`")
-                                    # pandas.eval is safe - it only allows mathematical operations
-                                    df[column] = df.eval(safe_expr, engine="python")
+                                    # Create column context mapping for 'x' variable
+                                    column_context = {"x": column}
+                                    # Use secure evaluator instead of pandas.eval
+                                    evaluator = _get_secure_evaluator()
+                                    result = evaluator.evaluate_column_expression(
+                                        expr, df, column_context
+                                    )
+                                    df[column] = result
                                 except Exception as e:
                                     raise InvalidParameterError(
                                         "value",
