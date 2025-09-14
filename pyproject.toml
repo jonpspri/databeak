@@ -196,12 +196,13 @@ ignore = [
     "E501",  # line too long (handled by ruff format)
     "B008",  # do not perform function calls in argument defaults
     "B905",  # `zip()` without an explicit `strict=` parameter
+    "S101",  # assert usage (used for type safety guards)
     "SIM105", # contextlib.suppress is slower
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "S101", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, assert, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
+"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
 
 [tool.ruff.lint.isort]
