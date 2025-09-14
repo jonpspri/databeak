@@ -18,6 +18,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models.csv_session import get_session_manager
+from ..utils.secure_evaluator import SecureExpressionEvaluator
 from ..models.data_models import OperationType
 from ..models.tool_responses import (
     CellValueResult,
@@ -42,6 +43,9 @@ RowData = dict[str, CellValue] | list[CellValue]
 # To avoid conflicts with tool response models, use them as dict types in function signatures
 
 logger = logging.getLogger(__name__)
+
+# Global secure expression evaluator instance
+_secure_evaluator = SecureExpressionEvaluator()
 
 
 # Implementation: Session validation and DataFrame retrieval with error handling
@@ -315,9 +319,10 @@ async def add_column(
             raise ToolError(f"Column '{name}' already exists")
 
         if formula:
-            # Evaluate formula in the context of the dataframe
+            # Evaluate formula using secure expression evaluator
             try:
-                session.df[name] = df.eval(formula)
+                result = _secure_evaluator.evaluate_simple_formula(formula, df)
+                session.df[name] = result
             except Exception as e:
                 raise ToolError(f"Formula evaluation failed: {e}") from e
         elif isinstance(value, list):
