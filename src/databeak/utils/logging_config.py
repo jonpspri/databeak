@@ -104,28 +104,28 @@ class CorrelatedLogger:
         """Initialize correlated logger."""
         self.logger = logging.getLogger(name)
 
-    def _log_with_context(self, level: int, msg: str, **kwargs: Any) -> None:
+    def _log_with_context(self, level: int, msg: str, **kwargs: Any) -> None:  # Any justified: arbitrary logging context
         """Log message with additional context."""
         extra = {"correlation_id": get_correlation_id(), **kwargs}
         self.logger.log(level, msg, extra=extra)
 
-    def debug(self, msg: str, **kwargs: Any) -> None:
+    def debug(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
         """Log debug message with context."""
         self._log_with_context(logging.DEBUG, msg, **kwargs)
 
-    def info(self, msg: str, **kwargs: Any) -> None:
+    def info(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
         """Log info message with context."""
         self._log_with_context(logging.INFO, msg, **kwargs)
 
-    def warning(self, msg: str, **kwargs: Any) -> None:
+    def warning(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
         """Log warning message with context."""
         self._log_with_context(logging.WARNING, msg, **kwargs)
 
-    def error(self, msg: str, **kwargs: Any) -> None:
+    def error(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
         """Log error message with context."""
         self._log_with_context(logging.ERROR, msg, **kwargs)
 
-    def critical(self, msg: str, **kwargs: Any) -> None:
+    def critical(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
         """Log critical message with context."""
         self._log_with_context(logging.CRITICAL, msg, **kwargs)
 

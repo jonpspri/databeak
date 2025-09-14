@@ -63,7 +63,7 @@ def get_data_summary(session_id: str) -> InternalDataSummary:
         session_id=session_id,
         shape=df.shape,
         columns=df.columns.tolist(),
-        dtypes={col: str(dtype) for col, dtype in df.dtypes.items()},
+        dtypes={str(col): str(dtype) for col, dtype in df.dtypes.items()},
         memory_usage_mb=round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
         null_counts=df.isnull().sum().to_dict(),
         preview=create_data_preview_with_indices(df, 10),
