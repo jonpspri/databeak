@@ -475,6 +475,23 @@ class SessionManager:
         session.update_access_time()
         return session
 
+    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
+        """Get existing session or create new one (backward compatibility).
+
+        Args:
+            session_id: Session ID (if None, generates one)
+
+        Returns:
+            CSVSession
+        """
+        if session_id:
+            return self.get_session(session_id)
+        else:
+            # Generate a new session ID for backward compatibility
+            import uuid
+            new_session_id = str(uuid.uuid4())
+            return self.create_session(new_session_id)
+
     async def remove_session(self, session_id: str) -> bool:
         """Remove a session."""
         if session_id in self.sessions:
