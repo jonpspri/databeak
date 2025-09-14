@@ -203,6 +203,10 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
+"src/databeak/servers/column_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/servers/column_text_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/servers/row_operations_server.py" = ["S101"]  # Type safety assertions
+"src/databeak/services/transformation_operations.py" = ["S101"]  # Type safety assertions
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]
