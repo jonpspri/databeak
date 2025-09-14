@@ -22,8 +22,8 @@ class DataSession:
     def __init__(self, session_id: str):
         """Initialize data session."""
         self.session_id = session_id
-        self.df = pd.DataFrame()
-        self.original_df = pd.DataFrame()
+        self.df: pd.DataFrame | None = None
+        self.original_df: pd.DataFrame | None = None
         self.file_path: str | None = None
         self.metadata: dict[str, Any] = {}  # type: ignore[explicit-any]  # Any justified: flexible session metadata
         self.created_at = datetime.now(timezone.utc)
@@ -88,6 +88,7 @@ class DataSession:
         """Get basic statistics about the data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
+        assert self.df is not None  # Type guard: validated above
 
         return {
             "row_count": len(self.df),

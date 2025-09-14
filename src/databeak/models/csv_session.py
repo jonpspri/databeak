@@ -103,7 +103,7 @@ class CSVSession:
         return self.lifecycle.is_expired()
 
     @property
-    def df(self) -> pd.DataFrame:
+    def df(self) -> pd.DataFrame | None:
         """Get or set the DataFrame."""
         return self._data_session.df
 
@@ -116,7 +116,7 @@ class CSVSession:
     @df.deleter
     def df(self) -> None:
         """Clear the DataFrame."""
-        self._data_session.df = pd.DataFrame()
+        self._data_session.df = None
         self.update_access_time()
 
     def has_data(self) -> bool:
