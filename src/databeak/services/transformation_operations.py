@@ -34,6 +34,7 @@ from ..models.tool_responses import (
 from ..utils.pydantic_validators import parse_json_string_to_dict
 from ..utils.secure_evaluator import _get_secure_evaluator
 from ..utils.validators import convert_pandas_na_list
+from ..models.typed_dicts import ColumnSelectionResult, ColumnRenameResult
 
 # Type aliases for better type safety (non-conflicting)
 CellValue = str | int | float | bool | None
@@ -209,7 +210,7 @@ async def select_columns(
     session_id: str,
     columns: list[str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnSelectionResult:
     """Select specific columns from the dataframe.
 
     Args:
@@ -241,12 +242,12 @@ async def select_columns(
             },
         )
 
-        return {
-            "session_id": session_id,
-            "selected_columns": columns,
-            "columns_before": columns_before,
-            "columns_after": len(columns),
-        }
+        return ColumnSelectionResult(
+            session_id=session_id,
+            selected_columns=columns,
+            columns_before=columns_before,
+            columns_after=len(columns),
+        )
 
     except Exception as e:
         logger.error(f"Error selecting columns: {e!s}")
@@ -257,7 +258,7 @@ async def rename_columns(
     session_id: str,
     mapping: dict[str, str],
     ctx: Context | None = None,  # noqa: ARG001
-) -> dict[str, Any]:
+) -> ColumnRenameResult:
     """Rename columns in the dataframe.
 
     Args:
@@ -279,11 +280,11 @@ async def rename_columns(
         session.df = df.rename(columns=mapping)
         session.record_operation(OperationType.RENAME, {"mapping": mapping})
 
-        return {
-            "session_id": session_id,
-            "renamed": mapping,
-            "columns": session.df.columns.tolist(),
-        }
+        return ColumnRenameResult(
+            session_id=session_id,
+            renamed=mapping,
+            columns=session.df.columns.tolist(),
+        )
 
     except Exception as e:
         logger.error(f"Error renaming columns: {e!s}")
@@ -1548,7 +1549,7 @@ async def update_row(
             raise ToolError(f"Columns not found: {invalid_cols}")
 
         # Get old values for tracking
-        old_values: dict[str, Any] = {}
+        old_values: dict[str, CellValue] = {}
         for col in data:
             old_val = df.iloc[row_index][col]
             if pd.isna(old_val):
@@ -1563,7 +1564,7 @@ async def update_row(
             session.df.iloc[row_index, session.df.columns.get_loc(column)] = value
 
         # Get new values for tracking
-        new_values: dict[str, Any] = {}
+        new_values: dict[str, CellValue] = {}
         for col in data:
             new_val = session.df.iloc[row_index][col]
             if pd.isna(new_val):

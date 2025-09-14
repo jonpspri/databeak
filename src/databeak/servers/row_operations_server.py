@@ -498,7 +498,7 @@ def insert_row(
         session.df = df_new
 
         # Prepare inserted data for response (handle pandas types)
-        data_inserted: dict[str, Any] = {}
+        data_inserted: dict[str, CellValue] = {}
         for key, value in row_data.items():
             if pd.isna(value):
                 data_inserted[key] = None

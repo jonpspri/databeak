@@ -8,10 +8,11 @@ import pandas as pd
 
 from ..exceptions import InvalidRowIndexError, NoDataLoadedError, SessionNotFoundError
 from ..models import get_session_manager
+from ..models.typed_dicts import DataPreviewResult, InternalDataSummary, CellValue
 
 
 # Implementation: Convert DataFrame to structured preview with row indices and type handling
-def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dict[str, Any]:
+def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> DataPreviewResult:
     """Create data preview with row indices and metadata."""
     preview_df = df.head(num_rows)
 
@@ -21,7 +22,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
         # Handle pandas index types safely
         row_index_val = row_idx if isinstance(row_idx, int) else 0
         # Convert all keys to strings and handle pandas/numpy types
-        record: dict[str, Any] = {"__row_index__": row_index_val}  # Include original row index
+        record: dict[str, CellValue] = {"__row_index__": row_index_val}  # Include original row index
         row_dict = row.to_dict()
         for key, value in row_dict.items():
             str_key = str(key)
@@ -36,17 +37,17 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> dic
 
         preview_records.append(record)
 
-    return {
-        "records": preview_records,
-        "total_rows": len(df),
-        "total_columns": len(df.columns),
-        "columns": df.columns.tolist(),
-        "preview_rows": len(preview_records),
-    }
+    return DataPreviewResult(
+        records=preview_records,
+        total_rows=len(df),
+        total_columns=len(df.columns),
+        columns=df.columns.tolist(),
+        preview_rows=len(preview_records)
+    )
 
 
 # Implementation: Comprehensive data analysis including shape, types, memory usage, nulls
-def get_data_summary(session_id: str) -> dict[str, Any]:
+def get_data_summary(session_id: str) -> InternalDataSummary:
     """Get comprehensive data summary for session."""
     session_manager = get_session_manager()
     session = session_manager.get_session(session_id)
@@ -58,15 +59,15 @@ def get_data_summary(session_id: str) -> dict[str, Any]:
 
     df = session.df
 
-    return {
-        "session_id": session_id,
-        "shape": df.shape,
-        "columns": df.columns.tolist(),
-        "dtypes": {col: str(dtype) for col, dtype in df.dtypes.items()},
-        "memory_usage_mb": round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
-        "null_counts": df.isnull().sum().to_dict(),
-        "preview": create_data_preview_with_indices(df, 10),
-    }
+    return InternalDataSummary(
+        session_id=session_id,
+        shape=df.shape,
+        columns=df.columns.tolist(),
+        dtypes={col: str(dtype) for col, dtype in df.dtypes.items()},
+        memory_usage_mb=round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
+        null_counts=df.isnull().sum().to_dict(),
+        preview=create_data_preview_with_indices(df, 10),
+    )
 
 
 # Implementation: Boundary check for DataFrame row access

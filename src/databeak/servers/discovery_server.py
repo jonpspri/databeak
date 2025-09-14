@@ -25,6 +25,7 @@ from ..exceptions import (
 
 # Import session management and data models from the main package
 from ..models import OperationType, get_session_manager
+from ..models.csv_session import CSVSession
 from ..models.tool_responses import (
     BaseToolResponse,
     CellLocation,
@@ -94,7 +95,7 @@ class ProfileInfo(BaseModel):
     null_percentage: float = Field(description="Percentage of null values (0-100)")
     unique_count: int = Field(description="Number of unique values")
     unique_percentage: float = Field(description="Percentage of unique values (0-100)")
-    most_frequent: Any = Field(None, description="Most frequently occurring value")
+    most_frequent: CsvCellValue = Field(None, description="Most frequently occurring value")
     frequency: int | None = Field(None, description="Frequency count of most common value")
 
 
@@ -162,7 +163,7 @@ class FindCellsResult(BaseToolResponse):
     """Response model for cell value search operations."""
 
     session_id: str
-    search_value: Any
+    search_value: CsvCellValue
     matches_found: int
     coordinates: list[CellLocation]
     search_column: str | None = None
@@ -183,7 +184,7 @@ class InspectDataResult(BaseToolResponse):
 # ============================================================================
 
 
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame, raising appropriate exceptions if not found."""
     manager = get_session_manager()
     session = manager.get_session(session_id)

@@ -79,7 +79,7 @@ class FillNaOperation(UpdateOperation):
     """Fill NA operation specification."""
 
     type: Literal["fillna"] = "fillna"
-    value: Any = Field(description="Value to fill NaN/null with")
+    value: CellValue = Field(description="Value to fill NaN/null with")
 
 
 # Discriminated union for update operations
@@ -95,7 +95,7 @@ class UpdateColumnRequest(BaseModel):
     operation: Literal["replace", "map", "apply", "fillna"] = Field(
         description="Type of update operation"
     )
-    value: Any | None = Field(
+    value: Any | None = Field(  # Any justified: operation-dependent type (CellValue|dict|str)
         None, description="Value for the operation (depends on operation type)"
     )
     pattern: str | None = Field(None, description="Pattern for replace operation")

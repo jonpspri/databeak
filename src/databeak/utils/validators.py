@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
+from ..models.typed_dicts import CellValue
+
 
 # Implementation: File path security validation with existence checking and extension filtering
 def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, str]:
@@ -250,7 +252,7 @@ def sanitize_filename(filename: str) -> str:
 
 
 # Implementation: Pandas NA to None conversion for Pydantic compatibility
-def convert_pandas_na_to_none(value: Any) -> Any:
+def convert_pandas_na_to_none(value: Any) -> CellValue:  # Any input: pandas can contain any type
     """Convert pandas NA values to Python None for serialization."""
     import pandas as pd
 
@@ -261,6 +263,6 @@ def convert_pandas_na_to_none(value: Any) -> Any:
 
 
 # Implementation: List processing for pandas NA to None conversion
-def convert_pandas_na_list(values: list[Any]) -> list[Any]:
+def convert_pandas_na_list(values: list[Any]) -> list[CellValue]:  # Any input: pandas can contain any type
     """Convert list of pandas NA values to Python None."""
     return [convert_pandas_na_to_none(val) for val in values]

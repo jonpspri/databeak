@@ -24,6 +24,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType, get_session_manager
+from ..models.csv_session import CSVSession
 
 # Import response models - needed at runtime for FastMCP
 from ..models.statistics_models import (
@@ -40,7 +41,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame, raising appropriate exceptions if not found."""
     manager = get_session_manager()
     session = manager.get_session(session_id)
