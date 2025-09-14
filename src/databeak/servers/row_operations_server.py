@@ -139,7 +139,11 @@ def get_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -214,7 +218,11 @@ def set_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -296,7 +304,11 @@ def get_row_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -366,7 +378,11 @@ def get_column_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate column exists
         if column not in df.columns:
@@ -451,7 +467,11 @@ def insert_row(
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
         rows_before = len(df)
 
         # Handle special case: append at end
@@ -548,7 +568,11 @@ def delete_row(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
         rows_before = len(df)
 
         # Validate row index
@@ -625,7 +649,11 @@ def update_row(
             raise ToolError("Update data must be a dictionary or JSON string")
 
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        session = get_session_data(session_id)
+        if not session.has_data():
+            raise ToolError("No data loaded in session")
+        df = session.df
+        assert df is not None  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
