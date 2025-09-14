@@ -20,10 +20,11 @@ import ast
 import math
 import operator
 import re
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from simpleeval import NameNotDefined, SimpleEval
+from simpleeval import NameNotDefined, SimpleEval  # type: ignore[import-not-found,import-untyped]
 
 from ..exceptions import InvalidParameterError
 
@@ -36,7 +37,7 @@ class SecureExpressionEvaluator:
     """
 
     # Safe binary operators
-    SAFE_OPERATORS = {
+    SAFE_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
@@ -52,7 +53,7 @@ class SecureExpressionEvaluator:
     }
 
     # Safe unary operators
-    SAFE_UNARY_OPERATORS = {
+    SAFE_UNARY_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.UAdd: operator.pos,
         ast.USub: operator.neg,
         ast.Not: operator.not_,
@@ -60,7 +61,7 @@ class SecureExpressionEvaluator:
     }
 
     # Safe comparison operators
-    SAFE_COMPARISONS = {
+    SAFE_COMPARISONS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.Eq: operator.eq,
         ast.NotEq: operator.ne,
         ast.Lt: operator.lt,
@@ -74,21 +75,21 @@ class SecureExpressionEvaluator:
     }
 
     @staticmethod
-    def _safe_max(*args):
+    def _safe_max(*args: Any) -> Any:
         """Element-wise maximum that works with pandas Series."""
         if len(args) == 1:
             return np.max(args[0])
         return np.maximum(*args)
 
     @staticmethod
-    def _safe_min(*args):
+    def _safe_min(*args: Any) -> Any:
         """Element-wise minimum that works with pandas Series."""
         if len(args) == 1:
             return np.min(args[0])
         return np.minimum(*args)
 
     # Safe numpy functions (prefixed with np.)
-    SAFE_NUMPY_FUNCTIONS = {
+    SAFE_NUMPY_FUNCTIONS: ClassVar[dict[str, Any]] = {
         "np.sqrt": np.sqrt,
         "np.exp": np.exp,
         "np.log": np.log,
@@ -117,7 +118,7 @@ class SecureExpressionEvaluator:
     }
 
     # Dangerous patterns to explicitly block
-    DANGEROUS_PATTERNS = [
+    DANGEROUS_PATTERNS: ClassVar[list[str]] = [
         r"__.*__",  # Dunder methods
         r"exec\s*\(",  # exec function
         r"eval\s*\(",  # eval function
@@ -424,7 +425,7 @@ class SecureExpressionEvaluator:
                     # Scalar result - broadcast to all rows
                     result = pd.Series([result] * len(dataframe), index=dataframe.index)
 
-            return result
+            return result  # type: ignore[no-any-return]
 
         except NameNotDefined as e:
             raise InvalidParameterError(

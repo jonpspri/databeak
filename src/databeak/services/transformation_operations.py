@@ -18,7 +18,6 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models.csv_session import get_session_manager
-from ..utils.secure_evaluator import _get_secure_evaluator
 from ..models.data_models import OperationType
 from ..models.tool_responses import (
     CellValueResult,
@@ -33,6 +32,7 @@ from ..models.tool_responses import (
     UpdateRowResult,
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict
+from ..utils.secure_evaluator import _get_secure_evaluator
 from ..utils.validators import convert_pandas_na_list
 
 # Type aliases for better type safety (non-conflicting)
@@ -43,7 +43,6 @@ RowData = dict[str, CellValue] | list[CellValue]
 # To avoid conflicts with tool response models, use them as dict types in function signatures
 
 logger = logging.getLogger(__name__)
-
 
 
 # Implementation: Session validation and DataFrame retrieval with error handling

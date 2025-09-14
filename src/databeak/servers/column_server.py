@@ -45,7 +45,6 @@ class ColumnMapping(BaseModel):
     new_name: str = Field(description="New column name")
 
 
-
 # Base class for update operations
 class UpdateOperation(BaseModel):
     """Base class for update operations."""
@@ -262,7 +261,9 @@ async def add_column(
     ] = None,
     formula: Annotated[
         SecureExpression | str | None,
-        Field(description="Safe mathematical expression to compute column values (e.g., 'col1 + col2')"),
+        Field(
+            description="Safe mathematical expression to compute column values (e.g., 'col1 + col2')"
+        ),
     ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
@@ -626,9 +627,7 @@ async def update_column(
                         column_context = {"x": column}
                         # Use secure evaluator instead of pandas.eval
                         evaluator = _get_secure_evaluator()
-                        result = evaluator.evaluate_column_expression(
-                            expr, df, column_context
-                        )
+                        result = evaluator.evaluate_column_expression(expr, df, column_context)
                         df[column] = result
                     except Exception as e:
                         raise InvalidParameterError(

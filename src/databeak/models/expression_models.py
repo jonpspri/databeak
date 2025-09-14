@@ -10,8 +10,6 @@ Issue: #46 - Address pandas.eval() code injection vulnerability
 
 from __future__ import annotations
 
-from typing import Any
-
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..utils.secure_evaluator import validate_expression_safety
@@ -57,12 +55,12 @@ class SecureExpression(BaseModel):
     description: str | None = Field(
         default=None,
         description="Optional description of what the expression computes",
-        max_length=200
+        max_length=200,
     )
     variable_name: str = Field(
         default="x",
         description="Variable name used in expression for apply operations",
-        pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$"  # Valid Python identifier
+        pattern=r"^[a-zA-Z_][a-zA-Z0-9_]*$",  # Valid Python identifier
     )
 
     @field_validator("expression")
@@ -123,7 +121,7 @@ class SecureExpression(BaseModel):
 
     # Convenience class methods for common use cases
     @classmethod
-    def formula(cls, expression: str, description: str | None = None) -> "SecureExpression":
+    def formula(cls, expression: str, description: str | None = None) -> SecureExpression:
         """Create expression for column formulas.
 
         Args:
@@ -139,7 +137,7 @@ class SecureExpression(BaseModel):
         return cls(expression=expression, description=description)
 
     @classmethod
-    def apply_operation(cls, expression: str, variable: str = "x") -> "SecureExpression":
+    def apply_operation(cls, expression: str, variable: str = "x") -> SecureExpression:
         """Create expression for apply operations.
 
         Args:
@@ -155,7 +153,7 @@ class SecureExpression(BaseModel):
         return cls(expression=expression, variable_name=variable)
 
     @classmethod
-    def condition(cls, expression: str, description: str | None = None) -> "SecureExpression":
+    def condition(cls, expression: str, description: str | None = None) -> SecureExpression:
         """Create expression for conditional operations.
 
         Args:
@@ -168,10 +166,7 @@ class SecureExpression(BaseModel):
         Example:
             SecureExpression.condition("col1 > 0", "Positive values")
         """
-        return cls(
-            expression=expression,
-            description=description or "Conditional expression"
-        )
+        return cls(expression=expression, description=description or "Conditional expression")
 
 
 # For backward compatibility - these will be deprecated

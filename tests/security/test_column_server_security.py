@@ -8,10 +8,8 @@ Issue: #46 - Verify pandas.eval() vulnerability is fixed
 """
 
 import pytest
-import pandas as pd
 
 from src.databeak.exceptions import InvalidParameterError
-from src.databeak.servers.column_server import add_column, update_column
 from src.databeak.models.expression_models import SecureExpression
 from src.databeak.utils.secure_evaluator import validate_expression_safety
 
@@ -77,8 +75,8 @@ class TestColumnServerSecurity:
     def test_vulnerability_fixed_confirmation(self):
         """Test that specific vulnerability patterns are blocked.
 
-        This test confirms that the exact attack patterns that would have
-        worked with pandas.eval() are now completely blocked.
+        This test confirms that the exact attack patterns that would have worked with pandas.eval()
+        are now completely blocked.
         """
         # These are real attack patterns that would have worked with pandas.eval
         real_attack_vectors = [
