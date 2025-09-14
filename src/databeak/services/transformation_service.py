@@ -15,6 +15,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType, get_session_manager
+from ..models.csv_session import CSVSession
 from ..models.tool_responses import BaseToolResponse
 
 logger = logging.getLogger(__name__)
@@ -110,7 +111,7 @@ class StringOperationResult(BaseToolResponse):
 
 
 # Implementation: Session retrieval with validation and error handling
-def _get_session_data(session_id: str) -> tuple[Any, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame with validation."""
     manager = get_session_manager()
     session = manager.get_session(session_id)
@@ -140,6 +141,7 @@ async def filter_rows_with_pydantic(
     """Filter DataFrame rows with multiple conditions."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
         rows_before = len(df)
 
         # Initialize mask based on mode
@@ -236,6 +238,7 @@ async def sort_data_with_pydantic(
     """Sort DataFrame by one or more columns."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Parse columns parameter - handle both string lists and dict lists
         if columns and isinstance(columns[0], dict):
@@ -291,6 +294,7 @@ async def remove_duplicates_with_pydantic(
     """Remove duplicate rows from DataFrame."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
         rows_before = len(df)
 
         if subset:
@@ -344,6 +348,7 @@ async def fill_missing_values_with_pydantic(
     """Fill or remove missing values in columns."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         # Determine target columns
         if columns:
@@ -424,6 +429,7 @@ async def transform_column_case_with_pydantic(
     """Transform text case in column."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")
@@ -476,6 +482,7 @@ async def strip_column_with_pydantic(
     """Strip whitespace from column values."""
     try:
         session, df = _get_session_data(session_id)
+        assert session.df is not None  # Guaranteed by _get_session_data validation
 
         if column not in df.columns:
             raise ToolError(f"Column '{column}' not found")

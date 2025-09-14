@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 import pandas as pd
 
 from ..exceptions import InvalidRowIndexError, NoDataLoadedError, SessionNotFoundError
 from ..models import get_session_manager
-from ..models.typed_dicts import DataPreviewResult, InternalDataSummary, CellValue
+from ..models.typed_dicts import CellValue, DataPreviewResult, InternalDataSummary
 
 
 # Implementation: Convert DataFrame to structured preview with row indices and type handling

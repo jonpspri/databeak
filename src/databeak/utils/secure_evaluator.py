@@ -24,7 +24,7 @@ from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
-from simpleeval import NameNotDefined, SimpleEval  # type: ignore[import-untyped]
+from simpleeval import NameNotDefined, SimpleEval
 
 from ..exceptions import InvalidParameterError
 
