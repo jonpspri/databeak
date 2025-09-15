@@ -201,11 +201,7 @@ class DataSchema(BaseModel):
                 if invalid.any():
                     errors.append(f"Column {col_schema.name} contains invalid values")
 
-        return ValidationResult(
-            valid=len(errors) == 0,
-            errors=errors,
-            warnings=warnings
-        )
+        return ValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 class DataQualityRule(BaseModel):

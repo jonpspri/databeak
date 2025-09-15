@@ -24,7 +24,6 @@ class SessionManagerProtocol(Protocol):
         """Get or create a session by ID."""
         ...
 
-
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
         ...
@@ -144,10 +143,10 @@ class MockSessionManager:
         if not session:
             # Create new session like the real implementation
             from .csv_session import CSVSession
+
             session = CSVSession(session_id=session_id)
             self.sessions[session_id] = session
         return session
-
 
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""

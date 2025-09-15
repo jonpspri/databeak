@@ -489,6 +489,7 @@ class SessionManager:
         else:
             # Generate a new session ID for backward compatibility
             import uuid
+
             new_session_id = str(uuid.uuid4())
             return self.create_session(new_session_id)
 

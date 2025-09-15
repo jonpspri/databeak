@@ -676,7 +676,7 @@ class TestSessionManagement:
     async def test_close_session_nonexistent(self):
         """Test closing non-existent session."""
         with pytest.raises(ToolError, match="Session not found"):
-            await close_session(create_mock_context())
+            await close_session(create_mock_context("nonexistent-session-id"))
 
 
 @pytest.mark.asyncio
