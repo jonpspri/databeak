@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class SessionManagerProtocol(Protocol):
     """Protocol defining the session manager interface."""
 
-    def get_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> CSVSession:
         """Get or create a session by ID."""
         ...
 
@@ -60,7 +60,7 @@ class SessionService(ABC):
         Raises:
             ValueError: If session not found or no data loaded
         """
-        session = self.session_manager.get_session(session_id)
+        session = self.session_manager.get_or_create_session(session_id)
 
         if not session:
             raise ValueError(f"Session not found: {session_id}")
@@ -137,7 +137,7 @@ class MockSessionManager:
         self.sessions: dict[str, CSVSession] = {}
         self.next_id = 1
 
-    def get_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> CSVSession:
         """Get or create a session by ID."""
         session = self.sessions.get(session_id)
         if not session:
@@ -179,5 +179,5 @@ class MockSessionManager:
 
     def add_test_data(self, session_id: str, df: pd.DataFrame) -> None:
         """Add test data to a session (for testing purposes)."""
-        session = self.get_session(session_id)
+        session = self.get_or_create_session(session_id)
         session.load_data(df, None)

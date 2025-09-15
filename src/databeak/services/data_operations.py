@@ -50,7 +50,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> Dat
 def get_data_summary(session_id: str) -> InternalDataSummary:
     """Get comprehensive data summary for session."""
     session_manager = get_session_manager()
-    session = session_manager.get_session(session_id)
+    session = session_manager.get_or_create_session(session_id)
 
     if not session:
         raise SessionNotFoundError(session_id)

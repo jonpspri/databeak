@@ -8,6 +8,7 @@ This example shows how CSV Editor handles the exact scenario that was failing be
 """
 
 import asyncio
+import uuid
 
 import pandas as pd
 
@@ -25,10 +26,9 @@ async def main() -> None:
     print("=" * 65)
 
     # Create a session with job application tracking data
-    import uuid
     session_manager = get_session_manager()
     session_id = str(uuid.uuid4())
-    session = session_manager.get_session(session_id)
+    session = session_manager.get_or_create_session(session_id)
 
     # Create initial data structure
     initial_data = pd.DataFrame(

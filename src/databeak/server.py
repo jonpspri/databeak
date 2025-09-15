@@ -71,7 +71,7 @@ mcp.mount(column_text_server)
 async def get_csv_data(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get current CSV data from a session with enhanced indexing."""
     session_manager = get_session_manager()
-    session = session_manager.get_session(session_id)
+    session = session_manager.get_or_create_session(session_id)
 
     if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}
@@ -98,7 +98,7 @@ async def get_csv_data(session_id: str) -> dict[str, Any]:  # type: ignore[misc]
 async def get_csv_schema(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get CSV schema information."""
     session_manager = get_session_manager()
-    session = session_manager.get_session(session_id)
+    session = session_manager.get_or_create_session(session_id)
 
     if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}
@@ -161,7 +161,7 @@ async def get_csv_row(session_id: str, row_index: str) -> dict[str, Any]:  # typ
 async def get_csv_preview(session_id: str) -> dict[str, Any]:  # type: ignore[misc]  # Any justified: MCP resource flexible response
     """Get a preview of the CSV data with enhanced indexing and coordinate information."""
     session_manager = get_session_manager()
-    session = session_manager.get_session(session_id)
+    session = session_manager.get_or_create_session(session_id)
 
     if not session or not session.has_data():
         return {"error": "Session not found or no data loaded"}

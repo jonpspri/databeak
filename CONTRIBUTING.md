@@ -91,7 +91,7 @@ and handles everything pip does plus more.
 ```bash
 # All commands use uv
 uv run databeak --help
-uv run -m pytest
+uv run pytest -n auto
 uv run ruff check
 uv run mypy
 ```
@@ -140,18 +140,18 @@ changes:
 
 ```bash
 # Run tests by category
-uv run -m pytest tests/unit/          # Fast unit tests (run frequently)
-uv run -m pytest tests/integration/   # Integration tests
-uv run -m pytest tests/e2e/           # End-to-end tests
-uv run -m pytest                      # All tests
+uv run pytest -n auto tests/unit/          # Fast unit tests (run frequently)
+uv run pytest -n auto tests/integration/   # Integration tests
+uv run pytest -n auto tests/e2e/           # End-to-end tests
+uv run pytest -n auto                      # All tests
 
 # Run with coverage
-uv run -m pytest --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto --cov=src/databeak --cov-report=term-missing
 
 # Run specific tests
-uv run -m pytest tests/unit/servers/  # Test specific module
-uv run -m pytest -k "test_filter"     # Run tests matching pattern
-uv run -m pytest -x                   # Stop on first failure
+uv run pytest -n auto tests/unit/servers/  # Test specific module
+uv run pytest -k "test_filter"             # Run tests matching pattern (single test, no parallel)
+uv run pytest -n auto -x                   # Stop on first failure
 ```
 
 **Testing Requirements:**
@@ -294,13 +294,14 @@ tests/
 1. **Use pytest fixtures**:
 
    ```python
+   import uuid
+   
    @pytest.fixture
    async def session_with_data():
        """Create a session with sample data."""
        manager = get_session_manager()
-       import uuid
        session_id = str(uuid.uuid4())
-       session = manager.get_session(session_id)
+       session = manager.get_or_create_session(session_id)
        # ... setup
        yield session_id
        # ... cleanup
@@ -336,7 +337,7 @@ tests/
 
 - Minimum coverage: 80%
 - New features must have >90% coverage
-- Run coverage: `uv run -m pytest --cov`
+- Run coverage: `uv run pytest -n auto --cov`
 
 ## Documentation
 

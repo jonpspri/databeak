@@ -453,7 +453,7 @@ class SessionManager:
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def get_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> CSVSession:
         """Get a session by ID, creating it if it doesn't exist."""
         session = self.sessions.get(session_id)
         if not session:
@@ -502,7 +502,7 @@ class SessionManager:
 
     def export_session_history(self, session_id: str) -> SessionHistoryExport:
         """Export session history as JSON."""
-        session = self.get_session(session_id)
+        session = self.get_or_create_session(session_id)
 
         return SessionHistoryExport(
             session_id=session.session_id,
@@ -525,10 +525,10 @@ def get_session_manager() -> SessionManager:
     return _session_manager
 
 
-def get_session(session_id: str) -> CSVSession:
+def get_or_create_session(session_id: str) -> CSVSession:
     """Get or create session with elegant interface.
 
-    Provides dictionary-like access: session = get_session(session_id)
+    Provides dictionary-like access: session = get_or_create_session(session_id)
     Returns existing session or creates new empty session.
 
     Args:
@@ -538,7 +538,7 @@ def get_session(session_id: str) -> CSVSession:
         CSVSession (existing or newly created)
     """
     manager = get_session_manager()
-    session = manager.get_session(session_id)
+    session = manager.get_or_create_session(session_id)
 
     if not session:
         # Create new session with the specified ID

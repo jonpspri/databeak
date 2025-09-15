@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame, raising appropriate exceptions if not found."""
     manager = get_session_manager()
-    session = manager.get_session(session_id)
+    session = manager.get_or_create_session(session_id)
 
     if not session:
         raise SessionNotFoundError(session_id)

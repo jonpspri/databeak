@@ -869,7 +869,7 @@ class TestSessionManager:
         """Test get_session creates new session when needed."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         assert session_id is not None
         assert session_id in manager.sessions
@@ -882,8 +882,8 @@ class TestSessionManager:
         # Create max sessions
         session1_id = str(uuid.uuid4())
         session2_id = str(uuid.uuid4())
-        manager.get_session(session1_id)
-        manager.get_session(session2_id)
+        manager.get_or_create_session(session1_id)
+        manager.get_or_create_session(session2_id)
         assert len(manager.sessions) == 2
 
         # Mock the oldest session to have older access time using datetime
@@ -895,7 +895,7 @@ class TestSessionManager:
         with patch.object(oldest_session.lifecycle, "last_accessed", old_time):
             # Create third session - should remove oldest
             session3_id = str(uuid.uuid4())
-            manager.get_session(session3_id)
+            manager.get_or_create_session(session3_id)
 
             assert len(manager.sessions) == 2
             assert session1_id not in manager.sessions  # Oldest removed
@@ -906,9 +906,9 @@ class TestSessionManager:
         """Test getting a valid, non-expired session."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
-        retrieved_session = manager.get_session(session_id)
+        retrieved_session = manager.get_or_create_session(session_id)
         assert retrieved_session is not None
         assert retrieved_session.session_id == session_id
 
@@ -924,12 +924,12 @@ class TestSessionManager:
         """Test getting an expired session (lines 467->470)."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
         session = manager.sessions[session_id]
 
         # Mock session as expired
         with patch.object(session, "is_expired", return_value=True):
-            retrieved_session = manager.get_session(session_id)
+            retrieved_session = manager.get_or_create_session(session_id)
 
             assert retrieved_session is None
             assert session_id in manager.sessions_to_cleanup
@@ -939,7 +939,7 @@ class TestSessionManager:
         """Test removing an existing session (lines 474-479)."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         # Mock the session's clear method
         session = manager.sessions[session_id]
@@ -964,8 +964,8 @@ class TestSessionManager:
         # Create sessions
         session1_id = str(uuid.uuid4())
         session2_id = str(uuid.uuid4())
-        manager.get_session(session1_id)
-        manager.get_session(session2_id)
+        manager.get_or_create_session(session1_id)
+        manager.get_or_create_session(session2_id)
 
         # Load data into one session
         session1 = manager.sessions[session1_id]
@@ -995,8 +995,8 @@ class TestSessionManager:
         manager = SessionManager()
         session1_id = str(uuid.uuid4())
         session2_id = str(uuid.uuid4())
-        manager.get_session(session1_id)
-        manager.get_session(session2_id)
+        manager.get_or_create_session(session1_id)
+        manager.get_or_create_session(session2_id)
 
         # Mock one session as expired
         with (
@@ -1016,8 +1016,8 @@ class TestSessionManager:
         manager = SessionManager()
         session1_id = str(uuid.uuid4())
         session2_id = str(uuid.uuid4())
-        manager.get_session(session1_id)
-        manager.get_session(session2_id)
+        manager.get_or_create_session(session1_id)
+        manager.get_or_create_session(session2_id)
 
         # Mark sessions for cleanup
         manager.sessions_to_cleanup.add(session1_id)
@@ -1035,7 +1035,7 @@ class TestSessionManager:
         """Test export_session_history with existing session (lines 515-519)."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
         session = manager.sessions[session_id]
 
         # Add some test data

@@ -339,7 +339,7 @@ async def test_concurrent_session_limit():
     sessions = []
     for i in range(MAX_SESSIONS):
         session_id = f"session_{i}"
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
         sessions.append(session)
 
     # Verify all sessions are active

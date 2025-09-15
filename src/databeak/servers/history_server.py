@@ -300,7 +300,7 @@ async def undo_operation(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -380,7 +380,7 @@ async def redo_operation(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -467,7 +467,7 @@ async def get_history(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -565,7 +565,7 @@ async def restore_to_operation(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -642,7 +642,7 @@ async def clear_history(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -732,7 +732,7 @@ async def export_history(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -878,7 +878,7 @@ async def configure_auto_save(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -992,7 +992,7 @@ async def disable_auto_save(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -1083,7 +1083,7 @@ async def get_auto_save_status(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -1180,7 +1180,7 @@ async def trigger_manual_save(
         session_id = ctx.session_id
 
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)

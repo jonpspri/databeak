@@ -64,11 +64,11 @@ class TestServerSessionHandling:
 
         # Create session
         session_id = str(uuid.uuid4())
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
         assert session_id is not None
 
         # Verify session exists
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
         assert session is not None
         assert session.session_id == session_id
 
@@ -87,7 +87,7 @@ class TestServerSessionHandling:
         session_id = result.session_id
 
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
 
         # Test session has data
         assert session is not None

@@ -187,7 +187,7 @@ class InspectDataResult(BaseToolResponse):
 def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame, raising appropriate exceptions if not found."""
     manager = get_session_manager()
-    session = manager.get_session(session_id)
+    session = manager.get_or_create_session(session_id)
 
     if not session:
         raise SessionNotFoundError(session_id)
@@ -257,7 +257,7 @@ async def detect_outliers(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
@@ -425,7 +425,7 @@ async def profile_data(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")
@@ -550,7 +550,7 @@ async def group_by_aggregate(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
             raise ToolError(f"Invalid session or no data loaded: {session_id}")

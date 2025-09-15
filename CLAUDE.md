@@ -63,10 +63,10 @@ DataBeak follows a three-tier testing strategy:
 **Test Execution:**
 
 ```bash
-uv run -m pytest tests/unit/          # Run unit tests (frequent)
-uv run -m pytest tests/integration/   # Run integration tests
-uv run -m pytest tests/e2e/           # Run E2E tests
-uv run -m pytest --cov=src/databeak   # Run all with coverage
+uv run pytest -n auto tests/unit/          # Run unit tests (frequent)
+uv run pytest -n auto tests/integration/   # Run integration tests
+uv run pytest -n auto tests/e2e/           # Run E2E tests
+uv run pytest -n auto --cov=src/databeak   # Run all with coverage
 ```
 
 **Use the `test-coverage-analyzer` agent** for systematic test coverage analysis

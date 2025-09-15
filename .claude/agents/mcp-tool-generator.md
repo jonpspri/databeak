@@ -121,7 +121,7 @@ def process_domain_operation(
     """
     try:
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.data_session.df is None:
             raise ToolError("Invalid session or no data loaded")
