@@ -298,7 +298,9 @@ tests/
    async def session_with_data():
        """Create a session with sample data."""
        manager = get_session_manager()
-       session_id = manager.create_session()
+       import uuid
+       session_id = str(uuid.uuid4())
+       session = manager.get_session(session_id)
        # ... setup
        yield session_id
        # ... cleanup

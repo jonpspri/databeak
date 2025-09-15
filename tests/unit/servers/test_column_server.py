@@ -76,7 +76,7 @@ class TestColumnServerSelect:
 
     async def test_select_nonexistent_column(self, column_session):
         """Test selecting non-existent column."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(column_session)
             await select_columns(ctx, ["nonexistent", "first_name"])
 
@@ -120,7 +120,7 @@ class TestColumnServerRename:
         """Test renaming non-existent column."""
         mapping = {"nonexistent": "new_name"}
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(column_session)
             await rename_columns(ctx, mapping)
 
@@ -207,7 +207,7 @@ class TestColumnServerRemove:
 
     async def test_remove_nonexistent_column(self, column_session):
         """Test removing non-existent column."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(column_session)
             await remove_columns(ctx, ["nonexistent"])
 
@@ -262,7 +262,7 @@ class TestColumnServerChangeType:
 
     async def test_change_type_nonexistent_column(self, column_session):
         """Test changing type of non-existent column."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(column_session)
             await change_column_type(ctx, "nonexistent", "int")
 
@@ -325,7 +325,7 @@ class TestColumnServerUpdate:
 
     async def test_update_nonexistent_column(self, column_session):
         """Test updating non-existent column."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(column_session)
             await update_column(ctx, "nonexistent", {"operation": "fillna", "value": 0})
 
@@ -339,20 +339,20 @@ class TestColumnServerErrorHandling:
         invalid_session = "invalid-session-id"
         ctx = create_mock_context(invalid_session)
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await select_columns(ctx, ["test"])
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await rename_columns(ctx, {"old": "new"})
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await add_column(ctx, "test", "value")
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await remove_columns(ctx, ["test"])
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await change_column_type(ctx, "test", "int")
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             await update_column(ctx, "test", {"operation": "fillna", "value": 0})

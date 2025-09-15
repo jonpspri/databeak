@@ -3,6 +3,7 @@
 from unittest.mock import patch
 
 import pytest  # type: ignore[import-not-found]
+import uuid
 
 from src.databeak.models import get_session_manager
 from src.databeak.server import _load_instructions, main, mcp
@@ -62,7 +63,8 @@ class TestServerSessionHandling:
         session_manager = get_session_manager()
 
         # Create session
-        session_id = session_manager.create_session()
+        session_id = str(uuid.uuid4())
+        session = session_manager.get_session(session_id)
         assert session_id is not None
 
         # Verify session exists
@@ -74,8 +76,8 @@ class TestServerSessionHandling:
         removed = await session_manager.remove_session(session_id)
         assert removed is True
 
-        # Verify session is gone
-        session = session_manager.get_session(session_id)
+        # Verify session is gone (check sessions dict directly since get_session creates new ones)
+        session = session_manager.sessions.get(session_id)
         assert session is None
 
     async def test_session_with_data_operations(self):

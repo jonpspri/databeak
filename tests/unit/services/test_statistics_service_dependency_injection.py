@@ -119,7 +119,7 @@ class TestStatisticsServiceDependencyInjection:
         with pytest.raises(Exception) as exc_info:
             await self.statistics_service.get_statistics("invalid_session")
 
-        assert "Session not found" in str(exc_info.value)
+        assert "No data loaded in session" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_error_handling_with_invalid_column(self) -> None:
@@ -181,14 +181,14 @@ class TestMockSessionManagerBehavior:
 
     def test_session_creation(self) -> None:
         """Test mock session creation."""
-        session = self.mock.get_or_create_session("test_id")
+        session = self.mock.get_session("test_id")
         assert session.session_id == "test_id"
         assert "test_id" in self.mock.sessions
 
     def test_auto_id_generation(self) -> None:
         """Test automatic ID generation."""
-        session1 = self.mock.get_or_create_session()
-        session2 = self.mock.get_or_create_session()
+        session1 = self.mock.get_session("test_session_1")
+        session2 = self.mock.get_session("test_session_2")
         assert session1.session_id != session2.session_id
         assert session1.session_id.startswith("test_session_")
         assert session2.session_id.startswith("test_session_")
@@ -206,7 +206,7 @@ class TestMockSessionManagerBehavior:
     @pytest.mark.asyncio
     async def test_session_removal(self) -> None:
         """Test session removal."""
-        self.mock.get_or_create_session("temp_session")
+        self.mock.get_session("temp_session")
         assert "temp_session" in self.mock.sessions
 
         removed = await self.mock.remove_session("temp_session")

@@ -3,6 +3,7 @@
 import asyncio
 import shutil
 import tempfile
+import uuid
 from pathlib import Path
 
 import pandas as pd
@@ -355,7 +356,8 @@ async def test_session_manager_cleanup(sample_df, temp_dir) -> None:
     )
 
     manager = SessionManager()
-    session_id = manager.create_session()
+    session_id = str(uuid.uuid4())
+    session = manager.get_session(session_id)
     session = manager.get_session(session_id)
 
     # Enable auto-save

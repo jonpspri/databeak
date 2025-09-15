@@ -176,6 +176,7 @@ class MockSessionManager:
             return True
         return False
 
+
     def add_test_data(self, session_id: str, df: pd.DataFrame) -> None:
         """Add test data to a session (for testing purposes)."""
         session = self.get_session(session_id)

@@ -453,45 +453,25 @@ class SessionManager:
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def create_session(self, session_id: str) -> CSVSession:
-        """Create a new session."""
-        self._cleanup_expired()
-
-        if len(self.sessions) >= self.max_sessions:
-            # Remove oldest session
-            oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
-            del self.sessions[oldest.session_id]
-
-        session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
-        self.sessions[session.session_id] = session
-        logger.info(f"Created new session: {session.session_id}")
-        return session
-
     def get_session(self, session_id: str) -> CSVSession:
-        """Get a session by ID."""
+        """Get a session by ID, creating it if it doesn't exist."""
         session = self.sessions.get(session_id)
         if not session:
-            return self.create_session(session_id)
-        session.update_access_time()
+            # Create new session inline
+            self._cleanup_expired()
+            
+            if len(self.sessions) >= self.max_sessions:
+                # Remove oldest session
+                oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
+                del self.sessions[oldest.session_id]
+            
+            session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
+            self.sessions[session.session_id] = session
+            logger.info(f"Created new session: {session.session_id}")
+        else:
+            session.update_access_time()
         return session
 
-    def get_or_create_session(self, session_id: str | None = None) -> CSVSession:
-        """Get existing session or create new one (backward compatibility).
-
-        Args:
-            session_id: Session ID (if None, generates one)
-
-        Returns:
-            CSVSession
-        """
-        if session_id:
-            return self.get_session(session_id)
-        else:
-            # Generate a new session ID for backward compatibility
-            import uuid
-
-            new_session_id = str(uuid.uuid4())
-            return self.create_session(new_session_id)
 
     async def remove_session(self, session_id: str) -> bool:
         """Remove a session."""

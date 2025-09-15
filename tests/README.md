@@ -288,7 +288,9 @@ async def test_async():
 # Always clean up sessions in fixtures
 @pytest.fixture
 async def session():
-    session_id = create_session()
+    import uuid
+    session_id = str(uuid.uuid4())
+    session = session_manager.get_session(session_id)
     yield session_id
     await cleanup_session(session_id)  # This runs after test
 ```

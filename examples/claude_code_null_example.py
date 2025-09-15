@@ -25,8 +25,9 @@ async def main() -> None:
     print("=" * 65)
 
     # Create a session with job application tracking data
+    import uuid
     session_manager = get_session_manager()
-    session_id = session_manager.create_session()
+    session_id = str(uuid.uuid4())
     session = session_manager.get_session(session_id)
 
     # Create initial data structure

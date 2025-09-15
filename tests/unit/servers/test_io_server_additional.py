@@ -200,7 +200,7 @@ class TestExportFunctionality:
 
         session_manager = get_session_manager()
         session_id = "empty_session_test"
-        session_manager.create_session(session_id)
+        session_manager.get_session(session_id)
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             with pytest.raises(ToolError, match="no data loaded"):

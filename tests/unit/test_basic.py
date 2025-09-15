@@ -47,11 +47,11 @@ class TestValidators:
 class TestSessionManager:
     """Test session management."""
 
-    async def test_create_session(self) -> None:
+    async def test_get_session(self) -> None:
         """Test session creation."""
         manager = get_session_manager()
         test_session_id = "test_session_123"
-        session = manager.create_session(test_session_id)
+        session = manager.get_session(test_session_id)
 
         assert session is not None
         assert session.session_id == test_session_id
@@ -64,7 +64,7 @@ class TestSessionManager:
         """Test session removal."""
         manager = get_session_manager()
         test_session_id = "test_cleanup_456"
-        session = manager.create_session(test_session_id)
+        session = manager.get_session(test_session_id)
         session_id = session.session_id
 
         # Session should exist
