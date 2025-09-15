@@ -383,7 +383,7 @@ def validate_schema(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
@@ -631,7 +631,7 @@ def check_data_quality(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
@@ -984,7 +984,7 @@ def find_anomalies(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")

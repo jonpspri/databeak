@@ -67,8 +67,8 @@ class TestSessionManagement:
 
     async def test_get_session_info_invalid(self):
         """Test getting info for invalid session."""
-        with pytest.raises(ToolError, match="Session not found"):
-            await get_session_info(create_mock_context())
+        with pytest.raises(ToolError, match="Failed to get session info"):
+            await get_session_info(create_mock_context("nonexistent-session-id"))
 
 
 class TestCsvLoadingEdgeCases:
@@ -190,7 +190,7 @@ class TestExportFunctionality:
         """Test exporting with invalid session."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             with pytest.raises(ToolError, match="Session not found"):
-                await export_csv(create_mock_context(), file_path=tmp.name)
+                await export_csv(create_mock_context("nonexistent-session-id"), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
 
@@ -199,11 +199,12 @@ class TestExportFunctionality:
         from src.databeak.models import get_session_manager
 
         session_manager = get_session_manager()
-        session_manager.create_session()
+        session_id = "empty_session_test"
+        session_manager.get_or_create_session(session_id)
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             with pytest.raises(ToolError, match="no data loaded"):
-                await export_csv(create_mock_context(), file_path=tmp.name)
+                await export_csv(create_mock_context(session_id), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
 

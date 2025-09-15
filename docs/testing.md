@@ -338,7 +338,8 @@ async def test_concurrent_session_limit():
     """Test system handles maximum concurrent sessions."""
     sessions = []
     for i in range(MAX_SESSIONS):
-        session = await create_session(f"session_{i}")
+        session_id = f"session_{i}"
+        session = session_manager.get_or_create_session(session_id)
         sessions.append(session)
 
     # Verify all sessions are active

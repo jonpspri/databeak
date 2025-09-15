@@ -12,8 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
-from ..models import OperationType
-from ..models.csv_session import get_session
+from ..models import OperationType, get_session_manager
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -139,7 +138,8 @@ def get_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -218,7 +218,8 @@ def set_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -304,7 +305,8 @@ def get_row_data(
     """
     try:
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -378,7 +380,8 @@ def get_column_data(
     """
     try:
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -467,7 +470,8 @@ def insert_row(
                 raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
 
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -568,7 +572,8 @@ def delete_row(
     """
     try:
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
@@ -649,7 +654,8 @@ def update_row(
             raise ToolError("Update data must be a dictionary or JSON string")
 
         session_id = ctx.session_id
-        session = get_session(session_id)
+        session_manager = get_session_manager()
+        session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df

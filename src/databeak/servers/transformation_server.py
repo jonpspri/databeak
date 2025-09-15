@@ -108,7 +108,7 @@ def filter_rows(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
@@ -243,7 +243,7 @@ def sort_data(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
@@ -345,7 +345,7 @@ def remove_duplicates(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")
@@ -444,7 +444,7 @@ def fill_missing_values(
     try:
         session_id = ctx.session_id
         manager = get_session_manager()
-        session = manager.get_session(session_id)
+        session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError("Invalid session or no data loaded")

@@ -6,7 +6,7 @@ This server provides column selection, renaming, addition, removal, and type con
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, Literal  # type: ignore[explicit-any]
+from typing import Annotated, Any, Literal  # type: ignore[misc]
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -20,7 +20,6 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType
-from ..models.csv_session import get_session
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 from ..utils.secure_evaluator import _get_secure_evaluator
@@ -95,7 +94,7 @@ class UpdateColumnRequest(BaseModel):
     operation: Literal["replace", "map", "apply", "fillna"] = Field(
         description="Type of update operation"
     )
-    value: Any | None = Field(  # type: ignore[explicit-any]  # Any justified: operation-dependent type (CellValue|dict|str)
+    value: Any | None = Field(  # type: ignore[misc]  # Any justified: operation-dependent type (CellValue|dict|str)
         None, description="Value for the operation (depends on operation type)"
     )
     pattern: str | None = Field(None, description="Pattern for replace operation")
@@ -134,7 +133,10 @@ class RenameColumnsResult(BaseToolResponse):
 
 
 # Use elegant session access pattern
-_get_session_data = get_session
+def _get_session_data(session_id: str) -> CSVSession:
+    from ..models import get_session_manager
+
+    return get_session_manager().get_or_create_session(session_id)
 
 
 # =============================================================================

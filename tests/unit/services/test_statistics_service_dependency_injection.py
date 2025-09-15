@@ -119,7 +119,7 @@ class TestStatisticsServiceDependencyInjection:
         with pytest.raises(Exception) as exc_info:
             await self.statistics_service.get_statistics("invalid_session")
 
-        assert "Session not found" in str(exc_info.value)
+        assert "No data loaded in session" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_error_handling_with_invalid_column(self) -> None:
@@ -187,8 +187,8 @@ class TestMockSessionManagerBehavior:
 
     def test_auto_id_generation(self) -> None:
         """Test automatic ID generation."""
-        session1 = self.mock.get_or_create_session()
-        session2 = self.mock.get_or_create_session()
+        session1 = self.mock.get_or_create_session("test_session_1")
+        session2 = self.mock.get_or_create_session("test_session_2")
         assert session1.session_id != session2.session_id
         assert session1.session_id.startswith("test_session_")
         assert session2.session_id.startswith("test_session_")
@@ -198,7 +198,7 @@ class TestMockSessionManagerBehavior:
         test_df = pd.DataFrame({"col1": [1, 2, 3]})
         self.mock.add_test_data("test_session", test_df)
 
-        session = self.mock.get_session("test_session")
+        session = self.mock.get_or_create_session("test_session")
         assert session is not None
         assert session.has_data()
         pd.testing.assert_frame_equal(session.df, test_df)

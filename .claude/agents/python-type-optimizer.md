@@ -340,10 +340,10 @@ uv run mypy src/databeak/ --strict
 uv run rg "Any" src/databeak/ --type py | wc -l
 
 # Validate all tests still pass
-uv run -m pytest tests/ -v
+uv run pytest -n auto tests/ -v
 
 # Full quality check
-uv run ruff check src/ tests/ && uv run ruff format --check src/ tests/ && uv run mypy src/ && uv run -m pytest
+uv run ruff check src/ tests/ && uv run ruff format --check src/ tests/ && uv run mypy src/ && uv run pytest -n auto
 ```
 
 ### Analysis Commands

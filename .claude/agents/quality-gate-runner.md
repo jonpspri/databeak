@@ -44,10 +44,10 @@ uv sync --check
 uv run pre-commit run --all-files
 
 # 3. Testing with coverage
-uv run -m pytest tests/ --cov=src --cov-report=term-missing
+uv run pytest -n auto tests/ --cov=src --cov-report=term-missing
 
 # 4. Coverage validation (80% threshold)
-uv run -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+uv run pytest -n auto --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 
 #### Option 2: Individual Tool Execution (For Targeted Analysis)
@@ -66,10 +66,10 @@ uv run ruff format --check src/ tests/
 uv run mypy src/
 
 # 5. Testing with coverage
-uv run -m pytest tests/ --cov=src --cov-report=term-missing
+uv run pytest -n auto tests/ --cov=src --cov-report=term-missing
 
 # 6. Coverage validation (80% threshold)
-uv run -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+uv run pytest -n auto --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 
 ### Auto-fix Commands
@@ -263,7 +263,7 @@ uv run ruff format --check src/ tests/
 uv run mypy src/ --error-format=json
 
 # Testing with coverage
-uv run -m pytest tests/ --cov=src --cov-report=json --cov-report=term-missing
+uv run pytest -n auto tests/ --cov=src --cov-report=json --cov-report=term-missing
 ```
 
 ### Step 3: Issue Analysis and Categorization
@@ -349,7 +349,7 @@ uv run ruff check --fix --select I src/ tests/
 
 # After fixes, re-run specific checks
 uv run mypy src/databeak/tools/analytics.py  # Target specific file
-uv run pytest tests/test_io_operations.py -v  # Target specific test
+uv run pytest tests/test_io_operations.py -v  # Target specific test (single test, no parallel)
 ```
 
 ### Version Sync Requirements

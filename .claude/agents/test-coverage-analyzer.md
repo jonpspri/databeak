@@ -142,15 +142,15 @@ class TestToolFunctionality:
 
 ```bash
 # Generate detailed coverage report by test category
-uv run pytest tests/unit/ --cov=src/databeak --cov-report=term-missing
-uv run pytest tests/integration/ --cov=src/databeak --cov-report=term-missing
-uv run pytest tests/e2e/ --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto tests/unit/ --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto tests/integration/ --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto tests/e2e/ --cov=src/databeak --cov-report=term-missing
 
 # Full coverage report
-uv run pytest --cov=src/databeak --cov-report=html --cov-report=term-missing
+uv run pytest -n auto --cov=src/databeak --cov-report=html --cov-report=term-missing
 
 # Module-specific coverage
-uv run pytest --cov=src/databeak/servers --cov-report=term-missing
+uv run pytest -n auto --cov=src/databeak/servers --cov-report=term-missing
 ```
 
 ### Step 2: Identify Coverage Gaps
@@ -299,12 +299,12 @@ After generating new tests:
 uv run pytest tests/unit/path/to/new_test.py -v
 
 # Check coverage improvement
-uv run pytest tests/unit/ --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto tests/unit/ --cov=src/databeak --cov-report=term-missing
 
 # Run all quality checks
 uv run ruff check tests/
 uv run mypy tests/
-uv run pytest tests/
+uv run pytest -n auto tests/
 
 # Verify test isolation
 uv run pytest tests/unit/path/to/new_test.py --random-order

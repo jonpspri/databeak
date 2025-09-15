@@ -1,6 +1,9 @@
 """Comprehensive tests for discovery_server module - Fixed version."""
 
+from typing import cast
+
 import pytest
+from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from src.databeak.servers.discovery_server import (
@@ -30,7 +33,7 @@ async def discovery_session():
 1009,George White,38,220.00,Clothing,West,False
 1010,Helen Black,33,180.50,Food,North,False"""
 
-    ctx = create_mock_context()
+    ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
@@ -50,7 +53,7 @@ async def outlier_session():
 9,11,101,51
 10,13,104,49"""
 
-    ctx = create_mock_context()
+    ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
@@ -68,7 +71,7 @@ Sales,Frank,60000,10000,3
 Sales,Grace,65000,12000,4
 Sales,Henry,70000,15000,5"""
 
-    ctx = create_mock_context()
+    ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
     return result.session_id
 
@@ -79,7 +82,7 @@ class TestDetectOutliers:
 
     async def test_detect_outliers_iqr_method(self, outlier_session):
         """Test outlier detection using IQR method."""
-        ctx = create_mock_context_with_session_data(outlier_session)
+        ctx = cast(Context, create_mock_context_with_session_data(outlier_session))
         result = await detect_outliers(ctx, columns=["value"], method="iqr")
 
         assert result.success is True
@@ -93,7 +96,7 @@ class TestDetectOutliers:
 
     async def test_detect_outliers_zscore_method(self, outlier_session):
         """Test outlier detection using z-score method."""
-        ctx = create_mock_context_with_session_data(outlier_session)
+        ctx = cast(Context, create_mock_context_with_session_data(outlier_session))
         result = await detect_outliers(ctx, columns=["amount"], method="zscore", threshold=2.0)
 
         assert result.success is True
@@ -106,7 +109,7 @@ class TestDetectOutliers:
 
     async def test_detect_outliers_multiple_columns(self, outlier_session):
         """Test outlier detection on multiple columns."""
-        ctx = create_mock_context_with_session_data(outlier_session)
+        ctx = cast(Context, create_mock_context_with_session_data(outlier_session))
         result = await detect_outliers(ctx, columns=["value", "amount", "score"])
 
         assert result.success is True
@@ -116,7 +119,7 @@ class TestDetectOutliers:
 
     async def test_detect_outliers_all_columns(self, outlier_session):
         """Test outlier detection on all numeric columns."""
-        ctx = create_mock_context_with_session_data(outlier_session)
+        ctx = cast(Context, create_mock_context_with_session_data(outlier_session))
         result = await detect_outliers(ctx)
 
         assert result.success is True
@@ -126,16 +129,16 @@ class TestDetectOutliers:
     async def test_detect_outliers_non_numeric(self, discovery_session):
         """Test outlier detection with non-numeric columns."""
         with pytest.raises(ToolError, match="numeric"):
-            ctx = create_mock_context_with_session_data(discovery_session)
+            ctx = cast(Context, create_mock_context_with_session_data(discovery_session))
             await detect_outliers(ctx, columns=["name", "category"])
 
     async def test_detect_outliers_no_outliers(self):
         """Test when no outliers are present."""
         csv_content = "value\n10\n11\n12\n13\n14"
-        ctx = create_mock_context()
+        ctx = cast(Context, create_mock_context())
         result = await load_csv_from_content(ctx, csv_content)
 
-        ctx_outliers = create_mock_context_with_session_data(result.session_id)
+        ctx_outliers = cast(Context, create_mock_context_with_session_data(result.session_id))
         outliers = await detect_outliers(ctx_outliers, columns=["value"])
         assert outliers.success is True
         assert outliers.outliers_found == 0
@@ -147,7 +150,7 @@ class TestProfileData:
 
     async def test_profile_basic(self, discovery_session):
         """Test basic data profiling."""
-        ctx = create_mock_context_with_session_data(discovery_session)
+        ctx = cast(Context, create_mock_context_with_session_data(discovery_session))
         result = await profile_data(ctx)
 
         assert result.success is True

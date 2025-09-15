@@ -38,7 +38,7 @@ tests/unit/
 - Test single functions or classes
 - High code coverage target (80%+)
 
-**Run with:** `uv run -m pytest tests/unit/`
+**Run with:** `uv run pytest -n auto tests/unit/`
 
 ### Integration Tests (`tests/integration/`)
 
@@ -56,7 +56,7 @@ Integration tests verify that multiple components work correctly together:
 - Test component interactions
 - Validate data flow between modules
 
-**Run with:** `uv run -m pytest tests/integration/`
+**Run with:** `uv run pytest -n auto tests/integration/`
 
 ### End-to-End Tests (`tests/e2e/`)
 
@@ -71,7 +71,7 @@ E2E tests validate complete user workflows from start to finish:
 - Test complete user scenarios
 - Validate edge cases and error handling
 
-**Run with:** `uv run -m pytest tests/e2e/`
+**Run with:** `uv run pytest -n auto tests/e2e/`
 
 ## Running Tests
 
@@ -79,28 +79,28 @@ E2E tests validate complete user workflows from start to finish:
 
 ```bash
 # Run all tests
-uv run -m pytest
+uv run pytest -n auto
 
 # Run with coverage
-uv run -m pytest --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto --cov=src/databeak --cov-report=term-missing
 
 # Run specific test category
-uv run -m pytest tests/unit/
-uv run -m pytest tests/integration/
-uv run -m pytest tests/e2e/
+uv run pytest -n auto tests/unit/
+uv run pytest -n auto tests/integration/
+uv run pytest -n auto tests/e2e/
 
 # Run specific module tests
-uv run -m pytest tests/unit/servers/
-uv run -m pytest tests/unit/models/
+uv run pytest -n auto tests/unit/servers/
+uv run pytest -n auto tests/unit/models/
 
 # Run with verbose output
-uv run -m pytest -v
+uv run pytest -n auto -v
 
 # Run and stop on first failure
-uv run -m pytest -x
+uv run pytest -n auto -x
 
-# Run specific test
-uv run -m pytest tests/unit/servers/test_statistics_server.py::TestGetStatistics::test_get_statistics_all_columns
+# Run specific test (single test, no parallel)
+uv run pytest tests/unit/servers/test_statistics_server.py::TestGetStatistics::test_get_statistics_all_columns
 ```
 
 ### Test Discovery
@@ -121,7 +121,7 @@ For faster test runs on multi-core systems:
 uv add --dev pytest-xdist
 
 # Run tests in parallel
-uv run -m pytest -n auto
+uv run pytest -n auto
 ```
 
 ## Writing Tests
@@ -202,13 +202,13 @@ async def test_async_function():
 
 ```bash
 # Generate coverage report
-uv run -m pytest --cov=src/databeak --cov-report=html
+uv run pytest -n auto --cov=src/databeak --cov-report=html
 
 # View HTML report
 open htmlcov/index.html
 
 # Terminal report with missing lines
-uv run -m pytest --cov=src/databeak --cov-report=term-missing
+uv run pytest -n auto --cov=src/databeak --cov-report=term-missing
 ```
 
 ### Coverage Configuration
@@ -286,9 +286,12 @@ async def test_async():
 
 ```python
 # Always clean up sessions in fixtures
+import uuid
+
 @pytest.fixture
 async def session():
-    session_id = create_session()
+    session_id = str(uuid.uuid4())
+    session = session_manager.get_or_create_session(session_id)
     yield session_id
     await cleanup_session(session_id)  # This runs after test
 ```
@@ -330,7 +333,7 @@ touch tests/unit/tools/test_new_feature.py
 uv run -m pytest tests/unit/tools/test_new_feature.py
 
 # 4. Check coverage
-uv run -m pytest tests/unit/tools/test_new_feature.py --cov=src/databeak/tools/new_feature
+uv run pytest tests/unit/tools/test_new_feature.py --cov=src/databeak/tools/new_feature
 ```
 
 ## Resources

@@ -60,12 +60,13 @@ class TestLoadCsvEncodingFallbacks:
             temp_path = f.name
 
         try:
-            # Mock context
+            # Mock context with proper session_id
             mock_ctx = MagicMock()
+            mock_ctx.session_id = "test_session_id"
             mock_ctx.info = AsyncMock(return_value=None)
             mock_ctx.report_progress = AsyncMock(return_value=None)
 
-            result = await load_csv(file_path=temp_path, ctx=mock_ctx)
+            result = await load_csv(mock_ctx, file_path=temp_path)
 
             assert result.rows_affected == 2
             # Progress should be reported
@@ -120,14 +121,15 @@ class TestLoadCsvFromUrlFallbacks:
         # First call fails with encoding error, second succeeds
         mock_read_csv.side_effect = [UnicodeDecodeError("utf-8", b"", 0, 1, "invalid"), mock_df]
 
-        # Mock context
+        # Mock context with proper session_id
         mock_ctx = MagicMock()
+        mock_ctx.session_id = "test_session_id"
         mock_ctx.info = AsyncMock(return_value=None)
         mock_ctx.error = AsyncMock(return_value=None)
         mock_ctx.report_progress = AsyncMock(return_value=None)
 
         result = await load_csv_from_url(
-            url="http://example.com/data.csv", encoding="utf-8", ctx=mock_ctx
+            mock_ctx, url="http://example.com/data.csv", encoding="utf-8"
         )
 
         assert result.rows_affected == 2

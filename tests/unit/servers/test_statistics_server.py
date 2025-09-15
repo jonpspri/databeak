@@ -144,13 +144,13 @@ class TestGetStatistics:
 
     async def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session ID."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             ctx = create_mock_context("invalid-session-id")
             await get_statistics(ctx)
 
     async def test_get_statistics_invalid_columns(self, stats_session):
         """Test statistics with non-existent columns."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ToolError, match="Column.*not found"):
             ctx = create_mock_context_with_session_data(stats_session)
             await get_statistics(ctx, columns=["nonexistent", "fake_column"])
 

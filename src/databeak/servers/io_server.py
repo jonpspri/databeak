@@ -311,7 +311,7 @@ async def load_csv(
 
         # Get or create session
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
 
         await ctx.report_progress(0.3)
 
@@ -618,7 +618,7 @@ async def load_csv_from_url(
 
         # Get or create session
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
 
         if df is None:
             raise ToolError("Failed to load data from URL")
@@ -707,7 +707,7 @@ async def load_csv_from_content(
 
         # Get or create session
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
         session.load_data(df, None)
 
         await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from content")
@@ -767,7 +767,7 @@ async def export_csv(
 
         # Get session and validate data
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
             raise ToolError(f"Session not found or no data loaded: {session_id}")
@@ -914,7 +914,7 @@ async def get_session_info(
         session_id = ctx.session_id
 
         session_manager = get_session_manager()
-        session = session_manager.get_session(session_id)
+        session = session_manager.get_or_create_session(session_id)
 
         if not session:
             raise ToolError(f"Session not found: {session_id}")

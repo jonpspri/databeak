@@ -114,7 +114,7 @@ class StringOperationResult(BaseToolResponse):
 def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     """Get session and DataFrame with validation."""
     manager = get_session_manager()
-    session = manager.get_session(session_id)
+    session = manager.get_or_create_session(session_id)
 
     if not session:
         raise SessionNotFoundError(session_id)

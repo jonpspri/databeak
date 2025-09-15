@@ -201,7 +201,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230"]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
+"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101" ]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
 "src/databeak/servers/column_server.py" = ["S101"]  # Type safety assertions
 "src/databeak/servers/column_text_server.py" = ["S101"]  # Type safety assertions
@@ -236,6 +236,15 @@ strict_equality = true
 pretty = true
 show_column_numbers = true
 show_error_context = true
+plugins = [
+    "pydantic.mypy",
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
 [[tool.mypy.overrides]]
 module = [
@@ -252,7 +261,8 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
-
+disallow_untyped_defs = false
+disallow_any_explicit = false
 
 [[tool.mypy.overrides]]
 module = "examples.*"
@@ -352,6 +362,7 @@ dev = [
     "pytest>=8.4.2",
     "pytest-asyncio>=1.1.0",
     "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.12.10",
     "twine>=6.1.0",
     "types-aiofiles>=24.1.0.20250822",
