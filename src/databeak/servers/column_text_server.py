@@ -35,8 +35,9 @@ CellValue = str | int | float | bool | None
 
 
 # Use elegant session access pattern
-def _get_session_data(session_id: str):
+def _get_session_data(session_id: str) -> CSVSession:
     from ..models import get_session_manager
+
     return get_session_manager().get_or_create_session(session_id)
 
 
