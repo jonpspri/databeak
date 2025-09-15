@@ -81,7 +81,9 @@ class TestSessionManager:
 class TestDataOperations:
     """Test basic data operations."""
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
+    @pytest.mark.skip(
+        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
+    )
     async def test_load_csv_from_content(self) -> None:
         """Test loading CSV from string content."""
         from src.databeak.servers.io_server import load_csv_from_content
@@ -105,10 +107,12 @@ class TestDataOperations:
 
     async def test_filter_rows(self, test_session) -> None:
         """Test filtering rows."""
-        from src.databeak.services.transformation_operations import filter_rows
+        from src.databeak.servers.transformation_server import filter_rows
+        from tests.test_mock_context import create_mock_context_with_session_data
 
-        result = await filter_rows(
-            session_id=test_session,
+        ctx = create_mock_context_with_session_data(test_session)
+        result = filter_rows(
+            ctx,
             conditions=[{"column": "price", "operator": ">", "value": 50}],
             mode="and",
         )

@@ -7,4 +7,4 @@ by server modules.
 
 from .statistics_service import StatisticsService
 
-__all__ = ["StatisticsService", "data_operations", "transformation_operations"]
+__all__ = ["StatisticsService", "data_operations"]

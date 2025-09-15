@@ -275,6 +275,15 @@ class DataPreviewResult(TypedDict):
     preview_rows: int
 
 
+class CsvDataResource(TypedDict):
+    """CSV data resource response for MCP resource endpoint."""
+
+    session_id: str
+    shape: tuple[int, int]  # (rows, columns)
+    preview: DataPreviewResult  # Enhanced preview data with indices
+    columns_info: dict[str, Any]  # type: ignore[misc]  # Any justified: flexible column metadata
+
+
 class InternalDataSummary(TypedDict):
     """Internal data summary structure (not an MCP tool response)."""
 
