@@ -102,17 +102,39 @@ class TestDataOperations:
 
         # Note: LoadResult no longer contains session_id, cleanup handled by session manager
 
-    async def test_filter_rows(self, test_session) -> None:
-        """Test filtering rows."""
+    async def test_filter_rows(self) -> None:
+        """Test filtering rows with dedicated session to avoid test interference."""
+        from src.databeak.models import get_session_manager
+        from src.databeak.servers.io_server import load_csv_from_content
         from src.databeak.servers.transformation_server import filter_rows
-        from tests.test_mock_context import create_mock_context_with_session_data
+        from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
 
-        ctx = create_mock_context_with_session_data(test_session)
-        result = filter_rows(
-            ctx,
-            conditions=[{"column": "price", "operator": ">", "value": 50}],
-            mode="and",
+        # Create our own isolated session to avoid contamination from other tests
+        result = await load_csv_from_content(
+            create_mock_context(),
+            content="""product,price,quantity
+Laptop,999.99,10
+Mouse,29.99,50
+Keyboard,79.99,25""",
+            delimiter=",",
         )
 
-        assert result.success
-        assert result.rows_after < result.rows_before
+        # Get the session ID from session manager
+        manager = get_session_manager()
+        sessions = manager.list_sessions()
+        session_id = sessions[-1].session_id if sessions else "filter-test-session"
+
+        try:
+            # Test the filter operation
+            ctx = create_mock_context_with_session_data(session_id)
+            filter_result = filter_rows(
+                ctx,
+                conditions=[{"column": "price", "operator": ">", "value": 50}],
+                mode="and",
+            )
+
+            assert filter_result.success
+            assert filter_result.rows_after < filter_result.rows_before
+        finally:
+            # Cleanup our session
+            await manager.remove_session(session_id)
