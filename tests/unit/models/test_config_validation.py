@@ -150,7 +150,6 @@ class TestProjectStructureConsistency:
             "src/databeak/models",
             "src/databeak/servers",
             "src/databeak/services",
-            "src/databeak/resources",
             "src/databeak/utils",
             "src/databeak/prompts",
             "tests",
