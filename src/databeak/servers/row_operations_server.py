@@ -348,7 +348,6 @@ def get_row_data(
         )
 
         return RowDataResult(
-            session_id=session_id,
             row_index=row_index,
             data=row_data,
             columns=selected_columns,
@@ -429,7 +428,6 @@ def get_column_data(
         )
 
         return ColumnDataResult(
-            session_id=session_id,
             column=column,
             values=values,
             total_values=len(values),
@@ -548,7 +546,6 @@ def insert_row(
             rows_after=len(df_new),
             data_inserted=data_inserted,
             columns=list(df_new.columns),
-            session_id=session_id,
         )
 
     except ToolError:
@@ -612,7 +609,6 @@ def delete_row(
         )
 
         return DeleteRowResult(
-            session_id=session_id,
             row_index=row_index,
             rows_before=rows_before,
             rows_after=len(df_new),

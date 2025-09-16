@@ -37,7 +37,7 @@ class SecureExpressionEvaluator:
     """
 
     # Safe binary operators
-    SAFE_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {  # type: ignore[explicit-any]
+    SAFE_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.Add: operator.add,
         ast.Sub: operator.sub,
         ast.Mult: operator.mul,
@@ -53,7 +53,7 @@ class SecureExpressionEvaluator:
     }
 
     # Safe unary operators
-    SAFE_UNARY_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {  # type: ignore[explicit-any]
+    SAFE_UNARY_OPERATORS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.UAdd: operator.pos,
         ast.USub: operator.neg,
         ast.Not: operator.not_,
@@ -61,7 +61,7 @@ class SecureExpressionEvaluator:
     }
 
     # Safe comparison operators
-    SAFE_COMPARISONS: ClassVar[dict[type[ast.AST], Any]] = {  # type: ignore[explicit-any]
+    SAFE_COMPARISONS: ClassVar[dict[type[ast.AST], Any]] = {
         ast.Eq: operator.eq,
         ast.NotEq: operator.ne,
         ast.Lt: operator.lt,
@@ -75,21 +75,21 @@ class SecureExpressionEvaluator:
     }
 
     @staticmethod
-    def _safe_max(*args: Any) -> Any:  # type: ignore[explicit-any]
+    def _safe_max(*args: Any) -> Any:
         """Element-wise maximum that works with pandas Series."""
         if len(args) == 1:
             return np.max(args[0])
         return np.maximum(*args)
 
     @staticmethod
-    def _safe_min(*args: Any) -> Any:  # type: ignore[explicit-any]
+    def _safe_min(*args: Any) -> Any:
         """Element-wise minimum that works with pandas Series."""
         if len(args) == 1:
             return np.min(args[0])
         return np.minimum(*args)
 
     # Safe numpy functions (prefixed with np.)
-    SAFE_NUMPY_FUNCTIONS: ClassVar[dict[str, Any]] = {  # type: ignore[explicit-any]
+    SAFE_NUMPY_FUNCTIONS: ClassVar[dict[str, Any]] = {
         "np.sqrt": np.sqrt,
         "np.exp": np.exp,
         "np.log": np.log,
@@ -369,7 +369,7 @@ class SecureExpressionEvaluator:
                 f"Allowed functions: {', '.join(sorted(all_safe_functions))}",
             )
 
-    def evaluate_column_expression(  # type: ignore[explicit-any]
+    def evaluate_column_expression(
         self, expression: str, dataframe: pd.DataFrame, column_context: dict[str, str] | None = None
     ) -> pd.Series:
         """Safely evaluate a mathematical expression with column references.
@@ -439,7 +439,7 @@ class SecureExpressionEvaluator:
                 "expression", expression, f"Expression evaluation failed: {e}"
             ) from e
 
-    def evaluate_simple_formula(self, formula: str, dataframe: pd.DataFrame) -> pd.Series:  # type: ignore[explicit-any]
+    def evaluate_simple_formula(self, formula: str, dataframe: pd.DataFrame) -> pd.Series:
         """Evaluate a formula with direct column references.
 
         This method is designed to replace direct pandas.eval() usage where
@@ -494,7 +494,7 @@ def _get_secure_evaluator() -> SecureExpressionEvaluator:
     return _secure_evaluator
 
 
-def evaluate_expression_safely(  # type: ignore[explicit-any]
+def evaluate_expression_safely(
     expression: str, dataframe: pd.DataFrame, column_context: dict[str, str] | None = None
 ) -> pd.Series:
     """Convenience function for safe expression evaluation.

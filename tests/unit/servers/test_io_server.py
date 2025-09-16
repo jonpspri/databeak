@@ -126,18 +126,6 @@ class TestErrorConditions:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
                 await load_csv_from_url(create_mock_context(), url)
 
-    @pytest.mark.skip(reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs disentangling from other tests")
-    async def test_export_csv_session_not_found(self):
-        """Test export with non-existent session."""
-        with pytest.raises(ToolError, match="Session not found"):
-            await export_csv(create_mock_context())
-
-    async def test_export_csv_no_data_loaded(self):
-        """Test export from session with no data."""
-        # This would require mocking the session manager
-        # to return a session without data
-        pass  # Implementation depends on session mock setup
-
     async def test_load_csv_file_size_limit_exceeded(self):
         """Test file size limit enforcement before loading."""
         # Create a file and mock its size to exceed limit
@@ -255,19 +243,19 @@ class TestIntegrationWithSessions:
             temp_path = f.name
 
         try:
-            result = await load_csv(create_mock_context(), temp_path)
+            ctx = create_mock_context()
+            result = await load_csv(ctx, temp_path)
             assert result.success
-            assert result.session_id is not None
             assert result.rows_affected == 2
 
             # Verify session exists and has data
-            session_info = await get_session_info(create_mock_context(result.session_id))
+            session_info = await get_session_info(create_mock_context(ctx.session_id))
             assert session_info.data_loaded
             assert session_info.row_count == 2
             assert session_info.column_count == 2
 
             # Clean up session
-            await close_session(create_mock_context(result.session_id))
+            await close_session(create_mock_context(ctx.session_id))
         finally:
             Path(temp_path).unlink()
 
@@ -279,8 +267,9 @@ class TestIntegrationWithSessions:
             temp_path1 = f.name
 
         try:
-            result1 = await load_csv(create_mock_context(), temp_path1)
-            session_id = result1.session_id
+            ctx1 = create_mock_context()
+            result1 = await load_csv(ctx1, temp_path1)
+            session_id = ctx1.session_id
 
             # Second load into same session
             with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -289,7 +278,6 @@ class TestIntegrationWithSessions:
 
             try:
                 result2 = await load_csv(create_mock_context(session_id), temp_path2)
-                assert result2.session_id == session_id
                 assert result2.rows_affected == 2
 
                 # Verify session now has the new data
@@ -304,13 +292,13 @@ class TestIntegrationWithSessions:
         finally:
             Path(temp_path1).unlink()
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
     async def test_session_lifecycle_complete(self):
         """Test complete session lifecycle: create, use, export, close."""
         # Load data
         content = "name,age,salary\nAlice,25,50000\nBob,30,60000\nCharlie,35,70000"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Get session info
@@ -324,8 +312,10 @@ class TestIntegrationWithSessions:
             assert session_id in session_ids
 
             # Export the data
-            export_result = await export_csv(create_mock_context(session_id), format="json")
-            assert export_result.session_id == session_id
+            with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+                temp_path = tmp.name
+
+            export_result = await export_csv(create_mock_context(session_id), file_path=temp_path)
             assert export_result.rows_exported == 3
             assert Path(export_result.file_path).exists()
 
@@ -335,7 +325,6 @@ class TestIntegrationWithSessions:
         finally:
             # Close session
             close_result = await close_session(create_mock_context(session_id))
-            assert close_result.session_id == session_id
             assert not close_result.data_preserved
 
 
@@ -348,8 +337,9 @@ class TestTempFileCleanup:
         """Test temp file cleanup when export format fails."""
         # Load some data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Mock pandas to_excel to raise an error
@@ -365,21 +355,27 @@ class TestTempFileCleanup:
         finally:
             await close_session(create_mock_context(session_id))
 
-    async def test_export_csv_cleanup_on_session_error(self):
-        """Test temp file cleanup when session validation fails."""
-        # This tests the outer exception handler cleanup
-        with patch("src.databeak.servers.io_server.get_session_manager") as mock_manager:
-            mock_manager.side_effect = Exception("Mock session error")
+    async def test_export_csv_session_error_handling(self):
+        """Test error handling when session manager fails."""
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            temp_path = tmp.name
 
-            with pytest.raises(ToolError, match="Failed to export data"):
-                await export_csv(create_mock_context(), format="csv")
+        try:
+            with patch("src.databeak.servers.io_server.get_session_manager") as mock_manager:
+                mock_manager.side_effect = Exception("Mock session error")
+
+                with pytest.raises(ToolError, match="Failed to export data"):
+                    await export_csv(create_mock_context(), file_path=temp_path)
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
 
     @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
     async def test_export_csv_temp_file_naming(self):
         """Test temp file naming patterns and uniqueness."""
+        ctx = create_mock_context()
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Export multiple times to check uniqueness
@@ -495,8 +491,9 @@ class TestExportFormats:
     async def session_with_data(self):
         """Create session with test data."""
         content = "name,age,salary,active\nAlice,25,50000,true\nBob,30,60000,false"
-        result = await load_csv_from_content(create_mock_context(), content)
-        yield result.session_id
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, content)
+        yield ctx.session_id
         try:
             await close_session(create_mock_context())
         except Exception as e:
@@ -506,51 +503,59 @@ class TestExportFormats:
             logging.getLogger(__name__).warning(f"Session cleanup failed: {e}")
 
     async def test_export_csv_format(self, session_with_data):
-        """Test CSV export format."""
-        result = await export_csv(create_mock_context(session_with_data), format="csv")
-        assert result.format == "csv"
-        assert result.file_path.endswith(".csv")
-        assert result.rows_exported == 2
+        """Test CSV export format (inferred from .csv extension)."""
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            temp_path = tmp.name
 
-        # Verify file exists and has content
-        assert Path(result.file_path).exists()
-        content = Path(result.file_path).read_text()
-        assert "Alice" in content
-        assert "Bob" in content
+        try:
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
+            assert result.format == "csv"
+            assert result.file_path == temp_path
+            assert result.rows_exported == 2
 
-        # Cleanup
-        Path(result.file_path).unlink()
+            # Verify file exists and has content
+            assert Path(result.file_path).exists()
+            content = Path(result.file_path).read_text()
+            assert "Alice" in content
+            assert "Bob" in content
+            assert "name,age" in content  # CSV headers
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
 
     async def test_export_tsv_format(self, session_with_data):
-        """Test TSV export format."""
-        result = await export_csv(create_mock_context(session_with_data), format="tsv")
-        assert result.format == "tsv"
-        assert result.file_path.endswith(".tsv")
+        """Test TSV export format (inferred from .tsv extension)."""
+        with tempfile.NamedTemporaryFile(suffix=".tsv", delete=False) as tmp:
+            temp_path = tmp.name
 
-        # Verify tab separation
-        content = Path(result.file_path).read_text()
-        assert "\t" in content
+        try:
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
+            assert result.format == "tsv"
+            assert result.file_path == temp_path
 
-        # Cleanup
-        Path(result.file_path).unlink()
+            # Verify tab separation
+            content = Path(result.file_path).read_text()
+            assert "\t" in content
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
 
     async def test_export_json_format(self, session_with_data):
-        """Test JSON export format."""
-        result = await export_csv(create_mock_context(session_with_data), format="json")
-        assert result.format == "json"
-        assert result.file_path.endswith(".json")
+        """Test JSON export format (inferred from .json extension)."""
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
+            temp_path = tmp.name
 
-        # Verify valid JSON
-        import json
-        from pathlib import Path
+        try:
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
+            assert result.format == "json"
+            assert result.file_path == temp_path
 
-        with Path(result.file_path).open() as f:
-            data = json.load(f)
-        assert len(data) == 2
-        assert data[0]["name"] == "Alice"
-
-        # Cleanup
-        Path(result.file_path).unlink()
+            # Verify valid JSON
+            import json
+            with Path(result.file_path).open() as f:
+                data = json.load(f)
+            assert len(data) == 2
+            assert data[0]["name"] == "Alice"
+        finally:
+            Path(temp_path).unlink(missing_ok=True)
 
     async def test_export_with_custom_path(self, session_with_data):
         """Test export with user-specified file path."""
@@ -566,7 +571,6 @@ class TestExportFormats:
 class TestEncodingAndFallback:
     """Test encoding detection and fallback logic."""
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - encoding detection conflicts")
     async def test_encoding_fallback_success(self):
         """Test successful encoding fallback."""
         # Create file with latin1 encoding
@@ -765,21 +769,24 @@ class TestProgressReporting:
             mock_ctx.report_progress.assert_called()
         finally:
             Path(temp_path).unlink()
-            await close_session(create_mock_context(result.session_id))
+            await close_session(mock_ctx)
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
     async def test_export_csv_with_context(self):
         """Test export with context reporting."""
         mock_ctx = AsyncMock()
 
         # Load data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
         mock_ctx.session_id = session_id
 
         try:
-            result = await export_csv(mock_ctx)
+            with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+                temp_path = tmp.name
+
+            result = await export_csv(mock_ctx, file_path=temp_path)
 
             # Verify context methods were called
             mock_ctx.info.assert_called()

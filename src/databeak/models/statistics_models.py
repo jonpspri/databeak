@@ -46,7 +46,6 @@ class StatisticsSummary(BaseModel):
 class StatisticsResult(BaseToolResponse):
     """Response model for dataset statistical analysis."""
 
-    session_id: str = Field(description="Session identifier")
     statistics: dict[str, StatisticsSummary] = Field(
         description="Statistical summary for each column"
     )
@@ -58,7 +57,6 @@ class StatisticsResult(BaseToolResponse):
 class ColumnStatisticsResult(BaseToolResponse):
     """Response model for individual column statistical analysis."""
 
-    session_id: str = Field(description="Session identifier")
     column: str = Field(description="Name of the analyzed column")
     statistics: StatisticsSummary = Field(description="Statistical summary for the column")
     data_type: Literal["int64", "float64", "object", "bool", "datetime64", "category"] = Field(
@@ -70,7 +68,6 @@ class ColumnStatisticsResult(BaseToolResponse):
 class CorrelationResult(BaseToolResponse):
     """Response model for correlation matrix analysis."""
 
-    session_id: str = Field(description="Session identifier")
     correlation_matrix: dict[str, dict[str, float]] = Field(
         description="Correlation coefficients between columns"
     )
@@ -85,7 +82,6 @@ class CorrelationResult(BaseToolResponse):
 class ValueCountsResult(BaseToolResponse):
     """Response model for value frequency analysis."""
 
-    session_id: str = Field(description="Session identifier")
     column: str = Field(description="Name of the analyzed column")
     value_counts: dict[str, int | float] = Field(
         description="Count or proportion of each unique value"

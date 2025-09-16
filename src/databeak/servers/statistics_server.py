@@ -123,7 +123,6 @@ async def get_statistics(
             # Return empty results if no numeric columns found when specific columns requested
             if numeric_df.empty:
                 return StatisticsResult(
-                    session_id=session_id,
                     statistics={},
                     column_count=0,
                     numeric_columns=[],
@@ -134,7 +133,6 @@ async def get_statistics(
             # Return empty results if no numeric columns
             if numeric_df.empty:
                 return StatisticsResult(
-                    session_id=session_id,
                     statistics={},
                     column_count=0,
                     numeric_columns=[],
@@ -183,7 +181,6 @@ async def get_statistics(
         )
 
         return StatisticsResult(
-            session_id=session_id,
             statistics=stats_dict,
             column_count=len(stats_dict),
             numeric_columns=list(stats_dict.keys()),
@@ -345,7 +342,6 @@ async def get_column_statistics(
         )
 
         return ColumnStatisticsResult(
-            session_id=session_id,
             column=column,
             statistics=stats_summary,
             data_type=data_type,
@@ -472,7 +468,6 @@ async def get_correlation_matrix(
         )
 
         return CorrelationResult(
-            session_id=session_id,
             method=method,
             correlation_matrix=correlation_dict,
             columns_analyzed=list(numeric_df.columns),
@@ -595,7 +590,6 @@ async def get_value_counts(
         )
 
         return ValueCountsResult(
-            session_id=session_id,
             column=column,
             value_counts=counts_dict,
             total_values=total_count,

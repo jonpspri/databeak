@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import logging
 import socket
-import tempfile
-from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -71,7 +69,6 @@ class DataPreview(BaseModel):
 class LoadResult(BaseToolResponse):
     """Response model for data loading operations."""
 
-    session_id: str = Field(description="Session identifier for subsequent operations")
     rows_affected: int = Field(description="Number of rows loaded")
     columns_affected: list[str] = Field(description="List of column names detected")
     data: DataPreview | None = Field(None, description="Sample of loaded data")
@@ -81,7 +78,6 @@ class LoadResult(BaseToolResponse):
 class ExportResult(BaseToolResponse):
     """Response model for data export operations."""
 
-    session_id: str = Field(description="Session identifier that was exported")
     file_path: str = Field(description="Path to exported file")
     format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"] = Field(
         description="Export format used"
@@ -93,7 +89,6 @@ class ExportResult(BaseToolResponse):
 class SessionInfoResult(BaseToolResponse):
     """Response model for session information."""
 
-    session_id: str = Field(description="Session identifier")
     created_at: str = Field(description="Creation timestamp (ISO format)")
     last_modified: str = Field(description="Last modification timestamp (ISO format)")
     data_loaded: bool = Field(description="Whether session has data loaded")
@@ -113,7 +108,6 @@ class SessionListResult(BaseToolResponse):
 class CloseSessionResult(BaseToolResponse):
     """Response model for session closure operations."""
 
-    session_id: str = Field(description="Session identifier that was closed")
     message: str = Field(description="Operation status message")
     data_preserved: bool = Field(description="Whether data was preserved after closure")
 
@@ -450,7 +444,6 @@ async def load_csv(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -638,7 +631,6 @@ async def load_csv_from_url(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -722,7 +714,6 @@ async def load_csv_from_content(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -742,12 +733,9 @@ async def load_csv_from_content(
 async def export_csv(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[
-        str | None, Field(description="Output file path (auto-generated if not provided)")
-    ] = None,
-    format: Annotated[
-        Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"],
-        Field(description="Export format (csv, tsv, json, excel, parquet, html, markdown)"),
-    ] = "csv",
+        str,
+        Field(description="Output file path - must be a valid path that can be parsed by Path()"),
+    ],
     encoding: Annotated[
         str, Field(description="Text encoding for output file (utf-8, latin1, cp1252, etc.)")
     ] = "utf-8",
@@ -762,9 +750,6 @@ async def export_csv(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
 
-        # Normalize format to ExportFormat enum
-        format_enum = ExportFormat(format)
-
         # Get session and validate data
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
@@ -772,125 +757,89 @@ async def export_csv(
         if not session or session.df is None:
             raise ToolError(f"Session not found or no data loaded: {session_id}")
 
-        await ctx.info(f"Exporting data in {format_enum.value} format")
+        # Validate and parse the file path
+        try:
+            path_obj = Path(file_path)
+        except Exception as path_error:
+            raise ToolError(f"Invalid file path provided: {file_path}") from path_error
+
+        # Infer format from file extension
+        suffix = path_obj.suffix.lower()
+        format_mapping = {
+            ".csv": ExportFormat.CSV,
+            ".tsv": ExportFormat.TSV,
+            ".json": ExportFormat.JSON,
+            ".xlsx": ExportFormat.EXCEL,
+            ".xls": ExportFormat.EXCEL,
+            ".parquet": ExportFormat.PARQUET,
+            ".html": ExportFormat.HTML,
+            ".htm": ExportFormat.HTML,
+            ".md": ExportFormat.MARKDOWN,
+            ".markdown": ExportFormat.MARKDOWN,
+        }
+
+        # Default to CSV if suffix not recognized
+        format_enum = format_mapping.get(suffix, ExportFormat.CSV)
+
+        await ctx.info(f"Exporting data in {format_enum.value} format to {file_path}")
         await ctx.report_progress(0.1)
 
-        # Generate file path if not provided using proper temp file handling
-        temp_file_path = None
+        # Create parent directory if it doesn't exist
+        path_obj.parent.mkdir(parents=True, exist_ok=True)
+
+        df = session.df
+        await ctx.report_progress(0.5)
+
+        # Export based on format with comprehensive options
         try:
-            if not file_path:
-                # Determine extension based on format
-                extensions = {
-                    ExportFormat.CSV: ".csv",
-                    ExportFormat.TSV: ".tsv",
-                    ExportFormat.JSON: ".json",
-                    ExportFormat.EXCEL: ".xlsx",
-                    ExportFormat.PARQUET: ".parquet",
-                    ExportFormat.HTML: ".html",
-                    ExportFormat.MARKDOWN: ".md",
-                }
+            if format_enum == ExportFormat.CSV:
+                df.to_csv(path_obj, encoding=encoding, index=index, lineterminator="\n")
+            elif format_enum == ExportFormat.TSV:
+                df.to_csv(path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n")
+            elif format_enum == ExportFormat.JSON:
+                df.to_json(path_obj, orient="records", indent=2, force_ascii=False)
+            elif format_enum == ExportFormat.EXCEL:
+                with pd.ExcelWriter(path_obj, engine="openpyxl") as writer:
+                    df.to_excel(writer, sheet_name="Data", index=index)
+            elif format_enum == ExportFormat.PARQUET:
+                df.to_parquet(path_obj, index=index, engine="pyarrow")
+            elif format_enum == ExportFormat.HTML:
+                df.to_html(path_obj, index=index, escape=False, table_id="data-table")
+            elif format_enum == ExportFormat.MARKDOWN:
+                df.to_markdown(path_obj, index=index, tablefmt="github")
+            else:
+                raise ToolError(f"Unsupported format: {format_enum}")
+        except (OSError, pd.errors.EmptyDataError, ValueError, ImportError) as export_error:
+            # Provide format-specific error guidance
+            if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
+                raise ToolError(
+                    "Excel export requires openpyxl package. Install with: pip install openpyxl"
+                ) from export_error
+            elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
+                raise ToolError(
+                    "Parquet export requires pyarrow package. Install with: pip install pyarrow"
+                ) from export_error
+            else:
+                raise ToolError(f"Export failed: {export_error}") from export_error
 
-                # Use tempfile.NamedTemporaryFile for proper temp file handling
-                timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-                prefix = f"databeak_export_{session_id[:8]}_{timestamp}_"
-                suffix = extensions[format_enum]
+        # Record operation in session history
+        session.record_operation(
+            OperationType.EXPORT,
+            {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
+        )
 
-                # Create temp file but don't delete it (we'll return the path)
-                with tempfile.NamedTemporaryFile(
-                    prefix=prefix,
-                    suffix=suffix,
-                    delete=False,
-                    dir=None,  # Use system temp directory
-                ) as temp_file:
-                    file_path = temp_file.name
-                    temp_file_path = file_path  # Track for cleanup on error
+        await ctx.report_progress(1.0)
+        await ctx.info(f"Exported {len(df)} rows to {file_path}")
 
-            path_obj = Path(file_path)
+        # Calculate file size
+        file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
 
-            # Create parent directory if it doesn't exist
-            path_obj.parent.mkdir(parents=True, exist_ok=True)
-
-            df = session.df
-
-            await ctx.report_progress(0.5)
-
-            # Export based on format with comprehensive options
-            try:
-                if format_enum == ExportFormat.CSV:
-                    df.to_csv(path_obj, encoding=encoding, index=index, lineterminator="\n")
-                elif format_enum == ExportFormat.TSV:
-                    df.to_csv(
-                        path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n"
-                    )
-                elif format_enum == ExportFormat.JSON:
-                    df.to_json(path_obj, orient="records", indent=2, force_ascii=False)
-                elif format_enum == ExportFormat.EXCEL:
-                    with pd.ExcelWriter(path_obj, engine="openpyxl") as writer:
-                        df.to_excel(writer, sheet_name="Data", index=index)
-                elif format_enum == ExportFormat.PARQUET:
-                    df.to_parquet(path_obj, index=index, engine="pyarrow")
-                elif format_enum == ExportFormat.HTML:
-                    df.to_html(path_obj, index=index, escape=False, table_id="data-table")
-                elif format_enum == ExportFormat.MARKDOWN:
-                    df.to_markdown(path_obj, index=index, tablefmt="github")
-                else:
-                    raise ToolError(f"Unsupported format: {format_enum}")
-            except Exception as export_error:
-                # Clean up temp file on export error
-                if temp_file_path and Path(temp_file_path).exists():
-                    try:
-                        Path(temp_file_path).unlink()
-                        logger.debug(f"Cleaned up temp file after export error: {temp_file_path}")
-                    except OSError as cleanup_error:
-                        logger.warning(
-                            f"Failed to clean up temp file {temp_file_path}: {cleanup_error}"
-                        )
-
-                # Provide format-specific error guidance
-                if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
-                    raise ToolError(
-                        "Excel export requires openpyxl package. Install with: pip install openpyxl"
-                    ) from export_error
-                elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
-                    raise ToolError(
-                        "Parquet export requires pyarrow package. Install with: pip install pyarrow"
-                    ) from export_error
-                else:
-                    raise ToolError(f"Export failed: {export_error}") from export_error
-
-            # Record operation in session history
-            session.record_operation(
-                OperationType.EXPORT,
-                {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
-            )
-
-            await ctx.report_progress(1.0)
-            await ctx.info(f"Exported {len(df)} rows to {file_path}")
-
-            # Calculate file size
-            file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
-
-            return ExportResult(
-                session_id=session_id,
-                file_path=str(file_path),
-                format=format_enum.value,
-                rows_exported=len(df),
-                file_size_mb=round(file_size_mb, 3),
-            )
-
-        except Exception:
-            # Clean up temp file on any other error
-            if temp_file_path and Path(temp_file_path).exists():
-                try:
-                    Path(temp_file_path).unlink()
-                    logger.debug(f"Cleaned up temp file after error: {temp_file_path}")
-                except OSError as cleanup_error:
-                    logger.warning(
-                        f"Failed to clean up temp file {temp_file_path}: {cleanup_error}"
-                    )
-
-            # Re-raise the original error
-            raise
+        return ExportResult(
+            file_path=str(file_path),
+            format=format_enum.value,
+            rows_exported=len(df),
+            file_size_mb=round(file_size_mb, 3),
+        )
 
     except Exception as e:
         logger.error(f"Failed to export data: {e}")
@@ -925,7 +874,6 @@ async def get_session_info(
         info = session.get_info()
 
         return SessionInfoResult(
-            session_id=session_id,
             created_at=info.created_at.isoformat(),
             last_modified=info.last_accessed.isoformat(),
             data_loaded=session.df is not None,
@@ -1017,7 +965,6 @@ async def close_session(
         await ctx.info(f"Closed session {session_id}")
 
         return CloseSessionResult(
-            session_id=session_id,
             message=f"Session {session_id} closed successfully",
             data_preserved=False,  # Sessions are removed, so data is not preserved
         )

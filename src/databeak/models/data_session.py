@@ -25,7 +25,7 @@ class DataSession:
         self.df: pd.DataFrame | None = None
         self.original_df: pd.DataFrame | None = None
         self.file_path: str | None = None
-        self.metadata: dict[str, Any] = {}  # type: ignore[explicit-any]  # Any justified: flexible session metadata
+        self.metadata: dict[str, Any] = {}  # Any justified: flexible session metadata
         self.created_at = datetime.now(timezone.utc)
         self.last_accessed = datetime.now(timezone.utc)
 
@@ -51,7 +51,7 @@ class DataSession:
         """Update the last accessed time."""
         self.last_accessed = datetime.now(timezone.utc)
 
-    def get_data_info(self) -> dict[str, Any]:  # type: ignore[explicit-any]  # Any justified: flexible data info
+    def get_data_info(self) -> dict[str, Any]:  # Any justified: flexible data info
         """Get information about the loaded data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
@@ -84,7 +84,7 @@ class DataSession:
         """Check if data is loaded."""
         return self.df is not None
 
-    def get_basic_stats(self) -> dict[str, Any]:  # type: ignore[explicit-any]  # Any justified: flexible stats data
+    def get_basic_stats(self) -> dict[str, Any]:  # Any justified: flexible stats data
         """Get basic statistics about the data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)

@@ -32,7 +32,7 @@ async def column_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -68,7 +68,6 @@ class TestColumnServerSelect:
         ctx = create_mock_context_with_session_data(column_session)
         result = await select_columns(ctx, columns)
 
-        assert result.session_id == column_session
         assert result.selected_columns == columns
         assert result.columns_after == expected_count
         if expected_count == 8:  # all columns case
@@ -91,7 +90,6 @@ class TestColumnServerRename:
         ctx = create_mock_context_with_session_data(column_session)
         result = await rename_columns(ctx, mapping)
 
-        assert result.session_id == column_session
         assert result.renamed == mapping
         assert "given_name" in result.columns
 
@@ -134,7 +132,6 @@ class TestColumnServerAdd:
         ctx = create_mock_context_with_session_data(column_session)
         result = await add_column(ctx, "department", "Engineering")
 
-        assert result.session_id == column_session
         assert result.operation == "add"
         assert result.columns_affected == ["department"]
         assert result.rows_affected == 4
@@ -192,7 +189,6 @@ class TestColumnServerRemove:
         ctx = create_mock_context_with_session_data(column_session)
         result = await remove_columns(ctx, ["join_date"])
 
-        assert result.session_id == column_session
         assert result.operation == "remove"
         assert result.columns_affected == ["join_date"]
         assert result.rows_affected == 4
@@ -221,7 +217,6 @@ class TestColumnServerChangeType:
         ctx = create_mock_context_with_session_data(column_session)
         result = await change_column_type(ctx, "age", "int")
 
-        assert result.session_id == column_session
         assert result.operation == "change_type_to_int"
         assert result.columns_affected == ["age"]
 

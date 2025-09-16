@@ -36,7 +36,7 @@ async def row_operations_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -197,7 +197,6 @@ class TestGetRowData:
         result = get_row_data(ctx, 0)
 
         assert result.success is True
-        assert result.session_id == row_operations_session
         assert result.row_index == 0
         assert len(result.data) == 8  # All columns
         assert "first_name" in result.data
@@ -273,7 +272,6 @@ class TestGetColumnData:
         result = get_column_data(ctx, "first_name")
 
         assert result.success is True
-        assert result.session_id == row_operations_session
         assert result.column == "first_name"
         assert result.total_values == 4
         assert result.values == ["John", "Jane", "Bob", "Alice"]

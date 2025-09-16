@@ -135,7 +135,6 @@ class SetCellResult(BaseToolResponse):
 class RowDataResult(BaseToolResponse):
     """Response model for row data operations."""
 
-    session_id: str = Field(description="Session identifier")
     row_index: int = Field(description="Row index (0-based)")
     data: dict[str, str | int | float | bool | None] = Field(
         description="Row data as column name to value mapping"
@@ -146,7 +145,6 @@ class RowDataResult(BaseToolResponse):
 class ColumnDataResult(BaseToolResponse):
     """Response model for column data operations."""
 
-    session_id: str = Field(description="Session identifier")
     column: str = Field(description="Column name")
     values: list[str | int | float | bool | None] = Field(
         description="Column values in specified range"
@@ -169,13 +167,11 @@ class InsertRowResult(BaseToolResponse):
         description="Actual data that was inserted"
     )
     columns: list[str] = Field(description="Current column names")
-    session_id: str = Field(description="Session identifier")
 
 
 class DeleteRowResult(BaseToolResponse):
     """Response model for row deletion operations."""
 
-    session_id: str = Field(description="Session identifier")
     operation: str = Field(default="delete_row", description="Operation type identifier")
     row_index: int = Field(description="Index of deleted row")
     rows_before: int = Field(description="Row count before deletion")
@@ -206,7 +202,6 @@ class UpdateRowResult(BaseToolResponse):
 class FilterOperationResult(BaseToolResponse):
     """Response model for row filtering operations."""
 
-    session_id: str = Field(description="Session identifier")
     rows_before: int = Field(description="Row count before filtering")
     rows_after: int = Field(description="Row count after filtering")
     rows_filtered: int = Field(description="Number of rows removed by filter")
@@ -216,7 +211,6 @@ class FilterOperationResult(BaseToolResponse):
 class ColumnOperationResult(BaseToolResponse):
     """Response model for column operations (add, remove, rename, etc.)."""
 
-    session_id: str = Field(description="Session identifier")
     operation: str = Field(description="Type of operation performed")
     rows_affected: int = Field(description="Number of rows affected by operation")
     columns_affected: list[str] = Field(description="Names of columns affected")
@@ -241,7 +235,6 @@ class ColumnOperationResult(BaseToolResponse):
 class SortDataResult(BaseToolResponse):
     """Response model for data sorting operations."""
 
-    session_id: str = Field(description="Session identifier")
     sorted_by: list[str] = Field(description="Column names used for sorting")
     ascending: list[bool] = Field(
         description="Sort direction for each column (True=ascending, False=descending)"

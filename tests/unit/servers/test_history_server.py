@@ -68,7 +68,6 @@ class TestHistoryOperations:
             result = await undo_operation(create_mock_context())
 
         assert isinstance(result, UndoResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.operation_undone == "filter"
         assert result.previous_operation == "sort"
@@ -142,7 +141,6 @@ class TestHistoryOperations:
             result = await redo_operation(create_mock_context())
 
         assert isinstance(result, RedoResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.operation_redone == "transform"
         assert result.next_operation == "validate"
@@ -194,7 +192,6 @@ class TestHistoryOperations:
             result = await get_history(create_mock_context(), limit=10)
 
         assert isinstance(result, HistoryResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert len(result.operations) == 2
         assert result.operations[0].operation_id == "op1"
@@ -233,7 +230,6 @@ class TestHistoryOperations:
             result = await restore_to_operation(create_mock_context(), "target_op")
 
         assert isinstance(result, RestoreResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.restored_to_operation == "target_op"
         assert result.operations_undone == 3
@@ -260,7 +256,6 @@ class TestHistoryOperations:
             result = await clear_history(create_mock_context())
 
         assert isinstance(result, ClearHistoryResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.operations_cleared == 5
         assert result.history_was_enabled is True
@@ -307,7 +302,6 @@ class TestHistoryOperations:
             result = await export_history(create_mock_context(), "/tmp/history.json", format="json")
 
         assert isinstance(result, ExportHistoryResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.file_path == "/tmp/history.json"
         assert result.format == "json"
@@ -364,7 +358,6 @@ class TestAutoSaveOperations:
             )
 
         assert isinstance(result, AutoSaveConfigResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.config.enabled is True
         assert result.config.mode == "after_operation"
@@ -456,7 +449,6 @@ class TestAutoSaveOperations:
             result = await disable_auto_save(create_mock_context())
 
         assert isinstance(result, AutoSaveDisableResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.was_enabled is True
         assert result.final_save_performed is True
@@ -518,7 +510,6 @@ class TestAutoSaveOperations:
             result = await get_auto_save_status(create_mock_context())
 
         assert isinstance(result, AutoSaveStatusResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.status.enabled is True
         assert result.status.config is not None
@@ -579,7 +570,6 @@ class TestAutoSaveOperations:
             result = await trigger_manual_save(create_mock_context())
 
         assert isinstance(result, ManualSaveResult)
-        assert result.session_id == "test_session"
         assert result.success is True
         assert result.save_path == "/tmp/manual_save.csv"
         assert result.format == "csv"

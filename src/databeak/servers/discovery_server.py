@@ -34,13 +34,14 @@ from ..models.tool_responses import (
     DataTypeInfo,
     MissingDataInfo,
 )
+from ..models.typed_dicts import DataPreviewResult
 
 # Import data operations function directly to avoid dependency issues
 try:
     from ..services.data_operations import create_data_preview_with_indices
 except ImportError:
     # Fallback implementation for create_data_preview_with_indices
-    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> dict[str, Any]:
+    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> DataPreviewResult:
         """Fallback implementation for data preview creation."""
         records = []
         preview_rows = min(num_rows, len(df))
@@ -66,6 +67,7 @@ except ImportError:
             "records": records,
             "total_rows": len(df),
             "total_columns": len(df.columns),
+            "columns": list(df.columns.astype(str)),
             "preview_rows": preview_rows,
         }
 
@@ -113,7 +115,6 @@ class GroupStatistics(BaseModel):
 class OutliersResult(BaseToolResponse):
     """Response model for outlier detection analysis."""
 
-    session_id: str = Field(description="Session identifier")
     outliers_found: int = Field(description="Total number of outliers detected")
     outliers_by_column: dict[str, list[OutlierInfo]] = Field(
         description="Outliers grouped by column name"
@@ -127,7 +128,6 @@ class OutliersResult(BaseToolResponse):
 class ProfileResult(BaseToolResponse):
     """Response model for comprehensive data profiling."""
 
-    session_id: str
     profile: dict[str, ProfileInfo]
     total_rows: int
     total_columns: int
@@ -139,7 +139,6 @@ class ProfileResult(BaseToolResponse):
 class GroupAggregateResult(BaseToolResponse):
     """Response model for group aggregation operations."""
 
-    session_id: str
     groups: dict[str, GroupStatistics]
     group_by_columns: list[str]
     aggregated_columns: list[str]
@@ -149,7 +148,6 @@ class GroupAggregateResult(BaseToolResponse):
 class DataSummaryResult(BaseToolResponse):
     """Response model for data overview and summary."""
 
-    session_id: str
     coordinate_system: dict[str, str]
     shape: dict[str, int]
     columns: dict[str, DataTypeInfo]
@@ -162,7 +160,6 @@ class DataSummaryResult(BaseToolResponse):
 class FindCellsResult(BaseToolResponse):
     """Response model for cell value search operations."""
 
-    session_id: str
     search_value: CsvCellValue
     matches_found: int
     coordinates: list[CellLocation]
@@ -173,7 +170,6 @@ class FindCellsResult(BaseToolResponse):
 class InspectDataResult(BaseToolResponse):
     """Response model for contextual data inspection."""
 
-    session_id: str
     center_coordinates: dict[str, Any]
     surrounding_data: DataPreview
     radius: int
@@ -363,7 +359,6 @@ async def detect_outliers(
             pydantic_method = "isolation_forest"
 
         return OutliersResult(
-            session_id=session_id,
             outliers_found=total_outliers_count,
             outliers_by_column=outliers_by_column,
             method=cast("Literal['zscore', 'iqr', 'isolation_forest']", pydantic_method),
@@ -483,7 +478,6 @@ async def profile_data(
         )
 
         return ProfileResult(
-            session_id=session_id,
             profile=profile_dict,
             total_rows=len(df),
             total_columns=len(df.columns),
@@ -612,7 +606,6 @@ async def group_by_aggregate(
         )
 
         return GroupAggregateResult(
-            session_id=session_id,
             groups=group_stats,
             group_by_columns=group_by,
             aggregated_columns=agg_cols,
@@ -733,7 +726,6 @@ async def find_cells_with_value(
                 )
 
         return FindCellsResult(
-            session_id=session_id,
             search_value=value,
             matches_found=len(matches),
             coordinates=matches,
@@ -878,7 +870,6 @@ async def get_data_summary(
         memory_usage_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
 
         return DataSummaryResult(
-            session_id=session_id,
             coordinate_system=coordinate_system,
             shape=shape,
             columns=columns_info,
@@ -1004,7 +995,6 @@ async def inspect_data_around(
         )
 
         return InspectDataResult(
-            session_id=session_id,
             center_coordinates={"row": row, "column": column_name},
             surrounding_data=surrounding_data,
             radius=radius,

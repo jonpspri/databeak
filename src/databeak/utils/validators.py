@@ -252,7 +252,7 @@ def sanitize_filename(filename: str) -> str:
 
 
 # Implementation: Pandas NA to None conversion for Pydantic compatibility
-def convert_pandas_na_to_none(value: Any) -> CellValue:  # type: ignore[explicit-any]  # Any input: pandas can contain any type
+def convert_pandas_na_to_none(value: Any) -> CellValue:  # Any input: pandas can contain any type
     """Convert pandas NA values to Python None for serialization."""
     import pandas as pd
 
@@ -263,6 +263,8 @@ def convert_pandas_na_to_none(value: Any) -> CellValue:  # type: ignore[explicit
 
 
 # Implementation: List processing for pandas NA to None conversion
-def convert_pandas_na_list(values: list[Any]) -> list[CellValue]:  # type: ignore[explicit-any]  # Any input: pandas can contain any type
+def convert_pandas_na_list(
+    values: list[Any],
+) -> list[CellValue]:  # Any input: pandas can contain any type
     """Convert list of pandas NA values to Python None."""
     return [convert_pandas_na_to_none(val) for val in values]

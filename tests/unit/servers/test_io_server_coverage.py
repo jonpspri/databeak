@@ -170,17 +170,18 @@ class TestCloseSession:
         """Test successfully closing a session."""
         # Create a session first
         csv_content = "col1,col2\n1,2"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Close the session
-        result = await close_session(create_mock_context(load_result.session_id))
+        result = await close_session(create_mock_context(session_id))
 
         assert result.success is True
-        assert result.session_id == load_result.session_id
 
         # Verify session is closed
         with pytest.raises(ToolError, match="Failed to get session info"):
-            await get_session_info(create_mock_context(load_result.session_id))
+            await get_session_info(create_mock_context(session_id))
 
     @pytest.mark.skip(reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs disentangling from other tests")
     async def test_close_session_not_found(self):
@@ -192,13 +193,15 @@ class TestCloseSession:
         """Test closing session with context reporting."""
         # Create a session
         csv_content = "col1,col2\n1,2"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Mock context with async method
         from unittest.mock import AsyncMock
 
         mock_ctx = MagicMock()
-        mock_ctx.session_id = load_result.session_id
+        mock_ctx.session_id = session_id
         mock_ctx.info = AsyncMock(return_value=None)
 
         # Close with context
@@ -216,14 +219,16 @@ class TestExportCsvAdvanced:
         """Test exporting as TSV (tab-separated)."""
         # Create session with data
         csv_content = "name,value,category\ntest1,100,A\ntest2,200,B"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".tsv", delete=False) as f:
             temp_path = f.name
 
         try:
             result = await export_csv(
-                create_mock_context(load_result.session_id), file_path=temp_path, format="tsv"
+                create_mock_context(session_id), file_path=temp_path
             )
 
             assert result.success is True
@@ -243,14 +248,16 @@ class TestExportCsvAdvanced:
         csv_content = (
             'name,description\n"Smith, John","He said ""Hello"""\n"Doe, Jane","Normal text"'
         )
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             temp_path = f.name
 
         try:
             result = await export_csv(
-                create_mock_context(load_result.session_id), file_path=temp_path
+                create_mock_context(session_id), file_path=temp_path
             )
 
             assert result.success is True
@@ -265,7 +272,9 @@ class TestExportCsvAdvanced:
     async def test_export_csv_create_directory(self):
         """Test export creates directory if it doesn't exist."""
         csv_content = "col1,col2\n1,2"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Use a directory that doesn't exist
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -273,7 +282,7 @@ class TestExportCsvAdvanced:
             file_path = new_dir / "export.csv"
 
             result = await export_csv(
-                create_mock_context(load_result.session_id), file_path=str(file_path)
+                create_mock_context(session_id), file_path=str(file_path)
             )
 
             assert result.success is True
@@ -316,11 +325,13 @@ class TestLoadCsvFromContentEdgeCases:
     async def test_load_csv_from_content_with_index(self):
         """Test that data is loaded correctly."""
         csv_content = "id,name,value\n1,test1,100\n2,test2,200"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         assert result.rows_affected == 2
         assert result.columns_affected == ["id", "name", "value"]
         # Verify the session has data
-        info = await get_session_info(create_mock_context(result.session_id))
+        info = await get_session_info(create_mock_context(session_id))
         assert info.row_count == 2
         assert info.column_count == 3

@@ -190,7 +190,6 @@ def filter_rows(
         )
 
         return FilterOperationResult(
-            session_id=session_id,
             rows_before=rows_before,
             rows_after=rows_after,
             rows_filtered=rows_before - rows_after,
@@ -293,7 +292,6 @@ def sort_data(
         )
 
         return SortDataResult(
-            session_id=session_id,
             sorted_by=sort_columns,
             ascending=ascending,
             rows_processed=len(df),
@@ -381,7 +379,6 @@ def remove_duplicates(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="remove_duplicates",
             rows_affected=rows_after,
             columns_affected=subset if subset else df.columns.tolist(),
@@ -526,7 +523,6 @@ def fill_missing_values(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="fill_missing_values",
             rows_affected=rows_after,
             columns_affected=target_cols,

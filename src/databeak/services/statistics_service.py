@@ -50,7 +50,6 @@ class StatisticsService(SessionService):
             if numeric_df.empty:
                 # Return basic statistics for empty numeric data
                 return StatisticsResult(
-                    session_id=session_id,
                     statistics={},
                     column_count=0,
                     numeric_columns=[],
@@ -88,7 +87,6 @@ class StatisticsService(SessionService):
             )
 
             return StatisticsResult(
-                session_id=session_id,
                 statistics=stats,
                 column_count=len(stats),
                 numeric_columns=list(stats.keys()),
@@ -186,7 +184,6 @@ class StatisticsService(SessionService):
             )
 
             return ColumnStatisticsResult(
-                session_id=session_id,
                 column=column,
                 statistics=statistics,
                 data_type=mapped_dtype,
@@ -256,7 +253,6 @@ class StatisticsService(SessionService):
             )
 
             return CorrelationResult(
-                session_id=session_id,
                 correlation_matrix=correlations,
                 method=method,
                 columns_analyzed=list(corr_matrix.columns),
@@ -324,7 +320,6 @@ class StatisticsService(SessionService):
             )
 
             return ValueCountsResult(
-                session_id=session_id,
                 column=column,
                 value_counts=counts_dict,
                 total_values=len(df),
