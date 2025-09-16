@@ -31,7 +31,7 @@ Alice Brown,alice@example.com,555.444.5555,321 Elm Dr. Houston TX,   needs impro
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -43,7 +43,6 @@ class TestColumnTextServerReplace:
         ctx = create_mock_context_with_session_data(text_session)
         result = await replace_in_column(ctx, "phone", r"[^\d]", "", regex=True)
 
-        assert result.session_id == text_session
         assert result.operation == "replace_pattern"
         assert result.columns_affected == ["phone"]
         assert result.rows_affected == 4

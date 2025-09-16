@@ -26,7 +26,7 @@ async def update_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 class TestUpdateColumnDiscriminatedUnions:

@@ -255,19 +255,19 @@ class TestIntegrationWithSessions:
             temp_path = f.name
 
         try:
-            result = await load_csv(create_mock_context(), temp_path)
+            ctx = create_mock_context()
+            result = await load_csv(ctx, temp_path)
             assert result.success
-            assert result.session_id is not None
             assert result.rows_affected == 2
 
             # Verify session exists and has data
-            session_info = await get_session_info(create_mock_context(result.session_id))
+            session_info = await get_session_info(create_mock_context(ctx.session_id))
             assert session_info.data_loaded
             assert session_info.row_count == 2
             assert session_info.column_count == 2
 
             # Clean up session
-            await close_session(create_mock_context(result.session_id))
+            await close_session(create_mock_context(ctx.session_id))
         finally:
             Path(temp_path).unlink()
 
@@ -279,8 +279,9 @@ class TestIntegrationWithSessions:
             temp_path1 = f.name
 
         try:
-            result1 = await load_csv(create_mock_context(), temp_path1)
-            session_id = result1.session_id
+            ctx1 = create_mock_context()
+            result1 = await load_csv(ctx1, temp_path1)
+            session_id = ctx1.session_id
 
             # Second load into same session
             with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -289,7 +290,6 @@ class TestIntegrationWithSessions:
 
             try:
                 result2 = await load_csv(create_mock_context(session_id), temp_path2)
-                assert result2.session_id == session_id
                 assert result2.rows_affected == 2
 
                 # Verify session now has the new data
@@ -309,8 +309,9 @@ class TestIntegrationWithSessions:
         """Test complete session lifecycle: create, use, export, close."""
         # Load data
         content = "name,age,salary\nAlice,25,50000\nBob,30,60000\nCharlie,35,70000"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Get session info
@@ -325,7 +326,6 @@ class TestIntegrationWithSessions:
 
             # Export the data
             export_result = await export_csv(create_mock_context(session_id), format="json")
-            assert export_result.session_id == session_id
             assert export_result.rows_exported == 3
             assert Path(export_result.file_path).exists()
 
@@ -335,7 +335,6 @@ class TestIntegrationWithSessions:
         finally:
             # Close session
             close_result = await close_session(create_mock_context(session_id))
-            assert close_result.session_id == session_id
             assert not close_result.data_preserved
 
 
@@ -348,8 +347,9 @@ class TestTempFileCleanup:
         """Test temp file cleanup when export format fails."""
         # Load some data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Mock pandas to_excel to raise an error
@@ -377,9 +377,10 @@ class TestTempFileCleanup:
     @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
     async def test_export_csv_temp_file_naming(self):
         """Test temp file naming patterns and uniqueness."""
+        ctx = create_mock_context()
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
 
         try:
             # Export multiple times to check uniqueness
@@ -495,8 +496,9 @@ class TestExportFormats:
     async def session_with_data(self):
         """Create session with test data."""
         content = "name,age,salary,active\nAlice,25,50000,true\nBob,30,60000,false"
-        result = await load_csv_from_content(create_mock_context(), content)
-        yield result.session_id
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, content)
+        yield ctx.session_id
         try:
             await close_session(create_mock_context())
         except Exception as e:
@@ -765,7 +767,7 @@ class TestProgressReporting:
             mock_ctx.report_progress.assert_called()
         finally:
             Path(temp_path).unlink()
-            await close_session(create_mock_context(result.session_id))
+            await close_session(mock_ctx)
 
     @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
     async def test_export_csv_with_context(self):
@@ -774,8 +776,9 @@ class TestProgressReporting:
 
         # Load data first
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(create_mock_context(), content)
-        session_id = load_result.session_id
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, content)
+        session_id = ctx.session_id
         mock_ctx.session_id = session_id
 
         try:

@@ -71,7 +71,6 @@ class DataPreview(BaseModel):
 class LoadResult(BaseToolResponse):
     """Response model for data loading operations."""
 
-    session_id: str = Field(description="Session identifier for subsequent operations")
     rows_affected: int = Field(description="Number of rows loaded")
     columns_affected: list[str] = Field(description="List of column names detected")
     data: DataPreview | None = Field(None, description="Sample of loaded data")
@@ -81,7 +80,6 @@ class LoadResult(BaseToolResponse):
 class ExportResult(BaseToolResponse):
     """Response model for data export operations."""
 
-    session_id: str = Field(description="Session identifier that was exported")
     file_path: str = Field(description="Path to exported file")
     format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"] = Field(
         description="Export format used"
@@ -93,7 +91,6 @@ class ExportResult(BaseToolResponse):
 class SessionInfoResult(BaseToolResponse):
     """Response model for session information."""
 
-    session_id: str = Field(description="Session identifier")
     created_at: str = Field(description="Creation timestamp (ISO format)")
     last_modified: str = Field(description="Last modification timestamp (ISO format)")
     data_loaded: bool = Field(description="Whether session has data loaded")
@@ -113,7 +110,6 @@ class SessionListResult(BaseToolResponse):
 class CloseSessionResult(BaseToolResponse):
     """Response model for session closure operations."""
 
-    session_id: str = Field(description="Session identifier that was closed")
     message: str = Field(description="Operation status message")
     data_preserved: bool = Field(description="Whether data was preserved after closure")
 
@@ -450,7 +446,6 @@ async def load_csv(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -638,7 +633,6 @@ async def load_csv_from_url(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -722,7 +716,6 @@ async def load_csv_from_content(
         )
 
         return LoadResult(
-            session_id=session.session_id,
             rows_affected=len(df),
             columns_affected=[str(col) for col in df.columns],
             data=data_preview,
@@ -871,7 +864,6 @@ async def export_csv(
             file_size_mb = path_obj.stat().st_size / (1024 * 1024) if path_obj.exists() else 0
 
             return ExportResult(
-                session_id=session_id,
                 file_path=str(file_path),
                 format=format_enum.value,
                 rows_exported=len(df),
@@ -925,7 +917,6 @@ async def get_session_info(
         info = session.get_info()
 
         return SessionInfoResult(
-            session_id=session_id,
             created_at=info.created_at.isoformat(),
             last_modified=info.last_accessed.isoformat(),
             data_loaded=session.df is not None,
@@ -1017,7 +1008,6 @@ async def close_session(
         await ctx.info(f"Closed session {session_id}")
 
         return CloseSessionResult(
-            session_id=session_id,
             message=f"Session {session_id} closed successfully",
             data_preserved=False,  # Sessions are removed, so data is not preserved
         )

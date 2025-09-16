@@ -36,16 +36,18 @@ class TestSessionManagement:
         """Test listing sessions with active sessions."""
         # Create a session with data
         csv_content = "col1,col2\n1,2\n3,4"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         result = await list_sessions(create_mock_context())
 
         assert result.total_sessions >= 1
         assert result.active_sessions >= 1
-        assert any(s.session_id == load_result.session_id for s in result.sessions)
+        assert any(s.session_id == session_id for s in result.sessions)
 
         # Check session info details
-        session_info = next(s for s in result.sessions if s.session_id == load_result.session_id)
+        session_info = next(s for s in result.sessions if s.session_id == session_id)
         assert session_info.row_count == 2
         assert session_info.column_count == 2
         assert session_info.columns == ["col1", "col2"]
@@ -54,12 +56,13 @@ class TestSessionManagement:
         """Test getting info for a valid session."""
         # Create a session
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
-        info = await get_session_info(create_mock_context(load_result.session_id))
+        info = await get_session_info(create_mock_context(session_id))
 
         assert info.success is True
-        assert info.session_id == load_result.session_id
         assert info.data_loaded is True
         assert info.row_count == 1
         assert info.column_count == 2
@@ -139,14 +142,16 @@ class TestExportFunctionality:
         """Test basic CSV export."""
         # Create a session with data
         csv_content = "name,value\ntest1,100\ntest2,200"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Export to a temporary file
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             export_result = await export_csv(
-                create_mock_context(load_result.session_id), file_path=tmp.name
+                create_mock_context(session_id), file_path=tmp.name
             )
 
             assert export_result.success is True
@@ -166,13 +171,15 @@ class TestExportFunctionality:
     async def test_export_csv_with_subset(self):
         """Test exporting a subset of columns."""
         csv_content = "col1,col2,col3,col4\n1,2,3,4\n5,6,7,8"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             export_result = await export_csv(
-                create_mock_context(load_result.session_id), file_path=tmp.name
+                create_mock_context(session_id), file_path=tmp.name
             )
 
             assert export_result.rows_exported == 2
@@ -229,8 +236,10 @@ class TestMemoryAndPerformance:
         """Test that memory usage is tracked."""
         csv_content = "col1,col2,col3\n" + "\n".join(f"{i},{i + 1},{i + 2}" for i in range(100))
 
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
-        info = await get_session_info(create_mock_context(load_result.session_id))
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
+        info = await get_session_info(create_mock_context(session_id))
 
         # SessionInfoResult doesn't have memory_usage_mb field
         # Just check that session has data loaded

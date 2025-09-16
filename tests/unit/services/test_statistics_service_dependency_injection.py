@@ -46,7 +46,6 @@ class TestStatisticsServiceDependencyInjection:
         result = await self.statistics_service.get_statistics(self.session_id)
 
         # Assert
-        assert result.session_id == self.session_id
         assert result.total_rows == 7
         assert len(result.statistics) == 2  # Only numeric columns
         assert "numeric_col" in result.statistics
@@ -79,7 +78,6 @@ class TestStatisticsServiceDependencyInjection:
         result = await self.statistics_service.get_column_statistics(self.session_id, "numeric_col")
 
         # Assert
-        assert result.session_id == self.session_id
         assert result.column == "numeric_col"
         assert result.data_type == "int64"
         assert result.non_null_count == 7
@@ -92,7 +90,6 @@ class TestStatisticsServiceDependencyInjection:
         result = await self.statistics_service.get_correlation_matrix(self.session_id)
 
         # Assert
-        assert result.session_id == self.session_id
         assert result.method == "pearson"
         assert len(result.columns_analyzed) == 2
         assert "numeric_col" in result.correlation_matrix
@@ -105,7 +102,6 @@ class TestStatisticsServiceDependencyInjection:
         result = await self.statistics_service.get_value_counts(self.session_id, "text_col")
 
         # Assert
-        assert result.session_id == self.session_id
         assert result.column == "text_col"
         assert result.total_values == 7
         assert result.unique_values == 4  # A, B, C, D

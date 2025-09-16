@@ -97,13 +97,10 @@ class TestDataOperations:
             create_mock_context(), content=csv_content, delimiter=","
         )
 
-        assert result.session_id is not None
         assert result.rows_affected == 2
         assert len(result.columns_affected) == 3
 
-        # Cleanup
-        manager = get_session_manager()
-        await manager.remove_session(result.session_id)
+        # Note: LoadResult no longer contains session_id, cleanup handled by session manager
 
     async def test_filter_rows(self, test_session) -> None:
         """Test filtering rows."""

@@ -36,7 +36,7 @@ async def validation_test_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -49,7 +49,7 @@ async def clean_test_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -70,7 +70,7 @@ async def problematic_test_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -474,7 +474,7 @@ class TestValidationEdgeCases:
 
         ctx = create_mock_context()
         result = await load_csv_from_content(ctx, numeric_csv)
-        session_id = result.session_id
+        session_id = ctx.session_id
 
         ctx_with_data = create_mock_context_with_session_data(session_id)
         anomaly_result = find_anomalies(ctx_with_data, methods=["statistical"])
@@ -492,7 +492,7 @@ D,Another normal,active"""
 
         ctx = create_mock_context()
         result = await load_csv_from_content(ctx, string_csv)
-        session_id = result.session_id
+        session_id = ctx.session_id
 
         ctx_with_data = create_mock_context_with_session_data(session_id)
         anomaly_result = find_anomalies(ctx_with_data, methods=["pattern"])

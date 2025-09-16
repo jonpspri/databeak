@@ -423,12 +423,10 @@ class TestLoadResult:
     def test_valid_creation_minimal(self):
         """Test valid LoadResult creation with minimal required fields."""
         result = LoadResult(
-            session_id="test-123",
             rows_affected=100,
             columns_affected=["id", "name", "age"],
         )
         assert result.success is True
-        assert result.session_id == "test-123"
         assert result.rows_affected == 100
         assert len(result.columns_affected) == 3
         assert result.data is None  # Optional field
@@ -442,7 +440,6 @@ class TestLoadResult:
             column_count=2,
         )
         result = LoadResult(
-            session_id="test-456",
             rows_affected=50,
             columns_affected=["id", "name"],
             data=preview,
@@ -454,14 +451,13 @@ class TestLoadResult:
     def test_missing_required_fields(self):
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            LoadResult(session_id="test-123")  # Missing rows_affected, columns_affected
+            LoadResult()  # Missing rows_affected, columns_affected
         assert "Field required" in str(exc_info.value)
 
     def test_invalid_field_types(self):
         """Test invalid field types raise ValidationError."""
         with pytest.raises(ValidationError):
             LoadResult(
-                session_id="test-123",
                 rows_affected="not_an_int",  # Should be int
                 columns_affected=["col1"],
             )
@@ -469,7 +465,6 @@ class TestLoadResult:
     def test_serialization_roundtrip(self):
         """Test serialization and deserialization preserves data."""
         original = LoadResult(
-            session_id="test-789",
             rows_affected=75,
             columns_affected=["a", "b", "c"],
             memory_usage_mb=2.0,
@@ -488,13 +483,12 @@ class TestLoadResult:
     def test_extra_fields_ignored(self):
         """Test extra fields are ignored during creation."""
         data = {
-            "session_id": "test-123",
             "rows_affected": 100,
             "columns_affected": ["id"],
             "extra_field": "should_be_ignored",
         }
         result = LoadResult(**data)
-        assert result.session_id == "test-123"
+        assert result.rows_affected == 100
         # Extra field should not cause an error (Pydantic ignores by default)
 
 
@@ -504,7 +498,6 @@ class TestSessionInfoResult:
     def test_valid_creation(self):
         """Test valid SessionInfoResult creation."""
         result = SessionInfoResult(
-            session_id="session-123",
             created_at="2023-01-01T10:00:00Z",
             last_modified="2023-01-01T10:30:00Z",
             data_loaded=True,
@@ -512,14 +505,12 @@ class TestSessionInfoResult:
             column_count=5,
             auto_save_enabled=True,
         )
-        assert result.session_id == "session-123"
         assert result.data_loaded is True
         assert result.row_count == 100
 
     def test_optional_count_fields(self):
         """Test optional count fields can be None."""
         result = SessionInfoResult(
-            session_id="session-456",
             created_at="2023-01-01T10:00:00Z",
             last_modified="2023-01-01T10:30:00Z",
             data_loaded=False,
@@ -601,11 +592,9 @@ class TestCloseSessionResult:
     def test_valid_creation(self):
         """Test valid CloseSessionResult creation."""
         result = CloseSessionResult(
-            session_id="close-123",
             message="Session closed successfully",
             data_preserved=True,
         )
-        assert result.session_id == "close-123"
         assert result.data_preserved is True
 
 
@@ -632,13 +621,11 @@ class TestStatisticsResult:
             )
         }
         result = StatisticsResult(
-            session_id="stats-123",
             statistics=stats,
             column_count=1,
             numeric_columns=["age"],
             total_rows=100,
         )
-        assert result.session_id == "stats-123"
         assert "age" in result.statistics
         assert result.statistics["age"].mean == 35.5
 
@@ -667,7 +654,6 @@ class TestStatisticsResult:
             ),
         }
         result = StatisticsResult(
-            session_id="multi-stats",
             statistics=stats,
             column_count=2,
             numeric_columns=["age", "salary"],
@@ -687,7 +673,6 @@ class TestCorrelationResult:
             "salary": {"age": 0.75, "salary": 1.0},
         }
         result = CorrelationResult(
-            session_id="corr-123",
             correlation_matrix=matrix,
             method="pearson",
             columns_analyzed=["age", "salary"],
@@ -700,7 +685,6 @@ class TestCorrelationResult:
         matrix = {"a": {"a": 1.0}}
         for method in ["pearson", "spearman", "kendall"]:
             result = CorrelationResult(
-                session_id="test",
                 correlation_matrix=matrix,
                 method=method,
                 columns_analyzed=["a"],
@@ -711,7 +695,6 @@ class TestCorrelationResult:
         """Test invalid correlation method raises ValidationError."""
         with pytest.raises(ValidationError):
             CorrelationResult(
-                session_id="test",
                 correlation_matrix={"a": {"a": 1.0}},
                 method="invalid_method",
                 columns_analyzed=["a"],
@@ -724,7 +707,6 @@ class TestValueCountsResult:
     def test_valid_creation(self):
         """Test valid ValueCountsResult creation."""
         result = ValueCountsResult(
-            session_id="counts-123",
             column="status",
             value_counts={"active": 75, "inactive": 25},
             total_values=100,
@@ -736,7 +718,6 @@ class TestValueCountsResult:
     def test_mixed_value_types(self):
         """Test ValueCountsResult with mixed value types."""
         result = ValueCountsResult(
-            session_id="mixed-counts",
             column="mixed",
             value_counts={"text": 10, "123": 5, "true": 3},
             total_values=18,
@@ -757,7 +738,6 @@ class TestOutliersResult:
             ]
         }
         result = OutliersResult(
-            session_id="outliers-123",
             outliers_found=2,
             outliers_by_column=outliers,
             method="zscore",
@@ -771,7 +751,6 @@ class TestOutliersResult:
         outliers = {"col": [OutlierInfo(row_index=0, value=100.0)]}
         for method in ["zscore", "iqr", "isolation_forest"]:
             result = OutliersResult(
-                session_id="test",
                 outliers_found=1,
                 outliers_by_column=outliers,
                 method=method,
@@ -796,7 +775,6 @@ class TestColumnStatisticsResult:
             max=70.0,
         )
         result = ColumnStatisticsResult(
-            session_id="col-stats-123",
             column="age",
             statistics=stats,
             data_type="int64",
@@ -820,7 +798,6 @@ class TestColumnStatisticsResult:
         )
         for dtype in ["int64", "float64", "object", "bool", "datetime64", "category"]:
             result = ColumnStatisticsResult(
-                session_id="test",
                 column="test_col",
                 statistics=stats,
                 data_type=dtype,
@@ -885,7 +862,6 @@ class TestInsertRowResult:
             rows_after=51,
             data_inserted={"col": "value"},
             columns=["col"],
-            session_id="test",
         )
         assert result.operation == "insert_row"
 
@@ -935,13 +911,11 @@ class TestFilterOperationResult:
     def test_valid_creation(self):
         """Test valid FilterOperationResult creation."""
         result = FilterOperationResult(
-            session_id="filter-123",
             rows_before=1000,
             rows_after=750,
             rows_filtered=250,
             conditions_applied=2,
         )
-        assert result.session_id == "filter-123"
         assert result.rows_before == 1000
         assert result.rows_after == 750
         assert result.rows_filtered == 250
@@ -950,7 +924,6 @@ class TestFilterOperationResult:
     def test_calculated_fields_consistency(self):
         """Test that filter counts are logically consistent."""
         result = FilterOperationResult(
-            session_id="consistency-test",
             rows_before=100,
             rows_after=60,
             rows_filtered=40,
@@ -963,7 +936,6 @@ class TestFilterOperationResult:
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError):
             FilterOperationResult(
-                session_id="test",
                 rows_before=100,
                 # Missing other required fields
             )
@@ -972,7 +944,6 @@ class TestFilterOperationResult:
         """Test validation handles negative values appropriately."""
         # This should work (though logically odd)
         result = FilterOperationResult(
-            session_id="negative-test",
             rows_before=0,
             rows_after=0,
             rows_filtered=0,
@@ -987,12 +958,10 @@ class TestColumnOperationResult:
     def test_valid_creation_minimal(self):
         """Test valid ColumnOperationResult creation with minimal fields."""
         result = ColumnOperationResult(
-            session_id="col-op-123",
             operation="add_column",
             rows_affected=100,
             columns_affected=["new_column"],
         )
-        assert result.session_id == "col-op-123"
         assert result.operation == "add_column"
         assert result.rows_affected == 100
         assert result.columns_affected == ["new_column"]
@@ -1006,7 +975,6 @@ class TestColumnOperationResult:
     def test_valid_creation_with_all_fields(self):
         """Test valid ColumnOperationResult creation with all optional fields."""
         result = ColumnOperationResult(
-            session_id="full-col-op",
             operation="transform_column",
             rows_affected=50,
             columns_affected=["transformed_col"],
@@ -1025,7 +993,6 @@ class TestColumnOperationResult:
     def test_mixed_sample_types(self):
         """Test ColumnOperationResult with mixed types in samples."""
         result = ColumnOperationResult(
-            session_id="mixed-types",
             operation="clean_column",
             rows_affected=25,
             columns_affected=["mixed_col"],
@@ -1040,7 +1007,6 @@ class TestColumnOperationResult:
     def test_serialization_with_optional_fields(self):
         """Test serialization handles optional fields correctly."""
         result = ColumnOperationResult(
-            session_id="serialize-test",
             operation="remove_column",
             rows_affected=100,
             columns_affected=["removed_col"],
@@ -1069,7 +1035,6 @@ class TestComprehensiveEdgeCases:
         """Test models handle empty collections appropriately."""
         # Empty columns list
         result = LoadResult(
-            session_id="empty-test",
             rows_affected=0,
             columns_affected=[],
         )
@@ -1077,7 +1042,6 @@ class TestComprehensiveEdgeCases:
 
         # Empty statistics dict
         stats_result = StatisticsResult(
-            session_id="empty-stats",
             statistics={},
             column_count=0,
             numeric_columns=[],
@@ -1088,17 +1052,14 @@ class TestComprehensiveEdgeCases:
     def test_unicode_and_special_characters(self):
         """Test models handle Unicode and special characters."""
         result = LoadResult(
-            session_id="unicode-测试-🔥",
             rows_affected=1,
             columns_affected=["名前", "年齢", "email@domain"],
         )
-        assert "测试" in result.session_id
         assert "名前" in result.columns_affected
 
     def test_very_large_numbers(self):
         """Test models handle very large numbers."""
         result = FilterOperationResult(
-            session_id="large-numbers",
             rows_before=999999999,
             rows_after=999999998,
             rows_filtered=1,
@@ -1110,7 +1071,6 @@ class TestComprehensiveEdgeCases:
         """Test JSON serialization handles edge cases."""
         # Model with None values
         result = SessionInfoResult(
-            session_id="json-test",
             created_at="2023-01-01T10:00:00Z",
             last_modified="2023-01-01T10:30:00Z",
             data_loaded=False,
@@ -1129,7 +1089,6 @@ class TestComprehensiveEdgeCases:
         """Test all models handle extra fields appropriately."""
         # Test with LoadResult (critical model)
         data_with_extra = {
-            "session_id": "extra-test",
             "rows_affected": 50,
             "columns_affected": ["col1"],
             "unknown_field": "should_be_ignored",
@@ -1137,7 +1096,7 @@ class TestComprehensiveEdgeCases:
         }
 
         result = LoadResult(**data_with_extra)
-        assert result.session_id == "extra-test"
+        assert result.rows_affected == 50
         # Should not have extra fields as attributes
         assert not hasattr(result, "unknown_field")
 
@@ -1173,7 +1132,6 @@ class TestComprehensiveEdgeCases:
         """Test BaseToolResponse inheritance behavior."""
         # All response models should inherit from BaseToolResponse
         result = LoadResult(
-            session_id="inherit-test",
             rows_affected=10,
             columns_affected=["col1"],
         )
@@ -1185,7 +1143,6 @@ class TestComprehensiveEdgeCases:
         # Should be able to override success
         result_with_failure = LoadResult(
             success=False,
-            session_id="fail-test",
             rows_affected=0,
             columns_affected=[],
         )
@@ -1208,12 +1165,10 @@ class TestSortDataResult:
     ):
         """Test SortDataResult creation with various configurations."""
         result = SortDataResult(
-            session_id=session_id,
             sorted_by=sorted_by,
             ascending=ascending,
             rows_processed=rows_processed,
         )
-        assert result.session_id == session_id
         assert result.sorted_by == sorted_by
         assert result.ascending == ascending
         assert result.rows_processed == rows_processed
@@ -1222,7 +1177,6 @@ class TestSortDataResult:
     def test_serialization_roundtrip(self):
         """Test serialization and deserialization."""
         original = SortDataResult(
-            session_id="serialize-test",
             sorted_by=["col1", "col2"],
             ascending=[False, True],
             rows_processed=25,

@@ -71,8 +71,6 @@ class ValidationSummary(BaseModel):
 
 class ValidateSchemaResult(BaseModel):
     """Response model for schema validation operations."""
-
-    session_id: str = Field(description="Session identifier")
     valid: bool = Field(description="Whether validation passed overall")
     errors: list[ValidationError] = Field(description="All validation errors found")
     summary: ValidationSummary = Field(description="Summary of validation results")
@@ -125,8 +123,6 @@ class QualityResults(BaseModel):
 
 class DataQualityResult(BaseModel):
     """Response model for data quality check operations."""
-
-    session_id: str = Field(description="Session identifier")
     quality_results: QualityResults = Field(description="Comprehensive quality assessment results")
 
 
@@ -210,8 +206,6 @@ class AnomalyResults(BaseModel):
 
 class FindAnomaliesResult(BaseModel):
     """Response model for anomaly detection operations."""
-
-    session_id: str = Field(description="Session identifier")
     anomalies: AnomalyResults = Field(description="Comprehensive anomaly detection results")
     columns_analyzed: list[str] = Field(
         description="Names of columns that were analyzed for anomalies"
@@ -600,7 +594,6 @@ def validate_schema(
             all_errors.extend(error_list)
 
         return ValidateSchemaResult(
-            session_id=session_id,
             valid=is_valid,
             errors=all_errors,
             summary=validation_summary,
@@ -948,7 +941,6 @@ def check_data_quality(
         )
 
         return DataQualityResult(
-            session_id=session_id,
             quality_results=quality_results,
         )
 
@@ -1211,7 +1203,6 @@ def find_anomalies(
         )
 
         return FindAnomaliesResult(
-            session_id=session_id,
             anomalies=anomaly_results,
             columns_analyzed=target_cols,
             methods_used=[str(m) for m in methods],  # Convert to list[str] for compatibility

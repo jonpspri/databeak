@@ -111,7 +111,6 @@ class SelectColumnsResult(BaseToolResponse):
 
     model_config = ConfigDict(extra="forbid")
 
-    session_id: str = Field(description="Session identifier")
     selected_columns: list[str] = Field(description="List of selected column names")
     columns_before: int = Field(description="Number of columns before selection")
     columns_after: int = Field(description="Number of columns after selection")
@@ -122,7 +121,6 @@ class RenameColumnsResult(BaseToolResponse):
 
     model_config = ConfigDict(extra="forbid")
 
-    session_id: str = Field(description="Session identifier")
     renamed: dict[str, str] = Field(description="Mapping of old names to new names")
     columns: list[str] = Field(description="List of final column names")
 
@@ -183,7 +181,6 @@ async def select_columns(
         )
 
         return SelectColumnsResult(
-            session_id=session_id,
             selected_columns=columns,
             columns_before=columns_before,
             columns_after=len(columns),
@@ -247,7 +244,6 @@ async def rename_columns(
         )
 
         return RenameColumnsResult(
-            session_id=session_id,
             renamed=mapping,
             columns=list(mapping.values()),
         )
@@ -349,7 +345,6 @@ async def add_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="add",
             rows_affected=len(df),
             columns_affected=[name],
@@ -411,7 +406,6 @@ async def remove_columns(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="remove",
             rows_affected=len(df),
             columns_affected=columns,
@@ -531,7 +525,6 @@ async def change_column_type(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=f"change_type_to_{dtype}",
             rows_affected=len(df),
             columns_affected=[column],
@@ -846,7 +839,6 @@ async def update_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=f"update_{operation_type}",
             rows_affected=len(df),
             columns_affected=[column],

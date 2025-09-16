@@ -35,7 +35,7 @@ async def discovery_session():
 
     ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -55,7 +55,7 @@ async def outlier_session():
 
     ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ Sales,Henry,70000,15000,5"""
 
     ctx = cast(Context, create_mock_context())
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestDetectOutliers:
         ctx = cast(Context, create_mock_context())
         result = await load_csv_from_content(ctx, csv_content)
 
-        ctx_outliers = cast(Context, create_mock_context_with_session_data(result.session_id))
+        ctx_outliers = cast(Context, create_mock_context_with_session_data(ctx.session_id))
         outliers = await detect_outliers(ctx_outliers, columns=["value"])
         assert outliers.success is True
         assert outliers.outliers_found == 0
@@ -182,9 +182,10 @@ class TestProfileData:
     async def test_profile_with_data(self):
         """Test profiling with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
 
-        ctx_profile = create_mock_context_with_session_data(result.session_id)
+        ctx_profile = create_mock_context_with_session_data(ctx.session_id)
         profile = await profile_data(ctx_profile)
         assert profile.success is True
         assert profile.total_rows == 2
@@ -248,10 +249,11 @@ B,30
 B,
 A,
 C,40"""
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
 
         agg_result = await group_by_aggregate(
-            create_mock_context_with_session_data(result.session_id),
+            create_mock_context_with_session_data(ctx.session_id),
             group_by=["category"],
             aggregations={"value": ["mean", "count"]},
         )
@@ -353,10 +355,11 @@ class TestFindCellsWithValue:
     async def test_find_null_values(self):
         """Test finding null values."""
         csv_content = "col1,col2\nA,1\nB,\n,3\nD,4"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
 
         null_result = await find_cells_with_value(
-            create_mock_context_with_session_data(result.session_id), None
+            create_mock_context_with_session_data(ctx.session_id), None
         )
         assert null_result.success is True
         assert null_result.matches_found == 2
@@ -495,9 +498,10 @@ A,1,
 B,,2
 ,3,3
 D,4,"""
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
 
-        summary = await get_data_summary(create_mock_context_with_session_data(result.session_id))
+        summary = await get_data_summary(create_mock_context_with_session_data(ctx.session_id))
         assert summary.success is True
         assert summary.missing_data.total_missing > 0
         assert summary.missing_data.missing_percentage > 0
@@ -529,8 +533,9 @@ class TestIntegrationAndEdgeCases:
     async def test_with_actual_data(self):
         """Test all functions with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
-        session_id = result.session_id
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Profile should work
         profile = await profile_data(create_mock_context_with_session_data(session_id))
@@ -552,8 +557,9 @@ class TestIntegrationAndEdgeCases:
     async def test_single_row_operations(self):
         """Test with single row DataFrame."""
         csv_content = "name,value\nTest,42"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
-        session_id = result.session_id
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Inspect should work
         inspect = await inspect_data_around(
@@ -572,10 +578,11 @@ class TestIntegrationAndEdgeCases:
     async def test_large_radius_inspect(self):
         """Test inspect with radius larger than DataFrame."""
         csv_content = "a,b\n1,2\n3,4"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        result = await load_csv_from_content(ctx, csv_content)
 
         inspect = await inspect_data_around(
-            create_mock_context_with_session_data(result.session_id),
+            create_mock_context_with_session_data(ctx.session_id),
             row=0,
             column_name="a",
             radius=100,

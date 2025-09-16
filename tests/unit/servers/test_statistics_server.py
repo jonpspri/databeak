@@ -30,7 +30,7 @@ Helen Black,40,92000.00,Engineering,14,4.4"""
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ async def sparse_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ async def edge_case_session():
 
     ctx = create_mock_context()
     result = await load_csv_from_content(ctx, csv_content)
-    return result.session_id
+    return ctx.session_id
 
 
 @pytest.mark.asyncio
@@ -74,7 +74,6 @@ class TestGetStatistics:
         result = await get_statistics(ctx)
 
         assert result.success is True
-        assert result.session_id == stats_session
         assert len(result.statistics) > 0
 
         # Check that numeric columns have statistics
@@ -134,10 +133,10 @@ class TestGetStatistics:
     async def test_get_statistics_with_data(self):
         """Test statistics on DataFrame with data."""
         csv_content = "col1,col2,col3\n1,2,3"
-        ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, csv_content)
+        load_ctx = create_mock_context()
+        result = await load_csv_from_content(load_ctx, csv_content)
 
-        ctx = create_mock_context_with_session_data(result.session_id)
+        ctx = create_mock_context_with_session_data(load_ctx.session_id)
         stats = await get_statistics(ctx)
         assert stats.success is True
         assert stats.total_rows == 1
@@ -378,10 +377,10 @@ class TestEdgeCasesAndIntegration:
     async def test_single_row_statistics(self):
         """Test statistics with single row."""
         csv_content = "value\n42"
-        ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, csv_content)
+        load_ctx = create_mock_context()
+        result = await load_csv_from_content(load_ctx, csv_content)
 
-        ctx = create_mock_context_with_session_data(result.session_id)
+        ctx = create_mock_context_with_session_data(load_ctx.session_id)
         stats = await get_statistics(ctx)
         assert stats.success is True
         assert stats.total_rows == 1
@@ -392,10 +391,10 @@ class TestEdgeCasesAndIntegration:
     async def test_all_null_column(self):
         """Test statistics on column with all null values."""
         csv_content = "id,empty\n1,\n2,\n3,"
-        ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, csv_content)
+        load_ctx = create_mock_context()
+        result = await load_csv_from_content(load_ctx, csv_content)
 
-        ctx = create_mock_context_with_session_data(result.session_id)
+        ctx = create_mock_context_with_session_data(load_ctx.session_id)
         col_stats = await get_column_statistics(ctx, "empty")
         assert col_stats.success is True
         assert col_stats.non_null_count == 0
@@ -407,7 +406,7 @@ class TestEdgeCasesAndIntegration:
         result = await load_csv_from_content(ctx, csv_content)
 
         # Should treat as string column
-        ctx = create_mock_context_with_session_data(result.session_id)
+        ctx = create_mock_context_with_session_data(ctx.session_id)
         col_stats = await get_column_statistics(ctx, "mixed")
         assert col_stats.success is True
         assert col_stats.data_type == "object"

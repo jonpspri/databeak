@@ -122,8 +122,6 @@ class AutoSaveStatus(BaseModel):
 
 class UndoResult(BaseModel):
     """Response model for undo operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the undo operation was successful")
     operation_undone: str | None = Field(
         default=None, description="Type of operation that was undone"
@@ -138,8 +136,6 @@ class UndoResult(BaseModel):
 
 class RedoResult(BaseModel):
     """Response model for redo operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the redo operation was successful")
     operation_redone: str | None = Field(
         default=None, description="Type of operation that was redone"
@@ -152,8 +148,6 @@ class RedoResult(BaseModel):
 
 class HistoryResult(BaseModel):
     """Response model for history retrieval operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the history retrieval was successful")
     operations: list[HistoryOperation] = Field(
         default_factory=list, description="List of history operations"
@@ -167,8 +161,6 @@ class HistoryResult(BaseModel):
 
 class RestoreResult(BaseModel):
     """Response model for restore operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the restore operation was successful")
     restored_to_operation: str | None = Field(
         default=None, description="Operation ID that was restored to"
@@ -180,8 +172,6 @@ class RestoreResult(BaseModel):
 
 class ClearHistoryResult(BaseModel):
     """Response model for clear history operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the clear operation was successful")
     operations_cleared: int = Field(default=0, description="Number of operations that were cleared")
     history_was_enabled: bool = Field(
@@ -191,8 +181,6 @@ class ClearHistoryResult(BaseModel):
 
 class ExportHistoryResult(BaseModel):
     """Response model for history export operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the export was successful")
     file_path: str = Field(description="Path to the exported history file")
     format: Literal["json", "csv"] = Field(default="json", description="Format used for export")
@@ -202,8 +190,6 @@ class ExportHistoryResult(BaseModel):
 
 class AutoSaveConfigResult(BaseModel):
     """Response model for auto-save configuration operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(
         default=True, description="Whether the configuration update was successful"
     )
@@ -218,16 +204,12 @@ class AutoSaveConfigResult(BaseModel):
 
 class AutoSaveStatusResult(BaseModel):
     """Response model for auto-save status operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the status retrieval was successful")
     status: AutoSaveStatus = Field(description="Current auto-save status information")
 
 
 class AutoSaveDisableResult(BaseModel):
     """Response model for auto-save disable operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the disable operation was successful")
     was_enabled: bool = Field(
         default=False, description="Whether auto-save was enabled before disabling"
@@ -242,8 +224,6 @@ class AutoSaveDisableResult(BaseModel):
 
 class ManualSaveResult(BaseModel):
     """Response model for manual save operations."""
-
-    session_id: str = Field(description="Session identifier")
     success: bool = Field(default=True, description="Whether the manual save was successful")
     save_path: str = Field(description="Path where the data was saved")
     format: str = Field(default="csv", description="Format used for saving")
@@ -321,7 +301,6 @@ async def undo_operation(
         await ctx.info(f"Successfully undid operation: {result.get('message', 'Operation undone')}")
 
         return UndoResult(
-            session_id=session_id,
             operation_undone=result.get("operation_type"),
             previous_operation=result.get("previous_operation"),
             can_undo_more=can_undo,
@@ -401,7 +380,6 @@ async def redo_operation(
         await ctx.info(f"Successfully redid operation: {result.get('message', 'Operation redone')}")
 
         return RedoResult(
-            session_id=session_id,
             operation_redone=result.get("operation_type"),
             next_operation=result.get("next_operation"),
             can_undo=can_undo,
@@ -506,7 +484,6 @@ async def get_history(
         await ctx.info(f"Retrieved {len(operations)} operations from history")
 
         return HistoryResult(
-            session_id=session_id,
             operations=operations,
             summary=summary,
             total_found=len(operations),
@@ -580,7 +557,6 @@ async def restore_to_operation(
         await ctx.info(f"Successfully restored to operation {operation_id}")
 
         return RestoreResult(
-            session_id=session_id,
             restored_to_operation=operation_id,
             operations_undone=result.get("operations_undone", 0),
             operations_redone=result.get("operations_redone", 0),
@@ -663,7 +639,6 @@ async def clear_history(
         await ctx.info(f"Cleared {operations_count} operations from history")
 
         return ClearHistoryResult(
-            session_id=session_id,
             operations_cleared=operations_count,
             history_was_enabled=True,
         )
@@ -765,7 +740,6 @@ async def export_history(
         await ctx.info(f"Successfully exported {operations_count} operations to {file_path}")
 
         return ExportHistoryResult(
-            session_id=session_id,
             file_path=file_path,
             format=format,
             operations_exported=operations_count,
@@ -930,7 +904,6 @@ async def configure_auto_save(
         config_changed = previous_config != new_config
 
         return AutoSaveConfigResult(
-            session_id=session_id,
             config=new_config,
             previous_config=previous_config,
             config_changed=config_changed,
@@ -1021,7 +994,6 @@ async def disable_auto_save(
             await ctx.info("Auto-save was already disabled")
 
         return AutoSaveDisableResult(
-            session_id=session_id,
             was_enabled=was_enabled,
             final_save_performed=final_save_performed,
             final_save_path=final_save_path,
@@ -1118,7 +1090,6 @@ async def get_auto_save_status(
             await ctx.info("Auto-save is currently disabled")
 
         return AutoSaveStatusResult(
-            session_id=session_id,
             status=status,
         )
 
@@ -1209,7 +1180,6 @@ async def trigger_manual_save(
         await ctx.info(f"Manual save completed: {save_path}")
 
         return ManualSaveResult(
-            session_id=session_id,
             save_path=save_path,
             format=save_format,
             rows_saved=rows_saved,

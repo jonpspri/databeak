@@ -59,8 +59,13 @@ Keyboard,79.99,25""",
         delimiter=",",
     )
 
-    yield result.session_id
+    # Get the session ID from the context instead of result
+    # Since LoadResult no longer contains session_id, we need to get it from the session manager
+    manager = get_session_manager()
+    sessions = manager.list_sessions()
+    session_id = sessions[-1].session_id if sessions else "test-session-fallback"
+
+    yield session_id
 
     # Cleanup
-    manager = get_session_manager()
-    await manager.remove_session(result.session_id)
+    await manager.remove_session(session_id)

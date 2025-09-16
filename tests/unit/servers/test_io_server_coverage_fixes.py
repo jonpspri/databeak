@@ -415,12 +415,14 @@ class TestExportCsvErrorPaths:
         """Test Excel export with missing openpyxl dependency."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         with patch("pandas.DataFrame.to_excel", side_effect=Exception("openpyxl")):
             with pytest.raises(ToolError, match="Export failed"):
                 await export_csv(
-                    create_mock_context(load_result.session_id),
+                    create_mock_context(session_id),
                     format="excel"
                 )
 
@@ -428,12 +430,14 @@ class TestExportCsvErrorPaths:
         """Test Parquet export with missing pyarrow dependency."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         with patch("pandas.DataFrame.to_parquet", side_effect=ImportError("No module named 'pyarrow'")):
             with pytest.raises(ToolError, match="Parquet export requires pyarrow package"):
                 await export_csv(
-                    create_mock_context(load_result.session_id),
+                    create_mock_context(session_id),
                     format="parquet"
                 )
 
@@ -441,7 +445,9 @@ class TestExportCsvErrorPaths:
         """Test export with unsupported format."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         # Mock the ExportFormat enum validation to allow invalid format
         with patch("src.databeak.models.ExportFormat") as mock_format:
@@ -449,14 +455,16 @@ class TestExportCsvErrorPaths:
 
             with pytest.raises(ToolError, match="Failed to export data"):
                 await export_csv(
-                    create_mock_context(load_result.session_id),
+                    create_mock_context(session_id),
                     format="invalid"
                 )
 
     async def test_export_csv_temp_file_cleanup_error(self):
         """Test temp file cleanup when unlink fails."""
         csv_content = "name,value\ntest,123"
-        load_result = await load_csv_from_content(create_mock_context(), csv_content)
+        ctx = create_mock_context()
+        load_result = await load_csv_from_content(ctx, csv_content)
+        session_id = ctx.session_id
 
         with (
             patch("pandas.DataFrame.to_csv", side_effect=Exception("Export failed")),
@@ -464,7 +472,7 @@ class TestExportCsvErrorPaths:
             patch("pathlib.Path.exists", return_value=True)
         ):
             with pytest.raises(ToolError, match="Export failed"):
-                await export_csv(create_mock_context(load_result.session_id))
+                await export_csv(create_mock_context(session_id))
 
 
 @pytest.mark.asyncio
