@@ -222,7 +222,6 @@ class OperationResult(BaseModel):
 
     success: bool = Field(..., description="Whether operation succeeded")
     message: str = Field(..., description="Result message")
-    session_id: str | None = Field(default=None, description="Session ID")
     rows_affected: int | None = Field(default=None, description="Number of rows affected")
     columns_affected: list[str] | None = Field(default=None, description="Columns affected")
     data: dict[str, Any] | None = Field(default=None, description="Additional result data")

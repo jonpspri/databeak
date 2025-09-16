@@ -527,7 +527,6 @@ class TestExportResult:
         """Test valid ExportResult creation."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             result = ExportResult(
-                session_id="export-123",
                 file_path=tmp.name,
                 format="csv",
                 rows_exported=100,
@@ -544,7 +543,6 @@ class TestExportResult:
         with tempfile.NamedTemporaryFile() as tmp:
             for fmt in valid_formats:
                 result = ExportResult(
-                    session_id="test",
                     file_path=tmp.name,
                     format=fmt,
                     rows_exported=10,
@@ -554,7 +552,6 @@ class TestExportResult:
             # Test invalid format
             with pytest.raises(ValidationError):
                 ExportResult(
-                    session_id="test",
                     file_path=tmp.name,
                     format="invalid_format",
                     rows_exported=10,
@@ -847,7 +844,6 @@ class TestInsertRowResult:
             rows_after=101,
             data_inserted={"id": 101, "name": "New User", "age": 30},
             columns=["id", "name", "age"],
-            session_id="insert-123",
         )
         assert result.operation == "insert_row"  # Default value
         assert result.row_index == 10
@@ -872,7 +868,6 @@ class TestDeleteRowResult:
     def test_valid_creation(self):
         """Test valid DeleteRowResult creation."""
         result = DeleteRowResult(
-            session_id="delete-123",
             row_index=5,
             rows_before=100,
             rows_after=99,
