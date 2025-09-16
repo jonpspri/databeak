@@ -228,7 +228,7 @@ class TestExportCsvAdvanced:
 
         try:
             result = await export_csv(
-                create_mock_context(session_id), file_path=temp_path, format="tsv"
+                create_mock_context(session_id), file_path=temp_path
             )
 
             assert result.success is True
