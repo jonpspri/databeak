@@ -7,14 +7,6 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # Local imports
-from .resources.csv_resources import (
-    get_csv_cell,
-    get_csv_data,
-    get_csv_preview,
-    get_csv_row,
-    get_csv_schema,
-    list_active_sessions,
-)
 from .servers.column_server import column_server
 from .servers.column_text_server import column_text_server
 from .servers.discovery_server import discovery_server
@@ -68,19 +60,6 @@ mcp.mount(validation_server)
 mcp.mount(transformation_server)
 mcp.mount(column_server)
 mcp.mount(column_text_server)
-
-# ============================================================================
-# RESOURCES
-# ============================================================================
-
-
-# Register CSV resources
-mcp.resource("csv://{session_id}/data")(get_csv_data)
-mcp.resource("csv://{session_id}/schema")(get_csv_schema)
-mcp.resource("sessions://active")(list_active_sessions)
-mcp.resource("csv://{session_id}/cell/{row_index}/{column}")(get_csv_cell)
-mcp.resource("csv://{session_id}/row/{row_index}")(get_csv_row)
-mcp.resource("csv://{session_id}/preview")(get_csv_preview)
 
 
 # ============================================================================
