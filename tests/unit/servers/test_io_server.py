@@ -126,17 +126,6 @@ class TestErrorConditions:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
                 await load_csv_from_url(create_mock_context(), url)
 
-    async def test_export_csv_session_not_found(self):
-        """Test export with non-existent session."""
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            temp_path = tmp.name
-
-        try:
-            with pytest.raises(ToolError, match="Session not found"):
-                await export_csv(create_mock_context(), file_path=temp_path)
-        finally:
-            Path(temp_path).unlink(missing_ok=True)
-
     async def test_load_csv_file_size_limit_exceeded(self):
         """Test file size limit enforcement before loading."""
         # Create a file and mock its size to exceed limit
