@@ -193,8 +193,9 @@ async def filter_rows_with_pydantic(
             mask = mask & condition_mask if mode == "and" else mask | condition_mask
 
         # Apply filter
-        session.df = df[mask].reset_index(drop=True)
-        rows_after = len(session.df)
+        filtered_df = df[mask].reset_index(drop=True)
+        session.df = filtered_df
+        rows_after = len(filtered_df)
 
         # Record operation
         session.record_operation(
@@ -300,8 +301,9 @@ async def remove_duplicates_with_pydantic(
                 raise ToolError(f"Columns not found: {missing_cols}")
 
         # Remove duplicates
-        session.df = df.drop_duplicates(subset=subset, keep=keep).reset_index(drop=True)
-        rows_after = len(session.df)
+        deduped_df = df.drop_duplicates(subset=subset, keep=keep).reset_index(drop=True)
+        session.df = deduped_df
+        rows_after = len(deduped_df)
 
         # Record operation
         session.record_operation(
@@ -364,29 +366,33 @@ async def fill_missing_values_with_pydantic(
         elif strategy == "fill":
             if value is None:
                 raise ToolError("Value required for 'fill' strategy")
-            session.df[target_cols] = df[target_cols].fillna(value)
+            df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
-            session.df[target_cols] = df[target_cols].ffill()
+            df[target_cols] = df[target_cols].ffill()
         elif strategy == "backward":
-            session.df[target_cols] = df[target_cols].bfill()
+            df[target_cols] = df[target_cols].bfill()
         elif strategy == "mean":
             for col in target_cols:
                 if df[col].dtype in ["int64", "float64"]:
-                    session.df[col] = df[col].fillna(df[col].mean())
+                    df[col] = df[col].fillna(df[col].mean())
         elif strategy == "median":
             for col in target_cols:
                 if df[col].dtype in ["int64", "float64"]:
-                    session.df[col] = df[col].fillna(df[col].median())
+                    df[col] = df[col].fillna(df[col].median())
         elif strategy == "mode":
             for col in target_cols:
                 mode_val = df[col].mode()
                 if len(mode_val) > 0:
-                    session.df[col] = df[col].fillna(mode_val[0])
+                    df[col] = df[col].fillna(mode_val[0])
         else:
             raise ToolError(f"Unknown strategy: {strategy}")
 
+        # Update session DataFrame for non-drop strategies
+        if strategy != "drop":
+            session.df = df
+
         # Count nulls after
-        nulls_after = session.df[target_cols].isna().sum().sum() if strategy != "drop" else 0
+        nulls_after = df[target_cols].isna().sum().sum() if strategy != "drop" else 0
 
         # Record operation
         session.record_operation(
@@ -434,18 +440,18 @@ async def transform_column_case_with_pydantic(
 
         # Apply transformation
         if transform == "upper":
-            session.df[column] = df[column].astype(str).str.upper()
+            df[column] = df[column].astype(str).str.upper()
         elif transform == "lower":
-            session.df[column] = df[column].astype(str).str.lower()
+            df[column] = df[column].astype(str).str.lower()
         elif transform == "title":
-            session.df[column] = df[column].astype(str).str.title()
+            df[column] = df[column].astype(str).str.title()
         elif transform == "capitalize":
-            session.df[column] = df[column].astype(str).str.capitalize()
+            df[column] = df[column].astype(str).str.capitalize()
         else:
             raise ToolError(f"Unknown transform: {transform}")
 
         # Get sample after
-        sample_after = session.df[column].head(5).tolist()
+        sample_after = df[column].head(5).tolist()
 
         # Record operation
         session.record_operation(
@@ -485,10 +491,10 @@ async def strip_column_with_pydantic(
         sample_before = df[column].head(5).tolist()
 
         # Strip whitespace
-        session.df[column] = df[column].astype(str).str.strip()
+        df[column] = df[column].astype(str).str.strip()
 
         # Get sample after
-        sample_after = session.df[column].head(5).tolist()
+        sample_after = df[column].head(5).tolist()
 
         # Record operation
         session.record_operation(

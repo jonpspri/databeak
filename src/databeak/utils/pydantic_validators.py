@@ -9,7 +9,9 @@ T = TypeVar("T")
 
 
 # Implementation: JSON string to dict parsing with error handling for Claude Code compatibility
-def parse_json_string_to_dict(v: dict[str, Any] | str) -> dict[str, Any]:  # type: ignore[explicit-any]  # Any justified: JSON can contain arbitrary structure
+def parse_json_string_to_dict(
+    v: dict[str, Any] | str,
+) -> dict[str, Any]:  # Any justified: JSON can contain arbitrary structure
     """Parse JSON string to dictionary with validation."""
     if isinstance(v, str):
         try:
@@ -23,7 +25,7 @@ def parse_json_string_to_dict(v: dict[str, Any] | str) -> dict[str, Any]:  # typ
 
 
 # Implementation: JSON string to dict or list parsing with type validation
-def parse_json_string_to_dict_or_list(  # type: ignore[explicit-any]  # Any justified: JSON arbitrary structure
+def parse_json_string_to_dict_or_list(  # Any justified: JSON arbitrary structure
     v: dict[str, Any] | list[Any] | str,
 ) -> dict[str, Any] | list[Any]:
     """Parse JSON string to dictionary or list with validation."""
@@ -39,7 +41,9 @@ def parse_json_string_to_dict_or_list(  # type: ignore[explicit-any]  # Any just
 
 
 # Implementation: JSON string to list parsing with type validation
-def parse_json_string_to_list(v: list[Any] | str) -> list[Any]:  # type: ignore[explicit-any]  # Any justified: JSON arbitrary structure
+def parse_json_string_to_list(
+    v: list[Any] | str,
+) -> list[Any]:  # Any justified: JSON arbitrary structure
     """Parse JSON string to list with validation."""
     if isinstance(v, str):
         try:

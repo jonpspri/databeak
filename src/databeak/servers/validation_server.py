@@ -71,6 +71,7 @@ class ValidationSummary(BaseModel):
 
 class ValidateSchemaResult(BaseModel):
     """Response model for schema validation operations."""
+
     valid: bool = Field(description="Whether validation passed overall")
     errors: list[ValidationError] = Field(description="All validation errors found")
     summary: ValidationSummary = Field(description="Summary of validation results")
@@ -123,6 +124,7 @@ class QualityResults(BaseModel):
 
 class DataQualityResult(BaseModel):
     """Response model for data quality check operations."""
+
     quality_results: QualityResults = Field(description="Comprehensive quality assessment results")
 
 
@@ -206,6 +208,7 @@ class AnomalyResults(BaseModel):
 
 class FindAnomaliesResult(BaseModel):
     """Response model for anomaly detection operations."""
+
     anomalies: AnomalyResults = Field(description="Comprehensive anomaly detection results")
     columns_analyzed: list[str] = Field(
         description="Names of columns that were analyzed for anomalies"

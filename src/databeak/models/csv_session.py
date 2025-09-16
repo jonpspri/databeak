@@ -459,19 +459,18 @@ class SessionManager:
         if not session:
             # Create new session inline
             self._cleanup_expired()
-            
+
             if len(self.sessions) >= self.max_sessions:
                 # Remove oldest session
                 oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
                 del self.sessions[oldest.session_id]
-            
+
             session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
             self.sessions[session.session_id] = session
             logger.info(f"Created new session: {session.session_id}")
         else:
             session.update_access_time()
         return session
-
 
     async def remove_session(self, session_id: str) -> bool:
         """Remove a session."""

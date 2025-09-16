@@ -34,13 +34,14 @@ from ..models.tool_responses import (
     DataTypeInfo,
     MissingDataInfo,
 )
+from ..models.typed_dicts import DataPreviewResult
 
 # Import data operations function directly to avoid dependency issues
 try:
     from ..services.data_operations import create_data_preview_with_indices
 except ImportError:
     # Fallback implementation for create_data_preview_with_indices
-    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> dict[str, Any]:
+    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> DataPreviewResult:
         """Fallback implementation for data preview creation."""
         records = []
         preview_rows = min(num_rows, len(df))
@@ -66,6 +67,7 @@ except ImportError:
             "records": records,
             "total_rows": len(df),
             "total_columns": len(df.columns),
+            "columns": list(df.columns.astype(str)),
             "preview_rows": preview_rows,
         }
 
@@ -112,6 +114,7 @@ class GroupStatistics(BaseModel):
 
 class OutliersResult(BaseToolResponse):
     """Response model for outlier detection analysis."""
+
     outliers_found: int = Field(description="Total number of outliers detected")
     outliers_by_column: dict[str, list[OutlierInfo]] = Field(
         description="Outliers grouped by column name"
@@ -124,6 +127,7 @@ class OutliersResult(BaseToolResponse):
 
 class ProfileResult(BaseToolResponse):
     """Response model for comprehensive data profiling."""
+
     profile: dict[str, ProfileInfo]
     total_rows: int
     total_columns: int
@@ -134,6 +138,7 @@ class ProfileResult(BaseToolResponse):
 
 class GroupAggregateResult(BaseToolResponse):
     """Response model for group aggregation operations."""
+
     groups: dict[str, GroupStatistics]
     group_by_columns: list[str]
     aggregated_columns: list[str]
@@ -142,6 +147,7 @@ class GroupAggregateResult(BaseToolResponse):
 
 class DataSummaryResult(BaseToolResponse):
     """Response model for data overview and summary."""
+
     coordinate_system: dict[str, str]
     shape: dict[str, int]
     columns: dict[str, DataTypeInfo]
@@ -153,6 +159,7 @@ class DataSummaryResult(BaseToolResponse):
 
 class FindCellsResult(BaseToolResponse):
     """Response model for cell value search operations."""
+
     search_value: CsvCellValue
     matches_found: int
     coordinates: list[CellLocation]
@@ -162,6 +169,7 @@ class FindCellsResult(BaseToolResponse):
 
 class InspectDataResult(BaseToolResponse):
     """Response model for contextual data inspection."""
+
     center_coordinates: dict[str, Any]
     surrounding_data: DataPreview
     radius: int

@@ -733,7 +733,8 @@ async def load_csv_from_content(
 async def export_csv(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[
-        str, Field(description="Output file path - must be a valid path that can be parsed by Path()")
+        str,
+        Field(description="Output file path - must be a valid path that can be parsed by Path()"),
     ],
     encoding: Annotated[
         str, Field(description="Text encoding for output file (utf-8, latin1, cp1252, etc.)")
@@ -765,16 +766,16 @@ async def export_csv(
         # Infer format from file extension
         suffix = path_obj.suffix.lower()
         format_mapping = {
-            '.csv': ExportFormat.CSV,
-            '.tsv': ExportFormat.TSV,
-            '.json': ExportFormat.JSON,
-            '.xlsx': ExportFormat.EXCEL,
-            '.xls': ExportFormat.EXCEL,
-            '.parquet': ExportFormat.PARQUET,
-            '.html': ExportFormat.HTML,
-            '.htm': ExportFormat.HTML,
-            '.md': ExportFormat.MARKDOWN,
-            '.markdown': ExportFormat.MARKDOWN,
+            ".csv": ExportFormat.CSV,
+            ".tsv": ExportFormat.TSV,
+            ".json": ExportFormat.JSON,
+            ".xlsx": ExportFormat.EXCEL,
+            ".xls": ExportFormat.EXCEL,
+            ".parquet": ExportFormat.PARQUET,
+            ".html": ExportFormat.HTML,
+            ".htm": ExportFormat.HTML,
+            ".md": ExportFormat.MARKDOWN,
+            ".markdown": ExportFormat.MARKDOWN,
         }
 
         # Default to CSV if suffix not recognized
@@ -794,9 +795,7 @@ async def export_csv(
             if format_enum == ExportFormat.CSV:
                 df.to_csv(path_obj, encoding=encoding, index=index, lineterminator="\n")
             elif format_enum == ExportFormat.TSV:
-                df.to_csv(
-                    path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n"
-                )
+                df.to_csv(path_obj, sep="\t", encoding=encoding, index=index, lineterminator="\n")
             elif format_enum == ExportFormat.JSON:
                 df.to_json(path_obj, orient="records", indent=2, force_ascii=False)
             elif format_enum == ExportFormat.EXCEL:
@@ -810,7 +809,7 @@ async def export_csv(
                 df.to_markdown(path_obj, index=index, tablefmt="github")
             else:
                 raise ToolError(f"Unsupported format: {format_enum}")
-        except (OSError, IOError, pd.errors.EmptyDataError, ValueError, ImportError) as export_error:
+        except (OSError, pd.errors.EmptyDataError, ValueError, ImportError) as export_error:
             # Provide format-specific error guidance
             if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
                 raise ToolError(

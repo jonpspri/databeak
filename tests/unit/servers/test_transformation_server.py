@@ -32,7 +32,7 @@ Alice Brown,28,95.0,active,Excellent
 Charlie Wilson,30,85.5,pending,"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 
@@ -143,7 +143,7 @@ class TestTransformationServerDuplicates:
         ctx_insert = create_mock_context_with_session_data(transformation_session)
         insert_row(
             ctx_insert,
-            position=-1,
+            row_index=-1,
             data={
                 "name": "John Doe",
                 "age": 30,

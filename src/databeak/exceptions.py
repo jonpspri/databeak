@@ -171,7 +171,9 @@ class ParameterError(DatabeakError):
 class InvalidParameterError(ParameterError):
     """Invalid parameter value."""
 
-    def __init__(self, parameter: str, value: Any, expected: str | None = None):  # type: ignore[misc]  # Any justified: can receive any invalid value type
+    def __init__(
+        self, parameter: str, value: Any, expected: str | None = None
+    ):  # Any justified: can receive any invalid value type
         """Initialize with parameter details."""
         super().__init__(
             f"Invalid value for parameter '{parameter}': {value}",

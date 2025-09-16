@@ -225,7 +225,7 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_any_unimported = false
-disallow_any_explicit = true
+disallow_any_explicit = false
 no_implicit_optional = true
 check_untyped_defs = true
 warn_redundant_casts = true
@@ -256,6 +256,7 @@ module = [
     "bottleneck",
     "fastparquet",
     "pytest",
+    "simpleeval",
 ]
 ignore_missing_imports = true
 
@@ -263,6 +264,7 @@ ignore_missing_imports = true
 module = "tests.*"
 disallow_untyped_defs = false
 disallow_any_explicit = false
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "examples.*"

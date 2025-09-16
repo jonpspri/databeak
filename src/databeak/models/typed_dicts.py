@@ -30,7 +30,7 @@ class DataValidationIssues(TypedDict):
 
     errors: list[str]
     warnings: list[str]
-    info: dict[str, Any]  # type: ignore[misc]  # Any justified: flexible validation metadata
+    info: dict[str, Any]  # Any justified: flexible validation metadata
 
 
 class QualityCheckResult(TypedDict):
@@ -40,7 +40,7 @@ class QualityCheckResult(TypedDict):
     passed: bool
     score: float
     message: str
-    details: NotRequired[dict[str, Any]]  # type: ignore[misc]  # Any justified: flexible rule-specific data
+    details: NotRequired[dict[str, Any]]  # Any justified: flexible rule-specific data
 
 
 class DataStatistics(TypedDict):
@@ -92,8 +92,8 @@ class SessionHistoryExport(TypedDict):
 
     session_id: str
     created_at: str
-    operations: list[dict[str, Any]]  # type: ignore[misc]  # Any justified: operation history flexible structure
-    metadata: dict[str, Any]  # type: ignore[misc]  # Any justified: session metadata flexible structure
+    operations: list[dict[str, Any]]  # Any justified: operation history flexible structure
+    metadata: dict[str, Any]  # Any justified: session metadata flexible structure
 
 
 class OperationMetadata(TypedDict):
@@ -281,7 +281,7 @@ class CsvDataResource(TypedDict):
     session_id: str
     shape: tuple[int, int]  # (rows, columns)
     preview: DataPreviewResult  # Enhanced preview data with indices
-    columns_info: dict[str, Any]  # type: ignore[misc]  # Any justified: flexible column metadata
+    columns_info: dict[str, Any]  # Any justified: flexible column metadata
 
 
 class InternalDataSummary(TypedDict):

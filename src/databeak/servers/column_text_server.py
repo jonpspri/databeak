@@ -22,6 +22,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models import OperationType
+from ..models.csv_session import CSVSession
 from ..models.tool_responses import ColumnOperationResult
 
 logger = logging.getLogger(__name__)
@@ -149,7 +150,6 @@ async def replace_in_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="replace_pattern",
             rows_affected=changes_made,
             columns_affected=[column],
@@ -271,7 +271,6 @@ async def extract_from_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=operation_desc,
             rows_affected=successful_extractions,
             columns_affected=affected_columns,
@@ -434,7 +433,6 @@ async def split_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=operation_desc,
             rows_affected=rows_affected,
             columns_affected=affected_columns,
@@ -540,7 +538,6 @@ async def transform_column_case(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=f"case_{transform}",
             rows_affected=changes_made,
             columns_affected=[column],
@@ -634,7 +631,6 @@ async def strip_column(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation=f"strip_{'whitespace' if chars is None else 'chars'}",
             rows_affected=changes_made,
             columns_affected=[column],
@@ -694,7 +690,6 @@ async def fill_column_nulls(
         if nulls_before == 0:
             # No nulls to fill
             return ColumnOperationResult(
-                session_id=session_id,
                 operation="fill_nulls",
                 rows_affected=0,
                 columns_affected=[column],
@@ -722,7 +717,6 @@ async def fill_column_nulls(
         )
 
         return ColumnOperationResult(
-            session_id=session_id,
             operation="fill_nulls",
             rows_affected=filled_count,
             columns_affected=[column],
