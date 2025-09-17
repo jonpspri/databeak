@@ -492,11 +492,12 @@ def insert_row(
                 row_data[col] = data.get(col, None)
         elif isinstance(data, list):
             # List format - must match column count
-            if len(data) != len(df.columns):
+            try:
+                row_data = dict(zip(df.columns, data, strict=True))
+            except ValueError as e:
                 raise ToolError(
                     f"List data length ({len(data)}) must match column count ({len(df.columns)})"
-                )
-            row_data = dict(zip(df.columns, data, strict=False))
+                ) from e
         else:
             raise ToolError(f"Unsupported data type: {type(data)}. Use dict, list, or JSON string")
 
