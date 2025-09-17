@@ -18,21 +18,6 @@ CsvCellValue = str | int | float | bool | None
 # =============================================================================
 
 
-class SessionInfo(BaseModel):
-    """Session information in list results."""
-
-    session_id: str = Field(description="Unique session identifier")
-    created_at: str = Field(description="Session creation timestamp (ISO format)")
-    last_accessed: str = Field(description="Last access timestamp (ISO format)")
-    row_count: int = Field(description="Number of rows in dataset")
-    column_count: int = Field(description="Number of columns in dataset")
-    columns: list[str] = Field(description="List of column names")
-    memory_usage_mb: float = Field(description="Memory usage in megabytes")
-    file_path: str | None = Field(
-        default=None, description="Original file path if loaded from file"
-    )
-
-
 class DataTypeInfo(BaseModel):
     """Data type information for columns."""
 
@@ -50,15 +35,6 @@ class MissingDataInfo(BaseModel):
     total_missing: int = Field(description="Total number of missing values across all columns")
     missing_by_column: dict[str, int] = Field(description="Missing value count for each column")
     missing_percentage: float = Field(description="Percentage of missing values (0-100)")
-
-
-class DataPreview(BaseModel):
-    """Data preview with row samples."""
-
-    rows: list[dict[str, CsvCellValue]] = Field(description="Sample rows from dataset")
-    row_count: int = Field(description="Total number of rows in dataset")
-    column_count: int = Field(description="Total number of columns in dataset")
-    truncated: bool = Field(default=False, description="Whether preview is truncated")
 
 
 class CellLocation(BaseModel):

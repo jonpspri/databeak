@@ -111,7 +111,7 @@ async def replace_in_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -207,7 +207,7 @@ async def extract_from_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -337,7 +337,7 @@ async def split_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -493,7 +493,7 @@ async def transform_column_case(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -594,7 +594,7 @@ async def strip_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -679,7 +679,7 @@ async def fill_column_nulls(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())

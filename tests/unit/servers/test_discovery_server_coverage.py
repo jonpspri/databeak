@@ -1,13 +1,14 @@
 """Comprehensive unit tests for discovery_server module to improve coverage."""
 
+import uuid
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
-import uuid
 from fastmcp.exceptions import ToolError
 
+from src.databeak.models.csv_session import get_session_manager
 from src.databeak.servers.discovery_server import (
     DataSummaryResult,
     FindCellsResult,
@@ -22,7 +23,6 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
     profile_data,
 )
-from src.databeak.models.csv_session import get_session_manager
 from tests.test_mock_context import create_mock_context_with_session_data
 
 
@@ -607,7 +607,9 @@ class TestInspectDataAround:
 class TestErrorHandling:
     """Test error handling across all functions."""
 
-    @pytest.mark.skip(reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior")
+    @pytest.mark.skip(
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+    )
     async def test_session_not_found(self):
         """Test all functions with invalid session."""
         with patch("src.databeak.servers.discovery_server.get_session_manager") as manager:

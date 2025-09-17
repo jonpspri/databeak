@@ -25,7 +25,7 @@ async def update_session():
 5,Item E,Category 3,500,inactive"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 

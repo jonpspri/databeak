@@ -30,7 +30,7 @@ Bob Johnson,bob@company.org,(555) 111-2222,  789 Pine Rd. Chicago IL  ,EXCELLENT
 Alice Brown,alice@example.com,555.444.5555,321 Elm Dr. Houston TX,   needs improvement   ,ACT-004"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    _result = await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 

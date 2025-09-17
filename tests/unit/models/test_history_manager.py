@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -23,7 +23,7 @@ class TestOperationHistory:
 
     def test_operation_history_init(self):
         """Test OperationHistory initialization."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         details = {"operation": "filter", "condition": "age > 25"}
         metadata = {"user": "test_user"}
 
@@ -44,7 +44,7 @@ class TestOperationHistory:
 
     def test_operation_history_init_with_snapshot(self):
         """Test OperationHistory initialization with data snapshot."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         details = {"operation": "filter"}
         df = pd.DataFrame({"col1": [1, 2, 3], "col2": [4, 5, 6]})
 
@@ -61,7 +61,7 @@ class TestOperationHistory:
 
     def test_operation_history_to_dict(self):
         """Test conversion to dictionary."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         details = {"operation": "filter"}
         metadata = {"user": "test_user"}
 
@@ -84,7 +84,7 @@ class TestOperationHistory:
 
     def test_operation_history_to_dict_with_snapshot(self):
         """Test conversion to dictionary with snapshot."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         details = {"operation": "filter"}
         df = pd.DataFrame({"col1": [1, 2, 3]})
 
@@ -101,7 +101,7 @@ class TestOperationHistory:
 
     def test_operation_history_from_dict(self):
         """Test creation from dictionary."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         data = {
             "operation_id": "test_op_123",
             "operation_type": "filter",
@@ -121,7 +121,7 @@ class TestOperationHistory:
 
     def test_operation_history_from_dict_with_snapshot(self):
         """Test creation from dictionary with snapshot."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         df = pd.DataFrame({"col1": [1, 2, 3]})
         data = {
             "operation_id": "test_op_123",
@@ -137,7 +137,7 @@ class TestOperationHistory:
 
     def test_operation_history_from_dict_no_metadata(self):
         """Test creation from dictionary without metadata."""
-        timestamp = datetime.now(timezone.utc)
+        timestamp = datetime.now(UTC)
         data = {
             "operation_id": "test_op_123",
             "operation_type": "filter",
@@ -407,7 +407,7 @@ class TestHistoryManagerPersistenceJSON:
                 {
                     "operation_id": "op_123",
                     "operation_type": "filter",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "details": {"column": "age"},
                     "metadata": {},
                     "has_snapshot": True,

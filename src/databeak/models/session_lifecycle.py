@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from ..exceptions import SessionExpiredError
@@ -18,16 +18,16 @@ class SessionLifecycle:
         """Initialize session lifecycle manager."""
         self.session_id = session_id
         self.ttl = timedelta(minutes=ttl_minutes)
-        self.created_at = datetime.now(timezone.utc)
-        self.last_accessed = datetime.now(timezone.utc)
+        self.created_at = datetime.now(UTC)
+        self.last_accessed = datetime.now(UTC)
 
     def update_access_time(self) -> None:
         """Update the last accessed time."""
-        self.last_accessed = datetime.now(timezone.utc)
+        self.last_accessed = datetime.now(UTC)
 
     def is_expired(self) -> bool:
         """Check if session has expired."""
-        return datetime.now(timezone.utc) - self.last_accessed > self.ttl
+        return datetime.now(UTC) - self.last_accessed > self.ttl
 
     def validate_not_expired(self) -> None:
         """Raise exception if session is expired."""
@@ -36,7 +36,7 @@ class SessionLifecycle:
 
     def get_remaining_ttl(self) -> timedelta:
         """Get remaining time until expiration."""
-        elapsed = datetime.now(timezone.utc) - self.last_accessed
+        elapsed = datetime.now(UTC) - self.last_accessed
         return max(timedelta(0), self.ttl - elapsed)
 
     def extend_ttl(self, additional_minutes: int) -> None:

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 
 class DatabeakError(Exception):
     """Base exception with error details and serialization."""
@@ -172,7 +170,7 @@ class InvalidParameterError(ParameterError):
     """Invalid parameter value."""
 
     def __init__(
-        self, parameter: str, value: Any, expected: str | None = None
+        self, parameter: str, value: str, expected: str | None = None
     ):  # Any justified: can receive any invalid value type
         """Initialize with parameter details."""
         super().__init__(
@@ -180,7 +178,7 @@ class InvalidParameterError(ParameterError):
             error_code="INVALID_PARAMETER",
             details={
                 "parameter": parameter,
-                "value": str(value),
+                "value": value,
                 "expected": expected,
             },
         )

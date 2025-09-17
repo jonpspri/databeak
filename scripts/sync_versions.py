@@ -202,9 +202,8 @@ from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
-
 import tomllib
+from pathlib import Path
 
 
 def get_package_version() -> str:

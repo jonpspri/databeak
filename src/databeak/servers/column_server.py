@@ -161,7 +161,7 @@ async def select_columns(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101 # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -230,7 +230,7 @@ async def rename_columns(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
@@ -304,7 +304,7 @@ async def add_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if name in df.columns:
             raise InvalidParameterError("name", name, f"Column '{name}' already exists")
@@ -393,7 +393,7 @@ async def remove_columns(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -469,7 +469,7 @@ async def change_column_type(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -595,7 +595,7 @@ async def update_column(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check
+        assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())

@@ -24,13 +24,12 @@ from ..exceptions import (
 )
 
 # Import session management and data models from the main package
-from ..models import OperationType, get_session_manager
+from ..models import DataPreview, OperationType, get_session_manager
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import (
     BaseToolResponse,
     CellLocation,
     CsvCellValue,
-    DataPreview,
     DataTypeInfo,
     MissingDataInfo,
 )

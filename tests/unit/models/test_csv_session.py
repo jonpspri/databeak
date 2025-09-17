@@ -1,11 +1,12 @@
 """Unit tests for csv_session.py module."""
 
+import uuid
+from datetime import UTC
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
 import pandas as pd
 import pytest
-import uuid
 
 from src.databeak.exceptions import HistoryNotEnabledError
 from src.databeak.models.csv_session import (
@@ -869,7 +870,7 @@ class TestSessionManager:
         """Test get_session creates new session when needed."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_or_create_session(session_id)
+        _session = manager.get_or_create_session(session_id)
 
         assert session_id is not None
         assert session_id in manager.sessions
@@ -887,9 +888,9 @@ class TestSessionManager:
         assert len(manager.sessions) == 2
 
         # Mock the oldest session to have older access time using datetime
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
-        old_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        old_time = datetime.now(UTC) - timedelta(hours=1)
         oldest_session = manager.sessions[session1_id]
 
         with patch.object(oldest_session.lifecycle, "last_accessed", old_time):
@@ -906,7 +907,7 @@ class TestSessionManager:
         """Test getting a valid, non-expired session."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
-        session = manager.get_or_create_session(session_id)
+        _session = manager.get_or_create_session(session_id)
 
         retrieved_session = manager.get_or_create_session(session_id)
         assert retrieved_session is not None
@@ -1029,7 +1030,6 @@ class TestSessionManager:
             # Should try to remove both marked sessions
             assert mock_remove.call_count == 2
             assert len(manager.sessions_to_cleanup) == 0
-
 
     def test_export_session_history_exists(self):
         """Test export_session_history with existing session (lines 515-519)."""

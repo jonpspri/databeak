@@ -24,6 +24,7 @@ from tests.test_mock_context import create_mock_context, create_mock_context_wit
 @pytest.fixture
 async def column_session():
     """Create a test session with column operation data."""
+
     csv_content = """id,first_name,last_name,age,email,salary,is_active,join_date
 1,John,Doe,30,john@example.com,50000,true,2023-01-15
 2,Jane,Smith,25,jane@test.com,55000,true,2023-02-01
@@ -31,7 +32,7 @@ async def column_session():
 4,Alice,Brown,28,alice@example.com,52000,true,2023-03-01"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    _result = await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 

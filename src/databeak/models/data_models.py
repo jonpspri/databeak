@@ -258,6 +258,15 @@ class DataStatistics(BaseModel):
     q25: float | None = Field(default=None, description="25th percentile (numeric only)")
     q50: float | None = Field(default=None, description="50th percentile (numeric only)")
     q75: float | None = Field(default=None, description="75th percentile (numeric only)")
+
+
+class DataPreview(BaseModel):
+    """Data preview with row samples."""
+
+    rows: list[dict[str, CellValue]] = Field(description="Sample rows from dataset")
+    row_count: int = Field(description="Total number of rows in dataset")
+    column_count: int = Field(description="Total number of columns in dataset")
+    truncated: bool = Field(False, description="Whether preview is truncated")
     top_values: dict[str, int] | None = Field(
         default=None, description="Top 10 most frequent values"
     )

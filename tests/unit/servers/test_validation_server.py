@@ -35,7 +35,7 @@ async def validation_test_session():
 10,Ivan Petrov,27,ivan@russian.ru,58000,2023-10-15,active"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 
@@ -48,7 +48,7 @@ async def clean_test_session():
 3,Bob,35,bob@company.org"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 
@@ -69,7 +69,7 @@ async def problematic_test_session():
 10,Henry,32,91.0,A"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 
@@ -473,7 +473,7 @@ class TestValidationEdgeCases:
 5,50,500"""
 
         ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, numeric_csv)
+        await load_csv_from_content(ctx, numeric_csv)
         session_id = ctx.session_id
 
         ctx_with_data = create_mock_context_with_session_data(session_id)
@@ -491,7 +491,7 @@ Z,OUTLIER DATA,DIFFERENT
 D,Another normal,active"""
 
         ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, string_csv)
+        await load_csv_from_content(ctx, string_csv)
         session_id = ctx.session_id
 
         ctx_with_data = create_mock_context_with_session_data(session_id)

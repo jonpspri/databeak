@@ -35,7 +35,7 @@ async def row_operations_session():
 4,Alice,Brown,28,alice@example.com,52000,true,2023-03-01"""
 
     ctx = create_mock_context()
-    result = await load_csv_from_content(ctx, csv_content)
+    await load_csv_from_content(ctx, csv_content)
     return ctx.session_id
 
 

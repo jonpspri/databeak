@@ -143,7 +143,7 @@ def get_cell_value(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -223,7 +223,7 @@ def set_cell_value(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -310,7 +310,7 @@ def get_row_data(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -384,7 +384,7 @@ def get_column_data(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate column exists
         if column not in df.columns:
@@ -473,7 +473,7 @@ def insert_row(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
         rows_before = len(df)
 
         # Handle special case: append at end
@@ -496,7 +496,7 @@ def insert_row(
                 raise ToolError(
                     f"List data length ({len(data)}) must match column count ({len(df.columns)})"
                 )
-            row_data = dict(zip(df.columns, data))
+            row_data = dict(zip(df.columns, data, strict=False))
         else:
             raise ToolError(f"Unsupported data type: {type(data)}. Use dict, list, or JSON string")
 
@@ -574,7 +574,7 @@ def delete_row(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
         rows_before = len(df)
 
         # Validate row index
@@ -655,7 +655,7 @@ def update_row(
         if not session.has_data():
             raise ToolError("No data loaded in session")
         df = session.df
-        assert df is not None  # Validated by has_data() check above
+        assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):

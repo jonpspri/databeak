@@ -7,7 +7,7 @@ cases, error handling, and type conversions.
 from __future__ import annotations
 
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -225,7 +225,9 @@ class TestGetDataSummary:
         assert "preview" in result
         assert result["memory_usage_mb"] >= 0  # Memory usage can be 0 for very small dataframes
 
-    @pytest.mark.skip(reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior")
+    @pytest.mark.skip(
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+    )
     @patch("src.databeak.services.data_operations.get_session_manager")
     def test_session_not_found(self, mock_manager):
         """Test SessionNotFoundError when session doesn't exist."""

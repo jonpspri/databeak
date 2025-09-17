@@ -165,13 +165,15 @@ class TestLoadCsvSizeConstraints:
 class TestCloseSession:
     """Test session closing functionality."""
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
+    @pytest.mark.skip(
+        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
+    )
     async def test_close_session_success(self):
         """Test successfully closing a session."""
         # Create a session first
         csv_content = "col1,col2\n1,2"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         # Close the session
@@ -183,7 +185,9 @@ class TestCloseSession:
         with pytest.raises(ToolError, match="Failed to get session info"):
             await get_session_info(create_mock_context(session_id))
 
-    @pytest.mark.skip(reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs disentangling from other tests")
+    @pytest.mark.skip(
+        reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs disentangling from other tests"
+    )
     async def test_close_session_not_found(self):
         """Test closing non-existent session."""
         with pytest.raises(ToolError, match="Session not found"):
@@ -194,7 +198,7 @@ class TestCloseSession:
         # Create a session
         csv_content = "col1,col2\n1,2"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         # Mock context with async method
@@ -220,16 +224,14 @@ class TestExportCsvAdvanced:
         # Create session with data
         csv_content = "name,value,category\ntest1,100,A\ntest2,200,B"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".tsv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(
-                create_mock_context(session_id), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
 
             assert result.success is True
             assert result.format == "tsv"
@@ -249,16 +251,14 @@ class TestExportCsvAdvanced:
             'name,description\n"Smith, John","He said ""Hello"""\n"Doe, Jane","Normal text"'
         )
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(
-                create_mock_context(session_id), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
 
             assert result.success is True
 
@@ -273,7 +273,7 @@ class TestExportCsvAdvanced:
         """Test export creates directory if it doesn't exist."""
         csv_content = "col1,col2\n1,2"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         # Use a directory that doesn't exist
@@ -281,9 +281,7 @@ class TestExportCsvAdvanced:
             new_dir = Path(tmpdir) / "new" / "nested" / "dir"
             file_path = new_dir / "export.csv"
 
-            result = await export_csv(
-                create_mock_context(session_id), file_path=str(file_path)
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=str(file_path))
 
             assert result.success is True
             assert file_path.exists()

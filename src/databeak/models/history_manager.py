@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import pickle
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -163,7 +163,7 @@ class HistoryManager:
                     "session_id": self.session_id,
                     "history": [h.to_dict() for h in self.history],
                     "current_index": self.current_index,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 }
 
                 with Path(history_file).open("w") as f:
@@ -182,7 +182,7 @@ class HistoryManager:
                     "session_id": self.session_id,
                     "history": self.history,
                     "current_index": self.current_index,
-                    "timestamp": datetime.now(timezone.utc),
+                    "timestamp": datetime.now(UTC),
                 }
 
                 with Path(history_file).open("wb") as f:
@@ -215,9 +215,7 @@ class HistoryManager:
             self.history = self.history[: self.current_index + 1]
 
         # Generate operation ID
-        operation_id = (
-            f"{self.session_id}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
-        )
+        operation_id = f"{self.session_id}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S_%f')}"
 
         # Determine if we should take a snapshot
         take_snapshot = (
@@ -230,7 +228,7 @@ class HistoryManager:
         operation = OperationHistory(
             operation_id=operation_id,
             operation_type=operation_type,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             details=details,
             data_snapshot=(
                 current_data.copy() if take_snapshot and current_data is not None else None
@@ -408,7 +406,7 @@ class HistoryManager:
             if format == "json":
                 data = {
                     "session_id": self.session_id,
-                    "exported_at": datetime.now(timezone.utc).isoformat(),
+                    "exported_at": datetime.now(UTC).isoformat(),
                     "total_operations": len(self.history),
                     "current_position": self.current_index,
                     "operations": self.get_history(),

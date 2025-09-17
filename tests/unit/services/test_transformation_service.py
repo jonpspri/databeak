@@ -1,15 +1,14 @@
 """Unit tests for transformation service functions."""
 
-from unittest.mock import MagicMock, patch
 import uuid
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.models.csv_session import get_session_manager
-
 from src.databeak.exceptions import NoDataLoadedError, SessionNotFoundError
+from src.databeak.models.csv_session import get_session_manager
 from src.databeak.services.transformation_service import (
     DuplicateRemovalResult,
     FillMissingResult,
@@ -43,7 +42,9 @@ class TestGetSessionData:
         assert result_session == session
         pd.testing.assert_frame_equal(result_df, df)
 
-    @pytest.mark.skip(reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior")
+    @pytest.mark.skip(
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+    )
     def test_get_session_data_session_not_found(self):
         """Test exception when session not found."""
         with patch(
@@ -61,7 +62,7 @@ class TestGetSessionData:
         # Create a real session with no data (df = None)
         session_id = str(uuid.uuid4())
         manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
+        manager.get_or_create_session(session_id)
         # Don't set session.df, leaving it as None
 
         with pytest.raises(NoDataLoadedError):
@@ -132,7 +133,9 @@ class TestFilterRows:
         conditions = [{"column": "name", "operator": "contains", "value": "i"}]
         result = await filter_rows_with_pydantic(session_id, conditions)
 
-        assert result.rows_filtered == 1  # Only Alice, Charlie, Diana contain 'i', so Bob is filtered out
+        assert (
+            result.rows_filtered == 1
+        )  # Only Alice, Charlie, Diana contain 'i', so Bob is filtered out
 
     @pytest.mark.asyncio
     async def test_filter_rows_in_condition(self, session_with_data):
