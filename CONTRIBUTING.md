@@ -295,7 +295,7 @@ tests/
 
    ```python
    import uuid
-   
+
    @pytest.fixture
    async def session_with_data():
        """Create a session with sample data."""

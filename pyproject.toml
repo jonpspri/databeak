@@ -189,19 +189,13 @@ select = [
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)
-    "B008",  # do not perform function calls in argument defaults
-    "B905",  # `zip()` without an explicit `strict=` parameter
-    "SIM105", # contextlib.suppress is slower
+    "SIM105", # contextlib.suppress is slower that try-except-pass
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101" ]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, and blocking file ops in tests
+"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101" ]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, blocking file ops, and assert in tests
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
-"src/databeak/servers/column_server.py" = ["S101"]  # Type safety assertions
-"src/databeak/servers/column_text_server.py" = ["S101"]  # Type safety assertions
-"src/databeak/servers/row_operations_server.py" = ["S101"]  # Type safety assertions
-"src/databeak/services/transformation_operations.py" = ["S101"]  # Type safety assertions
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]
@@ -259,7 +253,7 @@ ignore_missing_imports = true
 module = "tests.*"
 disallow_untyped_defs = false
 disallow_any_explicit = false
-ignore_errors = true
+#ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = "examples.*"

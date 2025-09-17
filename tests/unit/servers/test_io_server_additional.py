@@ -37,7 +37,7 @@ class TestSessionManagement:
         # Create a session with data
         csv_content = "col1,col2\n1,2\n3,4"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         result = await list_sessions(create_mock_context())
@@ -57,7 +57,7 @@ class TestSessionManagement:
         # Create a session
         csv_content = "name,value\ntest,123"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         info = await get_session_info(create_mock_context(session_id))
@@ -143,16 +143,14 @@ class TestExportFunctionality:
         # Create a session with data
         csv_content = "name,value\ntest1,100\ntest2,200"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         # Export to a temporary file
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            export_result = await export_csv(
-                create_mock_context(session_id), file_path=tmp.name
-            )
+            export_result = await export_csv(create_mock_context(session_id), file_path=tmp.name)
 
             assert export_result.success is True
             assert export_result.file_path == tmp.name
@@ -172,15 +170,13 @@ class TestExportFunctionality:
         """Test exporting a subset of columns."""
         csv_content = "col1,col2,col3,col4\n1,2,3,4\n5,6,7,8"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            export_result = await export_csv(
-                create_mock_context(session_id), file_path=tmp.name
-            )
+            export_result = await export_csv(create_mock_context(session_id), file_path=tmp.name)
 
             assert export_result.rows_exported == 2
 
@@ -237,7 +233,7 @@ class TestMemoryAndPerformance:
         csv_content = "col1,col2,col3\n" + "\n".join(f"{i},{i + 1},{i + 2}" for i in range(100))
 
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
         info = await get_session_info(create_mock_context(session_id))
 

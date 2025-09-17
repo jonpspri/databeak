@@ -5,7 +5,7 @@ coupling between server modules and session management.
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -231,7 +231,7 @@ def demonstrate_testing_patterns() -> None:
 
 if __name__ == "__main__":
     """Run the demonstration."""
-    print(f"Starting DataBeak Dependency Injection Demo at {datetime.now(timezone.utc)}")
+    print(f"Starting DataBeak Dependency Injection Demo at {datetime.now(UTC)}")
     print()
 
     # Run the main demonstration
@@ -240,4 +240,4 @@ if __name__ == "__main__":
     # Show testing benefits
     demonstrate_testing_patterns()
 
-    print(f"\nDemo completed at {datetime.now(timezone.utc)}")
+    print(f"\nDemo completed at {datetime.now(UTC)}")

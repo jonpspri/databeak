@@ -110,10 +110,13 @@ class TestDataOperations:
         from src.databeak.models import get_session_manager
         from src.databeak.servers.io_server import load_csv_from_content
         from src.databeak.servers.transformation_server import filter_rows
-        from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
+        from tests.test_mock_context import (
+            create_mock_context,
+            create_mock_context_with_session_data,
+        )
 
         # Create our own isolated session to avoid contamination from other tests
-        result = await load_csv_from_content(
+        await load_csv_from_content(
             create_mock_context(),
             content="""product,price,quantity
 Laptop,999.99,10

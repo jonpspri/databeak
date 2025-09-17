@@ -268,7 +268,7 @@ class TestIntegrationWithSessions:
 
         try:
             ctx1 = create_mock_context()
-            result1 = await load_csv(ctx1, temp_path1)
+            await load_csv(ctx1, temp_path1)
             session_id = ctx1.session_id
 
             # Second load into same session
@@ -297,7 +297,7 @@ class TestIntegrationWithSessions:
         # Load data
         content = "name,age,salary\nAlice,25,50000\nBob,30,60000\nCharlie,35,70000"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, content)
+        await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
 
         try:
@@ -332,13 +332,15 @@ class TestIntegrationWithSessions:
 class TestTempFileCleanup:
     """Test temporary file cleanup scenarios."""
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
+    @pytest.mark.skip(
+        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
+    )
     async def test_export_csv_cleanup_on_format_error(self):
         """Test temp file cleanup when export format fails."""
         # Load some data first
         content = "name,age\nJohn,30"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, content)
+        await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
 
         try:
@@ -369,12 +371,14 @@ class TestTempFileCleanup:
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
-    @pytest.mark.skip(reason="TODO: Resource contention in parallel execution - directory cleanup conflicts")
+    @pytest.mark.skip(
+        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
+    )
     async def test_export_csv_temp_file_naming(self):
         """Test temp file naming patterns and uniqueness."""
         ctx = create_mock_context()
         content = "name,age\nJohn,30"
-        load_result = await load_csv_from_content(ctx, content)
+        await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
 
         try:
@@ -492,7 +496,7 @@ class TestExportFormats:
         """Create session with test data."""
         content = "name,age,salary,active\nAlice,25,50000,true\nBob,30,60000,false"
         ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, content)
+        await load_csv_from_content(ctx, content)
         yield ctx.session_id
         try:
             await close_session(create_mock_context())
@@ -550,6 +554,7 @@ class TestExportFormats:
 
             # Verify valid JSON
             import json
+
             with Path(result.file_path).open() as f:
                 data = json.load(f)
             assert len(data) == 2
@@ -778,7 +783,7 @@ class TestProgressReporting:
         # Load data first
         content = "name,age\nJohn,30"
         ctx = create_mock_context()
-        load_result = await load_csv_from_content(ctx, content)
+        await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
         mock_ctx.session_id = session_id
 

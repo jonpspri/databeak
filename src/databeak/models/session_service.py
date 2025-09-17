@@ -7,6 +7,7 @@ between server modules and session management implementation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import UTC
 from typing import TYPE_CHECKING, Protocol
 
 from .data_models import SessionInfo
@@ -150,15 +151,15 @@ class MockSessionManager:
 
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         results = []
         for session_id, session in self.sessions.items():
             df = session.df if session.has_data() else None
             info = SessionInfo(
                 session_id=session_id,
-                created_at=datetime.now(timezone.utc),
-                last_accessed=datetime.now(timezone.utc),
+                created_at=datetime.now(UTC),
+                last_accessed=datetime.now(UTC),
                 row_count=len(df) if df is not None else 0,
                 column_count=len(df.columns) if df is not None else 0,
                 columns=list(df.columns) if df is not None else [],

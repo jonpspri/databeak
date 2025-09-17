@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -112,7 +112,7 @@ class AutoSaveManager:
         self.session_id = session_id
         self.config = config
         self.original_file_path = original_file_path
-        self.last_save = datetime.now(timezone.utc)
+        self.last_save = datetime.now(UTC)
         self.save_count = 0
         self.periodic_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
@@ -158,7 +158,7 @@ class AutoSaveManager:
                 result = await save_callback(save_path, self.config.format, self.config.encoding)
 
                 if result.get("success"):
-                    self.last_save = datetime.now(timezone.utc)
+                    self.last_save = datetime.now(UTC)
                     self.save_count += 1
 
                     # Clean up old backups if needed
@@ -205,7 +205,7 @@ class AutoSaveManager:
             return f"session_{self.session_id}_autosave.csv"
 
         elif self.config.strategy == AutoSaveStrategy.BACKUP:
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"backup_{self.session_id}_{timestamp}.{self.config.format.value}"
             return str(Path(self.config.backup_dir) / filename)
 

@@ -43,8 +43,8 @@ class QualityCheckResult(TypedDict):
     details: NotRequired[dict[str, Any]]  # Any justified: flexible rule-specific data
 
 
-class DataStatistics(TypedDict):
-    """Statistical summary of column data."""
+class DataStatisticsDict(TypedDict):
+    """Statistical summary of column data (internal use - use DataStatistics Pydantic model for API responses)."""
 
     count: int
     mean: NotRequired[float]  # Only for numeric columns
@@ -61,14 +61,14 @@ class ColumnProfile(TypedDict):
 
     name: str
     dtype: str
-    statistics: DataStatistics
+    statistics: DataStatisticsDict
     sample_values: list[CellValue]
     quality_issues: list[str]
 
 
 # Session and Operation Metadata
-class SessionMetadata(TypedDict):
-    """Session state and configuration metadata."""
+class SessionMetadataDict(TypedDict):
+    """Session state and configuration metadata (internal use)."""
 
     created_at: str
     last_accessed: str
@@ -192,8 +192,8 @@ class ColumnRenameResult(TypedDict):
 
 
 # Tool Response Components
-class OperationResult(TypedDict):
-    """Standard operation result structure."""
+class OperationResultDict(TypedDict):
+    """Standard operation result structure (internal use - use OperationResult Pydantic model for API responses)."""
 
     success: bool
     operation_type: str
@@ -233,7 +233,7 @@ class DataProfileResult(TypedDict):
     memory_usage_mb: float
     column_analyses: list[ColumnAnalysis]
     correlations: NotRequired[dict[str, dict[str, float]]]
-    summary_statistics: NotRequired[dict[str, DataStatistics]]
+    summary_statistics: NotRequired[dict[str, DataStatisticsDict]]
 
 
 # Configuration and Settings

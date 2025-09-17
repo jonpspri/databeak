@@ -1,7 +1,7 @@
 """Comprehensive unit tests for statistics_server module to improve coverage."""
 
 import uuid
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -61,8 +61,6 @@ def session_with_empty_data():
     session.df = df
 
     return session_id, df
-
-
 
 
 @pytest.mark.asyncio
@@ -148,7 +146,9 @@ class TestGetStatistics:
             ctx = create_mock_context_with_session_data(session_id)
             await get_statistics(ctx, columns=["numeric1", "invalid_col"])
 
-    @pytest.mark.skip(reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior")
+    @pytest.mark.skip(
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+    )
     async def test_statistics_session_not_found(self):
         """Test statistics with invalid session."""
         with patch("src.databeak.servers.statistics_server.get_session_manager") as manager:
@@ -163,7 +163,7 @@ class TestGetStatistics:
         # Create a real session but don't load any data
         session_id = str(uuid.uuid4())
         manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
+        manager.get_or_create_session(session_id)
         # Don't call session.load_data() - leave df as None
 
         with pytest.raises(ToolError, match="No data loaded"):
@@ -318,9 +318,7 @@ class TestGetCorrelationMatrix:
         session_id = str(uuid.uuid4())
         manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
-        session.df = pd.DataFrame(
-            {"text1": ["a", "b", "c"], "text2": ["x", "y", "z"]}
-        )
+        session.df = pd.DataFrame({"text1": ["a", "b", "c"], "text2": ["x", "y", "z"]})
 
         # Should raise an error when there are no numeric columns
         with pytest.raises(ToolError, match="No numeric columns"):

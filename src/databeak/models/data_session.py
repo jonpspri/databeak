@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import pandas as pd
@@ -26,8 +26,8 @@ class DataSession:
         self.original_df: pd.DataFrame | None = None
         self.file_path: str | None = None
         self.metadata: dict[str, Any] = {}  # Any justified: flexible session metadata
-        self.created_at = datetime.now(timezone.utc)
-        self.last_accessed = datetime.now(timezone.utc)
+        self.created_at = datetime.now(UTC)
+        self.last_accessed = datetime.now(UTC)
 
     def load_data(self, df: pd.DataFrame, file_path: str | None = None) -> None:
         """Load data into the session."""
@@ -43,13 +43,13 @@ class DataSession:
                 "shape": df.shape,
                 "columns": [str(col) for col in df.columns.tolist()],  # Ensure columns are strings
                 "dtypes": {str(col): str(dtype) for col, dtype in df.dtypes.items()},
-                "loaded_at": datetime.now(timezone.utc).isoformat(),
+                "loaded_at": datetime.now(UTC).isoformat(),
             }
         )
 
     def update_access_time(self) -> None:
         """Update the last accessed time."""
-        self.last_accessed = datetime.now(timezone.utc)
+        self.last_accessed = datetime.now(UTC)
 
     def get_data_info(self) -> dict[str, Any]:  # Any justified: flexible data info
         """Get information about the loaded data."""

@@ -22,7 +22,8 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management and data models from the main package
-from ..models import ExportFormat, OperationType, get_session_manager
+from ..models import DataPreview, ExportFormat, OperationType, SessionInfo, get_session_manager
+from ..models.data_models import CellValue
 from ..models.tool_responses import BaseToolResponse
 from ..services.data_operations import create_data_preview_with_indices
 from ..utils.validators import validate_file_path, validate_url
@@ -41,29 +42,8 @@ MAX_URL_SIZE_MB = 100  # Maximum download size for URLs
 # ============================================================================
 
 # Type aliases
-CsvCellValue = str | int | float | bool | None
-
-
-class SessionInfo(BaseModel):
-    """Session information in list results."""
-
-    session_id: str = Field(description="Unique session identifier")
-    created_at: str = Field(description="Session creation timestamp (ISO format)")
-    last_accessed: str = Field(description="Last access timestamp (ISO format)")
-    row_count: int = Field(description="Number of rows in dataset")
-    column_count: int = Field(description="Number of columns in dataset")
-    columns: list[str] = Field(description="List of column names")
-    memory_usage_mb: float = Field(description="Memory usage in megabytes")
-    file_path: str | None = Field(None, description="Original file path if loaded from file")
-
-
-class DataPreview(BaseModel):
-    """Data preview with row samples."""
-
-    rows: list[dict[str, CsvCellValue]] = Field(description="Sample rows from dataset")
-    row_count: int = Field(description="Total number of rows in dataset")
-    column_count: int = Field(description="Total number of columns in dataset")
-    truncated: bool = Field(False, description="Whether preview is truncated")
+# Note: CsvCellValue is an alias for CellValue for backward compatibility
+CsvCellValue = CellValue
 
 
 class LoadResult(BaseToolResponse):
@@ -910,18 +890,8 @@ async def list_sessions(
         active_count = 0
 
         for s in sessions:
-            # s is already a SessionInfo from data_models
-            session_info = SessionInfo(
-                session_id=s.session_id,
-                created_at=s.created_at.isoformat(),
-                last_accessed=s.last_accessed.isoformat(),
-                row_count=s.row_count,
-                column_count=s.column_count,
-                columns=[str(col) for col in s.columns],  # Ensure columns are strings
-                memory_usage_mb=s.memory_usage_mb,
-                file_path=s.file_path,
-            )
-            session_infos.append(session_info)
+            # s is already a SessionInfo from data_models, so we can use it directly
+            session_infos.append(s)
 
             # Count active sessions (those with data loaded)
             if s.row_count > 0:

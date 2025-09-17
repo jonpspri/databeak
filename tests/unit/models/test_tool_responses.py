@@ -13,6 +13,8 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+from src.databeak.models import DataPreview
+
 # Import statistics models from dedicated module
 from src.databeak.models.statistics_models import (
     ColumnStatisticsResult,
@@ -26,7 +28,6 @@ from src.databeak.models.tool_responses import (
     CellLocation,
     CellValueResult,
     ColumnOperationResult,
-    DataPreview,
     DataTypeInfo,
     DeleteRowResult,
     FilterOperationResult,

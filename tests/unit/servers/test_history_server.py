@@ -37,7 +37,9 @@ from src.databeak.servers.history_server import (
 from tests.test_mock_context import create_mock_context
 
 
-@pytest.mark.skip(reason="TODO: Mock/async compatibility issues - complex history functionality needs real session implementation")
+@pytest.mark.skip(
+    reason="TODO: Mock/async compatibility issues - complex history functionality needs real session implementation"
+)
 class TestHistoryOperations:
     """Test history operation functions."""
 
@@ -77,7 +79,9 @@ class TestHistoryOperations:
 
         mock_session.undo.assert_called_once()
 
-    @pytest.mark.skip(reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior")
+    @pytest.mark.skip(
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+    )
     @pytest.mark.asyncio
     async def test_undo_operation_session_not_found(self):
         """Test undo operation with missing session."""
@@ -331,7 +335,9 @@ class TestHistoryOperations:
             await export_history(create_mock_context(), "/tmp/history.json")
 
 
-@pytest.mark.skip(reason="TODO: Mock/async compatibility issues - complex auto-save functionality needs real session implementation")
+@pytest.mark.skip(
+    reason="TODO: Mock/async compatibility issues - complex auto-save functionality needs real session implementation"
+)
 class TestAutoSaveOperations:
     """Test auto-save operation functions."""
 
