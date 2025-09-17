@@ -211,7 +211,9 @@ class TestGroupByAggregate:
         eng_group = result.groups.get("Engineering")
         assert eng_group is not None
         assert eng_group.count == 3
-        assert eng_group.mean > 70000 if hasattr(eng_group, "mean") else True
+        if hasattr(eng_group, "mean"):
+            assert eng_group.mean is not None
+            assert eng_group.mean > 70000
 
     async def test_groupby_multiple_columns(self, discovery_session):
         """Test groupby with multiple grouping columns."""

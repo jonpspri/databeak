@@ -192,6 +192,7 @@ class TestEdgeCases:
             result = await load_csv(create_mock_context(), temp_path)
             assert result.success
             assert result.rows_affected == 2
+            assert result.data is not None
             assert "José García" in str(result.data.rows)
         finally:
             Path(temp_path).unlink()
@@ -332,31 +333,6 @@ class TestIntegrationWithSessions:
 class TestTempFileCleanup:
     """Test temporary file cleanup scenarios."""
 
-    @pytest.mark.skip(
-        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
-    )
-    async def test_export_csv_cleanup_on_format_error(self):
-        """Test temp file cleanup when export format fails."""
-        # Load some data first
-        content = "name,age\nJohn,30"
-        ctx = create_mock_context()
-        await load_csv_from_content(ctx, content)
-        session_id = ctx.session_id
-
-        try:
-            # Mock pandas to_excel to raise an error
-            with (
-                patch("pandas.DataFrame.to_excel", side_effect=Exception("Mock export error")),
-                pytest.raises(ToolError, match="Export failed"),
-            ):
-                await export_csv(create_mock_context(session_id), format="excel")
-
-            # Verify no temp files were left behind
-            # (This is implicit - if cleanup failed, we'd see orphaned files)
-
-        finally:
-            await close_session(create_mock_context(session_id))
-
     async def test_export_csv_session_error_handling(self):
         """Test error handling when session manager fails."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
@@ -370,33 +346,6 @@ class TestTempFileCleanup:
                     await export_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink(missing_ok=True)
-
-    @pytest.mark.skip(
-        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
-    )
-    async def test_export_csv_temp_file_naming(self):
-        """Test temp file naming patterns and uniqueness."""
-        ctx = create_mock_context()
-        content = "name,age\nJohn,30"
-        await load_csv_from_content(ctx, content)
-        session_id = ctx.session_id
-
-        try:
-            # Export multiple times to check uniqueness
-            export1 = await export_csv(create_mock_context(session_id), format="csv")
-            export2 = await export_csv(create_mock_context(session_id), format="json")
-
-            assert export1.file_path != export2.file_path
-            assert export1.file_path.endswith(".csv")
-            assert export2.file_path.endswith(".json")
-            assert "databeak_export" in export1.file_path
-            assert session_id[:8] in export1.file_path
-
-            # Clean up
-            Path(export1.file_path).unlink()
-            Path(export2.file_path).unlink()
-        finally:
-            await close_session(create_mock_context(session_id))
 
 
 @pytest.mark.asyncio

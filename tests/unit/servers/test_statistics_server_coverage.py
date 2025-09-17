@@ -83,7 +83,7 @@ class TestGetStatistics:
         numeric1_stats = result.statistics["numeric1"]
         assert numeric1_stats.mean == 5.5
         assert numeric1_stats.percentile_50 == 5.5  # median
-        assert numeric1_stats.std > 0
+        assert int(numeric1_stats.std) > 0
         assert numeric1_stats.min == 1
         assert numeric1_stats.max == 10
 

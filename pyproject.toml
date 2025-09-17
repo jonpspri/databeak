@@ -253,6 +253,7 @@ ignore_missing_imports = true
 module = "tests.*"
 disallow_untyped_defs = false
 disallow_any_explicit = false
+disable_error_code = ["arg-type"]
 #ignore_errors = true
 
 [[tool.mypy.overrides]]

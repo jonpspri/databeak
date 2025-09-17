@@ -157,8 +157,8 @@ class TestValidatorEdgeCases:
         # Empty for dict_or_list
         result_dict = parse_json_string_to_dict_or_list("{}")
         assert result_dict == {}
-        result_list = parse_json_string_to_dict_or_list("[]")
-        assert result_list == []
+        result_list_or_dict = parse_json_string_to_dict_or_list("[]")
+        assert result_list_or_dict == []
 
     def test_null_json_values(self):
         """Test handling of null values in JSON."""

@@ -250,7 +250,7 @@ class TestColumnNameValidation:
         ]
 
         for name in invalid_names:
-            is_valid, message = validate_column_name(name)  # type: ignore[arg-type]
+            is_valid, message = validate_column_name(name)
             assert is_valid is False, f"Should have failed for invalid name: {name}"
 
     def test_validate_column_name_non_string(self) -> None:
@@ -258,7 +258,7 @@ class TestColumnNameValidation:
         non_string_names = [123, [], {}, True, 1.5]
 
         for name in non_string_names:
-            is_valid, message = validate_column_name(name)  # type: ignore[arg-type]
+            is_valid, message = validate_column_name(name)
             assert is_valid is False
             assert "non-empty string" in message
 

@@ -572,7 +572,7 @@ class TestSafeTypeConversion:
             # Use numeric data for float conversion
             series = pd.Series([1.1, 2.2, 3.3])
         else:
-            series = pd.Series(["1", "2", "3"])
+            series = pd.Series(["1", "2", "3"])  # type: ignore[assignment]
 
         result = safe_type_conversion(series, target_type)
 

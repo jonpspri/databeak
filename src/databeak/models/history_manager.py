@@ -85,7 +85,7 @@ class HistoryManager:
         """Initialize history manager."""
         self.session_id = session_id
         self.storage_type = storage_type
-        self.history_dir = history_dir or str(Path.cwd() / ".csv_history")
+        self.history_dir: str = history_dir or str(Path.cwd() / ".csv_history")
         self.max_history = max_history
         self.enable_snapshots = enable_snapshots
         self.snapshot_interval = snapshot_interval

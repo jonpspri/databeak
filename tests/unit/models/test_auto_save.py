@@ -1,9 +1,9 @@
 """Tests for auto-save functionality."""
 
 import asyncio
-import shutil
 import tempfile
 import uuid
+from collections.abc import Generator
 from pathlib import Path
 
 import pandas as pd
@@ -27,12 +27,10 @@ def sample_df() -> pd.DataFrame:
 
 
 @pytest.fixture
-def temp_dir() -> str:
+def temp_dir() -> Generator[str]:
     """Create a temporary directory for test files."""
-    temp_dir = tempfile.mkdtemp()
-    yield temp_dir
-    # Cleanup
-    shutil.rmtree(temp_dir, ignore_errors=True)
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield temp_dir
 
 
 @pytest.mark.asyncio
@@ -242,7 +240,7 @@ async def test_hybrid_mode(sample_df, temp_dir) -> None:
     # Trigger operation-based save
     session.record_operation("test_op", {"test": "data"})
     result = await session.trigger_auto_save_if_needed()
-    assert result["success"] is True
+    assert result is not None and result["success"] is True
 
     # Wait for periodic save
     await asyncio.sleep(2.5)
@@ -276,7 +274,7 @@ async def test_different_export_formats(sample_df, temp_dir) -> None:
         session.record_operation("test_op", {"format": format.value})
         result = await session.trigger_auto_save_if_needed()
 
-        assert result["success"] is True
+        assert result is not None and result["success"] is True
 
         # Check file was created with correct extension
         pattern = f"*{session.session_id}*.{format.value}"

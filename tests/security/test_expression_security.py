@@ -219,7 +219,8 @@ class TestExpressionSecurity:
         pandas_result = large_df.eval(expr)
         pandas_time = time.time() - start_time
 
-        # Results should be equivalent
+        # Results should be equivalent - ensure both are Series
+        assert isinstance(pandas_result, pd.Series), "pandas_result should be a Series"
         pd.testing.assert_series_equal(
             secure_result.sort_index(), pandas_result.sort_index(), check_names=False
         )

@@ -2,6 +2,8 @@
 
 import asyncio
 import sys
+from asyncio import AbstractEventLoop
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
@@ -14,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_history_files() -> None:
+def cleanup_history_files() -> Generator[None]:
     """Clean up history files created during testing."""
     yield  # Let all tests run first
 
@@ -28,7 +30,7 @@ def cleanup_history_files() -> None:
 
 
 @pytest.fixture(scope="session")
-def event_loop() -> None:
+def event_loop() -> Generator[AbstractEventLoop]:
     """Create an event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
