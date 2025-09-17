@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling>=1.26.0"]
+requires = ["hatchling>=1.26.0", "uv-dynamic-versioning"]
 build-backend = "hatchling.build"
 
 [project]
 name = "databeak"
-version = "1.0.5"
+dynamic = ["version"]
 description = "DataBeak: MCP server for comprehensive CSV file operations with pandas-based tools"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -136,7 +136,6 @@ include = [
     "NOTICE",
     "CHANGELOG.md",
     "pyproject.toml",
-    "uv.toml",
 ]
 exclude = [
     "*.pyc",
@@ -157,18 +156,14 @@ exclude = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/databeak"]
 
-# Use uv instead of hatch environments
-# Run commands with:
-#   uv run test
-#   uv run server
-#   uv run fmt
-# See uv.toml for command definitions
+[tool.hatch.version]
+source = "uv-dynamic-versioning"
 
-# Modern tool configurations
+[tool.uv-dynamic-versioning]
+fallback-version = "0.0.0"
 
 [tool.ruff]
 line-length = 100
-target-version = "py310"
 fix = true
 output-format = "grouped"
 show-fixes = true
