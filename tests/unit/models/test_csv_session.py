@@ -203,6 +203,7 @@ class TestCSVSession:
         session.load_data(df, "test.csv")
 
         # Modify the data
+        assert session.df is not None
         session.df["new_col"] = ["X", "Y"]
         assert "new_col" in session.df.columns
 
@@ -215,7 +216,7 @@ class TestCSVSession:
         assert result is True
 
         # Should restore original data and clear history
-        assert "new_col" not in session.df.columns
+        assert session.df is not None and "new_col" not in session.df.columns
         assert len(session.operations_history) == 0
 
     def test_rollback_partial_steps_warning(self):
@@ -834,12 +835,18 @@ class TestCSVSession:
 
         # Configure auto-save to be needed
         session._data_session.metadata["needs_autosave"] = True
-        session.auto_save_manager.should_save_after_operation = Mock(return_value=True)
-        session.auto_save_manager.trigger_save = AsyncMock(
-            return_value={"success": False, "error": "Save failed"}
-        )
-
-        result = await session.trigger_auto_save_if_needed()
+        with (
+            patch.object(
+                session.auto_save_manager, "should_save_after_operation", return_value=True
+            ),
+            patch.object(
+                session.auto_save_manager,
+                "trigger_save",
+                new_callable=AsyncMock,
+                return_value={"success": False, "error": "Save failed"},
+            ),
+        ):
+            result = await session.trigger_auto_save_if_needed()
 
         assert result is not None
         assert result["success"] is False

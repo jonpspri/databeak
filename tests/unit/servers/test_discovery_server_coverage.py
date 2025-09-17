@@ -402,6 +402,7 @@ class TestFindCellsWithValue:
         manager = get_session_manager()
         session = manager.get_or_create_session(session_id_with_outliers)
         df = session.df
+        assert df is not None
         target_value = df["values"].iloc[0]
 
         ctx = create_mock_context_with_session_data(session_id_with_outliers)
@@ -509,6 +510,7 @@ class TestGetDataSummary:
         result = await get_data_summary(ctx, max_preview_rows=20)
 
         assert result.success is True
+        assert result.preview is not None
         assert len(result.preview.rows) <= 20
 
     async def test_data_summary_empty_dataframe(self, session_id_with_outliers):
@@ -664,5 +666,5 @@ class TestErrorHandling:
         single_col_session.df = single_col_df
 
         ctx = create_mock_context_with_session_data(single_col_session_id)
-        result = await detect_outliers(ctx)
-        assert result.success is True
+        outliers_result = await detect_outliers(ctx)
+        assert outliers_result.success is True

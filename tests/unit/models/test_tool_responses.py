@@ -14,6 +14,7 @@ import pytest
 from pydantic import ValidationError
 
 from src.databeak.models import DataPreview
+from src.databeak.models.data_models import SessionInfo
 
 # Import statistics models from dedicated module
 from src.databeak.models.statistics_models import (
@@ -36,7 +37,6 @@ from src.databeak.models.tool_responses import (
     MissingDataInfo,
     # RenameColumnsResult,  # Not yet implemented
     ServerInfoResult,
-    SessionInfo,
     SortDataResult,
     UpdateRowResult,
 )
@@ -111,7 +111,7 @@ class TestSessionInfo:
     def test_missing_required_field(self):
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            SessionInfo(
+            SessionInfo(  # type: ignore [call-arg]
                 session_id="test-123",
                 created_at="2023-01-01T10:00:00Z",
                 # Missing required fields
@@ -392,7 +392,7 @@ class TestHealthResult:
     def test_missing_required_field(self):
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError):
-            HealthResult(status="healthy")  # Missing other required fields
+            HealthResult(status="healthy")  # type: ignore [call-arg]
 
 
 class TestServerInfoResult:
@@ -452,7 +452,7 @@ class TestLoadResult:
     def test_missing_required_fields(self):
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
-            LoadResult()  # Missing rows_affected, columns_affected
+            LoadResult()  # type: ignore [call-arg]  # Missing rows_affected, columns_affected
         assert "Field required" in str(exc_info.value)
 
     def test_invalid_field_types(self):
@@ -931,9 +931,9 @@ class TestFilterOperationResult:
     def test_missing_required_field(self):
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError):
-            FilterOperationResult(
+            FilterOperationResult(  # type: ignore [call-arg]
                 rows_before=100,
-                # Missing other required fields
+                # Missing rows_after, rows_filtered, conditions_applied
             )
 
     def test_negative_values_validation(self):
@@ -995,10 +995,10 @@ class TestColumnOperationResult:
             original_sample=[1, "text", 3.14, None, True],
             updated_sample=[1, "TEXT", 3.14, "N/A", True],
         )
-        assert result.original_sample[1] == "text"
-        assert result.updated_sample[1] == "TEXT"
-        assert result.original_sample[3] is None
-        assert result.updated_sample[3] == "N/A"
+        assert result.original_sample is not None and result.original_sample[1] == "text"
+        assert result.updated_sample is not None and result.updated_sample[1] == "TEXT"
+        assert result.original_sample is not None and result.original_sample[3] is None
+        assert result.updated_sample is not None and result.updated_sample[3] == "N/A"
 
     def test_serialization_with_optional_fields(self):
         """Test serialization handles optional fields correctly."""

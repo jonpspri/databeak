@@ -109,7 +109,7 @@ class CSVSession:
         return self._data_session.df
 
     @df.setter
-    def df(self, new_df: pd.DataFrame) -> None:
+    def df(self, new_df: pd.DataFrame | None) -> None:
         """Set the DataFrame."""
         self._data_session.df = new_df
         self.update_access_time()

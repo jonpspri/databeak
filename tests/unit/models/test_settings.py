@@ -189,6 +189,7 @@ class TestSettingsDocumentation:
             session = CSVSession()
 
             # Verify the directory was passed to HistoryManager
+            assert session.history_manager is not None
             assert session.history_manager.history_dir == test_dir
 
             # Verify other HistoryManager parameters are still correctly set

@@ -1,8 +1,8 @@
 """DataBeak - MCP server for comprehensive CSV operations."""
 
-__version__ = "1.0.5"
-__author__ = "Santosh Ray"
+__author__ = ["Jonathan Springer", "Santosh Ray"]
 
+from ._version import __version__
 from .server import main, mcp
 
-__all__ = ["main", "mcp"]
+__all__ = ["__version__", "main", "mcp"]

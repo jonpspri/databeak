@@ -4,6 +4,8 @@ This test module demonstrates the improved testability achieved through dependen
 showing how services can be tested in isolation from the global session management system.
 """
 
+from typing import cast
+
 import pandas as pd
 import pytest
 
@@ -23,7 +25,9 @@ class TestStatisticsServiceDependencyInjection:
         self.service_factory = SessionServiceFactory(self.mock_session_manager)
 
         # Create statistics service with injected dependencies
-        self.statistics_service = self.service_factory.create_service(StatisticsService)
+        self.statistics_service = cast(
+            StatisticsService, self.service_factory.create_service(StatisticsService)
+        )
 
         # Create test data
         self.test_data = pd.DataFrame(

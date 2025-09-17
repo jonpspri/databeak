@@ -751,7 +751,7 @@ class TestHistoryManagerUndoRedo:
 
         undone_op, snapshot = manager.undo()
 
-        assert undone_op.operation_type == "op1"
+        assert undone_op is not None and undone_op.operation_type == "op1"
         assert snapshot is None
 
     def test_undo_cannot_undo(self):
@@ -1393,12 +1393,12 @@ class TestHistoryManagerStorageTypes:
 
         # Test undo
         undone_op, snapshot = manager.undo()
-        assert undone_op.operation_type == "sort"
+        assert undone_op is not None and undone_op.operation_type == "sort"
         assert manager.current_index == 0
 
         # Test redo
         redone_op, snapshot = manager.redo()
-        assert redone_op.operation_type == "sort"
+        assert redone_op is not None and redone_op.operation_type == "sort"
         assert manager.current_index == 1
 
 
@@ -1428,7 +1428,7 @@ class TestHistoryManagerEdgeCases:
 
         # Snapshot should be unchanged
         snapshot = manager.history[0].data_snapshot
-        assert snapshot.loc[0, "col1"] == 1
+        assert snapshot is not None and snapshot.loc[0, "col1"] == 1
 
     def test_concurrent_manager_instances(self):
         """Test multiple manager instances with same session ID."""
@@ -1507,7 +1507,7 @@ class TestHistoryManagerEdgeCases:
         operation_id = manager.add_operation("complex_op", complex_details)
 
         operation = manager.get_operation(operation_id)
-        assert operation.details == complex_details
+        assert operation is not None and operation.details == complex_details
 
     @patch("src.databeak.models.history_manager.logger.info")
     def test_logging_operations(self, mock_logger):
