@@ -10,11 +10,9 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "Apache-2.0"}
 authors = [
-    {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
     {name = "Jonathan Springer", email = "jps@s390x.com"},
 ]
 maintainers = [
-    {name = "Santosh Ray", email = "rayskumar02@gmail.com"},
     {name = "Jonathan Springer", email = "jps@s390x.com"},
 ]
 keywords = [
@@ -258,6 +256,10 @@ disable_error_code = ["arg-type"]
 
 [[tool.mypy.overrides]]
 module = "examples.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "benchmarks.*"
 ignore_errors = true
 
 

@@ -4,6 +4,7 @@ This test module demonstrates the improved testability achieved through dependen
 showing how services can be tested in isolation from the global session management system.
 """
 
+import uuid
 from typing import cast
 
 import pandas as pd
@@ -13,41 +14,55 @@ from src.databeak.models.session_service import MockSessionManager, SessionServi
 from src.databeak.services.statistics_service import StatisticsService
 
 
+@pytest.fixture
+def test_data():
+    """Create test data for statistics service tests."""
+    return pd.DataFrame(
+        {
+            "numeric_col": [1, 2, 3, 4, 5, 10, 15],
+            "float_col": [1.1, 2.2, 3.3, 4.4, 5.5, 10.5, 15.5],
+            "text_col": ["A", "B", "C", "A", "B", "C", "D"],
+            "mixed_col": ["text1", "text2", "text1", "text2", "text3", "text3", "text4"],
+        }
+    )
+
+
+@pytest.fixture
+def session_id():
+    """Provide a unique session ID for each test."""
+    return uuid.uuid4().hex
+
+
+@pytest.fixture
+def mock_session_manager(test_data, session_id):
+    """Create a fresh MockSessionManager with test data for each test."""
+    mock_manager = MockSessionManager()
+    mock_manager.add_test_data(session_id, test_data)
+    return mock_manager
+
+
+@pytest.fixture
+def service_factory(mock_session_manager):
+    """Create a SessionServiceFactory with injected mock session manager."""
+    return SessionServiceFactory(mock_session_manager)
+
+
+@pytest.fixture
+def statistics_service(service_factory):
+    """Create a StatisticsService with injected dependencies."""
+    return cast(StatisticsService, service_factory.create_service(StatisticsService))
+
+
 class TestStatisticsServiceDependencyInjection:
     """Test StatisticsService with dependency injection for improved testability."""
 
-    def setup_method(self) -> None:
-        """Set up test environment with mocked dependencies."""
-        # Create mock session manager instead of using global one
-        self.mock_session_manager = MockSessionManager()
-
-        # Create service factory with injected mock
-        self.service_factory = SessionServiceFactory(self.mock_session_manager)
-
-        # Create statistics service with injected dependencies
-        self.statistics_service = cast(
-            StatisticsService, self.service_factory.create_service(StatisticsService)
-        )
-
-        # Create test data
-        self.test_data = pd.DataFrame(
-            {
-                "numeric_col": [1, 2, 3, 4, 5, 10, 15],
-                "float_col": [1.1, 2.2, 3.3, 4.4, 5.5, 10.5, 15.5],
-                "text_col": ["A", "B", "C", "A", "B", "C", "D"],
-                "mixed_col": ["text1", "text2", "text1", "text2", "text3", "text3", "text4"],
-            }
-        )
-
-        # Add test data to mock session manager
-        self.session_id = "test_session_001"
-        self.mock_session_manager.add_test_data(self.session_id, self.test_data)
-
     @pytest.mark.asyncio
-    async def test_get_statistics_with_dependency_injection(self) -> None:
+    async def test_get_statistics_with_dependency_injection(
+        self, session_id, statistics_service
+    ) -> None:
         """Test that statistics service works with injected session manager."""
         # Act
-        result = await self.statistics_service.get_statistics(self.session_id)
+        result = await statistics_service.get_statistics(session_id)
 
         # Assert
         assert result.total_rows == 7
@@ -63,12 +78,10 @@ class TestStatisticsServiceDependencyInjection:
         assert numeric_stats.max == 15
 
     @pytest.mark.asyncio
-    async def test_get_statistics_with_column_filter(self) -> None:
+    async def test_get_statistics_with_column_filter(self, session_id, statistics_service) -> None:
         """Test statistics with column filtering using injected dependencies."""
         # Act
-        result = await self.statistics_service.get_statistics(
-            self.session_id, columns=["numeric_col"]
-        )
+        result = await statistics_service.get_statistics(session_id, columns=["numeric_col"])
 
         # Assert
         assert len(result.statistics) == 1
@@ -76,10 +89,12 @@ class TestStatisticsServiceDependencyInjection:
         assert "float_col" not in result.statistics
 
     @pytest.mark.asyncio
-    async def test_get_column_statistics_with_dependency_injection(self) -> None:
+    async def test_get_column_statistics_with_dependency_injection(
+        self, session_id, statistics_service
+    ) -> None:
         """Test column statistics with injected dependencies."""
         # Act
-        result = await self.statistics_service.get_column_statistics(self.session_id, "numeric_col")
+        result = await statistics_service.get_column_statistics(session_id, "numeric_col")
 
         # Assert
         assert result.column == "numeric_col"
@@ -88,10 +103,12 @@ class TestStatisticsServiceDependencyInjection:
         assert result.statistics.count == 7
 
     @pytest.mark.asyncio
-    async def test_get_correlation_matrix_with_dependency_injection(self) -> None:
+    async def test_get_correlation_matrix_with_dependency_injection(
+        self, session_id, statistics_service
+    ) -> None:
         """Test correlation matrix with injected dependencies."""
         # Act
-        result = await self.statistics_service.get_correlation_matrix(self.session_id)
+        result = await statistics_service.get_correlation_matrix(session_id)
 
         # Assert
         assert result.method == "pearson"
@@ -100,10 +117,12 @@ class TestStatisticsServiceDependencyInjection:
         assert "float_col" in result.correlation_matrix
 
     @pytest.mark.asyncio
-    async def test_get_value_counts_with_dependency_injection(self) -> None:
+    async def test_get_value_counts_with_dependency_injection(
+        self, session_id, statistics_service
+    ) -> None:
         """Test value counts with injected dependencies."""
         # Act
-        result = await self.statistics_service.get_value_counts(self.session_id, "text_col")
+        result = await statistics_service.get_value_counts(session_id, "text_col")
 
         # Assert
         assert result.column == "text_col"
@@ -113,35 +132,37 @@ class TestStatisticsServiceDependencyInjection:
         assert result.value_counts["A"] == 2
 
     @pytest.mark.asyncio
-    async def test_error_handling_with_invalid_session(self) -> None:
+    async def test_error_handling_with_invalid_session(self, statistics_service) -> None:
         """Test error handling with dependency injection."""
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
-            await self.statistics_service.get_statistics("invalid_session")
+            await statistics_service.get_statistics("invalid_session")
 
         assert "No data loaded in session" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_error_handling_with_invalid_column(self) -> None:
+    async def test_error_handling_with_invalid_column(self, session_id, statistics_service) -> None:
         """Test error handling for invalid column with dependency injection."""
         # Act & Assert
         with pytest.raises(Exception) as exc_info:
-            await self.statistics_service.get_column_statistics(
-                self.session_id, "nonexistent_column"
-            )
+            await statistics_service.get_column_statistics(session_id, "nonexistent_column")
 
         assert "Column 'nonexistent_column' not found" in str(exc_info.value)
 
-    def test_service_can_be_tested_in_isolation(self) -> None:
+    def test_service_can_be_tested_in_isolation(
+        self, statistics_service, mock_session_manager
+    ) -> None:
         """Demonstrate that service can be tested without global session manager."""
         # Verify that we're using our mock, not the global session manager
-        assert isinstance(self.statistics_service.session_manager, MockSessionManager)
-        assert self.statistics_service.session_manager is self.mock_session_manager
+        assert isinstance(statistics_service.session_manager, MockSessionManager)
+        assert statistics_service.session_manager is mock_session_manager
 
         # Verify service name
-        assert self.statistics_service.get_service_name() == "StatisticsService"
+        assert statistics_service.get_service_name() == "StatisticsService"
 
-    def test_multiple_services_with_different_dependencies(self) -> None:
+    def test_multiple_services_with_different_dependencies(
+        self, statistics_service, mock_session_manager
+    ) -> None:
         """Test creating multiple services with different dependency configurations."""
         # Create another mock session manager with different data
         other_mock = MockSessionManager()
@@ -153,10 +174,12 @@ class TestStatisticsServiceDependencyInjection:
         other_mock.add_test_data("other_session", other_data)
 
         # Verify services are independent
-        assert self.statistics_service.session_manager is not other_service.session_manager
-        assert len(self.mock_session_manager.sessions) == 1
+        assert statistics_service.session_manager is not other_service.session_manager
+        assert len(mock_session_manager.sessions) == 1
         assert len(other_mock.sessions) == 1
-        assert "test_session_001" in self.mock_session_manager.sessions
+        # Session ID will be unique due to uuid.uuid4().hex fixture
+        session_ids = list(mock_session_manager.sessions.keys())
+        assert len(session_ids) == 1  # Should have exactly one session
         assert "other_session" in other_mock.sessions
 
     @pytest.mark.asyncio
