@@ -121,9 +121,12 @@ class TestDataOperations:
         assert filter_result.rows_before == 5
         assert filter_result.rows_after == 3
 
+    @pytest.mark.asyncio
+    async def test_filter_rows_category(self, isolated_context, csv_session_with_data) -> None:
         # Test a different filter condition - Electronics category on fresh data
         # Need to reload data first since previous filter modified the session
         from src.databeak.servers.io_server import load_csv_from_content
+        from src.databeak.servers.transformation_server import filter_rows
 
         csv_content = """product,price,quantity,category
 Laptop,999.99,10,Electronics

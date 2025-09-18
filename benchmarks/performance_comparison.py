@@ -545,20 +545,22 @@ def print_results_table(operation_name: str, results: dict[str, Any], data_size:
     new = results["new_pattern"]
     imp = results["improvements"]
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"BENCHMARK RESULTS: {operation_name}")
     print(f"Data size: {data_size:,} rows")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     print(f"{'Metric':<25} {'Old Pattern':<15} {'New Pattern':<15} {'Improvement':<15}")
-    print(f"{'-'*80}")
+    print(f"{'-' * 80}")
 
     print(
-        f"{'Mean Time (ms)':<25} {old['mean_time']*1000:<15.3f} {new['mean_time']*1000:<15.3f} {imp['time_improvement_percent']:<15.1f}%"
+        f"{'Mean Time (ms)':<25} {old['mean_time'] * 1000:<15.3f} {new['mean_time'] * 1000:<15.3f} {imp['time_improvement_percent']:<15.1f}%"
     )
-    print(f"{'Std Dev Time (ms)':<25} {old['std_time']*1000:<15.3f} {new['std_time']*1000:<15.3f}")
-    print(f"{'Min Time (ms)':<25} {old['min_time']*1000:<15.3f} {new['min_time']*1000:<15.3f}")
-    print(f"{'Max Time (ms)':<25} {old['max_time']*1000:<15.3f} {new['max_time']*1000:<15.3f}")
+    print(
+        f"{'Std Dev Time (ms)':<25} {old['std_time'] * 1000:<15.3f} {new['std_time'] * 1000:<15.3f}"
+    )
+    print(f"{'Min Time (ms)':<25} {old['min_time'] * 1000:<15.3f} {new['min_time'] * 1000:<15.3f}")
+    print(f"{'Max Time (ms)':<25} {old['max_time'] * 1000:<15.3f} {new['max_time'] * 1000:<15.3f}")
     print(
         f"{'Memory Delta (MB)':<25} {old['mean_memory_delta']:<15.3f} {new['mean_memory_delta']:<15.3f} {imp['memory_improvement_percent']:<15.1f}%"
     )
@@ -590,9 +592,9 @@ def run_comprehensive_benchmarks() -> None:
     all_results = {}
 
     for data_size in data_sizes:
-        print(f"\n{'#'*80}")
+        print(f"\n{'#' * 80}")
         print(f"TESTING WITH {data_size:,} ROWS")
-        print(f"{'#'*80}")
+        print(f"{'#' * 80}")
 
         benchmark = PerformanceBenchmark(rows=data_size)
 
@@ -610,9 +612,9 @@ def run_comprehensive_benchmarks() -> None:
             print_results_table(operation_name, results, data_size)
 
     # Summary analysis
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("SUMMARY ANALYSIS")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     # Calculate overall improvements
     total_time_improvements = []

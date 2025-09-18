@@ -22,7 +22,7 @@ from src.databeak.servers.row_operations_server import (
     set_cell_value,
     update_row,
 )
-from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
@@ -58,7 +58,7 @@ class TestGetCellValue:
         self, row_operations_session, row_index, column, expected_value, description
     ):
         """Test successful cell value retrieval with various coordinates."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_cell_value(ctx, row_index, column)
 
         assert result.success is True
@@ -70,7 +70,7 @@ class TestGetCellValue:
     async def test_get_cell_value_null_handling(self, row_operations_session):
         """Test null value handling in cell retrieval."""
         # First set a cell to None to test null handling
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         set_cell_value(ctx, 0, "email", None)
 
         result = get_cell_value(ctx, 0, "email")
@@ -94,7 +94,7 @@ class TestGetCellValue:
         self, row_operations_session, row_index, column, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             get_cell_value(ctx, row_index, column)
 
@@ -127,7 +127,7 @@ class TestSetCellValue:
     ):
         """Test successful cell value updates."""
         # Get original value first
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         original = get_cell_value(ctx, row_index, column)
 
         # Update the value
@@ -146,7 +146,7 @@ class TestSetCellValue:
     async def test_set_cell_value_type_conversion(self, row_operations_session):
         """Test pandas type conversion handling."""
         # Set string to numeric column (pandas may preserve as string)
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = set_cell_value(ctx, 0, "age", "35")
 
         assert result.success is True
@@ -174,7 +174,7 @@ class TestSetCellValue:
         self, row_operations_session, row_index, column, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             set_cell_value(ctx, row_index, column, "test")
 
@@ -193,7 +193,7 @@ class TestGetRowData:
 
     async def test_get_row_data_all_columns(self, row_operations_session):
         """Test retrieving all columns from a row."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_row_data(ctx, 0)
 
         assert result.success is True
@@ -207,7 +207,7 @@ class TestGetRowData:
     async def test_get_row_data_selected_columns(self, row_operations_session):
         """Test retrieving specific columns from a row."""
         columns = ["first_name", "last_name", "age"]
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_row_data(ctx, 1, columns)
 
         assert result.success is True
@@ -222,7 +222,7 @@ class TestGetRowData:
     async def test_get_row_data_null_values(self, row_operations_session):
         """Test row data retrieval with null values."""
         # Set some values to null first
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         set_cell_value(ctx, 0, "email", None)
         set_cell_value(ctx, 0, "salary", None)
 
@@ -243,13 +243,13 @@ class TestGetRowData:
         self, row_operations_session, row_index, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             get_row_data(ctx, row_index)
 
     async def test_get_row_data_invalid_columns(self, row_operations_session):
         """Test error handling for invalid column names."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(ColumnNotFoundError):
             get_row_data(ctx, 0, ["first_name", "nonexistent"])
 
@@ -268,19 +268,19 @@ class TestGetColumnData:
 
     async def test_get_column_data_full_column(self, row_operations_session):
         """Test retrieving full column data."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "first_name")
 
         assert result.success is True
         assert result.column == "first_name"
         assert result.total_values == 4
         assert result.values == ["John", "Jane", "Bob", "Alice"]
-        assert result.start_row is None
-        assert result.end_row is None
+        assert result.start_row == 0
+        assert result.end_row == 3
 
     async def test_get_column_data_with_range(self, row_operations_session):
         """Test retrieving column data with row range."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "age", 1, 3)
 
         assert result.success is True
@@ -292,7 +292,7 @@ class TestGetColumnData:
 
     async def test_get_column_data_start_only(self, row_operations_session):
         """Test retrieving column data from start row to end."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "last_name", 2)
 
         assert result.success is True
@@ -300,23 +300,23 @@ class TestGetColumnData:
         assert result.total_values == 2
         assert result.values == ["Johnson", "Brown"]  # Rows 2 and 3
         assert result.start_row == 2
-        assert result.end_row is None
+        assert result.end_row == 3
 
     async def test_get_column_data_end_only(self, row_operations_session):
         """Test retrieving column data from beginning to end row."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "email", None, 2)
 
         assert result.success is True
         assert result.column == "email"
         assert result.total_values == 2
         assert result.values == ["john@example.com", "jane@test.com"]  # Rows 0 and 1
-        assert result.start_row is None
+        assert result.start_row == 0
         assert result.end_row == 2
 
     async def test_get_column_data_numeric_column(self, row_operations_session):
         """Test retrieving numeric column data."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "salary")
 
         assert result.success is True
@@ -325,7 +325,7 @@ class TestGetColumnData:
 
     async def test_get_column_data_boolean_column(self, row_operations_session):
         """Test retrieving boolean column data."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = get_column_data(ctx, "is_active")
 
         assert result.success is True
@@ -347,7 +347,7 @@ class TestGetColumnData:
         self, row_operations_session, column, start_row, end_row, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             get_column_data(ctx, column, start_row, end_row)
 
@@ -377,7 +377,7 @@ class TestInsertRow:
             "join_date": "2023-04-01",
         }
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = insert_row(ctx, 2, new_data)
 
         assert result.success is True
@@ -396,7 +396,7 @@ class TestInsertRow:
         """Test inserting row with list format."""
         new_data = [6, "Diana", "Davis", 29, "diana@example.com", 53000, True, "2023-05-01"]
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = insert_row(ctx, -1, new_data)  # Append at end
 
         assert result.success is True
@@ -423,7 +423,7 @@ class TestInsertRow:
             }
         )
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = insert_row(ctx, 0, json_data)  # Insert at beginning
 
         assert result.success is True
@@ -439,7 +439,7 @@ class TestInsertRow:
         """Test inserting row with partial dictionary (missing columns filled with None)."""
         partial_data = {"first_name": "Frank", "age": 40, "is_active": True}
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = insert_row(ctx, 1, partial_data)
 
         assert result.success is True
@@ -461,7 +461,7 @@ class TestInsertRow:
             "join_date": None,
         }
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = insert_row(ctx, 3, null_data)
 
         assert result.success is True
@@ -487,7 +487,7 @@ class TestInsertRow:
         self, row_operations_session, row_index, data, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             insert_row(ctx, row_index, data)
 
@@ -507,7 +507,7 @@ class TestDeleteRow:
     async def test_delete_row_middle(self, row_operations_session):
         """Test deleting a row from the middle."""
         # Get original data for verification
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         original_row = get_row_data(ctx, 1)
 
         result = delete_row(ctx, 1)
@@ -526,7 +526,7 @@ class TestDeleteRow:
 
     async def test_delete_row_first(self, row_operations_session):
         """Test deleting the first row."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = delete_row(ctx, 0)
 
         assert result.success is True
@@ -539,7 +539,7 @@ class TestDeleteRow:
 
     async def test_delete_row_last(self, row_operations_session):
         """Test deleting the last row."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = delete_row(ctx, 3)
 
         assert result.success is True
@@ -550,7 +550,7 @@ class TestDeleteRow:
     async def test_delete_row_with_nulls(self, row_operations_session):
         """Test deleting row with null values."""
         # Set some values to null first
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         set_cell_value(ctx, 0, "email", None)
         set_cell_value(ctx, 0, "salary", None)
 
@@ -571,7 +571,7 @@ class TestDeleteRow:
         self, row_operations_session, row_index, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             delete_row(ctx, row_index)
 
@@ -592,7 +592,7 @@ class TestUpdateRow:
         """Test updating multiple columns in a row."""
         updates = {"age": 31, "salary": 51000, "is_active": False}
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = update_row(ctx, 0, updates)
 
         assert result.success is True
@@ -624,7 +624,7 @@ class TestUpdateRow:
         """Test updating a single column."""
         updates = {"first_name": "Jonathan"}
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = update_row(ctx, 0, updates)
 
         assert result.success is True
@@ -637,7 +637,7 @@ class TestUpdateRow:
         """Test updating columns to null values."""
         updates = {"email": None, "salary": None}
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = update_row(ctx, 1, updates)
 
         assert result.success is True
@@ -655,7 +655,7 @@ class TestUpdateRow:
         """Test updating row with JSON string format."""
         json_updates = json.dumps({"last_name": "Smith-Jones", "age": 26})
 
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         result = update_row(ctx, 1, json_updates)
 
         assert result.success is True
@@ -666,7 +666,7 @@ class TestUpdateRow:
     async def test_update_row_no_changes(self, row_operations_session):
         """Test updating row with same values (no actual changes)."""
         # Get current values
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         current = get_row_data(ctx, 0)
         current_age = current.data["age"]
 
@@ -694,7 +694,7 @@ class TestUpdateRow:
         self, row_operations_session, row_index, data, expected_error, description
     ):
         """Test boundary condition error handling."""
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         with pytest.raises(expected_error):
             update_row(ctx, row_index, data)
 
@@ -714,7 +714,7 @@ class TestRowOperationsIntegration:
     async def test_complete_row_lifecycle(self, row_operations_session):
         """Test complete row manipulation workflow."""
         # 1. Get original data
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         original = get_row_data(ctx, 0)
         assert original.data["first_name"] == "John"
 
@@ -744,7 +744,7 @@ class TestRowOperationsIntegration:
     async def test_cell_operations_consistency(self, row_operations_session):
         """Test consistency between cell and row operations."""
         # Set a cell value
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         set_result = set_cell_value(ctx, 0, "first_name", "Johnny")
         assert set_result.success is True
 
@@ -764,7 +764,7 @@ class TestRowOperationsIntegration:
     async def test_column_data_after_modifications(self, row_operations_session):
         """Test column data retrieval after row modifications."""
         # Get original column data
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         original_names = get_column_data(ctx, "first_name")
         assert original_names.values == ["John", "Jane", "Bob", "Alice"]
 
@@ -788,7 +788,7 @@ class TestRowOperationsIntegration:
         last_index = 3  # 4 rows, so last index is 3
 
         # Update last row
-        ctx = create_mock_context_with_session_data(row_operations_session)
+        ctx = create_mock_context(row_operations_session)
         update_result = update_row(ctx, last_index, {"age": 99})
         assert update_result.success is True
 

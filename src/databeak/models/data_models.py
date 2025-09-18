@@ -267,6 +267,6 @@ class DataPreview(BaseModel):
     row_count: int = Field(description="Total number of rows in dataset")
     column_count: int = Field(description="Total number of columns in dataset")
     truncated: bool = Field(False, description="Whether preview is truncated")
-    top_values: dict[str, int] | None = Field(
-        default=None, description="Top 10 most frequent values"
-    )
+    # top_values: dict[str, int] | None = Field(
+    #     default=None, description="Top 10 most frequent values"
+    # )

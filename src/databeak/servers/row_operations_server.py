@@ -405,10 +405,14 @@ def get_column_data(
         # Apply row range slicing
         if start_row is None and end_row is None:
             column_data = df[column]
+            start_row = 0
+            end_row = len(df) - 1
         elif start_row is None:
             column_data = df[column][:end_row]
+            start_row = 0
         elif end_row is None:
             column_data = df[column][start_row:]
+            end_row = len(df) - 1
         else:
             column_data = df[column][start_row:end_row]
 
