@@ -165,33 +165,30 @@ class TestLoadCsvSizeConstraints:
 class TestCloseSession:
     """Test session closing functionality."""
 
-    @pytest.mark.skip(
-        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
-    )
-    async def test_close_session_success(self):
-        """Test successfully closing a session."""
-        # Create a session first
-        csv_content = "col1,col2\n1,2"
-        ctx = create_mock_context()
-        await load_csv_from_content(ctx, csv_content)
-        session_id = ctx.session_id
+    @pytest.mark.asyncio
+    async def test_close_session_success(self, csv_session_with_data):
+        """Test successfully closing a session with isolated context."""
+        # Get the isolated context from fixture
+        isolated_context, _load_result = csv_session_with_data
+        session_id = isolated_context.session_id
 
         # Close the session
-        result = await close_session(create_mock_context(session_id))
+        result = await close_session(isolated_context)
 
         assert result.success is True
 
-        # Verify session is closed
+        # Verify session is closed - create a new context with same session_id
         with pytest.raises(ToolError, match="Failed to get session info"):
             await get_session_info(create_mock_context(session_id))
 
-    @pytest.mark.skip(
-        reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs disentangling from other tests"
-    )
-    async def test_close_session_not_found(self):
-        """Test closing non-existent session."""
+    @pytest.mark.asyncio
+    async def test_close_session_not_found(self, isolated_context):
+        """Test closing non-existent session with isolated context."""
+        # Use a completely different session ID that doesn't exist
+        nonexistent_id = "definitely-nonexistent-" + isolated_context.session_id
+
         with pytest.raises(ToolError, match="Session not found"):
-            await close_session(create_mock_context("nonexistent-session-id"))
+            await close_session(create_mock_context(nonexistent_id))
 
     async def test_close_session_with_context(self):
         """Test closing session with context reporting."""

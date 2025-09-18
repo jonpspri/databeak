@@ -1,16 +1,15 @@
 """Mock Context for testing FastMCP Context state management."""
 
+import uuid
 from typing import Any
 
 
 class MockContext:
     """Mock implementation of FastMCP Context for testing."""
 
-    def __init__(
-        self, session_id: str = "test_session", session_data: dict[str, Any] | None = None
-    ):
-        self._session_id = session_id
-        self._session_data = session_data or {}
+    def __init__(self, session_id: str | None = None, session_data: dict[str, Any] | None = None):
+        self._session_id = session_id or uuid.uuid4().hex
+        self._session_data = dict(session_data or {})
 
     @property
     def session_id(self) -> str:
@@ -38,13 +37,8 @@ class MockContext:
         pass
 
 
-def create_mock_context(session_id: str = "test_session") -> MockContext:
-    """Create a basic mock context with a session ID."""
-    return MockContext(session_id=session_id)
-
-
-def create_mock_context_with_session_data(
-    session_id: str = "test_session", session_data: dict[str, Any] | None = None
+def create_mock_context(
+    session_id: str | None = None, session_data: dict[str, Any] | None = None
 ) -> MockContext:
     """Create a mock context with session data."""
     return MockContext(session_id=session_id, session_data=session_data)

@@ -81,66 +81,66 @@ class TestSessionManager:
 class TestDataOperations:
     """Test basic data operations."""
 
-    @pytest.mark.skip(
-        reason="TODO: Resource contention in parallel execution - directory cleanup conflicts"
-    )
-    async def test_load_csv_from_content(self) -> None:
-        """Test loading CSV from string content."""
+    @pytest.mark.asyncio
+    async def test_load_csv_from_content(self, isolated_context, temp_work_dir) -> None:
+        """Test loading CSV from string content with isolated session."""
         from src.databeak.servers.io_server import load_csv_from_content
-        from tests.test_mock_context import create_mock_context
 
         csv_content = """a,b,c
 1,2,3
 4,5,6"""
 
-        result = await load_csv_from_content(
-            create_mock_context(), content=csv_content, delimiter=","
-        )
+        result = await load_csv_from_content(isolated_context, content=csv_content, delimiter=",")
 
         assert result.rows_affected == 2
         assert len(result.columns_affected) == 3
+        assert result.columns_affected == ["a", "b", "c"]
 
-        # Note: LoadResult no longer contains session_id, cleanup handled by session manager
+        # Verify session isolation - each test gets its own unique session
+        assert isolated_context.session_id is not None
+        assert len(isolated_context.session_id) > 0
 
-    @pytest.mark.skip(
-        reason="TODO: Test interdependency issue - passes individually but fails in full suite, needs session isolation refactoring"
-    )
-    async def test_filter_rows(self) -> None:
-        """Test filtering rows with dedicated session to avoid test interference."""
-        from src.databeak.models import get_session_manager
-        from src.databeak.servers.io_server import load_csv_from_content
+    @pytest.mark.asyncio
+    async def test_filter_rows(self, csv_session_with_data) -> None:
+        """Test filtering rows with isolated session."""
         from src.databeak.servers.transformation_server import filter_rows
-        from tests.test_mock_context import (
-            create_mock_context,
-            create_mock_context_with_session_data,
+
+        # Get the isolated context and load result from fixture
+        isolated_context, _load_result = csv_session_with_data
+
+        # Test the filter operation on price > 100 (should filter to Laptop, Desk, Chair)
+        filter_result = filter_rows(
+            isolated_context,
+            conditions=[{"column": "price", "operator": ">", "value": 100}],
+            mode="and",
         )
 
-        # Create our own isolated session to avoid contamination from other tests
-        await load_csv_from_content(
-            create_mock_context(),
-            content="""product,price,quantity
-Laptop,999.99,10
-Mouse,29.99,50
-Keyboard,79.99,25""",
-            delimiter=",",
+        assert filter_result.success
+        assert filter_result.rows_after < filter_result.rows_before
+        # Original data has 5 rows, filter should leave 3 rows (Laptop: 999.99, Desk: 299.99, Chair: 199.99)
+        assert filter_result.rows_before == 5
+        assert filter_result.rows_after == 3
+
+        # Test a different filter condition - Electronics category on fresh data
+        # Need to reload data first since previous filter modified the session
+        from src.databeak.servers.io_server import load_csv_from_content
+
+        csv_content = """product,price,quantity,category
+Laptop,999.99,10,Electronics
+Mouse,29.99,50,Electronics
+Keyboard,79.99,25,Electronics
+Desk,299.99,5,Furniture
+Chair,199.99,8,Furniture"""
+
+        await load_csv_from_content(isolated_context, content=csv_content, delimiter=",")
+
+        filter_result2 = filter_rows(
+            isolated_context,
+            conditions=[{"column": "category", "operator": "==", "value": "Electronics"}],
+            mode="and",
         )
 
-        # Get the session ID from session manager
-        manager = get_session_manager()
-        sessions = manager.list_sessions()
-        session_id = sessions[-1].session_id if sessions else "filter-test-session"
-
-        try:
-            # Test the filter operation
-            ctx = create_mock_context_with_session_data(session_id)
-            filter_result = filter_rows(
-                ctx,
-                conditions=[{"column": "price", "operator": ">", "value": 50}],
-                mode="and",
-            )
-
-            assert filter_result.success
-            assert filter_result.rows_after < filter_result.rows_before
-        finally:
-            # Cleanup our session
-            await manager.remove_session(session_id)
+        assert filter_result2.success
+        # Should have 3 Electronics items from fresh data (5 total, 3 Electronics)
+        assert filter_result2.rows_before == 5
+        assert filter_result2.rows_after == 3
