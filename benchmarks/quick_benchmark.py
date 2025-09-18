@@ -145,8 +145,8 @@ def run_quick_benchmark() -> None:
 
     improvement = ((old_results["mean"] - new_results["mean"]) / old_results["mean"]) * 100
 
-    print(f"Old pattern: {old_results['mean']*1000:.2f}ms ± {old_results['std']*1000:.2f}ms")
-    print(f"New pattern: {new_results['mean']*1000:.2f}ms ± {new_results['std']*1000:.2f}ms")
+    print(f"Old pattern: {old_results['mean'] * 1000:.2f}ms ± {old_results['std'] * 1000:.2f}ms")
+    print(f"New pattern: {new_results['mean'] * 1000:.2f}ms ± {new_results['std'] * 1000:.2f}ms")
     print(f"Improvement: {improvement:.1f}%")
 
     if 15 <= improvement <= 25:
@@ -157,7 +157,7 @@ def run_quick_benchmark() -> None:
         print("⚠ Performance improvement below claimed range")
 
     print(
-        f"\nThroughput improvement: {((1/new_results['mean'] - 1/old_results['mean']) / (1/old_results['mean'])) * 100:.1f}%"
+        f"\nThroughput improvement: {((1 / new_results['mean'] - 1 / old_results['mean']) / (1 / old_results['mean'])) * 100:.1f}%"
     )
     print("=" * 50)
     print("Quick benchmark completed")

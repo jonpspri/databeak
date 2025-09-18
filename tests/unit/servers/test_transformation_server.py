@@ -18,7 +18,7 @@ from src.databeak.servers.transformation_server import (
     remove_duplicates,
     sort_data,
 )
-from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ class TestTransformationServerFilterRows:
             FilterCondition(column="status", operator="==", value="active"),
         ]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = filter_rows(ctx, conditions, mode="and")
         assert result.success is True
         assert result.rows_before == 5
@@ -60,7 +60,7 @@ class TestTransformationServerFilterRows:
             {"column": "status", "operator": "!=", "value": "inactive"},
         ]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = filter_rows(ctx, conditions, mode="and")
         assert result.success is True
         assert result.rows_after == 2  # John and Charlie
@@ -69,7 +69,7 @@ class TestTransformationServerFilterRows:
         """Test null operators with Pydantic models."""
         conditions = [FilterCondition(column="notes", operator="is_null")]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = filter_rows(ctx, conditions)
         assert result.success is True
         assert result.rows_after == 2  # Jane and Charlie have empty notes
@@ -78,7 +78,7 @@ class TestTransformationServerFilterRows:
         """Test text operators with Pydantic models."""
         conditions = [FilterCondition(column="name", operator="contains", value="o")]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = filter_rows(ctx, conditions)
         assert result.success is True
         assert result.rows_after == 4  # John Doe, Bob Johnson, Alice Brown, Charlie Wilson
@@ -90,7 +90,7 @@ class TestTransformationServerFilterRows:
             FilterCondition(column="score", operator=">", value=94),
         ]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = filter_rows(ctx, conditions, mode="or")
         assert result.success is True
         assert result.rows_after == 2  # Jane (age < 28) and Alice (score > 94)
@@ -107,7 +107,7 @@ class TestTransformationServerSort:
             SortColumn(column="score", ascending=True),
         ]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = sort_data(ctx, columns)
         assert result.sorted_by == ["age", "score"]
         assert len(result.ascending) == 2
@@ -120,13 +120,13 @@ class TestTransformationServerSort:
             "name",  # Simple string format
         ]
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = sort_data(ctx, columns)
         assert result.success is True
 
     async def test_sort_string_columns(self, transformation_session):
         """Test sorting simple string columns."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = sort_data(ctx, ["name", "status"])
         assert result.success is True
 
@@ -140,7 +140,7 @@ class TestTransformationServerDuplicates:
         # First add a duplicate row
         from src.databeak.servers.row_operations_server import insert_row
 
-        ctx_insert = create_mock_context_with_session_data(transformation_session)
+        ctx_insert = create_mock_context(transformation_session)
         insert_row(
             ctx_insert,
             row_index=-1,
@@ -153,21 +153,21 @@ class TestTransformationServerDuplicates:
             },
         )
 
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = remove_duplicates(ctx)
         assert result.operation == "remove_duplicates"
         assert result.rows_affected > 0
 
     async def test_remove_duplicates_subset(self, transformation_session):
         """Test removing duplicates based on subset of columns."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = remove_duplicates(ctx, subset=["age", "score"])
         assert result.success is True
 
     async def test_remove_duplicates_keep_options(self, transformation_session):
         """Test different keep options."""
         for keep_option in ["first", "last", "none"]:
-            ctx = create_mock_context_with_session_data(transformation_session)
+            ctx = create_mock_context(transformation_session)
             result = remove_duplicates(ctx, keep=keep_option)
             assert result.operation == "remove_duplicates"
 
@@ -178,33 +178,33 @@ class TestTransformationServerFillMissing:
 
     async def test_fill_missing_drop(self, transformation_session):
         """Test dropping rows with missing values."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = fill_missing_values(ctx, strategy="drop")
         assert result.operation == "fill_missing_values"
         assert result.success is True
 
     async def test_fill_missing_with_value(self, transformation_session):
         """Test filling with specific value."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = fill_missing_values(ctx, strategy="fill", value="Unknown")
         assert result.success is True
 
     async def test_fill_missing_forward_fill(self, transformation_session):
         """Test forward fill strategy."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = fill_missing_values(ctx, strategy="forward")
         assert result.success is True
 
     async def test_fill_missing_column_specific(self, transformation_session):
         """Test filling specific columns only."""
-        ctx = create_mock_context_with_session_data(transformation_session)
+        ctx = create_mock_context(transformation_session)
         result = fill_missing_values(ctx, strategy="fill", value="N/A", columns=["notes"])
         assert result.success is True
 
     async def test_fill_missing_statistical(self, transformation_session):
         """Test statistical fill strategies."""
         for strategy in ["mean", "median", "mode"]:
-            ctx = create_mock_context_with_session_data(transformation_session)
+            ctx = create_mock_context(transformation_session)
             result = fill_missing_values(ctx, strategy=strategy)
             assert result.success is True
 
@@ -234,7 +234,7 @@ class TestTransformationServerErrorHandling:
         conditions = [FilterCondition(column="nonexistent", operator="==", value="test")]
 
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context_with_session_data(transformation_session)
+            ctx = create_mock_context(transformation_session)
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_column(self, transformation_session):
@@ -242,5 +242,5 @@ class TestTransformationServerErrorHandling:
         columns = [SortColumn(column="nonexistent", ascending=True)]
 
         with pytest.raises(ToolError):
-            ctx = create_mock_context_with_session_data(transformation_session)
+            ctx = create_mock_context(transformation_session)
             sort_data(ctx, columns)

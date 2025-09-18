@@ -11,7 +11,7 @@ from src.databeak.servers.column_server import (
     update_column,
 )
 from src.databeak.servers.io_server import load_csv_from_content
-from tests.test_mock_context import create_mock_context, create_mock_context_with_session_data
+from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = ReplaceOperation(pattern="Category 1", replacement="Cat-1")
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="category",
             operation=operation,
         )
@@ -52,7 +52,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = MapOperation(mapping={"active": 1, "inactive": 0})
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="status",
             operation=operation,
         )
@@ -66,7 +66,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = ApplyOperation(expression="x * 2")
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="value",
             operation=operation,
         )
@@ -80,7 +80,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = FillNaOperation(value=0)
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="value",
             operation=operation,
         )
@@ -94,7 +94,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"type": "replace", "pattern": "Item A", "replacement": "Product A"}
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="name",
             operation=operation,
         )
@@ -110,7 +110,7 @@ class TestUpdateColumnDiscriminatedUnions:
         }
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="category",
             operation=operation,
         )
@@ -123,7 +123,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"type": "apply", "expression": "x.upper()"}
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="status",
             operation=operation,
         )
@@ -136,7 +136,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"type": "fillna", "value": "unknown"}
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="status",
             operation=operation,
         )
@@ -152,7 +152,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         with pytest.raises(ToolError, match="Invalid value for parameter"):
             await update_column(
-                create_mock_context_with_session_data(update_session),
+                create_mock_context(update_session),
                 column="value",
                 operation=operation,
             )
@@ -163,7 +163,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         with pytest.raises(ToolError, match="Invalid value for parameter"):
             await update_column(
-                create_mock_context_with_session_data(update_session),
+                create_mock_context(update_session),
                 column="value",
                 operation=operation,
             )
@@ -174,7 +174,7 @@ class TestUpdateColumnDiscriminatedUnions:
         operation = {"operation": "fillna", "value": -1}
 
         result = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="value",
             operation=operation,
         )
@@ -188,7 +188,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         with pytest.raises(ToolError, match="Column 'nonexistent' not found"):
             await update_column(
-                create_mock_context_with_session_data(update_session),
+                create_mock_context(update_session),
                 column="nonexistent",
                 operation=operation,
             )
@@ -197,7 +197,7 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test sequence of different operations."""
         # First, fill nulls
         result1 = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="value",
             operation=FillNaOperation(value=0),
         )
@@ -205,7 +205,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         # Then apply transformation
         result2 = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="value",
             operation=ApplyOperation(expression="x * 1.1"),
         )
@@ -213,7 +213,7 @@ class TestUpdateColumnDiscriminatedUnions:
 
         # Finally, map categories
         result3 = await update_column(
-            create_mock_context_with_session_data(update_session),
+            create_mock_context(update_session),
             column="category",
             operation=MapOperation(
                 mapping={"Category 1": "Premium", "Category 2": "Standard", "Category 3": "Basic"}
