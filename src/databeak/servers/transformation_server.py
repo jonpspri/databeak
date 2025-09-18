@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Import session management from the main package
 from ..models import OperationType, get_session_manager
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
+from ..models.typed_dicts import FilterConditionDict
 
 logger = logging.getLogger(__name__)
 
@@ -24,31 +25,7 @@ CellValue = str | int | float | bool | None
 # ============================================================================
 
 
-class FilterCondition(BaseModel):
-    """Filter condition for row filtering."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    column: str = Field(description="Column name to filter on")
-    operator: Literal[
-        "==",
-        "!=",
-        ">",
-        "<",
-        ">=",
-        "<=",
-        "contains",
-        "not_contains",
-        "starts_with",
-        "ends_with",
-        "in",
-        "not_in",
-        "is_null",
-        "is_not_null",
-    ] = Field(description="Comparison operator")
-    value: CellValue | list[CellValue] = Field(
-        default=None, description="Value to compare against (not needed for null operators)"
-    )
+# Use existing FilterCondition from data_models instead of defining locally
 
 
 class SortColumn(BaseModel):
@@ -68,7 +45,7 @@ class SortColumn(BaseModel):
 def filter_rows(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     conditions: Annotated[
-        list[FilterCondition | dict[str, Any]],
+        list[FilterConditionDict],
         Field(description="List of filter conditions with column, operator, and value"),
     ],
     mode: Annotated[
@@ -119,27 +96,27 @@ def filter_rows(
         # Initialize mask based on mode: AND starts True, OR starts False
         mask = pd.Series([mode == "and"] * len(df))
 
-        # Process conditions - convert Pydantic models if needed
-        processed_conditions = []
+        # Process conditions (handles both FilterConditionDict and FilterCondition objects)
         for condition in conditions:
-            if isinstance(condition, FilterCondition):
-                processed_conditions.append(condition.model_dump())
+            if isinstance(condition, dict):
+                # It's a FilterConditionDict
+                column = condition.get("column")
+                operator = condition.get("operator")
+                value = condition.get("value")
             else:
-                processed_conditions.append(condition)
-
-        for condition in processed_conditions:
-            column = condition.get("column")
-            operator = condition.get("operator")
-            value = condition.get("value")
+                # It's a FilterCondition object
+                column = condition.column
+                operator = condition.operator
+                value = condition.value
 
             if column is None or column not in df.columns:
                 raise ToolError(f"Column '{column}' not found in data")
 
             col_data = df[column]
 
-            if operator == "==":
+            if operator == "=" or operator == "==":
                 condition_mask = col_data == value
-            elif operator == "!=":
+            elif operator == "!=" or operator == "not_equals":
                 condition_mask = col_data != value
             elif operator == ">":
                 condition_mask = col_data > value
@@ -178,11 +155,27 @@ def filter_rows(
         session.df = df[mask].reset_index(drop=True)
         rows_after = len(session.df)
 
+        # Convert conditions to JSON-serializable format for history
+        serializable_conditions = []
+        for condition in conditions:
+            if isinstance(condition, dict):
+                # It's already a dict
+                serializable_conditions.append(dict(condition))
+            else:
+                # It's a FilterCondition object - convert to dict
+                serializable_conditions.append(
+                    {
+                        "column": condition.column,
+                        "operator": condition.operator,
+                        "value": condition.value,
+                    }
+                )
+
         # Record operation
         session.record_operation(
             OperationType.FILTER,
             {
-                "conditions": processed_conditions,
+                "conditions": serializable_conditions,
                 "mode": mode,
                 "rows_before": rows_before,
                 "rows_after": rows_after,
@@ -193,7 +186,7 @@ def filter_rows(
             rows_before=rows_before,
             rows_after=rows_after,
             rows_filtered=rows_before - rows_after,
-            conditions_applied=len(processed_conditions),
+            conditions_applied=len(conditions),
         )
 
     except Exception as e:
@@ -204,10 +197,8 @@ def filter_rows(
 def sort_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
-        list[str | SortColumn | dict[str, Any]],
-        Field(
-            description="Column specifications for sorting (strings, SortColumn objects, or dicts)"
-        ),
+        list[str | SortColumn],
+        Field(description="Column specifications for sorting (strings or SortColumn objects)"),
     ],
 ) -> SortDataResult:
     """Sort data by one or more columns with comprehensive error handling.
@@ -260,16 +251,9 @@ def sort_data(
             elif isinstance(col, SortColumn):
                 sort_columns.append(col.column)
                 ascending.append(col.ascending)
-            elif isinstance(col, dict):
-                if "column" not in col:
-                    raise ToolError(f"Dict specification missing 'column' key: {col}")
+            elif isinstance(col, dict) and "column" in col:
                 sort_columns.append(col["column"])
-                # Handle string/bool conversion for ascending
-                asc_val = col.get("ascending", True)
-                if isinstance(asc_val, str):
-                    ascending.append(asc_val.lower() in ("true", "1", "yes"))
-                else:
-                    ascending.append(bool(asc_val))
+                ascending.append(col.get("ascending", True))
             else:
                 raise ToolError(f"Invalid column specification: {col}")
 
@@ -398,7 +382,7 @@ def fill_missing_values(
             description="Strategy for handling missing values (drop, fill, forward, backward, mean, median, mode)"
         ),
     ] = "drop",
-    value: Annotated[Any, Field(description="Value to use when strategy is 'fill'")] = None,
+    value: Annotated[CellValue, Field(description="Value to use when strategy is 'fill'")] = None,
     columns: Annotated[
         list[str] | None, Field(description="Columns to process (None = all columns)")
     ] = None,

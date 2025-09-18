@@ -9,9 +9,9 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import src.databeak.servers.transformation_server  # noqa: F401
+from src.databeak.models.data_models import FilterCondition
 from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.servers.transformation_server import (
-    FilterCondition,
     SortColumn,
     fill_missing_values,
     filter_rows,
@@ -44,7 +44,7 @@ class TestTransformationServerFilterRows:
         """Test filtering using Pydantic FilterCondition models."""
         conditions = [
             FilterCondition(column="age", operator=">", value=27),
-            FilterCondition(column="status", operator="==", value="active"),
+            FilterCondition(column="status", operator="=", value="active"),
         ]
 
         ctx = create_mock_context(transformation_session)
@@ -215,7 +215,7 @@ class TestTransformationServerErrorHandling:
 
     async def test_filter_invalid_session(self):
         """Test filtering with invalid session."""
-        conditions = [FilterCondition(column="test", operator="==", value="test")]
+        conditions = [FilterCondition(column="test", operator="=", value="test")]
 
         with pytest.raises(ToolError, match="Invalid session"):
             ctx = create_mock_context("invalid-session-id")
@@ -231,7 +231,7 @@ class TestTransformationServerErrorHandling:
 
     async def test_filter_invalid_column(self, transformation_session):
         """Test filtering with invalid column name."""
-        conditions = [FilterCondition(column="nonexistent", operator="==", value="test")]
+        conditions = [FilterCondition(column="nonexistent", operator="=", value="test")]
 
         with pytest.raises(ToolError, match="not found"):
             ctx = create_mock_context(transformation_session)

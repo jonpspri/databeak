@@ -481,8 +481,11 @@ class TestCSVSession:
             result = await session.undo()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -578,8 +581,11 @@ class TestCSVSession:
             result = await session.redo()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -682,8 +688,11 @@ class TestCSVSession:
             result = session.get_history()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -777,8 +786,11 @@ class TestCSVSession:
             result = await session.restore_to_operation("op-123")
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio

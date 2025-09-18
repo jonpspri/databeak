@@ -250,40 +250,52 @@ async def get_column_statistics(
         null_count = int(col_data.isnull().sum())
         unique_count = int(col_data.nunique())
 
-        # Initialize statistics dict (with mixed types for flexibility)
-        statistics: dict[str, Any] = {
+        # Initialize statistics dict using ColumnStatistics structure
+        from ..models.typed_dicts import ColumnStatistics
+
+        statistics: ColumnStatistics = {
             "count": count,
             "null_count": null_count,
             "unique_count": unique_count,
+            "dtype": str(col_data.dtype),
         }
 
         # Add numeric statistics if column is numeric (but not boolean)
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
+            # Helper function to safely convert pandas scalars to float
+            def safe_float(value: Any) -> float:
+                """Safely convert pandas scalar to float."""
+                try:
+                    return float(value) if not pd.isna(value) else 0.0
+                except (TypeError, ValueError):
+                    return 0.0
+
             statistics.update(
                 {
-                    "mean": float(col_data.mean()) if not pd.isna(col_data.mean()) else 0.0,
-                    "std": float(col_data.std()) if not pd.isna(col_data.std()) else 0.0,
-                    "min": float(col_data.min()) if not pd.isna(col_data.min()) else 0.0,
-                    "max": float(col_data.max()) if not pd.isna(col_data.max()) else 0.0,
-                    "25%": float(col_data.quantile(0.25))
-                    if not pd.isna(col_data.quantile(0.25))
-                    else 0.0,
-                    "50%": float(col_data.quantile(0.50))
-                    if not pd.isna(col_data.quantile(0.50))
-                    else 0.0,
-                    "75%": float(col_data.quantile(0.75))
-                    if not pd.isna(col_data.quantile(0.75))
-                    else 0.0,
+                    "mean": safe_float(col_data.mean()),
+                    "std": safe_float(col_data.std()),
+                    "min": safe_float(col_data.min()),
+                    "max": safe_float(col_data.max()),
+                    "sum": safe_float(col_data.sum()),
+                    "variance": safe_float(col_data.var()),
+                    "skewness": safe_float(col_data.skew()),
+                    "kurtosis": safe_float(col_data.kurtosis()),
                 }
             )
-        else:
-            # For non-numeric columns, add most frequent value
-            if count > 0:
-                mode_result = col_data.mode()
-                most_frequent = mode_result.iloc[0] if len(mode_result) > 0 else None
-                if most_frequent is not None and not pd.isna(most_frequent):
-                    statistics["most_frequent"] = str(most_frequent)
-                    statistics["most_frequent_count"] = int(col_data.value_counts().iloc[0])
+        # Create additional dict for non-standard fields
+        additional_stats: dict[str, str | int] = {}
+        if (
+            not (
+                pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data)
+            )
+            and count > 0
+        ):
+            # For non-numeric columns, add most frequent value in additional dict
+            mode_result = col_data.mode()
+            most_frequent = mode_result.iloc[0] if len(mode_result) > 0 else None
+            if most_frequent is not None and not pd.isna(most_frequent):
+                additional_stats["most_frequent"] = str(most_frequent)
+                additional_stats["most_frequent_count"] = int(col_data.value_counts().iloc[0])
 
         session.record_operation(
             OperationType.ANALYZE,
@@ -298,17 +310,26 @@ async def get_column_statistics(
         from ..models.statistics_models import StatisticsSummary
 
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            # Numeric columns
+            # Numeric columns - calculate percentiles for Pydantic model
+            col_data_non_null = col_data.dropna()
+            percentile_25 = (
+                float(col_data_non_null.quantile(0.25)) if len(col_data_non_null) > 0 else None
+            )
+            percentile_50 = (
+                float(col_data_non_null.quantile(0.50)) if len(col_data_non_null) > 0 else None
+            )
+            percentile_75 = (
+                float(col_data_non_null.quantile(0.75)) if len(col_data_non_null) > 0 else None
+            )
+
             stats_summary = StatisticsSummary(
                 count=statistics["count"],
                 mean=statistics.get("mean"),
                 std=statistics.get("std"),
                 min=statistics.get("min"),
-                **{
-                    "25%": statistics.get("25%"),
-                    "50%": statistics.get("50%"),
-                    "75%": statistics.get("75%"),
-                },
+                percentile_25=percentile_25,
+                percentile_50=percentile_50,
+                percentile_75=percentile_75,
                 max=statistics.get("max"),
                 unique=statistics["unique_count"],
             )
@@ -319,11 +340,17 @@ async def get_column_statistics(
                 mean=None,
                 std=None,
                 min=None,
-                **{"25%": None, "50%": None, "75%": None},
+                percentile_25=None,
+                percentile_50=None,
+                percentile_75=None,
                 max=None,
                 unique=statistics["unique_count"],
-                top=statistics.get("most_frequent"),
-                freq=statistics.get("most_frequent_count"),
+                top=str(additional_stats.get("most_frequent"))
+                if additional_stats.get("most_frequent")
+                else None,
+                freq=additional_stats.get("most_frequent_count")
+                if isinstance(additional_stats.get("most_frequent_count"), int)
+                else None,  # type: ignore
             )
 
         # Map dtype to expected literal type

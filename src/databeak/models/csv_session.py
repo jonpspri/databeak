@@ -17,7 +17,12 @@ from .data_models import ExportFormat, OperationType, SessionInfo
 from .data_session import DataSession
 from .history_manager import HistoryManager, HistoryStorage
 from .session_lifecycle import SessionLifecycle
-from .typed_dicts import SessionHistoryExport
+from .typed_dicts import (
+    AutoSaveOperationResult,
+    HistoryResult,
+    SessionHistoryExport,
+    UndoRedoOperationResult,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -187,7 +192,7 @@ class CSVSession:
         # Mark that auto-save is needed
         self._data_session.metadata["needs_autosave"] = True
 
-    async def trigger_auto_save_if_needed(self) -> dict[str, Any] | None:
+    async def trigger_auto_save_if_needed(self) -> AutoSaveOperationResult | None:
         """Trigger auto-save after operation if configured."""
         if self.auto_save_manager.should_save_after_operation() and self._data_session.metadata.get(
             "needs_autosave"
@@ -249,7 +254,7 @@ class CSVSession:
         logger.warning("Partial rollback not fully implemented")
         return False
 
-    async def enable_auto_save(self, config: dict[str, Any]) -> dict[str, Any]:
+    async def enable_auto_save(self, config: dict[str, Any]) -> AutoSaveOperationResult:
         """Enable or update auto-save configuration."""
         try:
             # Update configuration
@@ -272,7 +277,7 @@ class CSVSession:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    async def disable_auto_save(self) -> dict[str, Any]:
+    async def disable_auto_save(self) -> AutoSaveOperationResult:
         """Disable auto-save."""
         try:
             await self.auto_save_manager.stop_periodic_save()
@@ -281,15 +286,15 @@ class CSVSession:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def get_auto_save_status(self) -> dict[str, Any]:
+    def get_auto_save_status(self) -> AutoSaveOperationResult:
         """Get current auto-save status."""
         return self.auto_save_manager.get_status()
 
-    async def manual_save(self) -> dict[str, Any]:
+    async def manual_save(self) -> AutoSaveOperationResult:
         """Manually trigger a save."""
         return await self.auto_save_manager.trigger_save(self._save_callback, "manual")
 
-    async def undo(self) -> dict[str, Any]:
+    async def undo(self) -> UndoRedoOperationResult:
         """Undo the last operation."""
         if not self.history_manager:
             raise HistoryNotEnabledError(self.session_id)
@@ -327,7 +332,7 @@ class CSVSession:
                 "error": {"type": "UnexpectedError", "message": str(e)},
             }
 
-    async def redo(self) -> dict[str, Any]:
+    async def redo(self) -> UndoRedoOperationResult:
         """Redo the previously undone operation."""
         if not self.history_manager:
             raise HistoryNotEnabledError(self.session_id)
@@ -365,7 +370,7 @@ class CSVSession:
                 "error": {"type": "UnexpectedError", "message": str(e)},
             }
 
-    def get_history(self, limit: int | None = None) -> dict[str, Any]:
+    def get_history(self, limit: int | None = None) -> HistoryResult:
         """Get operation history."""
         if not self.history_manager:
             # Return legacy history if new history is not enabled
@@ -390,7 +395,7 @@ class CSVSession:
                 "error": {"type": "UnexpectedError", "message": str(e)},
             }
 
-    async def restore_to_operation(self, operation_id: str) -> dict[str, Any]:
+    async def restore_to_operation(self, operation_id: str) -> UndoRedoOperationResult:
         """Restore data to a specific operation point."""
         if not self.history_manager:
             raise HistoryNotEnabledError(self.session_id)

@@ -164,6 +164,95 @@ class TransformationPipeline(TypedDict):
     validation_rules: NotRequired[list[str]]
 
 
+# Column Operation Structures
+class UpdateColumnOperation(TypedDict):
+    """Column update operation specification."""
+
+    operation_type: str  # "replace", "map", "apply", "fillna"
+    value: NotRequired[CellValue]  # For replace/fillna operations
+    old_value: NotRequired[CellValue]  # For replace operations
+    new_value: NotRequired[CellValue]  # For replace operations
+    mapping: NotRequired[dict[str, CellValue]]  # For map operations
+    expression: NotRequired[str]  # For apply operations
+    fill_method: NotRequired[str]  # For fillna operations
+
+
+class ColumnStatistics(TypedDict):
+    """Statistical information for a column."""
+
+    count: int
+    null_count: int
+    unique_count: int
+    dtype: str
+    mean: NotRequired[float]  # Numeric columns only
+    std: NotRequired[float]  # Numeric columns only
+    min: NotRequired[CellValue]
+    max: NotRequired[CellValue]
+    sum: NotRequired[float]  # Numeric columns only
+    variance: NotRequired[float]  # Numeric columns only
+    skewness: NotRequired[float]  # Numeric columns only
+    kurtosis: NotRequired[float]  # Numeric columns only
+
+
+class AutoSaveConfigDict(TypedDict):
+    """Auto-save configuration parameters."""
+
+    enabled: bool
+    mode: str
+    strategy: str
+    interval_seconds: int
+    max_backups: int
+    backup_dir: str
+    custom_path: str | None
+    format: str  # Export format for auto-save
+    encoding: str
+
+
+class AutoSaveOperationResult(TypedDict):
+    """Result of auto-save operations (enable/disable/status/manual save)."""
+
+    success: NotRequired[bool]
+    enabled: NotRequired[bool]  # For status operations
+    mode: NotRequired[str]  # For status operations
+    strategy: NotRequired[str]  # For status operations
+    last_save: NotRequired[str | None]  # For status operations
+    save_count: NotRequired[int]  # For status operations
+    periodic_active: NotRequired[bool]  # For status operations
+    save_path: NotRequired[str]  # For manual save operations
+    trigger: NotRequired[str]  # For manual save operations
+    timestamp: NotRequired[str]  # For manual save operations
+    message: NotRequired[str]
+    error: NotRequired[str]
+    config: NotRequired[AutoSaveConfigDict]
+
+
+class UndoRedoOperationResult(TypedDict):
+    """Result of undo/redo operations."""
+
+    success: bool
+    message: NotRequired[str]
+    operation_id: NotRequired[str]
+    operation_type: NotRequired[str]
+    timestamp: NotRequired[str]
+    operation: NotRequired[dict[str, Any]]  # Any justified: flexible operation details
+    can_undo: NotRequired[bool]
+    can_redo: NotRequired[bool]
+    shape: NotRequired[tuple[int, int]]  # For restore operations
+    error: NotRequired[str | dict[str, str]]  # Can be string or structured error
+
+
+class HistoryResult(TypedDict):
+    """Result of history retrieval operations."""
+
+    success: bool
+    history: NotRequired[list[dict[str, CellValue]]]  # Operation history entries
+    total_operations: NotRequired[int]
+    total: NotRequired[int]  # Legacy field name
+    statistics: NotRequired[dict[str, Any]]  # Any justified: flexible statistics structure
+    message: NotRequired[str]
+    error: NotRequired[str | dict[str, str]]  # Can be string or structured error
+
+
 # Internal operation results (for legacy transformation functions)
 class ColumnSelectionResult(TypedDict):
     """Result of internal column selection operation."""

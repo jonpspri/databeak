@@ -143,8 +143,13 @@ class SecureExpressionEvaluator:
 
     def _setup_evaluator(self) -> None:
         """Configure the SimpleEval instance with safe functions and operators."""
-        # Set safe operators
-        self._evaluator.operators = {**self.SAFE_OPERATORS}
+        # Set safe operators (including comparison operators)
+        all_operators = {
+            **self.SAFE_OPERATORS,
+            **self.SAFE_COMPARISONS,
+            **self.SAFE_UNARY_OPERATORS,
+        }
+        self._evaluator.operators = all_operators
 
         # Create safe functions with proper pandas compatibility
         safe_functions = {
@@ -230,6 +235,52 @@ class SecureExpressionEvaluator:
             "np": SafeNumpy(),  # Restricted numpy access
         }
 
+    def evaluate(self, expression: str, context: dict[str, Any] | None = None) -> Any:
+        """Evaluate a safe mathematical expression and return the result.
+
+        Args:
+            expression: The mathematical expression to evaluate
+            context: Optional dictionary of variables to use in the expression
+
+        Returns:
+            The result of evaluating the expression
+
+        Raises:
+            InvalidParameterError: If the expression is unsafe or evaluation fails
+        """
+        # First validate the expression for safety
+        validate_expression_safety(expression)
+
+        # Temporarily add context variables if provided
+        original_names = None
+        if context:
+            original_names = self._evaluator.names.copy()
+            self._evaluator.names.update(context)
+
+        try:
+            # Evaluate using the configured safe evaluator
+            result = self._evaluator.eval(expression)
+            return result
+        except NameNotDefined as e:
+            raise InvalidParameterError(
+                "expression",
+                expression,
+                f"Unknown variable or function: {e}",
+            ) from e
+        except ZeroDivisionError:
+            # Let ZeroDivisionError bubble up as expected by tests
+            raise
+        except Exception as e:
+            raise InvalidParameterError(
+                "expression",
+                expression,
+                f"Evaluation failed: {e}",
+            ) from e
+        finally:
+            # Restore original names if context was provided
+            if original_names is not None:
+                self._evaluator.names = original_names
+
     def validate_expression_syntax(self, expression: str) -> None:
         """Validate that an expression only contains safe operations.
 
@@ -308,6 +359,10 @@ class SecureExpressionEvaluator:
             ast.IsNot,
             ast.In,
             ast.NotIn,
+            # Boolean operations
+            ast.BoolOp,
+            ast.And,
+            ast.Or,
             # Function calls (will be validated separately)
             ast.Call,
             # Attribute access (for np.function calls)

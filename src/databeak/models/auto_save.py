@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from ..models.data_models import ExportFormat
+from .typed_dicts import AutoSaveConfigDict, AutoSaveOperationResult
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class AutoSaveConfig:
         ]:
             Path(self.backup_dir).mkdir(parents=True, exist_ok=True)
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> AutoSaveConfigDict:
         """Convert config to dictionary."""
         return {
             "enabled": self.enabled,
@@ -147,7 +148,7 @@ class AutoSaveManager:
 
     async def trigger_save(
         self, save_callback: SaveCallback, trigger: str = "manual"
-    ) -> dict[str, Any]:
+    ) -> AutoSaveOperationResult:
         """Trigger an auto-save operation."""
         async with self._lock:
             try:
@@ -185,7 +186,7 @@ class AutoSaveManager:
                     )
                     return {
                         "success": False,
-                        "error": result.get("error"),
+                        "error": str(result.get("error", "Unknown error")),
                         "trigger": trigger,
                     }
 
@@ -250,7 +251,7 @@ class AutoSaveManager:
             AutoSaveMode.HYBRID,
         ]
 
-    def get_status(self) -> dict[str, Any]:
+    def get_status(self) -> AutoSaveOperationResult:
         """Get auto-save status."""
         return {
             "enabled": self.config.enabled,

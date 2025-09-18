@@ -18,6 +18,31 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..exceptions import SessionNotFoundError
 from ..models import get_session_manager
 
+
+def safe_int(value: Any, default: int = 0) -> int:
+    """Safely convert object to int."""
+    try:
+        return int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_str(value: Any, default: str = "") -> str:
+    """Safely convert object to str."""
+    try:
+        return str(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_bool(value: Any, default: bool = False) -> bool:
+    """Safely convert object to bool."""
+    try:
+        return bool(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -312,10 +337,12 @@ async def undo_operation(
 
         return UndoResult(
             operation_undone=result.get("operation_type"),
-            previous_operation=result.get("previous_operation"),
-            can_undo_more=can_undo,
-            can_redo=can_redo,
-            history_position=position,
+            previous_operation=safe_str(result.get("previous_operation"))
+            if result.get("previous_operation")
+            else None,
+            can_undo_more=safe_bool(can_undo),
+            can_redo=safe_bool(can_redo),
+            history_position=safe_int(position),
         )
 
     except SessionNotFoundError as e:
@@ -391,10 +418,12 @@ async def redo_operation(
 
         return RedoResult(
             operation_redone=result.get("operation_type"),
-            next_operation=result.get("next_operation"),
-            can_undo=can_undo,
-            can_redo_more=can_redo,
-            history_position=position,
+            next_operation=safe_str(result.get("next_operation"))
+            if result.get("next_operation")
+            else None,
+            can_undo=safe_bool(can_undo),
+            can_redo_more=safe_bool(can_redo),
+            history_position=safe_int(position),
         )
 
     except SessionNotFoundError as e:
@@ -469,26 +498,26 @@ async def get_history(
 
         # Convert operations to structured format
         operations = []
-        if "operations" in result:
-            for op in result["operations"]:
+        if "history" in result:
+            for op in result["history"]:
                 operations.append(
                     HistoryOperation(
-                        operation_id=op.get("operation_id", ""),
-                        operation_type=op.get("operation_type", "unknown"),
-                        timestamp=op.get("timestamp", ""),
-                        description=op.get("description", ""),
-                        can_undo=op.get("can_undo", False),
-                        can_redo=op.get("can_redo", False),
+                        operation_id=safe_str(op.get("operation_id")),
+                        operation_type=safe_str(op.get("operation_type", "unknown")),
+                        timestamp=safe_str(op.get("timestamp")),
+                        description=safe_str(op.get("description")),
+                        can_undo=safe_bool(op.get("can_undo", False)),
+                        can_redo=safe_bool(op.get("can_redo", False)),
                     )
                 )
 
         # Build summary
         summary = HistorySummary(
-            total_operations=result.get("total_operations", 0),
-            can_undo=result.get("can_undo", False),
-            can_redo=result.get("can_redo", False),
-            current_position=result.get("current_position", 0),
-            history_enabled=result.get("history_enabled", True),
+            total_operations=safe_int(result.get("total_operations", 0)),
+            can_undo=safe_bool(result.get("can_undo", False)),
+            can_redo=safe_bool(result.get("can_redo", False)),
+            current_position=safe_int(result.get("current_position", 0)),
+            history_enabled=safe_bool(result.get("history_enabled", True)),
         )
 
         await ctx.info(f"Retrieved {len(operations)} operations from history")
@@ -568,9 +597,9 @@ async def restore_to_operation(
 
         return RestoreResult(
             restored_to_operation=operation_id,
-            operations_undone=result.get("operations_undone", 0),
-            operations_redone=result.get("operations_redone", 0),
-            final_position=result.get("final_position", 0),
+            operations_undone=safe_int(result.get("operations_undone", 0)),
+            operations_redone=safe_int(result.get("operations_redone", 0)),
+            final_position=safe_int(result.get("final_position", 0)),
         )
 
     except SessionNotFoundError as e:
@@ -874,7 +903,13 @@ async def configure_auto_save(
         previous_config = None
         if previous_status.get("enabled", False) and "config" in previous_status:
             try:
-                previous_config = AutoSaveConfig(**previous_status["config"])
+                config_data = previous_status["config"]
+                if isinstance(config_data, dict):
+                    from ..models.auto_save import AutoSaveConfig
+
+                    previous_config = AutoSaveConfig.from_dict(dict(config_data))
+                else:
+                    previous_config = None
             except Exception:
                 # Previous config format might be incompatible, continue without it
                 previous_config = None
@@ -913,9 +948,38 @@ async def configure_auto_save(
         # Check if configuration actually changed
         config_changed = previous_config != new_config
 
+        # Convert model instance to Pydantic AutoSaveConfig for response
+        # Use local AutoSaveConfig class (Pydantic model)
+        local_autosave_config = AutoSaveConfig  # Local reference to avoid confusion
+        pydantic_config = local_autosave_config(
+            enabled=new_config.enabled,
+            mode=new_config.mode.value,  # type: ignore  # String literal matches Pydantic Literal type
+            strategy=new_config.strategy.value,  # type: ignore  # String literal matches Pydantic Literal type
+            interval_seconds=new_config.interval_seconds,
+            max_backups=new_config.max_backups,
+            backup_dir=new_config.backup_dir,
+            custom_path=new_config.custom_path,
+            format=new_config.format.value,  # type: ignore  # String literal matches Pydantic Literal type
+            encoding=new_config.encoding,
+        )
+
+        pydantic_previous = None
+        if previous_config:
+            pydantic_previous = local_autosave_config(
+                enabled=previous_config.enabled,
+                mode=previous_config.mode.value,  # type: ignore  # String literal matches Pydantic Literal type
+                strategy=previous_config.strategy.value,  # type: ignore  # String literal matches Pydantic Literal type
+                interval_seconds=previous_config.interval_seconds,
+                max_backups=previous_config.max_backups,
+                backup_dir=previous_config.backup_dir,
+                custom_path=previous_config.custom_path,
+                format=previous_config.format.value,  # type: ignore  # String literal matches Pydantic Literal type
+                encoding=previous_config.encoding,
+            )
+
         return AutoSaveConfigResult(
-            config=new_config,
-            previous_config=previous_config,
+            config=pydantic_config,  # type: ignore  # Pydantic models are compatible
+            previous_config=pydantic_previous,  # type: ignore  # Pydantic models are compatible
             config_changed=config_changed,
         )
 
@@ -1004,9 +1068,9 @@ async def disable_auto_save(
             await ctx.info("Auto-save was already disabled")
 
         return AutoSaveDisableResult(
-            was_enabled=was_enabled,
-            final_save_performed=final_save_performed,
-            final_save_path=final_save_path,
+            was_enabled=bool(was_enabled),
+            final_save_performed=bool(final_save_performed),
+            final_save_path=str(final_save_path) if final_save_path is not None else None,
         )
 
     except SessionNotFoundError as e:
@@ -1076,20 +1140,43 @@ async def get_auto_save_status(
         status_dict = session.get_auto_save_status()
 
         # Build status object
-        config_obj = None
+        pydantic_config_obj = None
         if status_dict.get("enabled", False) and "config" in status_dict:
             try:
-                config_obj = AutoSaveConfig(**status_dict["config"])
+                config_data = status_dict["config"]
+                if isinstance(config_data, dict):
+                    from ..models.auto_save import AutoSaveConfig as ModelConfig
+
+                    model_config = ModelConfig.from_dict(dict(config_data))
+                    # Convert to Pydantic AutoSaveConfig
+                    local_autosave_config = AutoSaveConfig  # Local reference to avoid confusion
+                    pydantic_config_obj = local_autosave_config(
+                        enabled=model_config.enabled,
+                        mode=model_config.mode.value,
+                        strategy=model_config.strategy.value,
+                        interval_seconds=model_config.interval_seconds,
+                        max_backups=model_config.max_backups,
+                        backup_dir=model_config.backup_dir,
+                        custom_path=model_config.custom_path,
+                        format=model_config.format.value,  # type: ignore  # String literal matches Pydantic Literal type
+                        encoding=model_config.encoding,
+                    )
             except Exception as e:
                 logger.warning(f"Could not parse auto-save config: {e}")
 
         status = AutoSaveStatus(
-            enabled=status_dict.get("enabled", False),
-            config=config_obj,
-            last_save_time=status_dict.get("last_save_time"),
-            save_count=status_dict.get("save_count", 0),
-            last_save_path=status_dict.get("last_save_path"),
-            next_scheduled_save=status_dict.get("next_scheduled_save"),
+            enabled=bool(status_dict.get("enabled", False)),
+            config=pydantic_config_obj,
+            last_save_time=str(status_dict.get("last_save_time"))
+            if status_dict.get("last_save_time") is not None
+            else None,
+            save_count=int(status_dict.get("save_count", 0)),
+            last_save_path=str(status_dict.get("last_save_path"))
+            if status_dict.get("last_save_path") is not None
+            else None,
+            next_scheduled_save=str(status_dict.get("next_scheduled_save"))
+            if status_dict.get("next_scheduled_save") is not None
+            else None,
         )
 
         if status.enabled:
@@ -1190,12 +1277,12 @@ async def trigger_manual_save(
         await ctx.info(f"Manual save completed: {save_path}")
 
         return ManualSaveResult(
-            save_path=save_path,
-            format=save_format,
+            save_path=str(save_path),
+            format=str(save_format),
             rows_saved=rows_saved,
             columns_saved=columns_saved,
-            file_size_bytes=file_size,
-            save_time=save_time,
+            file_size_bytes=safe_int(file_size) if file_size is not None else None,
+            save_time=str(save_time) if save_time is not None else None,
         )
 
     except SessionNotFoundError as e:
