@@ -8,6 +8,7 @@ on:
 jobs:
   publish-github:
     runs-on: ubuntu-latest
+    environment: pypi-publish
     permissions:
       contents: read
       packages: write
