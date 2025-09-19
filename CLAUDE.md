@@ -33,6 +33,16 @@ repository management guidance.
 
 ### Code Quality Standards
 
+DataBeak maintains exceptional code quality standards:
+
+- **Zero ruff violations** - Perfect linting compliance across all categories
+- **100% mypy compliance** - Complete type safety with no Any usage where
+  avoidable
+- **Comprehensive test coverage** - 1100+ unit tests with high coverage targets
+- **API design excellence** - No boolean traps, keyword-only parameters for
+  clarity
+- **Security best practices** - No silent exception handling, proper validation
+
 **Use the `quality-gate-runner` agent** for comprehensive quality pipeline
 execution including linting, formatting, type checking, testing, and coverage
 analysis.

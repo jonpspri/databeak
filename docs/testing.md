@@ -8,23 +8,25 @@ functionality across all components.
 
 ## Testing Philosophy
 
-### Test Pyramid
+### Current Testing Approach
 
-We follow the test pyramid approach with three levels:
+DataBeak currently focuses on comprehensive unit testing with future plans for
+integration and E2E testing:
 
 ```
         /\
-       /E2E\      <- Few, slow, comprehensive
+       /E2E\      <- Future: Complete workflow validation
       /------\
-     /Integr. \   <- Moderate count and speed
+     /Integr. \   <- Future: FastMCP Client-based testing
     /----------\
-   /   Unit     \ <- Many, fast, focused
+   /   Unit     \ <- Current focus: 1100+ comprehensive tests
   /--------------\
 ```
 
-- **Unit Tests (70%)**: Test individual functions and classes
-- **Integration Tests (20%)**: Test component interactions
-- **E2E Tests (10%)**: Test complete user workflows
+- **Unit Tests (Current)**: 1100+ fast, isolated module tests with high coverage
+- **Integration Tests (Planned)**: FastMCP Client-based realistic protocol
+  testing
+- **E2E Tests (Planned)**: Complete workflow validation
 
 ### Key Principles
 
