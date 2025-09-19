@@ -33,15 +33,13 @@ repository management guidance.
 
 ### Code Quality Standards
 
-DataBeak maintains exceptional code quality standards:
+DataBeak maintains strict code quality standards:
 
-- **Zero ruff violations** - Perfect linting compliance across all categories
-- **100% mypy compliance** - Complete type safety with no Any usage where
-  avoidable
-- **Comprehensive test coverage** - 1100+ unit tests with high coverage targets
-- **API design excellence** - No boolean traps, keyword-only parameters for
-  clarity
-- **Security best practices** - No silent exception handling, proper validation
+- **Zero ruff violations** - Clean linting compliance across all categories
+- **100% mypy compliance** - Strong type safety with minimal Any usage
+- **High test coverage** - 1100+ unit tests with good coverage targets
+- **Clear API design** - No boolean traps, keyword-only parameters for clarity
+- **Defensive practices** - No silent exception handling, proper validation
 
 **Use the `quality-gate-runner` agent** for comprehensive quality pipeline
 execution including linting, formatting, type checking, testing, and coverage
@@ -173,7 +171,51 @@ uv run mkdocs serve       # Serve docs locally
 - Pydantic models for data validation
 - Pandas for data operations
 - Session management with configurable timeouts
-- Comprehensive error handling and logging
+- Error handling and logging
+
+## Documentation Tone Standards
+
+DataBeak documentation maintains professional, factual tone:
+
+### Avoid Self-Aggrandizing Language
+
+**Prohibited terms**:
+
+- "exceptional", "perfect", "amazing", "outstanding", "superior"
+- "revolutionary", "cutting-edge", "world-class", "best-in-class"
+- "unparalleled", "state-of-the-art", "industry-leading", "premium", "elite"
+- "ultimate", "maximum", "optimal", "flawless"
+
+**Use factual alternatives**:
+
+- "exceptional standards" → "strict standards"
+- "perfect compliance" → "clean compliance"
+- "comprehensive coverage" → "high coverage"
+- "API design excellence" → "clear API design"
+- "security best practices" → "defensive practices"
+
+### Measurable Claims Only
+
+**Acceptable** (measurable):
+
+- "Zero ruff violations" (verifiable metric)
+- "100% mypy compliance" (measurable result)
+- "1100+ unit tests" (concrete count)
+
+**Prohibited** (subjective claims):
+
+- "production quality" (marketing speak)
+- "advanced analytics" (vague superlative)
+- "sophisticated architecture" (self-congratulatory)
+
+### Professional Descriptors
+
+Use measured, technical language:
+
+- "provides" not "delivers amazing"
+- "supports" not "offers comprehensive"
+- "implements" not "features advanced"
+- "handles" not "excels at"
 
 ## Additional Resources
 

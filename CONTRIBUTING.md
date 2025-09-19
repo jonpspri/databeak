@@ -259,7 +259,7 @@ src/databeak/
 │   ├── __init__.py
 │   ├── csv_session.py   # Session management
 │   └── data_models.py   # Pydantic models
-├── tools/               # MCP tool implementations
+├── servers/             # MCP server implementations
 │   ├── __init__.py
 │   ├── io_operations.py
 │   ├── transformations.py

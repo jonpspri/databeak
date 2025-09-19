@@ -103,10 +103,11 @@ uv run -m pytest tests/e2e/           # End-to-end tests
 tests/
 ├── unit/           # Fast, isolated module tests
 │   ├── models/     # Data models and session management
+│   ├── prompts/    # Prompt management
+│   ├── resources/  # Resource handling
 │   ├── servers/    # MCP server modules
-│   ├── tools/      # Individual tool operations
-│   ├── utils/      # Utility functions
-│   └── resources/  # Resource handling
+│   ├── services/   # Service layer components
+│   └── utils/      # Utility functions
 ├── integration/    # Component interaction tests
 │   ├── test_ai_accessibility.py
 │   ├── test_analytics_coverage.py

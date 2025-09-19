@@ -16,8 +16,8 @@ Model Context Protocol (MCP).
   undo/redo
 - ⚡ **High Performance** - Handles large datasets with streaming and chunking
 - 🔒 **Session Management** - Multi-user support with isolated sessions
-- 🌟 **Production Quality** - Zero ruff violations, 100% mypy compliance,
-  comprehensive test coverage
+- 🌟 **Code Quality** - Zero ruff violations, 100% mypy compliance, high test
+  coverage
 
 ## Getting Started
 
