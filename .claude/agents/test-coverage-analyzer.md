@@ -33,16 +33,19 @@ DataBeak follows a structured testing approach:
 tests/
 ├── unit/                    # Fast, isolated module tests
 │   ├── models/             # Data models and session management
+│   ├── prompts/            # Prompt management
+│   ├── resources/          # Resource handling
 │   ├── servers/            # MCP server modules
-│   ├── servers/            # MCP server modules
-│   ├── utils/              # Utility functions
-│   └── resources/          # Resource handling
-├── integration/            # Component interaction tests
+│   ├── services/           # Service layer components
+│   └── utils/              # Utility functions
+├── security/               # Security test utilities
+├── utils/                  # Test utility functions
+├── integration/            # Component interaction tests (planned)
 │   ├── test_ai_accessibility.py
 │   ├── test_analytics_coverage.py
 │   ├── test_mcp_*.py
 │   └── test_session_coverage.py
-└── e2e/                    # End-to-end workflow tests
+└── e2e/                    # End-to-end workflow tests (planned)
     └── test_io_server_comprehensive_coverage.py
 ```
 

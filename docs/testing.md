@@ -58,8 +58,10 @@ integration and E2E testing:
 tests/
 ├── unit/              # Mirrors src/ structure
 │   ├── models/
+│   ├── prompts/
+│   ├── resources/
 │   ├── servers/
-│   ├── tools/
+│   ├── services/
 │   └── utils/
 ├── integration/       # Cross-component tests
 └── e2e/              # Full workflow tests
