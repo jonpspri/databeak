@@ -20,7 +20,7 @@ class TestFileEncodingDetection:
     """Test file encoding detection."""
 
     @pytest.mark.parametrize(
-        "mock_encoding,mock_confidence,file_content,expected_encoding",
+        ("mock_encoding", "mock_confidence", "file_content", "expected_encoding"),
         [
             ("UTF-8", 0.95, b"test content", "utf-8"),
             ("ISO-8859-1", 0.3, b"\xef\xbb\xbftest,data\n1,2", ["utf-8", "utf-8-sig"]),
@@ -29,7 +29,12 @@ class TestFileEncodingDetection:
     )
     @patch("chardet.detect")
     def test_encoding_detection_scenarios(
-        self, mock_detect, mock_encoding, mock_confidence, file_content, expected_encoding
+        self,
+        mock_detect,
+        mock_encoding,
+        mock_confidence,
+        file_content,
+        expected_encoding,
     ):
         """Test encoding detection with different chardet results."""
         mock_detect.return_value = {"encoding": mock_encoding, "confidence": mock_confidence}
@@ -92,16 +97,14 @@ class TestLoadCsvEncodingFallbacks:
             Path(temp_path).unlink()
 
     @pytest.mark.skip(
-        reason="Complex encoding fallback + memory limit edge case - needs refactoring"
+        reason="Complex encoding fallback + memory limit edge case - needs refactoring",
     )
     async def test_load_csv_memory_check_on_fallback(self):
         """Test memory limit check during encoding fallback."""
-        pass
 
     @pytest.mark.skip(reason="Complex encoding fallback + row limit edge case - needs refactoring")
     async def test_load_csv_row_limit_on_fallback(self):
         """Test row limit check during encoding fallback."""
-        pass
 
 
 class TestLoadCsvFromUrlFallbacks:
@@ -129,7 +132,9 @@ class TestLoadCsvFromUrlFallbacks:
         mock_ctx.report_progress = AsyncMock(return_value=None)
 
         result = await load_csv_from_url(
-            mock_ctx, url="http://example.com/data.csv", encoding="utf-8"
+            mock_ctx,
+            url="http://example.com/data.csv",
+            encoding="utf-8",
         )
 
         assert result.rows_affected == 2
@@ -137,18 +142,16 @@ class TestLoadCsvFromUrlFallbacks:
         mock_ctx.info.assert_called()
 
     @pytest.mark.skip(
-        reason="Complex URL encoding fallback + memory limit edge case - needs refactoring"
+        reason="Complex URL encoding fallback + memory limit edge case - needs refactoring",
     )
     async def test_load_url_memory_check_fallback(self):
         """Test URL loading with memory check during fallback."""
-        pass
 
     @pytest.mark.skip(
-        reason="Complex URL encoding fallback + row limit edge case - needs refactoring"
+        reason="Complex URL encoding fallback + row limit edge case - needs refactoring",
     )
     async def test_load_url_row_limit_fallback(self):
         """Test URL loading with row limit during fallback."""
-        pass
 
     @patch("src.databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
@@ -164,7 +167,9 @@ class TestLoadCsvFromUrlFallbacks:
 
         with pytest.raises(ToolError, match="Encoding error with all attempted encodings"):
             await load_csv_from_url(
-                create_mock_context(), url="http://example.com/data.csv", encoding="utf-8"
+                create_mock_context(),
+                url="http://example.com/data.csv",
+                encoding="utf-8",
             )
 
     @patch("src.databeak.servers.io_server.urlopen")
@@ -184,7 +189,9 @@ class TestLoadCsvFromUrlFallbacks:
         ]
 
         result = await load_csv_from_url(
-            create_mock_context(), url="http://example.com/data.csv", encoding="utf-8"
+            create_mock_context(),
+            url="http://example.com/data.csv",
+            encoding="utf-8",
         )
 
         assert result.rows_affected == 1

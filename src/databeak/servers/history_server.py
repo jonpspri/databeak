@@ -18,6 +18,31 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from ..exceptions import SessionNotFoundError
 from ..models import get_session_manager
 
+
+def safe_int(value: Any, default: int = 0) -> int:
+    """Safely convert object to int."""
+    try:
+        return int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_str(value: Any, default: str = "") -> str:
+    """Safely convert object to str."""
+    try:
+        return str(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def safe_bool(value: Any, *, default: bool = False) -> bool:
+    """Safely convert object to bool."""
+    try:
+        return bool(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
 logger = logging.getLogger(__name__)
 
 # ============================================================================
@@ -32,7 +57,7 @@ class HistoryOperation(BaseModel):
 
     operation_id: str = Field(description="Unique identifier for this operation")
     operation_type: str = Field(
-        description="Type of operation performed (load, filter, sort, etc.)"
+        description="Type of operation performed (load, filter, sort, etc.)",
     )
     timestamp: str = Field(description="When the operation was performed (ISO format)")
     description: str = Field(description="Human-readable description of the operation")
@@ -45,10 +70,10 @@ class HistorySummary(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    total_operations: int = Field(description="Total number of operations in history")
+    total_operations: int = Field(ge=0, description="Total number of operations in history")
     can_undo: bool = Field(description="Whether any operations can be undone")
     can_redo: bool = Field(description="Whether any operations can be redone")
-    current_position: int = Field(description="Current position in the operation history")
+    current_position: int = Field(ge=0, description="Current position in the operation history")
     history_enabled: bool = Field(description="Whether history tracking is enabled")
 
 
@@ -59,21 +84,24 @@ class AutoSaveConfig(BaseModel):
 
     enabled: bool = Field(description="Whether auto-save is enabled")
     mode: Literal["disabled", "after_operation", "periodic", "hybrid"] = Field(
-        description="Auto-save trigger mode"
+        description="Auto-save trigger mode",
     )
     strategy: Literal["overwrite", "backup", "versioned", "custom"] = Field(
-        description="File saving strategy"
+        description="File saving strategy",
     )
     interval_seconds: int | None = Field(
-        None, description="Interval between periodic saves (seconds)"
+        None,
+        description="Interval between periodic saves (seconds)",
     )
     max_backups: int | None = Field(
-        default=None, description="Maximum number of backup files to keep"
+        default=None,
+        description="Maximum number of backup files to keep",
     )
     backup_dir: str | None = Field(default=None, description="Directory for backup files")
     custom_path: str | None = Field(default=None, description="Custom file path for saves")
     format: Literal["csv", "tsv", "json", "excel", "parquet"] = Field(
-        "csv", description="Export format for saved files"
+        "csv",
+        description="Export format for saved files",
     )
     encoding: str = Field(default="utf-8", description="Text encoding for saved files")
 
@@ -82,7 +110,8 @@ class AutoSaveConfig(BaseModel):
     def validate_interval(cls, v: int | None) -> int | None:
         """Validate interval is reasonable for periodic saves."""
         if v is not None and v < 30:
-            raise ValueError("Interval must be at least 30 seconds for stability")
+            msg = "Interval must be at least 30 seconds for stability"
+            raise ValueError(msg)
         return v
 
     @field_validator("max_backups")
@@ -90,7 +119,8 @@ class AutoSaveConfig(BaseModel):
     def validate_max_backups(cls, v: int | None) -> int | None:
         """Validate max_backups is reasonable."""
         if v is not None and v < 1:
-            raise ValueError("Maximum backups must be at least 1")
+            msg = "Maximum backups must be at least 1"
+            raise ValueError(msg)
         return v
 
 
@@ -101,17 +131,21 @@ class AutoSaveStatus(BaseModel):
 
     enabled: bool = Field(description="Whether auto-save is currently enabled")
     config: AutoSaveConfig | None = Field(
-        default=None, description="Current auto-save configuration"
+        default=None,
+        description="Current auto-save configuration",
     )
     last_save_time: str | None = Field(
-        default=None, description="Timestamp of last save (ISO format)"
+        default=None,
+        description="Timestamp of last save (ISO format)",
     )
     save_count: int = Field(default=0, description="Total number of saves performed")
     last_save_path: str | None = Field(
-        default=None, description="Path of the most recent save file"
+        default=None,
+        description="Path of the most recent save file",
     )
     next_scheduled_save: str | None = Field(
-        None, description="Timestamp of next scheduled save (ISO format)"
+        None,
+        description="Timestamp of next scheduled save (ISO format)",
     )
 
 
@@ -125,10 +159,12 @@ class UndoResult(BaseModel):
 
     success: bool = Field(default=True, description="Whether the undo operation was successful")
     operation_undone: str | None = Field(
-        default=None, description="Type of operation that was undone"
+        default=None,
+        description="Type of operation that was undone",
     )
     previous_operation: str | None = Field(
-        default=None, description="Previous operation in history"
+        default=None,
+        description="Previous operation in history",
     )
     can_undo_more: bool = Field(default=False, description="Whether more operations can be undone")
     can_redo: bool = Field(default=False, description="Whether any operations can be redone")
@@ -140,7 +176,8 @@ class RedoResult(BaseModel):
 
     success: bool = Field(default=True, description="Whether the redo operation was successful")
     operation_redone: str | None = Field(
-        default=None, description="Type of operation that was redone"
+        default=None,
+        description="Type of operation that was redone",
     )
     next_operation: str | None = Field(default=None, description="Next operation in history")
     can_undo: bool = Field(default=False, description="Whether any operations can be undone")
@@ -153,12 +190,14 @@ class HistoryResult(BaseModel):
 
     success: bool = Field(default=True, description="Whether the history retrieval was successful")
     operations: list[HistoryOperation] = Field(
-        default_factory=list, description="List of history operations"
+        default_factory=list,
+        description="List of history operations",
     )
     summary: HistorySummary = Field(description="Summary of operation history")
     total_found: int = Field(default=0, description="Total number of operations found")
     limit_applied: int | None = Field(
-        default=None, description="Maximum number of operations returned"
+        default=None,
+        description="Maximum number of operations returned",
     )
 
 
@@ -167,7 +206,8 @@ class RestoreResult(BaseModel):
 
     success: bool = Field(default=True, description="Whether the restore operation was successful")
     restored_to_operation: str | None = Field(
-        default=None, description="Operation ID that was restored to"
+        default=None,
+        description="Operation ID that was restored to",
     )
     operations_undone: int = Field(default=0, description="Number of operations that were undone")
     operations_redone: int = Field(default=0, description="Number of operations that were redone")
@@ -180,7 +220,8 @@ class ClearHistoryResult(BaseModel):
     success: bool = Field(default=True, description="Whether the clear operation was successful")
     operations_cleared: int = Field(default=0, description="Number of operations that were cleared")
     history_was_enabled: bool = Field(
-        True, description="Whether history was enabled before clearing"
+        default=True,
+        description="Whether history was enabled before clearing",
     )
 
 
@@ -198,14 +239,17 @@ class AutoSaveConfigResult(BaseModel):
     """Response model for auto-save configuration operations."""
 
     success: bool = Field(
-        default=True, description="Whether the configuration update was successful"
+        default=True,
+        description="Whether the configuration update was successful",
     )
     config: AutoSaveConfig = Field(description="New auto-save configuration")
     previous_config: AutoSaveConfig | None = Field(
-        None, description="Previous auto-save configuration"
+        None,
+        description="Previous auto-save configuration",
     )
     config_changed: bool = Field(
-        default=True, description="Whether the configuration actually changed"
+        default=True,
+        description="Whether the configuration actually changed",
     )
 
 
@@ -221,13 +265,16 @@ class AutoSaveDisableResult(BaseModel):
 
     success: bool = Field(default=True, description="Whether the disable operation was successful")
     was_enabled: bool = Field(
-        default=False, description="Whether auto-save was enabled before disabling"
+        default=False,
+        description="Whether auto-save was enabled before disabling",
     )
     final_save_performed: bool = Field(
-        False, description="Whether a final save was performed before disabling"
+        default=False,
+        description="Whether a final save was performed before disabling",
     )
     final_save_path: str | None = Field(
-        default=None, description="Path of final save file if performed"
+        default=None,
+        description="Path of final save file if performed",
     )
 
 
@@ -241,7 +288,8 @@ class ManualSaveResult(BaseModel):
     columns_saved: int = Field(default=0, description="Number of columns saved")
     file_size_bytes: int | None = Field(default=None, description="Size of saved file in bytes")
     save_time: str | None = Field(
-        None, description="Timestamp when save was completed (ISO format)"
+        None,
+        description="Timestamp when save was completed (ISO format)",
     )
 
 
@@ -300,7 +348,8 @@ async def undo_operation(
         result = await session.undo()
 
         if not result["success"]:
-            raise ToolError(f"Undo operation failed: {result.get('error', 'Unknown error')}")
+            msg = f"Undo operation failed: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         # Extract history information
         history_info = session.get_history()
@@ -312,21 +361,24 @@ async def undo_operation(
 
         return UndoResult(
             operation_undone=result.get("operation_type"),
-            previous_operation=result.get("previous_operation"),
-            can_undo_more=can_undo,
-            can_redo=can_redo,
-            history_position=position,
+            previous_operation=safe_str(result.get("previous_operation"))
+            if result.get("previous_operation")
+            else None,
+            can_undo_more=safe_bool(can_undo),
+            can_redo=safe_bool(can_redo),
+            history_position=safe_int(position),
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Undo operation failed: {e.message}")
+        logger.error("Undo operation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error in undo operation: {e!s}")
+        logger.error("Error in undo operation: %s", str(e))
         await ctx.error(f"Failed to undo operation: {e!s}")
-        raise ToolError(f"Error performing undo operation: {e}") from e
+        msg = f"Error performing undo operation: {e}"
+        raise ToolError(msg) from e
 
 
 async def redo_operation(
@@ -379,7 +431,8 @@ async def redo_operation(
         result = await session.redo()
 
         if not result["success"]:
-            raise ToolError(f"Redo operation failed: {result.get('error', 'Unknown error')}")
+            msg = f"Redo operation failed: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         # Extract history information
         history_info = session.get_history()
@@ -391,27 +444,31 @@ async def redo_operation(
 
         return RedoResult(
             operation_redone=result.get("operation_type"),
-            next_operation=result.get("next_operation"),
-            can_undo=can_undo,
-            can_redo_more=can_redo,
-            history_position=position,
+            next_operation=safe_str(result.get("next_operation"))
+            if result.get("next_operation")
+            else None,
+            can_undo=safe_bool(can_undo),
+            can_redo_more=safe_bool(can_redo),
+            history_position=safe_int(position),
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Redo operation failed: {e.message}")
+        logger.error("Redo operation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error in redo operation: {e!s}")
+        logger.error("Error in redo operation: %s", str(e))
         await ctx.error(f"Failed to redo operation: {e!s}")
-        raise ToolError(f"Error performing redo operation: {e}") from e
+        msg = f"Error performing redo operation: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_history(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     limit: Annotated[
-        int | None, Field(description="Maximum number of operations to return (None = all)")
+        int | None,
+        Field(description="Maximum number of operations to return (None = all)"),
     ] = None,
 ) -> HistoryResult:
     """Get comprehensive operation history for a session.
@@ -465,30 +522,31 @@ async def get_history(
         result = session.get_history(limit)
 
         if not result["success"]:
-            raise ToolError(f"Failed to retrieve history: {result.get('error', 'Unknown error')}")
+            msg = f"Failed to retrieve history: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         # Convert operations to structured format
         operations = []
-        if "operations" in result:
-            for op in result["operations"]:
+        if "history" in result:
+            for op in result["history"]:
                 operations.append(
                     HistoryOperation(
-                        operation_id=op.get("operation_id", ""),
-                        operation_type=op.get("operation_type", "unknown"),
-                        timestamp=op.get("timestamp", ""),
-                        description=op.get("description", ""),
-                        can_undo=op.get("can_undo", False),
-                        can_redo=op.get("can_redo", False),
-                    )
+                        operation_id=safe_str(op.get("operation_id")),
+                        operation_type=safe_str(op.get("operation_type", "unknown")),
+                        timestamp=safe_str(op.get("timestamp")),
+                        description=safe_str(op.get("description")),
+                        can_undo=safe_bool(op.get("can_undo", False)),
+                        can_redo=safe_bool(op.get("can_redo", False)),
+                    ),
                 )
 
         # Build summary
         summary = HistorySummary(
-            total_operations=result.get("total_operations", 0),
-            can_undo=result.get("can_undo", False),
-            can_redo=result.get("can_redo", False),
-            current_position=result.get("current_position", 0),
-            history_enabled=result.get("history_enabled", True),
+            total_operations=safe_int(result.get("total_operations", 0)),
+            can_undo=safe_bool(result.get("can_undo", False)),
+            can_redo=safe_bool(result.get("can_redo", False)),
+            current_position=safe_int(result.get("current_position", 0)),
+            history_enabled=safe_bool(result.get("history_enabled", True)),
         )
 
         await ctx.info(f"Retrieved {len(operations)} operations from history")
@@ -501,14 +559,15 @@ async def get_history(
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"History retrieval failed: {e.message}")
+        logger.error("History retrieval failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error retrieving history: {e!s}")
+        logger.error("Error retrieving history: %s", str(e))
         await ctx.error(f"Failed to retrieve history: {e!s}")
-        raise ToolError(f"Error retrieving operation history: {e}") from e
+        msg = f"Error retrieving operation history: {e}"
+        raise ToolError(msg) from e
 
 
 async def restore_to_operation(
@@ -562,26 +621,28 @@ async def restore_to_operation(
         result = await session.restore_to_operation(operation_id)
 
         if not result["success"]:
-            raise ToolError(f"Restore operation failed: {result.get('error', 'Unknown error')}")
+            msg = f"Restore operation failed: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         await ctx.info(f"Successfully restored to operation {operation_id}")
 
         return RestoreResult(
             restored_to_operation=operation_id,
-            operations_undone=result.get("operations_undone", 0),
-            operations_redone=result.get("operations_redone", 0),
-            final_position=result.get("final_position", 0),
+            operations_undone=safe_int(result.get("operations_undone", 0)),
+            operations_redone=safe_int(result.get("operations_redone", 0)),
+            final_position=safe_int(result.get("final_position", 0)),
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Restore operation failed: {e.message}")
+        logger.error("Restore operation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error in restore operation: {e!s}")
+        logger.error("Error in restore operation: %s", str(e))
         await ctx.error(f"Failed to restore to operation: {e!s}")
-        raise ToolError(f"Error restoring to operation: {e}") from e
+        msg = f"Error restoring to operation: {e}"
+        raise ToolError(msg) from e
 
 
 async def clear_history(
@@ -635,7 +696,8 @@ async def clear_history(
 
         # Check if history is enabled
         if not session.history_manager:
-            raise ToolError("History is not enabled for this session")
+            msg = "History is not enabled for this session"
+            raise ToolError(msg)
 
         await ctx.info(f"Clearing operation history for session {session_id}")
 
@@ -654,21 +716,23 @@ async def clear_history(
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Clear history failed: {e.message}")
+        logger.error("Clear history failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error clearing history: {e!s}")
+        logger.error("Error clearing history: %s", str(e))
         await ctx.error(f"Failed to clear history: {e!s}")
-        raise ToolError(f"Error clearing operation history: {e}") from e
+        msg = f"Error clearing operation history: {e}"
+        raise ToolError(msg) from e
 
 
 async def export_history(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     file_path: Annotated[str, Field(description="Output file path for history export")],
-    format: Annotated[
-        Literal["json", "csv"], Field(description="Export format: json or csv")
+    export_format: Annotated[
+        Literal["json", "csv"],
+        Field(description="Export format: json or csv"),
     ] = "json",
 ) -> ExportHistoryResult:
     """Export operation history to a file for audit trails.
@@ -696,7 +760,7 @@ async def export_history(
         result = await export_history("session_123", "/path/to/audit.json")
 
         # Export as CSV for analysis
-        result = await export_history("session_123", "/path/to/log.csv", format="csv")
+        result = await export_history("session_123", "/path/to/log.csv", export_format="csv")
 
     AI Workflow Integration:
         1. Compliance and audit trail generation
@@ -723,15 +787,17 @@ async def export_history(
             raise SessionNotFoundError(session_id)
 
         if not session.history_manager:
-            raise ToolError("History is not enabled for this session")
+            msg = "History is not enabled for this session"
+            raise ToolError(msg)
 
         await ctx.info(f"Exporting history for session {session_id} to {file_path}")
 
         # Export the history
-        success = session.history_manager.export_history(file_path, format)
+        success = session.history_manager.export_history(file_path, export_format)
 
         if not success:
-            raise ToolError("History export operation failed")
+            msg = "History export operation failed"
+            raise ToolError(msg)
 
         # Get operation count for response
         history_info = session.get_history()
@@ -745,26 +811,27 @@ async def export_history(
             file_size = Path(file_path).stat().st_size
         except Exception as e:
             # File size is optional, continue without it
-            logger.debug(f"Could not get file size for {file_path}: {e}")
+            logger.debug("Could not get file size for %s: %s", file_path, e)
 
         await ctx.info(f"Successfully exported {operations_count} operations to {file_path}")
 
         return ExportHistoryResult(
             file_path=file_path,
-            format=format,
+            format=export_format,
             operations_exported=operations_count,
             file_size_bytes=file_size,
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"History export failed: {e.message}")
+        logger.error("History export failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error exporting history: {e!s}")
+        logger.error("Error exporting history: %s", str(e))
         await ctx.error(f"Failed to export history: {e!s}")
-        raise ToolError(f"Error exporting operation history: {e}") from e
+        msg = f"Error exporting operation history: {e}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================
@@ -774,6 +841,7 @@ async def export_history(
 
 async def configure_auto_save(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
+    *,
     enabled: Annotated[bool, Field(description="Whether to enable auto-save functionality")] = True,
     mode: Annotated[
         Literal["disabled", "after_operation", "periodic", "hybrid"],
@@ -784,14 +852,16 @@ async def configure_auto_save(
         Field(description="File saving strategy"),
     ] = "backup",
     interval_seconds: Annotated[
-        int | None, Field(description="Interval between periodic saves in seconds")
+        int | None,
+        Field(description="Interval between periodic saves in seconds"),
     ] = None,
     max_backups: Annotated[
-        int | None, Field(description="Maximum number of backup files to keep")
+        int | None,
+        Field(description="Maximum number of backup files to keep"),
     ] = None,
     backup_dir: Annotated[str | None, Field(description="Directory for backup files")] = None,
     custom_path: Annotated[str | None, Field(description="Custom file path for saves")] = None,
-    format: Annotated[
+    export_format: Annotated[
         Literal["csv", "tsv", "json", "excel", "parquet"],
         Field(description="Export format for saved files"),
     ] = "csv",
@@ -874,7 +944,13 @@ async def configure_auto_save(
         previous_config = None
         if previous_status.get("enabled", False) and "config" in previous_status:
             try:
-                previous_config = AutoSaveConfig(**previous_status["config"])
+                config_data = previous_status["config"]
+                if isinstance(config_data, dict):
+                    from ..models.auto_save import AutoSaveConfig
+
+                    previous_config = AutoSaveConfig.from_dict(dict(config_data))
+                else:
+                    previous_config = None
             except Exception:
                 # Previous config format might be incompatible, continue without it
                 previous_config = None
@@ -884,7 +960,7 @@ async def configure_auto_save(
             "enabled": enabled,
             "mode": mode,
             "strategy": strategy,
-            "format": format,
+            "format": export_format,
             "encoding": encoding,
         }
 
@@ -904,8 +980,9 @@ async def configure_auto_save(
         result = await session.enable_auto_save(config_dict)
 
         if not result["success"]:
+            msg = f"Failed to configure auto-save: {result.get('error', 'Unknown error')}"
             raise ToolError(
-                f"Failed to configure auto-save: {result.get('error', 'Unknown error')}"
+                msg,
             )
 
         await ctx.info(f"Auto-save configured: {mode} mode, {strategy} strategy")
@@ -913,21 +990,51 @@ async def configure_auto_save(
         # Check if configuration actually changed
         config_changed = previous_config != new_config
 
+        # Convert model instance to Pydantic AutoSaveConfig for response
+        # Use local AutoSaveConfig class (Pydantic model)
+        local_autosave_config = AutoSaveConfig  # Local reference to avoid confusion
+        pydantic_config = local_autosave_config(
+            enabled=new_config.enabled,
+            mode=new_config.mode.value,  # type: ignore  # String literal matches Pydantic Literal type
+            strategy=new_config.strategy.value,  # type: ignore  # String literal matches Pydantic Literal type
+            interval_seconds=new_config.interval_seconds,
+            max_backups=new_config.max_backups,
+            backup_dir=new_config.backup_dir,
+            custom_path=new_config.custom_path,
+            export_format=new_config.export_format.value,  # type: ignore  # String literal matches Pydantic Literal type
+            encoding=new_config.encoding,
+        )
+
+        pydantic_previous = None
+        if previous_config:
+            pydantic_previous = local_autosave_config(
+                enabled=previous_config.enabled,
+                mode=previous_config.mode.value,  # type: ignore  # String literal matches Pydantic Literal type
+                strategy=previous_config.strategy.value,  # type: ignore  # String literal matches Pydantic Literal type
+                interval_seconds=previous_config.interval_seconds,
+                max_backups=previous_config.max_backups,
+                backup_dir=previous_config.backup_dir,
+                custom_path=previous_config.custom_path,
+                export_format=previous_config.export_format.value,  # type: ignore  # String literal matches Pydantic Literal type
+                encoding=previous_config.encoding,
+            )
+
         return AutoSaveConfigResult(
-            config=new_config,
-            previous_config=previous_config,
+            config=pydantic_config,  # type: ignore  # Pydantic models are compatible
+            previous_config=pydantic_previous,  # type: ignore  # Pydantic models are compatible
             config_changed=config_changed,
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Auto-save configuration failed: {e.message}")
+        logger.error("Auto-save configuration failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error configuring auto-save: {e!s}")
+        logger.error("Error configuring auto-save: %s", str(e))
         await ctx.error(f"Failed to configure auto-save: {e!s}")
-        raise ToolError(f"Error configuring auto-save: {e}") from e
+        msg = f"Error configuring auto-save: {e}"
+        raise ToolError(msg) from e
 
 
 async def disable_auto_save(
@@ -990,7 +1097,8 @@ async def disable_auto_save(
         result = await session.disable_auto_save()
 
         if not result["success"]:
-            raise ToolError(f"Failed to disable auto-save: {result.get('error', 'Unknown error')}")
+            msg = f"Failed to disable auto-save: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         # Check if a final save was performed
         final_save_performed = result.get("final_save_performed", False)
@@ -1004,20 +1112,21 @@ async def disable_auto_save(
             await ctx.info("Auto-save was already disabled")
 
         return AutoSaveDisableResult(
-            was_enabled=was_enabled,
-            final_save_performed=final_save_performed,
-            final_save_path=final_save_path,
+            was_enabled=bool(was_enabled),
+            final_save_performed=bool(final_save_performed),
+            final_save_path=str(final_save_path) if final_save_path is not None else None,
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Auto-save disable failed: {e.message}")
+        logger.error("Auto-save disable failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error disabling auto-save: {e!s}")
+        logger.error("Error disabling auto-save: %s", str(e))
         await ctx.error(f"Failed to disable auto-save: {e!s}")
-        raise ToolError(f"Error disabling auto-save: {e}") from e
+        msg = f"Error disabling auto-save: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_auto_save_status(
@@ -1076,25 +1185,48 @@ async def get_auto_save_status(
         status_dict = session.get_auto_save_status()
 
         # Build status object
-        config_obj = None
+        pydantic_config_obj = None
         if status_dict.get("enabled", False) and "config" in status_dict:
             try:
-                config_obj = AutoSaveConfig(**status_dict["config"])
+                config_data = status_dict["config"]
+                if isinstance(config_data, dict):
+                    from ..models.auto_save import AutoSaveConfig as ModelConfig
+
+                    model_config = ModelConfig.from_dict(dict(config_data))
+                    # Convert to Pydantic AutoSaveConfig
+                    local_autosave_config = AutoSaveConfig  # Local reference to avoid confusion
+                    pydantic_config_obj = local_autosave_config(
+                        enabled=model_config.enabled,
+                        mode=model_config.mode.value,
+                        strategy=model_config.strategy.value,
+                        interval_seconds=model_config.interval_seconds,
+                        max_backups=model_config.max_backups,
+                        backup_dir=model_config.backup_dir,
+                        custom_path=model_config.custom_path,
+                        export_format=model_config.export_format.value,  # type: ignore  # String literal matches Pydantic Literal type
+                        encoding=model_config.encoding,
+                    )
             except Exception as e:
-                logger.warning(f"Could not parse auto-save config: {e}")
+                logger.warning("Could not parse auto-save config: %s", e)
 
         status = AutoSaveStatus(
-            enabled=status_dict.get("enabled", False),
-            config=config_obj,
-            last_save_time=status_dict.get("last_save_time"),
-            save_count=status_dict.get("save_count", 0),
-            last_save_path=status_dict.get("last_save_path"),
-            next_scheduled_save=status_dict.get("next_scheduled_save"),
+            enabled=bool(status_dict.get("enabled", False)),
+            config=pydantic_config_obj,
+            last_save_time=str(status_dict.get("last_save_time"))
+            if status_dict.get("last_save_time") is not None
+            else None,
+            save_count=int(status_dict.get("save_count", 0)),
+            last_save_path=str(status_dict.get("last_save_path"))
+            if status_dict.get("last_save_path") is not None
+            else None,
+            next_scheduled_save=str(status_dict.get("next_scheduled_save"))
+            if status_dict.get("next_scheduled_save") is not None
+            else None,
         )
 
         if status.enabled:
             await ctx.info(
-                f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode"
+                f"Auto-save is enabled with {status.config.mode if status.config else 'unknown'} mode",
             )
         else:
             await ctx.info("Auto-save is currently disabled")
@@ -1104,14 +1236,15 @@ async def get_auto_save_status(
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Auto-save status check failed: {e.message}")
+        logger.error("Auto-save status check failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error getting auto-save status: {e!s}")
+        logger.error("Error getting auto-save status: %s", str(e))
         await ctx.error(f"Failed to get auto-save status: {e!s}")
-        raise ToolError(f"Error retrieving auto-save status: {e}") from e
+        msg = f"Error retrieving auto-save status: {e}"
+        raise ToolError(msg) from e
 
 
 async def trigger_manual_save(
@@ -1172,7 +1305,8 @@ async def trigger_manual_save(
         result = await session.manual_save()
 
         if not result["success"]:
-            raise ToolError(f"Manual save failed: {result.get('error', 'Unknown error')}")
+            msg = f"Manual save failed: {result.get('error', 'Unknown error')}"
+            raise ToolError(msg)
 
         # Extract result information
         save_path = result.get("save_path", "")
@@ -1190,23 +1324,24 @@ async def trigger_manual_save(
         await ctx.info(f"Manual save completed: {save_path}")
 
         return ManualSaveResult(
-            save_path=save_path,
-            format=save_format,
+            save_path=str(save_path),
+            format=str(save_format),
             rows_saved=rows_saved,
             columns_saved=columns_saved,
-            file_size_bytes=file_size,
-            save_time=save_time,
+            file_size_bytes=safe_int(file_size) if file_size is not None else None,
+            save_time=str(save_time) if save_time is not None else None,
         )
 
     except SessionNotFoundError as e:
-        logger.error(f"Manual save failed: {e.message}")
+        logger.error("Manual save failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error in manual save: {e!s}")
+        logger.error("Error in manual save: %s", str(e))
         await ctx.error(f"Failed to trigger manual save: {e!s}")
-        raise ToolError(f"Error triggering manual save: {e}") from e
+        msg = f"Error triggering manual save: {e}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================

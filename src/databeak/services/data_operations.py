@@ -21,7 +21,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> Dat
         row_index_val = row_idx if isinstance(row_idx, int) else 0
         # Convert all keys to strings and handle pandas/numpy types
         record: dict[str, CellValue] = {
-            "__row_index__": row_index_val
+            "__row_index__": row_index_val,
         }  # Include original row index
         row_dict = row.to_dict()
         for key, value in row_dict.items():
@@ -101,6 +101,8 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
         elif target_type == "boolean":
             return series.astype(bool)
         else:
-            raise ValueError(f"Unsupported type: {target_type}")
+            msg = f"Unsupported type: {target_type}"
+            raise ValueError(msg)
     except (ValueError, TypeError, OverflowError) as e:
-        raise ValueError(f"Failed to convert to {target_type}: {e}") from e
+        msg = f"Failed to convert to {target_type}: {e}"
+        raise ValueError(msg) from e

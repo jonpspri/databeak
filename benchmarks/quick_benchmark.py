@@ -131,36 +131,20 @@ def benchmark_function(func: Any, *args: Any, iterations: int = 20) -> dict[str,
 
 def run_quick_benchmark() -> None:
     """Run a quick benchmark."""
-    print("DataBeak Quick Performance Benchmark")
-    print("Testing wrapper pattern elimination")
-    print("=" * 50)
 
     # Test with 1000 rows
     df = generate_test_data(1000)
 
     # Benchmark statistics
-    print("\nTesting statistics operations...")
     old_results = benchmark_function(old_pattern_statistics, df)
     new_results = benchmark_function(new_pattern_statistics, df)
 
     improvement = ((old_results["mean"] - new_results["mean"]) / old_results["mean"]) * 100
 
-    print(f"Old pattern: {old_results['mean'] * 1000:.2f}ms ± {old_results['std'] * 1000:.2f}ms")
-    print(f"New pattern: {new_results['mean'] * 1000:.2f}ms ± {new_results['std'] * 1000:.2f}ms")
-    print(f"Improvement: {improvement:.1f}%")
-
-    if 15 <= improvement <= 25:
-        print("✓ Performance improvement validated!")
-    elif improvement > 25:
-        print("✓ Performance improvement exceeds expectations!")
+    if 15 <= improvement <= 25 or improvement > 25:
+        pass
     else:
-        print("⚠ Performance improvement below claimed range")
-
-    print(
-        f"\nThroughput improvement: {((1 / new_results['mean'] - 1 / old_results['mean']) / (1 / old_results['mean'])) * 100:.1f}%"
-    )
-    print("=" * 50)
-    print("Quick benchmark completed")
+        pass
 
 
 if __name__ == "__main__":

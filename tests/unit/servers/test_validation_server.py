@@ -204,8 +204,9 @@ class TestSchemaValidation:
 
         schema = {"id": {"type": "int"}}
 
+        ctx = create_mock_context("invalid-session")
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context("invalid-session")
             validate_schema(ctx, ValidationSchema(schema))
 
     async def test_validate_schema_empty_schema(self, clean_test_session):
@@ -299,8 +300,9 @@ class TestDataQualityChecking:
         """Test data quality check with invalid session."""
         from fastmcp.exceptions import ToolError
 
+        ctx = create_mock_context("invalid-session")
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context("invalid-session")
             check_data_quality(ctx)
 
     async def test_check_data_quality_clean_data(self, clean_test_session):
@@ -395,16 +397,18 @@ class TestAnomalyDetection:
         """Test anomaly detection with missing columns."""
         from fastmcp.exceptions import ToolError
 
+        ctx = create_mock_context(clean_test_session)
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context(clean_test_session)
             find_anomalies(ctx, columns=["nonexistent"])
 
     async def test_find_anomalies_invalid_session(self):
         """Test anomaly detection with invalid session."""
         from fastmcp.exceptions import ToolError
 
+        ctx = create_mock_context("invalid-session")
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context("invalid-session")
             find_anomalies(ctx)
 
     async def test_find_anomalies_empty_methods(self, clean_test_session):
@@ -422,8 +426,9 @@ class TestValidationEdgeCases:
     async def test_validate_schema_empty_dataframe(self):
         """Test schema validation on empty dataframe."""
         # load_csv_from_content now rejects empty CSVs
+        ctx = create_mock_context()
+
         with pytest.raises(ToolError, match="no data rows"):
-            ctx = create_mock_context()
             await load_csv_from_content(ctx, "id,name\n")  # Header only
 
     async def test_schema_validation_all_types(self, validation_test_session):

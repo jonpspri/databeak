@@ -411,7 +411,7 @@ class TestHistoryManagerPersistenceJSON:
                     "details": {"column": "age"},
                     "metadata": {},
                     "has_snapshot": True,
-                }
+                },
             ],
             "current_index": 0,
         }
@@ -751,7 +751,8 @@ class TestHistoryManagerUndoRedo:
 
         undone_op, snapshot = manager.undo()
 
-        assert undone_op is not None and undone_op.operation_type == "op1"
+        assert undone_op is not None
+        assert undone_op.operation_type == "op1"
         assert snapshot is None
 
     def test_undo_cannot_undo(self):
@@ -1135,7 +1136,10 @@ class TestHistoryManagerExport:
         df = pd.DataFrame({"col1": [1, 2, 3]})
 
         manager.add_operation(
-            "filter", {"column": "age", "condition": "> 25"}, df, {"user": "test_user"}
+            "filter",
+            {"column": "age", "condition": "> 25"},
+            df,
+            {"user": "test_user"},
         )
         manager.add_operation("sort", {"column": "name", "ascending": True})
 
@@ -1347,7 +1351,8 @@ class TestHistoryManagerStatistics:
 
 
 @pytest.mark.parametrize(
-    "storage_type", [HistoryStorage.MEMORY, HistoryStorage.JSON, HistoryStorage.PICKLE]
+    "storage_type",
+    [HistoryStorage.MEMORY, HistoryStorage.JSON, HistoryStorage.PICKLE],
 )
 class TestHistoryManagerStorageTypes:
     """Test HistoryManager with different storage types."""
@@ -1393,12 +1398,14 @@ class TestHistoryManagerStorageTypes:
 
         # Test undo
         undone_op, snapshot = manager.undo()
-        assert undone_op is not None and undone_op.operation_type == "sort"
+        assert undone_op is not None
+        assert undone_op.operation_type == "sort"
         assert manager.current_index == 0
 
         # Test redo
         redone_op, snapshot = manager.redo()
-        assert redone_op is not None and redone_op.operation_type == "sort"
+        assert redone_op is not None
+        assert redone_op.operation_type == "sort"
         assert manager.current_index == 1
 
 
@@ -1428,7 +1435,8 @@ class TestHistoryManagerEdgeCases:
 
         # Snapshot should be unchanged
         snapshot = manager.history[0].data_snapshot
-        assert snapshot is not None and snapshot.loc[0, "col1"] == 1
+        assert snapshot is not None
+        assert snapshot.loc[0, "col1"] == 1
 
     def test_concurrent_manager_instances(self):
         """Test multiple manager instances with same session ID."""
@@ -1483,7 +1491,7 @@ class TestHistoryManagerEdgeCases:
                 "str_col": ["a", "b", "c"],
                 "bool_col": [True, False, True],
                 "datetime_col": pd.date_range("2023-01-01", periods=3),
-            }
+            },
         )
 
         manager.add_operation("transform", {"type": "special"}, df)
@@ -1507,7 +1515,8 @@ class TestHistoryManagerEdgeCases:
         operation_id = manager.add_operation("complex_op", complex_details)
 
         operation = manager.get_operation(operation_id)
-        assert operation is not None and operation.details == complex_details
+        assert operation is not None
+        assert operation.details == complex_details
 
     @patch("src.databeak.models.history_manager.logger.info")
     def test_logging_operations(self, mock_logger):

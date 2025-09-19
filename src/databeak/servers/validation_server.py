@@ -29,29 +29,37 @@ class ValidationError(BaseModel):
     error: str = Field(description="Type of validation error encountered")
     message: str = Field(description="Human-readable error message")
     actual_type: str | None = Field(
-        default=None, description="Actual data type found (for type mismatch errors)"
+        default=None,
+        description="Actual data type found (for type mismatch errors)",
     )
     null_count: int | None = Field(default=None, description="Number of null/missing values found")
     null_indices: list[int] | None = Field(
-        default=None, description="Row indices where null values occur (limited to 100)"
+        default=None,
+        description="Row indices where null values occur (limited to 100)",
     )
     violation_count: int | None = Field(
-        default=None, description="Number of values violating the rule"
+        default=None,
+        description="Number of values violating the rule",
     )
     min_found: float | None = Field(
-        default=None, description="Minimum value found (for min/max violations)"
+        default=None,
+        description="Minimum value found (for min/max violations)",
     )
     max_found: float | None = Field(
-        default=None, description="Maximum value found (for min/max violations)"
+        default=None,
+        description="Maximum value found (for min/max violations)",
     )
     sample_violations: list[str] | None = Field(
-        default=None, description="Sample of values that violated the rule"
+        default=None,
+        description="Sample of values that violated the rule",
     )
     invalid_values: list[str] | None = Field(
-        default=None, description="List of invalid values found"
+        default=None,
+        description="List of invalid values found",
     )
     duplicate_count: int | None = Field(
-        default=None, description="Number of duplicate values found"
+        default=None,
+        description="Number of duplicate values found",
     )
 
 
@@ -64,7 +72,7 @@ class ValidationSummary(BaseModel):
     valid_columns: int = Field(description="Number of columns that passed validation")
     invalid_columns: int = Field(description="Number of columns that failed validation")
     missing_columns: list[str] = Field(
-        description="Columns defined in schema but missing from data"
+        description="Columns defined in schema but missing from data",
     )
     extra_columns: list[str] = Field(description="Columns in data but not defined in schema")
 
@@ -76,7 +84,7 @@ class ValidateSchemaResult(BaseModel):
     errors: list[ValidationError] = Field(description="All validation errors found")
     summary: ValidationSummary = Field(description="Summary of validation results")
     validation_errors: dict[str, list[ValidationError]] = Field(
-        description="Validation errors grouped by column name"
+        description="Validation errors grouped by column name",
     )
 
 
@@ -86,7 +94,8 @@ class QualityIssue(BaseModel):
     type: str = Field(description="Type of quality issue identified")
     severity: str = Field(description="Severity level: low, medium, high, or critical")
     column: str | None = Field(
-        default=None, description="Column name where issue was found (None for dataset-wide issues)"
+        default=None,
+        description="Column name where issue was found (None for dataset-wide issues)",
     )
     message: str = Field(description="Human-readable description of the quality issue")
     affected_rows: int = Field(description="Number of rows affected by this issue")
@@ -102,7 +111,8 @@ class QualityRuleResult(BaseModel):
     score: float = Field(description="Quality score for this rule (0-100)")
     issues: list[QualityIssue] = Field(description="List of quality issues found by this rule")
     column: str | None = Field(
-        default=None, description="Column name if rule applies to specific column"
+        default=None,
+        description="Column name if rule applies to specific column",
     )
 
 
@@ -116,7 +126,7 @@ class QualityResults(BaseModel):
     failed_rules: int = Field(description="Number of quality rules that failed")
     total_issues: int = Field(description="Total number of quality issues found")
     rule_results: list[QualityRuleResult] = Field(
-        description="Detailed results for each quality rule"
+        description="Detailed results for each quality rule",
     )
     issues: list[QualityIssue] = Field(description="All quality issues found across all rules")
     recommendations: list[str] = Field(description="Suggested actions to improve data quality")
@@ -166,19 +176,22 @@ class MissingAnomaly(BaseModel):
     """
 
     missing_count: int = Field(
-        description="Total number of missing/null values found in the column"
+        description="Total number of missing/null values found in the column",
     )
     missing_ratio: float = Field(
-        description="Ratio of missing values to total values (0.0 to 1.0)", ge=0.0, le=1.0
+        description="Ratio of missing values to total values (0.0 to 1.0)",
+        ge=0.0,
+        le=1.0,
     )
     missing_indices: list[int] = Field(
-        description="Row indices where missing values occur (limited to first 100 for performance)"
+        description="Row indices where missing values occur (limited to first 100 for performance)",
     )
     sequential_clusters: int = Field(
-        description="Number of consecutive missing value sequences detected", ge=0
+        description="Number of consecutive missing value sequences detected",
+        ge=0,
     )
     pattern: Literal["clustered", "random"] = Field(
-        description="Distribution pattern of missing values ('clustered' or 'random')"
+        description="Distribution pattern of missing values ('clustered' or 'random')",
     )
 
 
@@ -188,7 +201,7 @@ class AnomalySummary(BaseModel):
     total_anomalies: int = Field(description="Total number of anomalies found across all columns")
     affected_rows: int = Field(description="Number of rows containing at least one anomaly")
     affected_columns: list[str] = Field(
-        description="Names of columns where anomalies were detected"
+        description="Names of columns where anomalies were detected",
     )
 
 
@@ -199,10 +212,10 @@ class AnomalyResults(BaseModel):
 
     summary: AnomalySummary = Field(description="Summary statistics of anomaly detection results")
     by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly] = Field(
-        description="Anomalies organized by column name"
+        description="Anomalies organized by column name",
     )
     by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]] = Field(
-        description="Anomalies organized by detection method"
+        description="Anomalies organized by detection method",
     )
 
 
@@ -211,7 +224,7 @@ class FindAnomaliesResult(BaseModel):
 
     anomalies: AnomalyResults = Field(description="Comprehensive anomaly detection results")
     columns_analyzed: list[str] = Field(
-        description="Names of columns that were analyzed for anomalies"
+        description="Names of columns that were analyzed for anomalies",
     )
     methods_used: list[str] = Field(description="Detection methods that were applied")
     sensitivity: float = Field(description="Sensitivity threshold used for detection (0.0-1.0)")
@@ -226,7 +239,8 @@ class ColumnValidationRules(BaseModel):
     """Validation rules for a single column."""
 
     type: Literal["int", "float", "str", "bool", "datetime"] | None = Field(
-        None, description="Expected data type: int, float, str, bool, datetime"
+        None,
+        description="Expected data type: int, float, str, bool, datetime",
     )
     nullable: bool = Field(default=True, description="Whether null values are allowed")
     min: int | float | None = Field(default=None, description="Minimum value for numeric columns")
@@ -250,7 +264,8 @@ class ColumnValidationRules(BaseModel):
             re.compile(v)
             return v
         except re.error as e:
-            raise ValueError(f"Invalid regular expression: {e}") from e
+            msg = f"Invalid regular expression: {e}"
+            raise ValueError(msg) from e
 
 
 class QualityRule(BaseModel):
@@ -265,13 +280,18 @@ class CompletenessRule(QualityRule):
     """Rule for checking data completeness."""
 
     type: Literal["completeness"] = Field(
-        default="completeness", description="Rule type identifier"
+        default="completeness",
+        description="Rule type identifier",
     )
     threshold: float = Field(
-        default=0.95, ge=0.0, le=1.0, description="Minimum completeness ratio required (0.0-1.0)"
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Minimum completeness ratio required (0.0-1.0)",
     )
     columns: list[str] | None = Field(
-        default=None, description="Specific columns to check (None for all columns)"
+        default=None,
+        description="Specific columns to check (None for all columns)",
     )
 
 
@@ -280,7 +300,10 @@ class DuplicatesRule(QualityRule):
 
     type: Literal["duplicates"] = Field(default="duplicates", description="Rule type identifier")
     threshold: float = Field(
-        default=0.01, ge=0.0, le=1.0, description="Maximum allowable duplicate ratio (0.0-1.0)"
+        default=0.01,
+        ge=0.0,
+        le=1.0,
+        description="Maximum allowable duplicate ratio (0.0-1.0)",
     )
     columns: list[str] | None = Field(
         default=None,
@@ -294,7 +317,8 @@ class UniquenessRule(QualityRule):
     type: Literal["uniqueness"] = Field(default="uniqueness", description="Rule type identifier")
     column: str = Field(description="Column name to check for uniqueness")
     expected_unique: bool = Field(
-        default=True, description="Whether column values are expected to be unique"
+        default=True,
+        description="Whether column values are expected to be unique",
     )
 
 
@@ -309,7 +333,10 @@ class OutliersRule(QualityRule):
 
     type: Literal["outliers"] = Field(default="outliers", description="Rule type identifier")
     threshold: float = Field(
-        default=0.05, ge=0.0, le=1.0, description="Maximum allowable outlier ratio (0.0-1.0)"
+        default=0.05,
+        ge=0.0,
+        le=1.0,
+        description="Maximum allowable outlier ratio (0.0-1.0)",
     )
 
 
@@ -318,7 +345,8 @@ class ConsistencyRule(QualityRule):
 
     type: Literal["consistency"] = Field(default="consistency", description="Rule type identifier")
     columns: list[str] = Field(
-        default_factory=list, description="Column pairs to check for consistency"
+        default_factory=list,
+        description="Column pairs to check for consistency",
     )
 
 
@@ -347,13 +375,18 @@ class AnomalyDetectionParams(BaseModel):
     """Parameters for anomaly detection."""
 
     columns: list[str] | None = Field(
-        None, description="Specific columns to analyze (None for all columns)"
+        None,
+        description="Specific columns to analyze (None for all columns)",
     )
     sensitivity: float = Field(
-        0.95, ge=0.0, le=1.0, description="Detection sensitivity threshold (higher = more strict)"
+        0.95,
+        ge=0.0,
+        le=1.0,
+        description="Detection sensitivity threshold (higher = more strict)",
     )
     methods: list[Literal["statistical", "pattern", "missing"]] = Field(
-        default_factory=_default_anomaly_methods, description="Anomaly detection methods to apply"
+        default_factory=_default_anomaly_methods,
+        description="Anomaly detection methods to apply",
     )
 
 
@@ -365,7 +398,8 @@ class AnomalyDetectionParams(BaseModel):
 def validate_schema(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     schema: Annotated[
-        ValidationSchema, Field(description="Schema definition with column validation rules")
+        ValidationSchema,
+        Field(description="Schema definition with column validation rules"),
     ],
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition.
@@ -383,7 +417,8 @@ def validate_schema(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
         validation_errors: dict[str, list[ValidationError]] = {}
@@ -414,7 +449,7 @@ def validate_schema(
                     ValidationError(
                         error="column_missing",
                         message=f"Column '{col_name}' not found in data",
-                    )
+                    ),
                 ]
                 validation_summary.invalid_columns += 1
                 continue
@@ -443,7 +478,7 @@ def validate_schema(
                             error="type_mismatch",
                             message=f"Expected type '{expected_type}', got '{col_data.dtype}'",
                             actual_type=str(col_data.dtype),
-                        )
+                        ),
                     )
 
             # Nullable validation
@@ -456,7 +491,7 @@ def validate_schema(
                             message=f"Column contains {null_count} null values",
                             null_count=int(null_count),
                             null_indices=df[col_data.isna()].index.tolist()[:100],
-                        )
+                        ),
                     )
 
             # Min/Max validation for numeric columns
@@ -471,7 +506,7 @@ def validate_schema(
                                 message=f"{len(violations)} values below minimum {min_val}",
                                 violation_count=len(violations),
                                 min_found=float(violations.min()),
-                            )
+                            ),
                         )
 
                 if "max" in rules:
@@ -484,7 +519,7 @@ def validate_schema(
                                 message=f"{len(violations)} values above maximum {max_val}",
                                 violation_count=len(violations),
                                 max_found=float(violations.max()),
-                            )
+                            ),
                         )
 
             # Pattern validation for string columns
@@ -506,14 +541,14 @@ def validate_schema(
                                     sample_violations=[
                                         str(v) for v in violations.head(10).tolist()
                                     ],
-                                )
+                                ),
                             )
                 except Exception as e:
                     col_errors.append(
                         ValidationError(
                             error="pattern_error",
                             message=f"Invalid regex pattern: {e!s}",
-                        )
+                        ),
                     )
 
             # Allowed values validation
@@ -529,7 +564,7 @@ def validate_schema(
                             error="invalid_values",
                             message=f"Found {len(invalid)} invalid values",
                             invalid_values=[str(v) for v in list(invalid)[:50]],
-                        )
+                        ),
                     )
 
             # Uniqueness validation
@@ -541,7 +576,7 @@ def validate_schema(
                             error="duplicate_values",
                             message=f"Column contains {duplicates.sum()} duplicate values",
                             duplicate_count=int(duplicates.sum()),
-                        )
+                        ),
                     )
 
             # Length validation for strings
@@ -557,7 +592,7 @@ def validate_schema(
                                 error="min_length_violation",
                                 message=f"{len(short)} values shorter than {min_len} characters",
                                 violation_count=len(short),
-                            )
+                            ),
                         )
 
                 if "max_length" in rules:
@@ -571,7 +606,7 @@ def validate_schema(
                                 error="max_length_violation",
                                 message=f"{len(long)} values longer than {max_len} characters",
                                 violation_count=len(long),
-                            )
+                            ),
                         )
 
             if col_errors:
@@ -604,8 +639,9 @@ def validate_schema(
         )
 
     except Exception as e:
-        logger.error(f"Error validating schema: {e!s}")
-        raise ToolError(f"Error validating schema: {e!s}") from e
+        logger.error("Error validating schema: %s", str(e))
+        msg = f"Error validating schema: {e!s}"
+        raise ToolError(msg) from e
 
 
 def check_data_quality(
@@ -630,7 +666,8 @@ def check_data_quality(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
         rule_results: list[QualityRuleResult] = []
@@ -685,7 +722,7 @@ def check_data_quality(
                                 score=round(score, 2),
                                 issues=rule_issues,
                                 column=col,
-                            )
+                            ),
                         )
 
                         total_score += score
@@ -715,7 +752,7 @@ def check_data_quality(
                     rule_issues.append(issue)
                     quality_issues.append(issue)
                     recommendations.append(
-                        "Consider removing duplicate rows using the remove_duplicates tool"
+                        "Consider removing duplicate rows using the remove_duplicates tool",
                     )
 
                 # Add rule result
@@ -725,7 +762,7 @@ def check_data_quality(
                         passed=passed,
                         score=round(score, 2),
                         issues=rule_issues,
-                    )
+                    ),
                 )
 
                 total_score += score
@@ -769,7 +806,7 @@ def check_data_quality(
                             score=round(score, 2),
                             issues=rule_issues,
                             column=str(column),
-                        )
+                        ),
                     )
 
                     total_score += score
@@ -797,7 +834,7 @@ def check_data_quality(
                         if numeric_ratio > 0.9:
                             recommendations.append(
                                 f"Column '{col}' appears to contain numeric data stored as strings. "
-                                f"Consider converting to numeric type using change_column_type tool"
+                                f"Consider converting to numeric type using change_column_type tool",
                             )
 
                         # Add rule result
@@ -808,7 +845,7 @@ def check_data_quality(
                                 score=score,
                                 issues=[],
                                 column=col,
-                            )
+                            ),
                         )
 
                         total_score += score
@@ -855,7 +892,7 @@ def check_data_quality(
                             score=round(score, 2),
                             issues=rule_issues,
                             column=col,
-                        )
+                        ),
                     )
 
                     total_score += score
@@ -904,7 +941,7 @@ def check_data_quality(
                                 passed=passed,
                                 score=round(score, 2),
                                 issues=rule_issues,
-                            )
+                            ),
                         )
 
                         total_score += score
@@ -916,7 +953,7 @@ def check_data_quality(
         # Add general recommendations
         if not recommendations and overall_score < 85:
             recommendations.append(
-                "Consider running profile_data to get a comprehensive overview of data issues"
+                "Consider running profile_data to get a comprehensive overview of data issues",
             )
 
         # Count passed/failed rules
@@ -948,17 +985,20 @@ def check_data_quality(
         )
 
     except Exception as e:
-        logger.error(f"Error checking data quality: {e!s}")
-        raise ToolError(f"Error checking data quality: {e!s}") from e
+        logger.error("Error checking data quality: %s", str(e))
+        msg = f"Error checking data quality: {e!s}"
+        raise ToolError(msg) from e
 
 
 def find_anomalies(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
-        list[str] | None, Field(description="List of columns to analyze (None = all columns)")
+        list[str] | None,
+        Field(description="List of columns to analyze (None = all columns)"),
     ] = None,
     sensitivity: Annotated[
-        float, Field(description="Sensitivity threshold for anomaly detection (0-1)")
+        float,
+        Field(description="Sensitivity threshold for anomaly detection (0-1)"),
     ] = 0.95,
     methods: Annotated[
         list[Literal["statistical", "pattern", "missing"]] | None,
@@ -982,14 +1022,16 @@ def find_anomalies(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
             target_cols = columns
         else:
             target_cols = df.columns.tolist()
@@ -1145,7 +1187,7 @@ def find_anomalies(
                                         sequential_missing[-1].append(null_indices[i + 1])
                                     else:
                                         sequential_missing.append(
-                                            [null_indices[i], null_indices[i + 1]]
+                                            [null_indices[i], null_indices[i + 1]],
                                         )
 
                         # Flag as anomaly if there are suspicious patterns
@@ -1213,8 +1255,9 @@ def find_anomalies(
         )
 
     except Exception as e:
-        logger.error(f"Error finding anomalies: {e!s}")
-        raise ToolError(f"Error finding anomalies: {e!s}") from e
+        logger.error("Error finding anomalies: %s", str(e))
+        msg = f"Error finding anomalies: {e!s}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================
@@ -1224,7 +1267,8 @@ def find_anomalies(
 
 # Create validation server
 validation_server = FastMCP(
-    "DataBeak-Validation", instructions="Data validation server for DataBeak"
+    "DataBeak-Validation",
+    instructions="Data validation server for DataBeak",
 )
 
 

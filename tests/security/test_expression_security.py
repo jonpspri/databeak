@@ -35,7 +35,7 @@ class TestExpressionSecurity:
                 "col3": [1.1, 2.2, 3.3, 4.4, 5.5],
                 "negative_col": [-1, -2, -3, -4, -5],
                 "zero_col": [0, 0, 1, 0, 2],
-            }
+            },
         )
 
     def test_code_injection_blocked(self):
@@ -112,7 +112,9 @@ class TestExpressionSecurity:
 
                 if expected is not None:
                     np.testing.assert_array_almost_equal(
-                        result.values, expected, err_msg=f"Unexpected result for: {expr}"
+                        result.values,
+                        expected,
+                        err_msg=f"Unexpected result for: {expr}",
                     )
 
             except Exception as e:
@@ -141,10 +143,10 @@ class TestExpressionSecurity:
         assert valid_expr.expression == "col1 + col2"
 
         # Invalid expressions should be rejected
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression="exec('malicious')")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression="__import__('os').system('bad')")
 
     def test_apply_expression_model(self):
@@ -157,7 +159,8 @@ class TestExpressionSecurity:
 
         # Test evaluation
         result = self.evaluator.evaluate_column_expression(
-            substituted.replace("`my_column`", "col1"), self.test_df
+            substituted.replace("`my_column`", "col1"),
+            self.test_df,
         )
         expected = [2, 4, 6, 8, 10]
         np.testing.assert_array_equal(result.values, expected)
@@ -203,7 +206,7 @@ class TestExpressionSecurity:
             {
                 "col1": range(10000),
                 "col2": range(10000, 20000),
-            }
+            },
         )
 
         # Test expression
@@ -222,7 +225,9 @@ class TestExpressionSecurity:
         # Results should be equivalent - ensure both are Series
         assert isinstance(pandas_result, pd.Series), "pandas_result should be a Series"
         pd.testing.assert_series_equal(
-            secure_result.sort_index(), pandas_result.sort_index(), check_names=False
+            secure_result.sort_index(),
+            pandas_result.sort_index(),
+            check_names=False,
         )
 
         # Performance should be reasonable (within 10x of pandas.eval)
@@ -241,7 +246,7 @@ class TestExpressionSecurity:
 
         # Very long expression (should be blocked by Pydantic)
         long_expr = "col1 + " * 1000 + "col2"
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression=long_expr)
 
         # Division by zero handling (should produce inf, not raise error)
@@ -313,13 +318,13 @@ class TestUnifiedExpression:
 
     def test_invalid_expressions_blocked(self):
         """Test that invalid expressions are blocked in all creation methods."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression.formula("exec('bad')")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression.apply_operation("exec('bad')")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression.condition("exec('bad')")
 
 

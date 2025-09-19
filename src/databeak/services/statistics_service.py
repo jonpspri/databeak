@@ -34,6 +34,7 @@ class StatisticsService(SessionService):
         self,
         session_id: str,
         columns: list[str] | None = None,
+        *,
         include_percentiles: bool = True,
     ) -> StatisticsResult:
         """Get statistical summary of numerical columns."""
@@ -77,13 +78,14 @@ class StatisticsService(SessionService):
                         "50%": percentile_50,
                         "75%": percentile_75,
                         "max": float(col_data.max()),
-                    }
+                    },
                 )
 
                 stats[col] = col_stats
 
             session.record_operation(
-                OperationType.ANALYZE, {"type": "statistics", "columns": list(stats.keys())}
+                OperationType.ANALYZE,
+                {"type": "statistics", "columns": list(stats.keys())},
             )
 
             return StatisticsResult(
@@ -94,11 +96,12 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error(f"Validation error in get_statistics: {e}")
+            logger.error("Validation error in get_statistics: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error(f"Error getting statistics: {e}")
-            raise ToolError(f"Error getting statistics: {e}") from e
+            logger.error("Error getting statistics: %s", e)
+            msg = f"Error getting statistics: {e}"
+            raise ToolError(msg) from e
 
     # Implementation: Single column analysis with dtype mapping and statistics calculation
     async def get_column_statistics(
@@ -111,14 +114,16 @@ class StatisticsService(SessionService):
             session, df = self.get_session_and_data(session_id)
 
             if column not in df.columns:
-                raise ValueError(f"Column '{column}' not found")
+                msg = f"Column '{column}' not found"
+                raise ValueError(msg)
 
             col_data = df[column]
             col_dtype = str(col_data.dtype)
 
             # Map pandas dtypes to Pydantic model literals
             dtype_mapping: dict[
-                str, Literal["int64", "float64", "object", "bool", "datetime64", "category"]
+                str,
+                Literal["int64", "float64", "object", "bool", "datetime64", "category"],
             ] = {
                 "int64": "int64",
                 "float64": "float64",
@@ -148,7 +153,7 @@ class StatisticsService(SessionService):
                             "50%": float(non_null.quantile(0.50)),
                             "75%": float(non_null.quantile(0.75)),
                             "max": float(non_null.max()),
-                        }
+                        },
                     )
                 else:
                     # Empty numeric column
@@ -162,7 +167,7 @@ class StatisticsService(SessionService):
                             "50%": 0.0,
                             "75%": 0.0,
                             "max": 0.0,
-                        }
+                        },
                     )
             else:
                 # For non-numeric columns, create placeholder statistics
@@ -176,11 +181,12 @@ class StatisticsService(SessionService):
                         "50%": None,
                         "75%": None,
                         "max": None,
-                    }
+                    },
                 )
 
             session.record_operation(
-                OperationType.ANALYZE, {"type": "column_statistics", "column": column}
+                OperationType.ANALYZE,
+                {"type": "column_statistics", "column": column},
             )
 
             return ColumnStatisticsResult(
@@ -191,11 +197,12 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error(f"Validation error in get_column_statistics: {e}")
+            logger.error("Validation error in get_column_statistics: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error(f"Column statistics failed: {e}")
-            raise ToolError(f"Failed to analyze column '{column}': {e}") from e
+            logger.error("Column statistics failed: %s", e)
+            msg = f"Failed to analyze column '{column}': {e}"
+            raise ToolError(msg) from e
 
     # Implementation: Pairwise correlation calculation with method selection and threshold filtering
     async def get_correlation_matrix(
@@ -217,14 +224,17 @@ class StatisticsService(SessionService):
                 numeric_df = df.select_dtypes(include=[np.number])
 
             if numeric_df.empty:
-                raise ValueError("No numeric columns found")
+                msg = "No numeric columns found"
+                raise ValueError(msg)
 
             if len(numeric_df.columns) < 2:
-                raise ValueError("Need at least 2 numeric columns for correlation")
+                msg = "Need at least 2 numeric columns for correlation"
+                raise ValueError(msg)
 
             # Calculate correlation
             if method not in ["pearson", "spearman", "kendall"]:
-                raise ValueError(f"Invalid method: {method}")
+                msg = f"Invalid method: {method}"
+                raise ValueError(msg)
 
             corr_matrix = numeric_df.corr(method=method)
 
@@ -259,17 +269,19 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error(f"Validation error in get_correlation_matrix: {e}")
+            logger.error("Validation error in get_correlation_matrix: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error(f"Correlation analysis failed: {e}")
-            raise ToolError(f"Failed to compute correlation matrix: {e}") from e
+            logger.error("Correlation analysis failed: %s", e)
+            msg = f"Failed to compute correlation matrix: {e}"
+            raise ToolError(msg) from e
 
     # Implementation: Value frequency analysis with sorting and normalization options
     async def get_value_counts(
         self,
         session_id: str,
         column: str,
+        *,
         normalize: bool = False,
         sort: bool = True,
         ascending: bool = False,
@@ -280,17 +292,24 @@ class StatisticsService(SessionService):
             session, df = self.get_session_and_data(session_id)
 
             if column not in df.columns:
-                raise ValueError(f"Column '{column}' not found")
+                msg = f"Column '{column}' not found"
+                raise ValueError(msg)
 
             # Get value counts
             value_counts: pd.Series[int] | pd.Series[float]
             if normalize:
                 value_counts = df[column].value_counts(
-                    normalize=True, sort=sort, ascending=ascending, dropna=False
+                    normalize=True,
+                    sort=sort,
+                    ascending=ascending,
+                    dropna=False,
                 )
             else:
                 value_counts = df[column].value_counts(
-                    normalize=False, sort=sort, ascending=ascending, dropna=False
+                    normalize=False,
+                    sort=sort,
+                    ascending=ascending,
+                    dropna=False,
                 )
 
             # Apply top_n if specified
@@ -328,8 +347,9 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error(f"Validation error in get_value_counts: {e}")
+            logger.error("Validation error in get_value_counts: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error(f"Value counts analysis failed: {e}")
-            raise ToolError(f"Failed to analyze value counts for column '{column}': {e}") from e
+            logger.error("Value counts analysis failed: %s", e)
+            msg = f"Failed to analyze value counts for column '{column}': {e}"
+            raise ToolError(msg) from e

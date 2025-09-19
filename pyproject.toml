@@ -184,15 +184,29 @@ select = [
     "ASYNC",# flake8-async
     "DTZ",  # flake8-datetimez
     "FA",   # flake8-future-annotations
+    "FBT",  # flake8-boolean-trap
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "EM",   # flake8-errmsg
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+    "LOG",  # flake8-logging
+    "G",    # flake8-logging-format
+    "PIE",  # flake8-pie
+    "T20",  # flake8-print
+    "PT",   # flake8-pytest-style
 ]
 ignore = [
     "E501",  # line too long (handled by ruff format)
     "SIM105", # contextlib.suppress is slower that try-except-pass
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
+    "COM812", # Missing trailing comma (handled by ruff format)
+    "ISC001", # Implicit string concatenation (often used in docstrings)
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101" ]  # Allow unused arguments, naive datetime, temp files, binding all interfaces, blocking file ops, and assert in tests
+# Allow unused arguments, naive datetime, temp files, binding all interfaces, blocking file ops, and assert in tests
+"tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101" ]
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
 
 [tool.ruff.lint.isort]

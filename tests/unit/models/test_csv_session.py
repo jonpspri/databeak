@@ -216,7 +216,8 @@ class TestCSVSession:
         assert result is True
 
         # Should restore original data and clear history
-        assert session.df is not None and "new_col" not in session.df.columns
+        assert session.df is not None
+        assert "new_col" not in session.df.columns
         assert len(session.operations_history) == 0
 
     def test_rollback_partial_steps_warning(self):
@@ -280,7 +281,9 @@ class TestCSVSession:
         }
 
         with patch.object(
-            session.auto_save_manager, "start_periodic_save", new_callable=AsyncMock
+            session.auto_save_manager,
+            "start_periodic_save",
+            new_callable=AsyncMock,
         ) as mock_start:
             result = await session.enable_auto_save(config_dict)
 
@@ -308,7 +311,9 @@ class TestCSVSession:
         session = CSVSession()
 
         with patch.object(
-            session.auto_save_manager, "stop_periodic_save", new_callable=AsyncMock
+            session.auto_save_manager,
+            "stop_periodic_save",
+            new_callable=AsyncMock,
         ) as mock_stop:
             result = await session.disable_auto_save()
 
@@ -338,7 +343,9 @@ class TestCSVSession:
         session = CSVSession()
 
         with patch.object(
-            session.auto_save_manager, "get_status", return_value={"enabled": True}
+            session.auto_save_manager,
+            "get_status",
+            return_value={"enabled": True},
         ) as mock_get_status:
             result = session.get_auto_save_status()
 
@@ -397,7 +404,9 @@ class TestCSVSession:
             patch.object(session.history_manager, "undo", return_value=(mock_operation, df)),
             patch.object(session.history_manager, "can_redo", return_value=True),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=False
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=False,
             ),
         ):
             result = await session.undo()
@@ -437,10 +446,14 @@ class TestCSVSession:
             patch.object(session.history_manager, "can_undo", return_value=True),
             patch.object(session.history_manager, "undo", return_value=(mock_operation, df)),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=True
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=True,
             ),
             patch.object(
-                session.auto_save_manager, "trigger_save", new_callable=AsyncMock
+                session.auto_save_manager,
+                "trigger_save",
+                new_callable=AsyncMock,
             ) as mock_save,
         ):
             result = await session.undo()
@@ -474,15 +487,20 @@ class TestCSVSession:
         with (
             patch.object(session.history_manager, "can_undo", return_value=True),
             patch.object(
-                session.history_manager, "undo", side_effect=Exception("Unexpected error")
+                session.history_manager,
+                "undo",
+                side_effect=Exception("Unexpected error"),
             ),
             patch("src.databeak.models.csv_session.logger") as mock_logger,
         ):
             result = await session.undo()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -520,7 +538,9 @@ class TestCSVSession:
             patch.object(session.history_manager, "redo", return_value=(mock_operation, df)),
             patch.object(session.history_manager, "can_undo", return_value=True),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=False
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=False,
             ),
         ):
             result = await session.redo()
@@ -571,15 +591,20 @@ class TestCSVSession:
         with (
             patch.object(session.history_manager, "can_redo", return_value=True),
             patch.object(
-                session.history_manager, "redo", side_effect=Exception("Unexpected error")
+                session.history_manager,
+                "redo",
+                side_effect=Exception("Unexpected error"),
             ),
             patch("src.databeak.models.csv_session.logger") as mock_logger,
         ):
             result = await session.redo()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -597,10 +622,14 @@ class TestCSVSession:
             patch.object(session.history_manager, "can_redo", return_value=True),
             patch.object(session.history_manager, "redo", return_value=(mock_operation, df)),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=True
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=True,
             ),
             patch.object(
-                session.auto_save_manager, "trigger_save", new_callable=AsyncMock
+                session.auto_save_manager,
+                "trigger_save",
+                new_callable=AsyncMock,
             ) as mock_save,
         ):
             result = await session.redo()
@@ -675,15 +704,20 @@ class TestCSVSession:
 
         with (
             patch.object(
-                session.history_manager, "get_history", side_effect=Exception("Unexpected error")
+                session.history_manager,
+                "get_history",
+                side_effect=Exception("Unexpected error"),
             ),
             patch("src.databeak.models.csv_session.logger") as mock_logger,
         ):
             result = session.get_history()
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -703,7 +737,9 @@ class TestCSVSession:
         with (
             patch.object(session.history_manager, "restore_to_operation", return_value=df),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=False
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=False,
             ),
         ):
             result = await session.restore_to_operation("op-123")
@@ -733,10 +769,14 @@ class TestCSVSession:
         with (
             patch.object(session.history_manager, "restore_to_operation", return_value=df),
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=True
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=True,
             ),
             patch.object(
-                session.auto_save_manager, "trigger_save", new_callable=AsyncMock
+                session.auto_save_manager,
+                "trigger_save",
+                new_callable=AsyncMock,
             ) as mock_save,
         ):
             result = await session.restore_to_operation("op-123")
@@ -777,8 +817,11 @@ class TestCSVSession:
             result = await session.restore_to_operation("op-123")
 
             assert result["success"] is False
-            assert result["error"]["type"] == "UnexpectedError"
-            assert "Unexpected error" in result["error"]["message"]
+            # Type assertion: error is a dict when it's a structured error
+            error_dict = result["error"]
+            assert isinstance(error_dict, dict)
+            assert error_dict["type"] == "UnexpectedError"
+            assert "Unexpected error" in error_dict["message"]
             mock_logger.error.assert_called_once()
 
     @pytest.mark.asyncio
@@ -793,7 +836,9 @@ class TestCSVSession:
 
         with (
             patch.object(
-                session.auto_save_manager, "stop_periodic_save", new_callable=AsyncMock
+                session.auto_save_manager,
+                "stop_periodic_save",
+                new_callable=AsyncMock,
             ) as mock_stop,
             patch.object(session.history_manager, "clear_history") as mock_clear_history,
             patch.object(session._data_session, "clear_data") as mock_clear_data,
@@ -816,7 +861,9 @@ class TestCSVSession:
 
         with (
             patch.object(
-                session.auto_save_manager, "stop_periodic_save", new_callable=AsyncMock
+                session.auto_save_manager,
+                "stop_periodic_save",
+                new_callable=AsyncMock,
             ) as mock_stop,
             patch.object(session._data_session, "clear_data") as mock_clear_data,
         ):
@@ -837,7 +884,9 @@ class TestCSVSession:
         session._data_session.metadata["needs_autosave"] = True
         with (
             patch.object(
-                session.auto_save_manager, "should_save_after_operation", return_value=True
+                session.auto_save_manager,
+                "should_save_after_operation",
+                return_value=True,
             ),
             patch.object(
                 session.auto_save_manager,

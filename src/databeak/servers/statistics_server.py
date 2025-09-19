@@ -64,12 +64,14 @@ def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
 
 async def get_statistics(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
+    *,
     columns: Annotated[
         list[str] | None,
         Field(description="List of specific columns to analyze (None = all numeric columns)"),
     ] = None,
     include_percentiles: Annotated[
-        bool, Field(description="Whether to include 25th, 50th, 75th percentiles")
+        bool,
+        Field(description="Whether to include 25th, 50th, 75th percentiles"),
     ] = True,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
@@ -166,7 +168,7 @@ async def get_statistics(
                     "25%": float(col_data.quantile(0.25)) if len(col_data) > 0 else 0.0,
                     "50%": float(col_data.quantile(0.50)) if len(col_data) > 0 else 0.0,
                     "75%": float(col_data.quantile(0.75)) if len(col_data) > 0 else 0.0,
-                }
+                },
             )
 
             stats_dict[col] = col_stats
@@ -193,11 +195,12 @@ async def get_statistics(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Statistics calculation failed: {e.message}")
+        logger.error("Statistics calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error calculating statistics: {e!s}")
-        raise ToolError(f"Error calculating statistics: {e}") from e
+        logger.error("Error calculating statistics: %s", str(e))
+        msg = f"Error calculating statistics: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_column_statistics(
@@ -250,40 +253,52 @@ async def get_column_statistics(
         null_count = int(col_data.isnull().sum())
         unique_count = int(col_data.nunique())
 
-        # Initialize statistics dict (with mixed types for flexibility)
-        statistics: dict[str, Any] = {
+        # Initialize statistics dict using ColumnStatistics structure
+        from ..models.typed_dicts import ColumnStatistics
+
+        statistics: ColumnStatistics = {
             "count": count,
             "null_count": null_count,
             "unique_count": unique_count,
+            "dtype": str(col_data.dtype),
         }
 
         # Add numeric statistics if column is numeric (but not boolean)
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
+            # Helper function to safely convert pandas scalars to float
+            def safe_float(value: Any) -> float:
+                """Safely convert pandas scalar to float."""
+                try:
+                    return float(value) if not pd.isna(value) else 0.0
+                except (TypeError, ValueError):
+                    return 0.0
+
             statistics.update(
                 {
-                    "mean": float(col_data.mean()) if not pd.isna(col_data.mean()) else 0.0,
-                    "std": float(col_data.std()) if not pd.isna(col_data.std()) else 0.0,
-                    "min": float(col_data.min()) if not pd.isna(col_data.min()) else 0.0,
-                    "max": float(col_data.max()) if not pd.isna(col_data.max()) else 0.0,
-                    "25%": float(col_data.quantile(0.25))
-                    if not pd.isna(col_data.quantile(0.25))
-                    else 0.0,
-                    "50%": float(col_data.quantile(0.50))
-                    if not pd.isna(col_data.quantile(0.50))
-                    else 0.0,
-                    "75%": float(col_data.quantile(0.75))
-                    if not pd.isna(col_data.quantile(0.75))
-                    else 0.0,
-                }
+                    "mean": safe_float(col_data.mean()),
+                    "std": safe_float(col_data.std()),
+                    "min": safe_float(col_data.min()),
+                    "max": safe_float(col_data.max()),
+                    "sum": safe_float(col_data.sum()),
+                    "variance": safe_float(col_data.var()),
+                    "skewness": safe_float(col_data.skew()),
+                    "kurtosis": safe_float(col_data.kurtosis()),
+                },
             )
-        else:
-            # For non-numeric columns, add most frequent value
-            if count > 0:
-                mode_result = col_data.mode()
-                most_frequent = mode_result.iloc[0] if len(mode_result) > 0 else None
-                if most_frequent is not None and not pd.isna(most_frequent):
-                    statistics["most_frequent"] = str(most_frequent)
-                    statistics["most_frequent_count"] = int(col_data.value_counts().iloc[0])
+        # Create additional dict for non-standard fields
+        additional_stats: dict[str, str | int] = {}
+        if (
+            not (
+                pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data)
+            )
+            and count > 0
+        ):
+            # For non-numeric columns, add most frequent value in additional dict
+            mode_result = col_data.mode()
+            most_frequent = mode_result.iloc[0] if len(mode_result) > 0 else None
+            if most_frequent is not None and not pd.isna(most_frequent):
+                additional_stats["most_frequent"] = str(most_frequent)
+                additional_stats["most_frequent_count"] = int(col_data.value_counts().iloc[0])
 
         session.record_operation(
             OperationType.ANALYZE,
@@ -298,17 +313,26 @@ async def get_column_statistics(
         from ..models.statistics_models import StatisticsSummary
 
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            # Numeric columns
+            # Numeric columns - calculate percentiles for Pydantic model
+            col_data_non_null = col_data.dropna()
+            percentile_25 = (
+                float(col_data_non_null.quantile(0.25)) if len(col_data_non_null) > 0 else None
+            )
+            percentile_50 = (
+                float(col_data_non_null.quantile(0.50)) if len(col_data_non_null) > 0 else None
+            )
+            percentile_75 = (
+                float(col_data_non_null.quantile(0.75)) if len(col_data_non_null) > 0 else None
+            )
+
             stats_summary = StatisticsSummary(
                 count=statistics["count"],
                 mean=statistics.get("mean"),
                 std=statistics.get("std"),
                 min=statistics.get("min"),
-                **{
-                    "25%": statistics.get("25%"),
-                    "50%": statistics.get("50%"),
-                    "75%": statistics.get("75%"),
-                },
+                percentile_25=percentile_25,
+                percentile_50=percentile_50,
+                percentile_75=percentile_75,
                 max=statistics.get("max"),
                 unique=statistics["unique_count"],
             )
@@ -319,16 +343,23 @@ async def get_column_statistics(
                 mean=None,
                 std=None,
                 min=None,
-                **{"25%": None, "50%": None, "75%": None},
+                percentile_25=None,
+                percentile_50=None,
+                percentile_75=None,
                 max=None,
                 unique=statistics["unique_count"],
-                top=statistics.get("most_frequent"),
-                freq=statistics.get("most_frequent_count"),
+                top=str(additional_stats.get("most_frequent"))
+                if additional_stats.get("most_frequent")
+                else None,
+                freq=additional_stats.get("most_frequent_count")
+                if isinstance(additional_stats.get("most_frequent_count"), int)
+                else None,  # type: ignore
             )
 
         # Map dtype to expected literal type
         dtype_map: dict[
-            str, Literal["int64", "float64", "object", "bool", "datetime64", "category"]
+            str,
+            Literal["int64", "float64", "object", "bool", "datetime64", "category"],
         ] = {
             "int64": "int64",
             "float64": "float64",
@@ -349,11 +380,12 @@ async def get_column_statistics(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Column statistics failed: {e.message}")
+        await ctx.error(f"Column statistics failed: {e.message}")
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error calculating column statistics: {e!s}")
-        raise ToolError(f"Error calculating column statistics: {e}") from e
+        await ctx.error(f"Error calculating column statistics: {e}")
+        msg = f"Error calculating column statistics: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_correlation_matrix(
@@ -367,7 +399,8 @@ async def get_correlation_matrix(
         Field(description="List of columns to include (None = all numeric columns)"),
     ] = None,
     min_correlation: Annotated[
-        float | None, Field(description="Minimum correlation threshold to include in results")
+        float | None,
+        Field(description="Minimum correlation threshold to include in results"),
     ] = None,
 ) -> CorrelationResult:
     """Calculate correlation matrix for numerical columns.
@@ -423,10 +456,12 @@ async def get_correlation_matrix(
             numeric_df = df.select_dtypes(include=[np.number])
 
         if numeric_df.empty:
-            raise ToolError("No numeric columns found for correlation analysis")
+            msg = "No numeric columns found for correlation analysis"
+            raise ToolError(msg)
 
         if len(numeric_df.columns) < 2:
-            raise ToolError("Correlation analysis requires at least two numeric columns")
+            msg = "Correlation analysis requires at least two numeric columns"
+            raise ToolError(msg)
 
         # Calculate correlation matrix
         corr_matrix = numeric_df.corr(method=method)
@@ -479,28 +514,33 @@ async def get_correlation_matrix(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Correlation calculation failed: {e.message}")
+        logger.error("Correlation calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         # Re-raise ToolErrors as-is to preserve the exact error message
         raise
     except Exception as e:
-        logger.error(f"Error calculating correlation matrix: {e!s}")
-        raise ToolError(f"Error calculating correlation matrix: {e}") from e
+        logger.error("Error calculating correlation matrix: %s", str(e))
+        msg = f"Error calculating correlation matrix: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_value_counts(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Name of the column to analyze value distribution")],
+    *,
     normalize: Annotated[
-        bool, Field(description="Return percentages instead of raw counts")
+        bool,
+        Field(description="Return percentages instead of raw counts"),
     ] = False,
     sort: Annotated[bool, Field(description="Sort results by frequency")] = True,
     ascending: Annotated[
-        bool, Field(description="Sort in ascending order (False = descending)")
+        bool,
+        Field(description="Sort in ascending order (False = descending)"),
     ] = False,
     top_n: Annotated[
-        int | None, Field(description="Maximum number of values to return (None = all values)")
+        int | None,
+        Field(description="Maximum number of values to return (None = all values)"),
     ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
@@ -554,7 +594,10 @@ async def get_value_counts(
         # Get value counts
         # Note: mypy has issues with value_counts overloads when normalize is a bool variable
         value_counts = df[column].value_counts(
-            normalize=normalize, sort=sort, ascending=ascending, dropna=True
+            normalize=normalize,
+            sort=sort,
+            ascending=ascending,
+            dropna=True,
         )  # type: ignore[call-overload]
 
         # Limit to top_n if specified
@@ -598,11 +641,12 @@ async def get_value_counts(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Value counts calculation failed: {e.message}")
+        logger.error("Value counts calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error calculating value counts: {e!s}")
-        raise ToolError(f"Error calculating value counts: {e}") from e
+        logger.error("Error calculating value counts: %s", str(e))
+        msg = f"Error calculating value counts: {e}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================

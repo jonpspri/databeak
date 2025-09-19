@@ -37,7 +37,7 @@ def session_with_test_data():
             "boolean": [True, False, True, False, True, False, True, False, True, False],
             "all_null": [None] * 10,
             "mostly_null": [1, None, None, None, 5, None, None, None, None, 10],
-        }
+        },
     )
 
     # Create a real session and load data
@@ -135,27 +135,30 @@ class TestGetStatistics:
     async def test_statistics_invalid_columns(self, session_with_test_data):
         """Test statistics with invalid column names."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(session_id)
             await get_statistics(ctx, columns=["invalid_col"])
 
     async def test_statistics_mixed_valid_invalid_columns(self, session_with_test_data):
         """Test statistics with mix of valid and invalid columns."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(session_id)
             await get_statistics(ctx, columns=["numeric1", "invalid_col"])
 
     @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
     )
     async def test_statistics_session_not_found(self):
         """Test statistics with invalid session."""
         with patch("src.databeak.servers.statistics_server.get_session_manager") as manager:
             manager.return_value.get_session.return_value = None
 
+            ctx = create_mock_context("invalid-session")
+
             with pytest.raises(ToolError, match="Session"):
-                ctx = create_mock_context("invalid-session")
                 await get_statistics(ctx)
 
     async def test_statistics_no_data_loaded(self):
@@ -166,8 +169,9 @@ class TestGetStatistics:
         manager.get_or_create_session(session_id)
         # Don't call session.load_data() - leave df as None
 
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="No data loaded"):
-            ctx = create_mock_context(session_id)
             await get_statistics(ctx)
 
     async def test_statistics_all_null_column(self, session_with_test_data):
@@ -186,7 +190,13 @@ class TestGetColumnStatistics:
     """Test get_column_statistics function."""
 
     @pytest.mark.parametrize(
-        "column,expected_data_type,has_numeric_stats,expected_mean,expected_percentile_25",
+        (
+            "column",
+            "expected_data_type",
+            "has_numeric_stats",
+            "expected_mean",
+            "expected_percentile_25",
+        ),
         [
             ("numeric1", "int64", True, 5.5, 3.25),
             ("categorical", "object", False, None, None),
@@ -229,8 +239,9 @@ class TestGetColumnStatistics:
     async def test_column_statistics_invalid_column(self, session_with_test_data):
         """Test column statistics with invalid column."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="Column"):
-            ctx = create_mock_context(session_id)
             await get_column_statistics(ctx, "invalid_column")
 
     async def test_column_statistics_with_nulls(self, session_with_test_data):
@@ -321,30 +332,34 @@ class TestGetCorrelationMatrix:
         session.df = pd.DataFrame({"text1": ["a", "b", "c"], "text2": ["x", "y", "z"]})
 
         # Should raise an error when there are no numeric columns
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="No numeric columns"):
-            ctx = create_mock_context(session_id)
             await get_correlation_matrix(ctx)
 
     async def test_correlation_matrix_invalid_method(self, session_with_test_data):
         """Test correlation matrix with invalid method."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="method"):
-            ctx = create_mock_context(session_id)
             await get_correlation_matrix(ctx, method="invalid")
 
     async def test_correlation_matrix_invalid_columns(self, session_with_test_data):
         """Test correlation matrix with invalid columns."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(session_id)
             await get_correlation_matrix(ctx, columns=["numeric1", "invalid_col"])
 
     async def test_correlation_matrix_single_column(self, session_with_test_data):
         """Test correlation matrix with single column."""
         session_id, df = session_with_test_data
         # Single column should raise an error since correlation needs at least 2 columns
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="at least two"):
-            ctx = create_mock_context(session_id)
             await get_correlation_matrix(ctx, columns=["numeric1"])
 
 
@@ -421,8 +436,9 @@ class TestGetValueCounts:
     async def test_value_counts_invalid_column(self, session_with_test_data):
         """Test value counts with invalid column."""
         session_id, df = session_with_test_data
+        ctx = create_mock_context(session_id)
+
         with pytest.raises(ToolError, match="Column"):
-            ctx = create_mock_context(session_id)
             await get_value_counts(ctx, "invalid_column")
 
     async def test_value_counts_empty_column(self, session_with_test_data):
@@ -512,7 +528,7 @@ class TestEdgeCases:
                 "tiny": [1e-100, 1e-99, 1e-98],
                 "huge": [1e100, 1e101, 1e102],
                 "mixed": [-1e50, 0, 1e50],
-            }
+            },
         )
 
         # Create a real session with extreme values dataframe
@@ -534,7 +550,7 @@ class TestEdgeCases:
                 "column-with-dashes": [4, 5, 6],
                 "column.with.dots": [7, 8, 9],
                 "column@special#chars": [10, 11, 12],
-            }
+            },
         )
 
         # Create a real session with special column names dataframe

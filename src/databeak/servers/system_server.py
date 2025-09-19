@@ -52,7 +52,7 @@ async def health_check(
         # Check for potential issues
         if active_sessions >= session_manager.max_sessions * 0.9:  # 90% capacity warning
             status = "degraded"
-            logger.warning(
+            await ctx.warning(
                 f"Session capacity warning: {active_sessions}/{session_manager.max_sessions}"
             )
 
@@ -70,8 +70,7 @@ async def health_check(
 
     except (ImportError, AttributeError, ValueError, TypeError) as e:
         # Handle specific configuration/import issues - return unhealthy
-        logger.error(f"Health check failed due to configuration issue: {e!s}")
-        await ctx.error(f"Health check failed: {e!s}")
+        await ctx.error(f"Health check failed due to configuration issue: {e}")
 
         return HealthResult(
             status="unhealthy",
@@ -82,8 +81,7 @@ async def health_check(
         )
     except Exception as e:
         # Treat unexpected session manager errors as recoverable - return unhealthy
-        logger.error(f"Health check failed: {e!s}")
-        await ctx.error(f"Health check failed: {e!s}")
+        await ctx.error(f"Health check failed: {e}")
 
         try:
             version = str(__version__)
@@ -185,9 +183,11 @@ async def get_server_info(
         return server_info
 
     except Exception as e:
-        logger.error(f"Failed to get server information: {e!s}")
-        await ctx.error(f"Failed to get server information: {e!s}")
-        raise ToolError(f"Failed to get server information: {e}") from e
+        logger.error("Failed to get server information: %s", str(e))
+        await ctx.error(f"Failed to get server information: {e}")
+        msg = f"Failed to get server information: {e}"
+
+        raise ToolError(msg) from e
 
 
 # ============================================================================

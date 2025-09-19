@@ -18,7 +18,7 @@ async def update_consignee_example() -> None:
     result = await client.call_tool(
         "load_csv",
         {
-            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv"
+            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv",
         },
     )
     session_id = result["session_id"]
@@ -72,7 +72,7 @@ async def update_consignee_example() -> None:
     result = await client.call_tool(
         "load_csv",
         {
-            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv"
+            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv",
         },
     )
     session_id = result["session_id"]
@@ -115,7 +115,7 @@ async def update_consignee_example() -> None:
     result = await client.call_tool(
         "load_csv",
         {
-            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv"
+            "file_path": "/home/santosh/projects/csv-editor/tests/sample_data/123456/1753698447530_BOL_Lubecon USA LLC_GHY 1.csv",
         },
     )
     session_id = result["session_id"]

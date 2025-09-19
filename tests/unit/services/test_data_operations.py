@@ -39,7 +39,7 @@ class TestCreateDataPreviewWithIndices:
                 "name": ["Alice", "Bob", "Charlie"],
                 "age": [30, 25, 35],
                 "salary": [60000.0, 50000.0, 70000.0],
-            }
+            },
         )
 
         result = create_data_preview_with_indices(df, 2)
@@ -86,7 +86,7 @@ class TestCreateDataPreviewWithIndices:
                 "int_col": np.array([1, 2, 3], dtype=np.int64),
                 "float_col": np.array([1.1, 2.2, 3.3], dtype=np.float64),
                 "bool_col": np.array([True, False, True], dtype=bool),
-            }
+            },
         )
 
         result = create_data_preview_with_indices(df, 2)
@@ -100,7 +100,8 @@ class TestCreateDataPreviewWithIndices:
     def test_with_non_integer_index(self):
         """Test handling of non-integer row indices."""
         df = pd.DataFrame(
-            {"col1": [1, 2, 3], "col2": ["a", "b", "c"]}, index=["row1", "row2", "row3"]
+            {"col1": [1, 2, 3], "col2": ["a", "b", "c"]},
+            index=["row1", "row2", "row3"],
         )
 
         result = create_data_preview_with_indices(df, 2)
@@ -117,7 +118,7 @@ class TestCreateDataPreviewWithIndices:
                 123: [1, 2, 3],  # Numeric column name
                 "spaced column": ["a", "b", "c"],  # Spaced column name
                 ("tuple", "col"): [True, False, True],  # Tuple column name
-            }
+            },
         )
 
         result = create_data_preview_with_indices(df, 2)
@@ -161,7 +162,7 @@ class TestCreateDataPreviewWithIndices:
         assert len(result["records"]) == 0
 
     @pytest.mark.parametrize(
-        "special_value,expected",
+        ("special_value", "expected"),
         [
             (np.inf, float("inf")),
             (-np.inf, float("-inf")),
@@ -197,7 +198,7 @@ class TestGetDataSummary:
                 "int_col": [1, 2, 3, None],
                 "str_col": ["a", "b", "c", "d"],
                 "float_col": [1.1, 2.2, None, 4.4],
-            }
+            },
         )
 
         # Create a real session and load data
@@ -226,7 +227,7 @@ class TestGetDataSummary:
         assert result["memory_usage_mb"] >= 0  # Memory usage can be 0 for very small dataframes
 
     @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
     )
     @patch("src.databeak.services.data_operations.get_session_manager")
     def test_session_not_found(self, mock_manager):
@@ -420,7 +421,7 @@ class TestValidateColumnExists:
                 "col-with-dashes": [3, 4],
                 "col_with_underscores": [5, 6],
                 "col.with.dots": [7, 8],
-            }
+            },
         )
 
         validate_column_exists(df, "col with spaces")
@@ -487,7 +488,7 @@ class TestSafeTypeConversion:
         assert pd.isna(result.iloc[2])  # 'invalid' should become NaT
         # Some datetime formats may not parse successfully
         assert pd.notna(result.iloc[3]) or pd.isna(
-            result.iloc[3]
+            result.iloc[3],
         )  # Either valid or NaT is acceptable
 
     def test_convert_to_boolean(self):
@@ -527,7 +528,8 @@ class TestSafeTypeConversion:
         assert float_result.iloc[0] == 1e10
         assert float_result.iloc[1] == 1.23e-5
         assert np.isinf(float_result.iloc[2])
-        assert np.isinf(float_result.iloc[3]) and float_result.iloc[3] < 0
+        assert np.isinf(float_result.iloc[3])
+        assert float_result.iloc[3] < 0
         assert pd.isna(float_result.iloc[4])
 
     def test_datetime_conversion_formats(self):
@@ -539,7 +541,7 @@ class TestSafeTypeConversion:
                 "2023-01-01T12:30:45",
                 "2023-01-01 12:30:45.123",
                 "Jan 1, 2023",
-            ]
+            ],
         )
 
         result = safe_type_conversion(series, "datetime")
@@ -558,7 +560,7 @@ class TestSafeTypeConversion:
         assert result.dtype == "Int64"
 
     @pytest.mark.parametrize(
-        "target_type,expected_dtype",
+        ("target_type", "expected_dtype"),
         [
             ("int", "Int64"),
             ("string", "object"),

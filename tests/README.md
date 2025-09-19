@@ -2,9 +2,9 @@
 
 ## Overview
 
-DataBeak follows a three-tier testing strategy to ensure code quality,
-reliability, and maintainability. Our tests are organized by scope and purpose,
-making it easy to run the appropriate tests during development.
+DataBeak currently focuses on comprehensive unit testing with plans for future
+integration and E2E testing expansion. Our tests are organized by scope and
+purpose, making it easy to run the appropriate tests during development.
 
 ## Test Organization
 
@@ -40,38 +40,41 @@ tests/unit/
 
 **Run with:** `uv run pytest -n auto tests/unit/`
 
-### Integration Tests (`tests/integration/`)
+### Integration Tests (`tests/integration/`) - Future Implementation
 
-Integration tests verify that multiple components work correctly together:
+Integration tests will verify that multiple components work correctly together.
+Planned implementation using FastMCP Client for realistic MCP protocol testing:
 
-- `test_ai_accessibility.py` - AI assistant workflow tests
-- `test_analytics_coverage.py` - Analytics pipeline integration
-- `test_mcp_*.py` - MCP protocol integration
-- `test_session_coverage.py` - Session management across components
+- MCP protocol integration testing
+- Component interaction validation
+- Session management across components
+- Data flow verification between modules
 
-**Characteristics:**
+**Future Characteristics:**
 
 - Moderate execution time (100ms - 1s per test)
 - Real components with minimal mocking
-- Test component interactions
+- FastMCP Client-based MCP protocol testing
 - Validate data flow between modules
 
-**Run with:** `uv run pytest -n auto tests/integration/`
+**Planned:** Implementation tracked in GitHub issues
 
-### End-to-End Tests (`tests/e2e/`)
+### End-to-End Tests (`tests/e2e/`) - Future Implementation
 
-E2E tests validate complete user workflows from start to finish:
+E2E tests will validate complete user workflows from start to finish:
 
-- `test_io_server_comprehensive_coverage.py` - Full I/O pipeline validation
+- Full MCP server workflow validation
+- Complete CSV data processing pipelines
+- End-user scenario testing
 
-**Characteristics:**
+**Future Characteristics:**
 
 - Slower execution (> 1s per test)
 - No mocking - real system behavior
 - Test complete user scenarios
 - Validate edge cases and error handling
 
-**Run with:** `uv run pytest -n auto tests/e2e/`
+**Planned:** Implementation tracked in GitHub issues
 
 ## Running Tests
 
@@ -85,9 +88,9 @@ uv run pytest -n auto
 uv run pytest -n auto --cov=src/databeak --cov-report=term-missing
 
 # Run specific test category
-uv run pytest -n auto tests/unit/
-uv run pytest -n auto tests/integration/
-uv run pytest -n auto tests/e2e/
+uv run pytest -n auto tests/unit/          # Current primary testing
+# Future: uv run pytest -n auto tests/integration/
+# Future: uv run pytest -n auto tests/e2e/
 
 # Run specific module tests
 uv run pytest -n auto tests/unit/servers/
@@ -233,13 +236,16 @@ Tests run automatically on:
 - Pushes to main branch
 - Nightly scheduled runs
 
-CI pipeline runs:
+CI pipeline currently runs:
 
 1. Unit tests (fail fast)
-1. Integration tests
-1. E2E tests
 1. Coverage report
 1. Quality checks (ruff, mypy)
+
+Future CI additions:
+
+- Integration tests (FastMCP Client-based)
+- E2E tests (complete workflow validation)
 
 ## Best Practices
 
@@ -312,15 +318,15 @@ When adding new features:
    - Test the new functions/classes in isolation
    - Mock all dependencies
 
-1. **Add integration tests** in `tests/integration/`
+1. **Plan integration tests** for `tests/integration/` (future)
 
-   - Test how the feature interacts with existing components
-   - Use real components where possible
+   - Consider how the feature will interact with existing components
+   - Document integration test requirements for future implementation
 
-1. **Consider E2E tests** in `tests/e2e/`
+1. **Plan E2E tests** for `tests/e2e/` (future)
 
    - Only for major features or workflows
-   - Test the complete user experience
+   - Document complete user experience test scenarios
 
 Example for a new feature:
 

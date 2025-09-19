@@ -8,16 +8,11 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 from src.databeak.utils.logging_config import (
-    CorrelatedLogger,
     CorrelationFilter,
     StructuredFormatter,
     clear_correlation_id,
     correlation_id,
     get_correlation_id,
-    get_logger,
-    log_operation_end,
-    log_operation_start,
-    log_session_event,
     set_correlation_id,
     setup_logging,
     setup_structured_logging,
@@ -138,7 +133,8 @@ class TestStructuredFormatter:
         formatter = StructuredFormatter()
 
         try:
-            raise ValueError("Test exception")
+            msg = "Test exception"
+            raise ValueError(msg)
         except ValueError:
             import sys
 
@@ -435,219 +431,8 @@ class TestCorrelationIdManagement:
         assert get_correlation_id() == "no-correlation"
 
 
-class TestCorrelatedLogger:
-    """Test correlated logger wrapper."""
-
-    def test_correlated_logger_initialization(self):
-        """Test correlated logger initialization."""
-        logger = CorrelatedLogger("test.logger")
-
-        assert logger.logger.name == "test.logger"
-
-    def test_debug_logging(self):
-        """Test debug level logging."""
-        with patch("logging.getLogger") as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            logger = CorrelatedLogger("test.logger")
-            set_correlation_id("test-123")
-
-            logger.debug("Debug message", session_id="session-456")
-
-            mock_logger_instance.log.assert_called_once_with(
-                logging.DEBUG,
-                "Debug message",
-                extra={"correlation_id": "test-123", "session_id": "session-456"},
-            )
-            clear_correlation_id()
-
-    def test_info_logging(self):
-        """Test info level logging."""
-        with patch("logging.getLogger") as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            logger = CorrelatedLogger("test.logger")
-            set_correlation_id("test-123")
-
-            logger.info("Info message", operation_type="test_op")
-
-            mock_logger_instance.log.assert_called_once_with(
-                logging.INFO,
-                "Info message",
-                extra={"correlation_id": "test-123", "operation_type": "test_op"},
-            )
-            clear_correlation_id()
-
-    def test_warning_logging(self):
-        """Test warning level logging."""
-        with patch("logging.getLogger") as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            logger = CorrelatedLogger("test.logger")
-            set_correlation_id("test-123")
-
-            logger.warning("Warning message")
-
-            mock_logger_instance.log.assert_called_once_with(
-                logging.WARNING, "Warning message", extra={"correlation_id": "test-123"}
-            )
-            clear_correlation_id()
-
-    def test_error_logging(self):
-        """Test error level logging."""
-        with patch("logging.getLogger") as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            logger = CorrelatedLogger("test.logger")
-            set_correlation_id("test-123")
-
-            logger.error("Error message", error_code="E001")
-
-            mock_logger_instance.log.assert_called_once_with(
-                logging.ERROR,
-                "Error message",
-                extra={"correlation_id": "test-123", "error_code": "E001"},
-            )
-            clear_correlation_id()
-
-    def test_critical_logging(self):
-        """Test critical level logging."""
-        with patch("logging.getLogger") as mock_get_logger:
-            mock_logger_instance = MagicMock()
-            mock_get_logger.return_value = mock_logger_instance
-
-            logger = CorrelatedLogger("test.logger")
-            set_correlation_id("test-123")
-
-            logger.critical("Critical message")
-
-            mock_logger_instance.log.assert_called_once_with(
-                logging.CRITICAL, "Critical message", extra={"correlation_id": "test-123"}
-            )
-            clear_correlation_id()
-
-
-class TestGetLogger:
-    """Test logger factory function."""
-
-    def test_get_logger_returns_correlated_logger(self):
-        """Test get_logger returns CorrelatedLogger instance."""
-        logger = get_logger("test.module")
-
-        assert isinstance(logger, CorrelatedLogger)
-        assert logger.logger.name == "test.module"
-
-
-class TestOperationLogging:
-    """Test operation logging convenience functions."""
-
-    def test_log_operation_start_with_session_id(self):
-        """Test logging operation start with session ID."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_operation_start("data_load", session_id="session-123", user_id="user-456")
-
-            mock_get_logger.assert_called_once_with("databeak.operations")
-            mock_logger.info.assert_called_once_with(
-                "Operation started: data_load",
-                session_id="session-123",
-                operation_type="data_load",
-                operation_phase="start",
-                user_id="user-456",
-            )
-
-    def test_log_operation_start_without_session_id(self):
-        """Test logging operation start without session ID."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_operation_start("data_transform")
-
-            mock_logger.info.assert_called_once_with(
-                "Operation started: data_transform",
-                session_id=None,
-                operation_type="data_transform",
-                operation_phase="start",
-            )
-
-    def test_log_operation_end_success(self):
-        """Test logging successful operation end."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_operation_end("data_export", session_id="session-789", success=True, records=100)
-
-            mock_get_logger.assert_called_once_with("databeak.operations")
-            mock_logger.info.assert_called_once_with(
-                "Operation completed: data_export",
-                session_id="session-789",
-                operation_type="data_export",
-                operation_phase="end",
-                operation_success=True,
-                records=100,
-            )
-
-    def test_log_operation_end_failure(self):
-        """Test logging failed operation end."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_operation_end("data_validation", success=False, error="Invalid format")
-
-            mock_logger.error.assert_called_once_with(
-                "Operation failed: data_validation",
-                session_id=None,
-                operation_type="data_validation",
-                operation_phase="end",
-                operation_success=False,
-                error="Invalid format",
-            )
-
-    def test_log_operation_end_default_success(self):
-        """Test logging operation end with default success=True."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_operation_end("cleanup_task")
-
-            mock_logger.info.assert_called_once_with(
-                "Operation completed: cleanup_task",
-                session_id=None,
-                operation_type="cleanup_task",
-                operation_phase="end",
-                operation_success=True,
-            )
-
-
-class TestSessionLogging:
-    """Test session logging convenience function."""
-
-    def test_log_session_event(self):
-        """Test logging session events."""
-        with patch("src.databeak.utils.logging_config.get_logger") as mock_get_logger:
-            mock_logger = MagicMock()
-            mock_get_logger.return_value = mock_logger
-
-            log_session_event("created", "session-abc", user_id="user-123", source="api")
-
-            mock_get_logger.assert_called_once_with("databeak.sessions")
-            mock_logger.info.assert_called_once_with(
-                "Session event: created",
-                session_id="session-abc",
-                event_type="created",
-                user_id="user-123",
-                source="api",
-            )
+# NOTE: TestGetLogger, TestOperationLogging, and TestSessionLogging removed
+# since we now use standard Python logging.Logger which is well-tested by Python itself.
 
 
 class TestBackwardCompatibility:

@@ -70,8 +70,8 @@ class TestColumnTextServerReplace:
 
     async def test_replace_nonexistent_column(self, text_session):
         """Test replacing in non-existent column."""
+        ctx = create_mock_context(text_session)
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await replace_in_column(ctx, "nonexistent", "pattern", "replacement")
 
 
@@ -110,8 +110,9 @@ class TestColumnTextServerExtract:
 
     async def test_extract_nonexistent_column(self, text_session):
         """Test extracting from non-existent column."""
+        ctx = create_mock_context(text_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await extract_from_column(ctx, "nonexistent", r"(\w+)")
 
 
@@ -170,8 +171,9 @@ class TestColumnTextServerSplit:
 
     async def test_split_nonexistent_column(self, text_session):
         """Test splitting non-existent column."""
+        ctx = create_mock_context(text_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await split_column(ctx, "nonexistent", " ")
 
 
@@ -210,8 +212,9 @@ class TestColumnTextServerCase:
 
     async def test_transform_case_nonexistent_column(self, text_session):
         """Test transforming case of non-existent column."""
+        ctx = create_mock_context(text_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await transform_column_case(ctx, "nonexistent", "upper")
 
 
@@ -250,8 +253,9 @@ class TestColumnTextServerStrip:
 
     async def test_strip_nonexistent_column(self, text_session):
         """Test stripping non-existent column."""
+        ctx = create_mock_context(text_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await strip_column(ctx, "nonexistent")
 
 
@@ -289,14 +293,15 @@ class TestColumnTextServerFillNulls:
         ctx = create_mock_context(text_session)
         await add_column(ctx, "verified", value=[True, None, False, None])
 
-        result = await fill_column_nulls(ctx, "verified", False)
+        result = await fill_column_nulls(ctx, "verified", value=False)
 
         assert result.operation == "fill_nulls"
 
     async def test_fill_nulls_nonexistent_column(self, text_session):
         """Test filling nulls in non-existent column."""
+        ctx = create_mock_context(text_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(text_session)
             await fill_column_nulls(ctx, "nonexistent", "value")
 
 
@@ -340,7 +345,11 @@ class TestColumnTextServerComplexOperations:
 
         # Format as (XXX) XXX-XXXX
         result = await replace_in_column(
-            ctx, "phone", r"(\d{3})(\d{3})(\d{4})", r"(\1) \2-\3", regex=True
+            ctx,
+            "phone",
+            r"(\d{3})(\d{3})(\d{4})",
+            r"(\1) \2-\3",
+            regex=True,
         )
 
         assert result.operation == "replace_pattern"

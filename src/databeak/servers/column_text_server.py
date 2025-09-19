@@ -52,7 +52,8 @@ class RegexPattern(BaseModel):
 
     pattern: str = Field(description="Regular expression pattern")
     flags: list[Literal["IGNORECASE", "MULTILINE", "DOTALL"]] = Field(
-        default_factory=list, description="Regex flags to apply"
+        default_factory=list,
+        description="Regex flags to apply",
     )
 
 
@@ -74,6 +75,7 @@ async def replace_in_column(
     column: Annotated[str, Field(description="Column name to apply pattern replacement in")],
     pattern: Annotated[str, Field(description="Pattern to search for (regex or literal string)")],
     replacement: Annotated[str, Field(description="Replacement text to use for matches")],
+    *,
     regex: Annotated[
         bool,
         Field(description="Whether to treat pattern as regex (True) or literal string (False)"),
@@ -109,7 +111,8 @@ async def replace_in_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -121,8 +124,11 @@ async def replace_in_column(
             try:
                 re.compile(pattern)
             except re.error as e:
+                msg = "pattern"
                 raise InvalidParameterError(
-                    "pattern", pattern, f"Invalid regex pattern: {e}"
+                    msg,
+                    pattern,
+                    f"Invalid regex pattern: {e}",
                 ) from e
 
         # Count replacements made
@@ -161,19 +167,22 @@ async def replace_in_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Replace in column failed: {e.message}")
+        logger.error("Replace in column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error replacing in column: {e!s}")
-        raise ToolError(f"Error replacing in column: {e}") from e
+        logger.error("Error replacing in column: %s", str(e))
+        msg = f"Error replacing in column: {e}"
+        raise ToolError(msg) from e
 
 
 async def extract_from_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to extract patterns from")],
     pattern: Annotated[str, Field(description="Regex pattern with capturing groups to extract")],
+    *,
     expand: Annotated[
-        bool, Field(description="Whether to expand multiple groups into separate columns")
+        bool,
+        Field(description="Whether to expand multiple groups into separate columns"),
     ] = False,
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
@@ -205,7 +214,8 @@ async def extract_from_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -216,7 +226,8 @@ async def extract_from_column(
         try:
             re.compile(pattern)
         except re.error as e:
-            raise InvalidParameterError("pattern", pattern, f"Invalid regex pattern: {e}") from e
+            msg = "pattern"
+            raise InvalidParameterError(msg, pattern, f"Invalid regex pattern: {e}") from e
 
         # Apply extraction
         # Note: mypy has issues with overloaded extract method, but this is valid
@@ -228,7 +239,8 @@ async def extract_from_column(
             for i in range(len(extracted.columns)):
                 new_col_name = f"{column}_extracted_{i}"
                 if session.df is None:
-                    raise ToolError("Session data not available")
+                    msg = "Session data not available"
+                    raise ToolError(msg)
                 session.df[new_col_name] = extracted.iloc[:, i]
                 columns_created.append(new_col_name)
 
@@ -239,12 +251,14 @@ async def extract_from_column(
             if isinstance(extracted, pd.DataFrame):
                 # Multiple groups but not expanding - take first group
                 if session.df is None:
-                    raise ToolError("Session data not available")
+                    msg = "Session data not available"
+                    raise ToolError(msg)
                 session.df[column] = extracted.iloc[:, 0]
             else:
                 # Single series result
                 if session.df is None:
-                    raise ToolError("Session data not available")
+                    msg = "Session data not available"
+                    raise ToolError(msg)
                 session.df[column] = extracted
 
             affected_columns = [column]
@@ -282,25 +296,30 @@ async def extract_from_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Extract from column failed: {e.message}")
+        logger.error("Extract from column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error extracting from column: {e!s}")
-        raise ToolError(f"Error extracting from column: {e}") from e
+        logger.error("Error extracting from column: %s", str(e))
+        msg = f"Error extracting from column: {e}"
+        raise ToolError(msg) from e
 
 
 async def split_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to split values in")],
     delimiter: Annotated[str, Field(description="String delimiter to split on")] = " ",
+    *,
     part_index: Annotated[
-        int | None, Field(description="Which part to keep (0-based index, None for first part)")
+        int | None,
+        Field(description="Which part to keep (0-based index, None for first part)"),
     ] = None,
     expand_to_columns: Annotated[
-        bool, Field(description="Whether to expand splits into multiple columns")
+        bool,
+        Field(description="Whether to expand splits into multiple columns"),
     ] = False,
     new_columns: Annotated[
-        list[str] | None, Field(description="Names for new columns when expanding")
+        list[str] | None,
+        Field(description="Names for new columns when expanding"),
     ] = None,
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
@@ -335,7 +354,8 @@ async def split_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -343,7 +363,8 @@ async def split_column(
             raise ColumnNotFoundError(column, df.columns.tolist())
 
         if not delimiter:
-            raise InvalidParameterError("delimiter", delimiter, "Delimiter cannot be empty")
+            msg = "delimiter"
+            raise InvalidParameterError(msg, delimiter, "Delimiter cannot be empty")
 
         # Apply split operation
         # Note: mypy has issues with overloaded split method, but this is valid
@@ -373,7 +394,8 @@ async def split_column(
                 for i, col_name in enumerate(column_names):
                     if i < len(split_data.columns):
                         if session.df is None:
-                            raise ToolError("Session data not available")
+                            msg = "Session data not available"
+                            raise ToolError(msg)
                         session.df[col_name] = split_data.iloc[:, i]
                         columns_created.append(col_name)
 
@@ -382,8 +404,9 @@ async def split_column(
                 rows_affected = len(df)
             else:
                 # Shouldn't happen with expand=True, but handle gracefully
+                msg = "expand_to_columns"
                 raise InvalidParameterError(
-                    "expand_to_columns",
+                    msg,
                     str(expand_to_columns),
                     "Split with expand=True did not produce DataFrame",
                 )
@@ -395,7 +418,8 @@ async def split_column(
             if isinstance(split_data, pd.DataFrame):
                 # This shouldn't happen with expand=False, but handle it
                 if session.df is None:
-                    raise ToolError("Session data not available")
+                    msg = "Session data not available"
+                    raise ToolError(msg)
                 if part_index < len(split_data.columns):
                     session.df[column] = split_data.iloc[:, part_index]
                 else:
@@ -409,7 +433,8 @@ async def split_column(
                     return pd.NA
 
                 if session.df is None:
-                    raise ToolError("Session data not available")
+                    msg = "Session data not available"
+                    raise ToolError(msg)
                 session.df[column] = split_data.apply(get_part)
 
             affected_columns = [column]
@@ -417,7 +442,8 @@ async def split_column(
 
             # Count successful splits (non-null results)
             if session.df is None:
-                raise ToolError("Session data not available")
+                msg = "Session data not available"
+                raise ToolError(msg)
             rows_affected = int(session.df[column].notna().sum())
 
         session.record_operation(
@@ -444,11 +470,12 @@ async def split_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Split column failed: {e.message}")
+        logger.error("Split column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error splitting column: {e!s}")
-        raise ToolError(f"Error splitting column: {e}") from e
+        logger.error("Error splitting column: %s", str(e))
+        msg = f"Error splitting column: {e}"
+        raise ToolError(msg) from e
 
 
 async def transform_column_case(
@@ -491,7 +518,8 @@ async def transform_column_case(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -505,7 +533,8 @@ async def transform_column_case(
         str_col = df[column].astype(str)
 
         if session.df is None:
-            raise ToolError("Session data not available")
+            msg = "Session data not available"
+            raise ToolError(msg)
         if transform == "upper":
             session.df[column] = str_col.str.upper()
         elif transform == "lower":
@@ -515,15 +544,19 @@ async def transform_column_case(
         elif transform == "capitalize":
             session.df[column] = str_col.str.capitalize()
         else:
+            msg = "transform"
             raise InvalidParameterError(
-                "transform", transform, "Supported transforms: upper, lower, title, capitalize"
+                msg,
+                transform,
+                "Supported transforms: upper, lower, title, capitalize",
             )
 
         # Count changes made (ignore null values)
         if session.df is None:
-            raise ToolError("Session data not available")
+            msg = "Session data not available"
+            raise ToolError(msg)
         changed_mask = original_data.astype(str).fillna("") != session.df[column].astype(
-            str
+            str,
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
@@ -549,11 +582,12 @@ async def transform_column_case(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Transform column case failed: {e.message}")
+        logger.error("Transform column case failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error transforming column case: {e!s}")
-        raise ToolError(f"Error transforming column case: {e}") from e
+        logger.error("Error transforming column case: %s", str(e))
+        msg = f"Error transforming column case: {e}"
+        raise ToolError(msg) from e
 
 
 async def strip_column(
@@ -592,7 +626,8 @@ async def strip_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -604,7 +639,8 @@ async def strip_column(
 
         # Apply strip operation
         if session.df is None:
-            raise ToolError("Session data not available")
+            msg = "Session data not available"
+            raise ToolError(msg)
         if chars is None:
             # Strip whitespace
             session.df[column] = df[column].astype(str).str.strip()
@@ -614,9 +650,10 @@ async def strip_column(
 
         # Count changes made
         if session.df is None:
-            raise ToolError("Session data not available")
+            msg = "Session data not available"
+            raise ToolError(msg)
         changed_mask = original_data.astype(str).fillna("") != session.df[column].astype(
-            str
+            str,
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
@@ -637,11 +674,12 @@ async def strip_column(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Strip column failed: {e.message}")
+        logger.error("Strip column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error stripping column: {e!s}")
-        raise ToolError(f"Error stripping column: {e}") from e
+        logger.error("Error stripping column: %s", str(e))
+        msg = f"Error stripping column: {e}"
+        raise ToolError(msg) from e
 
 
 async def fill_column_nulls(
@@ -677,7 +715,8 @@ async def fill_column_nulls(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -697,7 +736,8 @@ async def fill_column_nulls(
 
         # Fill null values
         if session.df is None:
-            raise ToolError("Session data not available")
+            msg = "Session data not available"
+            raise ToolError(msg)
         session.df[column] = df[column].fillna(value)
 
         # Verify fills worked
@@ -723,11 +763,12 @@ async def fill_column_nulls(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Fill column nulls failed: {e.message}")
+        logger.error("Fill column nulls failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Error filling column nulls: {e!s}")
-        raise ToolError(f"Error filling column nulls: {e}") from e
+        logger.error("Error filling column nulls: %s", str(e))
+        msg = f"Error filling column nulls: {e}"
+        raise ToolError(msg) from e
 
 
 # =============================================================================

@@ -18,27 +18,26 @@ class MockContext:
 
     async def info(self, message: str) -> None:
         """Mock info logging method."""
-        pass
 
     async def debug(self, message: str) -> None:
         """Mock debug logging method."""
-        pass
 
     async def error(self, message: str) -> None:
         """Mock error logging method."""
-        pass
 
     async def warn(self, message: str) -> None:
         """Mock warning logging method."""
-        pass
+
+    async def warning(self, message: str) -> None:
+        """Mock warning logging method (alias for warn)."""
 
     async def report_progress(self, progress: float) -> None:
         """Mock progress reporting method."""
-        pass
 
 
 def create_mock_context(
-    session_id: str | None = None, session_data: dict[str, Any] | None = None
+    session_id: str | None = None,
+    session_data: dict[str, Any] | None = None,
 ) -> MockContext:
     """Create a mock context with session data."""
     return MockContext(session_id=session_id, session_data=session_data)

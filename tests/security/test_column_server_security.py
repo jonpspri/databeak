@@ -29,11 +29,8 @@ class TestColumnServerSecurity:
 
         for malicious_formula in malicious_formulas:
             # Test that validation catches these at the Pydantic level
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ValueError, match=r"(?i)unsafe"):
                 SecureExpression(expression=malicious_formula)
-
-            error_msg = str(exc_info.value).lower()
-            assert "unsafe" in error_msg, f"Security error not indicated for: {malicious_formula}"
 
             # Test that direct validation also catches these
             with pytest.raises(InvalidParameterError):
@@ -46,10 +43,8 @@ class TestColumnServerSecurity:
         assert str(safe_expr) == "col1 + col2"
 
         # Test that malicious expressions are blocked
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression="exec('malicious')")
-
-        assert "unsafe" in str(exc_info.value).lower()
 
     def test_safe_mathematical_expressions_allowed(self):
         """Test that legitimate mathematical expressions are validated as safe."""
@@ -93,7 +88,7 @@ class TestColumnServerSecurity:
                 validate_expression_safety(attack)
 
             # Must be blocked at Pydantic model level
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match=r"(?i)unsafe"):
                 SecureExpression(expression=attack)
 
 

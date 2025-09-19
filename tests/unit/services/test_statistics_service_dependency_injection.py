@@ -23,7 +23,7 @@ def test_data():
             "float_col": [1.1, 2.2, 3.3, 4.4, 5.5, 10.5, 15.5],
             "text_col": ["A", "B", "C", "A", "B", "C", "D"],
             "mixed_col": ["text1", "text2", "text1", "text2", "text3", "text3", "text4"],
-        }
+        },
     )
 
 
@@ -58,7 +58,9 @@ class TestStatisticsServiceDependencyInjection:
 
     @pytest.mark.asyncio
     async def test_get_statistics_with_dependency_injection(
-        self, session_id, statistics_service
+        self,
+        session_id,
+        statistics_service,
     ) -> None:
         """Test that statistics service works with injected session manager."""
         # Act
@@ -90,7 +92,9 @@ class TestStatisticsServiceDependencyInjection:
 
     @pytest.mark.asyncio
     async def test_get_column_statistics_with_dependency_injection(
-        self, session_id, statistics_service
+        self,
+        session_id,
+        statistics_service,
     ) -> None:
         """Test column statistics with injected dependencies."""
         # Act
@@ -104,7 +108,9 @@ class TestStatisticsServiceDependencyInjection:
 
     @pytest.mark.asyncio
     async def test_get_correlation_matrix_with_dependency_injection(
-        self, session_id, statistics_service
+        self,
+        session_id,
+        statistics_service,
     ) -> None:
         """Test correlation matrix with injected dependencies."""
         # Act
@@ -118,7 +124,9 @@ class TestStatisticsServiceDependencyInjection:
 
     @pytest.mark.asyncio
     async def test_get_value_counts_with_dependency_injection(
-        self, session_id, statistics_service
+        self,
+        session_id,
+        statistics_service,
     ) -> None:
         """Test value counts with injected dependencies."""
         # Act
@@ -135,22 +143,20 @@ class TestStatisticsServiceDependencyInjection:
     async def test_error_handling_with_invalid_session(self, statistics_service) -> None:
         """Test error handling with dependency injection."""
         # Act & Assert
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(Exception, match=r"No data loaded in session"):
             await statistics_service.get_statistics("invalid_session")
-
-        assert "No data loaded in session" in str(exc_info.value)
 
     @pytest.mark.asyncio
     async def test_error_handling_with_invalid_column(self, session_id, statistics_service) -> None:
         """Test error handling for invalid column with dependency injection."""
         # Act & Assert
-        with pytest.raises(Exception) as exc_info:
+        with pytest.raises(Exception, match=r"Column 'nonexistent_column' not found"):
             await statistics_service.get_column_statistics(session_id, "nonexistent_column")
 
-        assert "Column 'nonexistent_column' not found" in str(exc_info.value)
-
     def test_service_can_be_tested_in_isolation(
-        self, statistics_service, mock_session_manager
+        self,
+        statistics_service,
+        mock_session_manager,
     ) -> None:
         """Demonstrate that service can be tested without global session manager."""
         # Verify that we're using our mock, not the global session manager
@@ -161,7 +167,9 @@ class TestStatisticsServiceDependencyInjection:
         assert statistics_service.get_service_name() == "StatisticsService"
 
     def test_multiple_services_with_different_dependencies(
-        self, statistics_service, mock_session_manager
+        self,
+        statistics_service,
+        mock_session_manager,
     ) -> None:
         """Test creating multiple services with different dependency configurations."""
         # Create another mock session manager with different data

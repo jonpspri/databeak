@@ -72,7 +72,7 @@ class TestErrorConditions:
         """Test memory limit enforcement."""
         # Mock pandas read_csv to return a large DataFrame
         large_data = pd.DataFrame(
-            {"col1": ["data"] * (MAX_ROWS + 100), "col2": list(range(MAX_ROWS + 100))}
+            {"col1": ["data"] * (MAX_ROWS + 100), "col2": list(range(MAX_ROWS + 100))},
         )
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -180,7 +180,10 @@ class TestEdgeCases:
     async def test_load_csv_special_characters(self):
         """Test loading CSV with special characters."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="utf-8"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="utf-8",
         ) as f:
             # Unicode characters, quotes, commas in data
             f.write("name,description,price\n")
@@ -429,7 +432,11 @@ class TestURLValidationSecurity:
         """Test HTTP error handling (404, 403, etc.)."""
         with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = HTTPError(
-                url="https://example.com/notfound.csv", code=404, msg="Not Found", hdrs={}, fp=None
+                url="https://example.com/notfound.csv",
+                code=404,
+                msg="Not Found",
+                hdrs={},
+                fp=None,
             )
 
             with pytest.raises(ToolError, match="Network error"):
@@ -453,7 +460,7 @@ class TestExportFormats:
             # Log but don't fail if session cleanup fails
             import logging
 
-            logging.getLogger(__name__).warning(f"Session cleanup failed: {e}")
+            logging.getLogger(__name__).warning("Session cleanup failed: %s", e)
 
     async def test_export_csv_format(self, session_with_data):
         """Test CSV export format (inferred from .csv extension)."""
@@ -531,7 +538,10 @@ class TestEncodingAndFallback:
         content = "name,description\nJosé,Niño años"
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="latin1"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="latin1",
         ) as f:
             f.write(content)
             temp_path = f.name
@@ -563,7 +573,10 @@ class TestEncodingAndFallback:
         content = "name,description\nJosé García,Niño años\nFrançois,café"
 
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="latin1"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="latin1",
         ) as f:
             f.write(content)
             temp_path = f.name
@@ -575,7 +588,9 @@ class TestEncodingAndFallback:
 
                 # Should use detected encoding instead of falling back
                 result = await load_csv(
-                    create_mock_context(), temp_path, encoding="utf-8"
+                    create_mock_context(),
+                    temp_path,
+                    encoding="utf-8",
                 )  # Will trigger fallback
                 assert result.success
                 assert result.rows_affected == 2
@@ -601,11 +616,14 @@ class TestEncodingAndFallback:
                 def mock_read_side_effect(*args, **kwargs):
                     call_count[0] += 1
                     if call_count[0] == 1:  # First call (original encoding)
-                        raise UnicodeDecodeError("utf-8", b"", 0, 1, "mock error")
+                        msg = "utf-8"
+                        raise UnicodeDecodeError(msg, b"", 0, 1, "mock error")
                     elif call_count[0] == 2:  # Second call (auto-detection, same encoding)
-                        raise UnicodeDecodeError("utf-8", b"", 0, 1, "auto-detect fails")
+                        msg = "utf-8"
+                        raise UnicodeDecodeError(msg, b"", 0, 1, "auto-detect fails")
                     elif call_count[0] == 3:  # First fallback fails
-                        raise UnicodeDecodeError("utf-8-sig", b"", 0, 1, "fallback 1 fails")
+                        msg = "utf-8-sig"
+                        raise UnicodeDecodeError(msg, b"", 0, 1, "fallback 1 fails")
                     else:  # Eventually succeed
                         return success_df
 
@@ -627,7 +645,6 @@ class TestSessionManagement:
         """Test getting info for session without loaded data."""
         # This would require creating an empty session
         # Implementation depends on session manager API
-        pass
 
     async def test_list_sessions_empty(self):
         """Test listing sessions when none exist."""
@@ -683,7 +700,8 @@ class TestMemoryAndPerformance:
                 def mock_read_side_effect(*args, **kwargs):
                     call_count[0] += 1
                     if call_count[0] == 1 or call_count[0] == 2:  # First call (original encoding)
-                        raise UnicodeDecodeError("utf-8", b"", 0, 1, "mock error")
+                        msg = "utf-8"
+                        raise UnicodeDecodeError(msg, b"", 0, 1, "mock error")
                     else:  # Fallback encoding succeeds but returns large df
                         return large_df
 
@@ -756,5 +774,5 @@ class TestProgressReporting:
 def create_test_dataframe():
     """Create test DataFrame compatible with session management."""
     return pd.DataFrame(
-        {"name": ["John", "Jane", "Alice"], "age": [30, 25, 35], "city": ["NYC", "LA", "Chicago"]}
+        {"name": ["John", "Jane", "Alice"], "age": [30, 25, 35], "city": ["NYC", "LA", "Chicago"]},
     )

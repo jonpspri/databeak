@@ -15,7 +15,7 @@ from ..models.typed_dicts import CellValue, DataValidationIssues
 
 
 # Implementation: File path security validation with existence checking and extension filtering
-def validate_file_path(file_path: str, must_exist: bool = True) -> tuple[bool, str]:
+def validate_file_path(file_path: str, *, must_exist: bool = True) -> tuple[bool, str]:
     """Validate file path for security and format requirements."""
     try:
         # Convert to Path object
@@ -95,7 +95,10 @@ def validate_url(url: str) -> tuple[bool, str]:
             try:
                 # Get IP addresses for hostname
                 addr_info = socket.getaddrinfo(
-                    hostname, None, family=socket.AF_UNSPEC, type=socket.SOCK_STREAM
+                    hostname,
+                    None,
+                    family=socket.AF_UNSPEC,
+                    type=socket.SOCK_STREAM,
                 )
                 for _, _, _, _, sockaddr in addr_info:
                     ip_addr = sockaddr[0]

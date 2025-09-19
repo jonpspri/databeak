@@ -80,7 +80,8 @@ class SecureExpression(BaseModel):
         try:
             validate_expression_safety(v)
         except Exception as e:
-            raise ValueError(f"Unsafe expression: {e}") from e
+            msg = f"Unsafe expression: {e}"
+            raise ValueError(msg) from e
         return v
 
     @field_validator("variable_name")
@@ -88,7 +89,8 @@ class SecureExpression(BaseModel):
     def validate_variable_name(cls, v: str) -> str:
         """Validate that variable name is safe."""
         if v in ("exec", "eval", "open", "import", "__import__"):
-            raise ValueError(f"Variable name '{v}' is not allowed")
+            msg = f"Variable name '{v}' is not allowed"
+            raise ValueError(msg)
         return v
 
     def get_expression_with_column(self, column_name: str) -> str:

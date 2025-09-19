@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
@@ -13,6 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Import session management from the main package
 from ..models import OperationType, get_session_manager
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
+from ..models.typed_dicts import FilterConditionDict
 
 logger = logging.getLogger(__name__)
 
@@ -24,31 +25,7 @@ CellValue = str | int | float | bool | None
 # ============================================================================
 
 
-class FilterCondition(BaseModel):
-    """Filter condition for row filtering."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    column: str = Field(description="Column name to filter on")
-    operator: Literal[
-        "==",
-        "!=",
-        ">",
-        "<",
-        ">=",
-        "<=",
-        "contains",
-        "not_contains",
-        "starts_with",
-        "ends_with",
-        "in",
-        "not_in",
-        "is_null",
-        "is_not_null",
-    ] = Field(description="Comparison operator")
-    value: CellValue | list[CellValue] = Field(
-        default=None, description="Value to compare against (not needed for null operators)"
-    )
+# Use existing FilterCondition from data_models instead of defining locally
 
 
 class SortColumn(BaseModel):
@@ -68,11 +45,12 @@ class SortColumn(BaseModel):
 def filter_rows(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     conditions: Annotated[
-        list[FilterCondition | dict[str, Any]],
+        list[FilterConditionDict],
         Field(description="List of filter conditions with column, operator, and value"),
     ],
     mode: Annotated[
-        Literal["and", "or"], Field(description="Logic for combining conditions (and/or)")
+        Literal["and", "or"],
+        Field(description="Logic for combining conditions (and/or)"),
     ] = "and",
 ) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value and text matching
@@ -111,7 +89,8 @@ def filter_rows(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
         rows_before = len(df)
@@ -119,27 +98,28 @@ def filter_rows(
         # Initialize mask based on mode: AND starts True, OR starts False
         mask = pd.Series([mode == "and"] * len(df))
 
-        # Process conditions - convert Pydantic models if needed
-        processed_conditions = []
+        # Process conditions (handles both FilterConditionDict and FilterCondition objects)
         for condition in conditions:
-            if isinstance(condition, FilterCondition):
-                processed_conditions.append(condition.model_dump())
+            if isinstance(condition, dict):
+                # It's a FilterConditionDict
+                column = condition.get("column")
+                operator = condition.get("operator")
+                value = condition.get("value")
             else:
-                processed_conditions.append(condition)
-
-        for condition in processed_conditions:
-            column = condition.get("column")
-            operator = condition.get("operator")
-            value = condition.get("value")
+                # It's a FilterCondition object
+                column = condition.column
+                operator = condition.operator
+                value = condition.value
 
             if column is None or column not in df.columns:
-                raise ToolError(f"Column '{column}' not found in data")
+                msg = f"Column '{column}' not found in data"
+                raise ToolError(msg)
 
             col_data = df[column]
 
-            if operator == "==":
+            if operator == "=" or operator == "==":
                 condition_mask = col_data == value
-            elif operator == "!=":
+            elif operator == "!=" or operator == "not_equals":
                 condition_mask = col_data != value
             elif operator == ">":
                 condition_mask = col_data > value
@@ -166,10 +146,13 @@ def filter_rows(
             elif operator == "is_not_null":
                 condition_mask = col_data.notna()
             else:
-                raise ToolError(
+                msg = (
                     f"Invalid operator '{operator}'. Valid operators: "
                     "==, !=, >, <, >=, <=, contains, not_contains, starts_with, ends_with, "
                     "in, not_in, is_null, is_not_null"
+                )
+                raise ToolError(
+                    msg,
                 )
 
             mask = mask & condition_mask if mode == "and" else mask | condition_mask
@@ -178,11 +161,27 @@ def filter_rows(
         session.df = df[mask].reset_index(drop=True)
         rows_after = len(session.df)
 
+        # Convert conditions to JSON-serializable format for history
+        serializable_conditions = []
+        for condition in conditions:
+            if isinstance(condition, dict):
+                # It's already a dict
+                serializable_conditions.append(dict(condition))
+            else:
+                # It's a FilterCondition object - convert to dict
+                serializable_conditions.append(
+                    {
+                        "column": condition.column,
+                        "operator": condition.operator,
+                        "value": condition.value,
+                    },
+                )
+
         # Record operation
         session.record_operation(
             OperationType.FILTER,
             {
-                "conditions": processed_conditions,
+                "conditions": serializable_conditions,
                 "mode": mode,
                 "rows_before": rows_before,
                 "rows_after": rows_after,
@@ -193,21 +192,20 @@ def filter_rows(
             rows_before=rows_before,
             rows_after=rows_after,
             rows_filtered=rows_before - rows_after,
-            conditions_applied=len(processed_conditions),
+            conditions_applied=len(conditions),
         )
 
     except Exception as e:
-        logger.error(f"Error filtering rows: {e!s}")
-        raise ToolError(f"Error filtering rows: {e!s}") from e
+        logger.error("Error filtering rows: %s", str(e))
+        msg = f"Error filtering rows: {e!s}"
+        raise ToolError(msg) from e
 
 
 def sort_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
-        list[str | SortColumn | dict[str, Any]],
-        Field(
-            description="Column specifications for sorting (strings, SortColumn objects, or dicts)"
-        ),
+        list[str | SortColumn],
+        Field(description="Column specifications for sorting (strings or SortColumn objects)"),
     ],
 ) -> SortDataResult:
     """Sort data by one or more columns with comprehensive error handling.
@@ -245,7 +243,8 @@ def sort_data(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
 
@@ -260,23 +259,18 @@ def sort_data(
             elif isinstance(col, SortColumn):
                 sort_columns.append(col.column)
                 ascending.append(col.ascending)
-            elif isinstance(col, dict):
-                if "column" not in col:
-                    raise ToolError(f"Dict specification missing 'column' key: {col}")
+            elif isinstance(col, dict) and "column" in col:
                 sort_columns.append(col["column"])
-                # Handle string/bool conversion for ascending
-                asc_val = col.get("ascending", True)
-                if isinstance(asc_val, str):
-                    ascending.append(asc_val.lower() in ("true", "1", "yes"))
-                else:
-                    ascending.append(bool(asc_val))
+                ascending.append(col.get("ascending", True))
             else:
-                raise ToolError(f"Invalid column specification: {col}")
+                msg = f"Invalid column specification: {col}"
+                raise ToolError(msg)
 
         # Validate all columns exist
         missing_cols = [col for col in sort_columns if col not in df.columns]
         if missing_cols:
-            raise ToolError(f"Columns not found: {missing_cols}")
+            msg = f"Columns not found: {missing_cols}"
+            raise ToolError(msg)
 
         # Perform sort
         session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
@@ -298,8 +292,9 @@ def sort_data(
         )
 
     except Exception as e:
-        logger.error(f"Error sorting data: {e!s}")
-        raise ToolError(f"Error sorting data: {e!s}") from e
+        logger.error("Error sorting data: %s", str(e))
+        msg = f"Error sorting data: {e!s}"
+        raise ToolError(msg) from e
 
 
 def remove_duplicates(
@@ -346,7 +341,8 @@ def remove_duplicates(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
         rows_before = len(df)
@@ -355,7 +351,8 @@ def remove_duplicates(
         if subset:
             missing_cols = [col for col in subset if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found in subset: {missing_cols}")
+                msg = f"Columns not found in subset: {missing_cols}"
+                raise ToolError(msg)
 
         # Convert keep parameter for pandas
         keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
@@ -386,8 +383,9 @@ def remove_duplicates(
         )
 
     except Exception as e:
-        logger.error(f"Error removing duplicates: {e!s}")
-        raise ToolError(f"Error removing duplicates: {e!s}") from e
+        logger.error("Error removing duplicates: %s", str(e))
+        msg = f"Error removing duplicates: {e!s}"
+        raise ToolError(msg) from e
 
 
 def fill_missing_values(
@@ -395,12 +393,13 @@ def fill_missing_values(
     strategy: Annotated[
         Literal["drop", "fill", "forward", "backward", "mean", "median", "mode"],
         Field(
-            description="Strategy for handling missing values (drop, fill, forward, backward, mean, median, mode)"
+            description="Strategy for handling missing values (drop, fill, forward, backward, mean, median, mode)",
         ),
     ] = "drop",
-    value: Annotated[Any, Field(description="Value to use when strategy is 'fill'")] = None,
+    value: Annotated[CellValue, Field(description="Value to use when strategy is 'fill'")] = None,
     columns: Annotated[
-        list[str] | None, Field(description="Columns to process (None = all columns)")
+        list[str] | None,
+        Field(description="Columns to process (None = all columns)"),
     ] = None,
 ) -> ColumnOperationResult:
     """Fill or remove missing values with comprehensive strategy support.
@@ -444,7 +443,8 @@ def fill_missing_values(
         session = manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError("Invalid session or no data loaded")
+            msg = "Invalid session or no data loaded"
+            raise ToolError(msg)
 
         df = session.df
         rows_before = len(df)
@@ -453,7 +453,8 @@ def fill_missing_values(
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
             target_cols = columns
         else:
             target_cols = df.columns.tolist()
@@ -466,7 +467,8 @@ def fill_missing_values(
             session.df = df.dropna(subset=target_cols)
         elif strategy == "fill":
             if value is None:
-                raise ToolError("Value required for 'fill' strategy")
+                msg = "Value required for 'fill' strategy"
+                raise ToolError(msg)
             session.df = df.copy()
             session.df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
@@ -483,7 +485,7 @@ def fill_missing_values(
                     if not pd.isna(mean_val):
                         session.df[col] = df[col].fillna(mean_val)
                 else:
-                    logger.warning(f"Column '{col}' is not numeric, skipping mean fill")
+                    logger.warning("Column '%s' is not numeric, skipping mean fill", col)
         elif strategy == "median":
             session.df = df.copy()
             for col in target_cols:
@@ -492,7 +494,7 @@ def fill_missing_values(
                     if not pd.isna(median_val):
                         session.df[col] = df[col].fillna(median_val)
                 else:
-                    logger.warning(f"Column '{col}' is not numeric, skipping median fill")
+                    logger.warning("Column '%s' is not numeric, skipping median fill", col)
         elif strategy == "mode":
             session.df = df.copy()
             for col in target_cols:
@@ -500,9 +502,12 @@ def fill_missing_values(
                 if len(mode_val) > 0:
                     session.df[col] = df[col].fillna(mode_val[0])
         else:
-            raise ToolError(
+            msg = (
                 f"Invalid strategy '{strategy}'. Valid strategies: "
                 "drop, fill, forward, backward, mean, median, mode"
+            )
+            raise ToolError(
+                msg,
             )
 
         rows_after = len(session.df)
@@ -530,8 +535,9 @@ def fill_missing_values(
         )
 
     except Exception as e:
-        logger.error(f"Error filling missing values: {e!s}")
-        raise ToolError(f"Error filling missing values: {e!s}") from e
+        logger.error("Error filling missing values: %s", str(e))
+        msg = f"Error filling missing values: {e!s}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================

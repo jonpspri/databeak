@@ -242,15 +242,10 @@ def update_version_file(version: str) -> None:
 def main() -> None:
     """Synchronize all version numbers."""
     version = get_package_version()
-    print(f"Synchronizing version to {version}")
 
     update_package_json(version)
-    print("✓ Updated package.json")
 
     update_version_file(version)
-    print("✓ Updated _version.py")
-
-    print("All version numbers synchronized!")
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 @pytest.fixture(scope="session", autouse=True)
-def cleanup_history_files() -> Generator[None]:
+def _cleanup_history_files() -> Generator[None]:
     """Clean up history files created during testing."""
     yield  # Let all tests run first
 
@@ -98,7 +98,11 @@ async def isolated_session_with_cleanup(isolated_session_id, temp_work_dir):
         await manager.remove_session(isolated_session_id)
     except Exception as e:
         # Log the exception instead of silently passing
-        print(f"Warning: Failed to cleanup session {isolated_session_id}: {e}")
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Failed to cleanup test session %s: %s", isolated_session_id, e
+        )
 
 
 @pytest.fixture

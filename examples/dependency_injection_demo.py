@@ -48,7 +48,7 @@ async def demonstrate_before_after() -> None:
             "sales": [100, 150, 200, 120, 180, 210, 110],
             "profit": [20, 30, 40, 25, 35, 42, 22],
             "region": ["North", "South", "East", "North", "South", "East", "West"],
-        }
+        },
     )
 
     print("Sample Data:")
@@ -81,7 +81,7 @@ async def demonstrate_before_after() -> None:
     if "sales" in stats_result.statistics:
         sales_stats = stats_result.statistics["sales"]
         print(
-            f"   ✓ Sales stats - Mean: {sales_stats.mean:.2f}, Min: {sales_stats.min}, Max: {sales_stats.max}"
+            f"   ✓ Sales stats - Mean: {sales_stats.mean:.2f}, Min: {sales_stats.min}, Max: {sales_stats.max}",
         )
 
     print()
@@ -144,7 +144,7 @@ async def demonstrate_before_after() -> None:
             "item": ["Widget", "Gadget", "Tool", "Widget"],
             "quantity": [50, 75, 30, 45],
             "price": [10.50, 25.00, 15.75, 10.50],
-        }
+        },
     )
 
     session_id_2 = "inventory_session"

@@ -34,7 +34,7 @@ async def overwrite_same_file_example():
             "product": ["Laptop", "Mouse", "Keyboard"],
             "price": [999.99, 29.99, 79.99],
             "stock": [50, 200, 150],
-        }
+        },
     )
 
     # Save initial data to file
@@ -77,7 +77,7 @@ async def overwrite_same_file_example():
             "product": ["Monitor"],
             "price": [329.989],
             "stock": [75],
-        }  # Will be rounded when saved
+        },  # Will be rounded when saved
     )
     session.df = pd.concat([session.df, new_row], ignore_index=True)
     session.record_operation(OperationType.ADD_COLUMN, {"operation": "add_monitor"})

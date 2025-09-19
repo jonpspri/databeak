@@ -128,8 +128,8 @@ class TestDetectOutliers:
 
     async def test_detect_outliers_non_numeric(self, discovery_session):
         """Test outlier detection with non-numeric columns."""
+        ctx = cast(Context, create_mock_context(discovery_session))
         with pytest.raises(ToolError, match="numeric"):
-            ctx = cast(Context, create_mock_context(discovery_session))
             await detect_outliers(ctx, columns=["name", "category"])
 
     async def test_detect_outliers_no_outliers(self):
@@ -339,7 +339,7 @@ class TestFindCellsWithValue:
     async def test_find_boolean_value(self, discovery_session):
         """Test finding boolean values."""
         ctx = create_mock_context(discovery_session)
-        result = await find_cells_with_value(ctx, True, columns=["is_premium"])
+        result = await find_cells_with_value(ctx, value=True, columns=["is_premium"])
 
         assert result.success is True
         assert result.matches_found > 0

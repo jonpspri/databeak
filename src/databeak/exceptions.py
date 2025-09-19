@@ -112,7 +112,7 @@ class FileError(DatabeakError):
     """File access and format errors."""
 
 
-class FileNotFoundError(FileError):
+class DataBeakFileNotFoundError(FileError):
     """File does not exist."""
 
     def __init__(self, file_path: str):
@@ -172,7 +172,10 @@ class InvalidParameterError(ParameterError):
     """Invalid parameter value."""
 
     def __init__(
-        self, parameter: str, value: Any, expected: str | None = None
+        self,
+        parameter: str,
+        value: Any,
+        expected: str | None = None,
     ):  # Any justified: can receive any invalid value type
         """Initialize with parameter details."""
         super().__init__(

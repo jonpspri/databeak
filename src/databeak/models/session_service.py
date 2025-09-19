@@ -64,14 +64,17 @@ class SessionService(ABC):
         session = self.session_manager.get_or_create_session(session_id)
 
         if not session:
-            raise ValueError(f"Session not found: {session_id}")
+            msg = f"Session not found: {session_id}"
+            raise ValueError(msg)
 
         if not session.has_data():
-            raise ValueError(f"No data loaded in session: {session_id}")
+            msg = f"No data loaded in session: {session_id}"
+            raise ValueError(msg)
 
         df = session.df
         if df is None:
-            raise ValueError(f"Invalid data state in session: {session_id}")
+            msg = f"Invalid data state in session: {session_id}"
+            raise ValueError(msg)
 
         return session, df
 
@@ -87,7 +90,8 @@ class SessionService(ABC):
         """
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
-            raise ValueError(f"Columns not found: {missing_cols}")
+            msg = f"Columns not found: {missing_cols}"
+            raise ValueError(msg)
 
     @abstractmethod
     def get_service_name(self) -> str:

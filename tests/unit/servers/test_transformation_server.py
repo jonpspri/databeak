@@ -9,9 +9,9 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import src.databeak.servers.transformation_server  # noqa: F401
+from src.databeak.models.data_models import FilterCondition
 from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.servers.transformation_server import (
-    FilterCondition,
     SortColumn,
     fill_missing_values,
     filter_rows,
@@ -44,7 +44,7 @@ class TestTransformationServerFilterRows:
         """Test filtering using Pydantic FilterCondition models."""
         conditions = [
             FilterCondition(column="age", operator=">", value=27),
-            FilterCondition(column="status", operator="==", value="active"),
+            FilterCondition(column="status", operator="=", value="active"),
         ]
 
         ctx = create_mock_context(transformation_session)
@@ -215,32 +215,36 @@ class TestTransformationServerErrorHandling:
 
     async def test_filter_invalid_session(self):
         """Test filtering with invalid session."""
-        conditions = [FilterCondition(column="test", operator="==", value="test")]
+        conditions = [FilterCondition(column="test", operator="=", value="test")]
+
+        ctx = create_mock_context("invalid-session-id")
 
         with pytest.raises(ToolError, match="Invalid session"):
-            ctx = create_mock_context("invalid-session-id")
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_session(self):
         """Test sorting with invalid session."""
         columns = [SortColumn(column="test", ascending=True)]
 
+        ctx = create_mock_context("invalid-session-id")
+
         with pytest.raises(ToolError, match="Invalid session"):
-            ctx = create_mock_context("invalid-session-id")
             sort_data(ctx, columns)
 
     async def test_filter_invalid_column(self, transformation_session):
         """Test filtering with invalid column name."""
-        conditions = [FilterCondition(column="nonexistent", operator="==", value="test")]
+        conditions = [FilterCondition(column="nonexistent", operator="=", value="test")]
+
+        ctx = create_mock_context(transformation_session)
 
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(transformation_session)
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_column(self, transformation_session):
         """Test sorting with invalid column name."""
         columns = [SortColumn(column="nonexistent", ascending=True)]
 
+        ctx = create_mock_context(transformation_session)
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context(transformation_session)
             sort_data(ctx, columns)

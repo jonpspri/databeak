@@ -30,7 +30,7 @@ async def test_default_autosave():
 
     # Create initial data
     initial_data = pd.DataFrame(
-        {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "value": [100, 200, 300]}
+        {"id": [1, 2, 3], "name": ["Alice", "Bob", "Charlie"], "value": [100, 200, 300]},
     )
 
     # Save initial data
