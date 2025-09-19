@@ -42,6 +42,7 @@ class AutoSaveConfig:
 
     def __init__(
         self,
+        *,
         enabled: bool = False,  # Default to disabled
         mode: AutoSaveMode = AutoSaveMode.AFTER_OPERATION,  # Changed to save after each operation
         strategy: AutoSaveStrategy = AutoSaveStrategy.OVERWRITE,  # Changed to overwrite same file
@@ -49,7 +50,7 @@ class AutoSaveConfig:
         max_backups: int = 10,
         backup_dir: str | None = None,
         custom_path: str | None = None,
-        format: ExportFormat = ExportFormat.CSV,
+        export_format: ExportFormat = ExportFormat.CSV,
         encoding: str = "utf-8",
     ):
         """Initialize auto-save configuration."""
@@ -60,7 +61,7 @@ class AutoSaveConfig:
         self.max_backups = max_backups
         self.backup_dir = backup_dir or str(Path.cwd() / ".csv_backups")
         self.custom_path = custom_path
-        self.format = format
+        self.export_format = export_format
         self.encoding = encoding
 
         # Create backup directory if needed
@@ -80,7 +81,7 @@ class AutoSaveConfig:
             "max_backups": self.max_backups,
             "backup_dir": self.backup_dir,
             "custom_path": self.custom_path,
-            "format": self.format.value,
+            "format": self.export_format.value,
             "encoding": self.encoding,
         }
 
@@ -95,7 +96,7 @@ class AutoSaveConfig:
             max_backups=data.get("max_backups", 10),
             backup_dir=data.get("backup_dir"),
             custom_path=data.get("custom_path"),
-            format=ExportFormat(data.get("format", "csv")),
+            export_format=ExportFormat(data.get("format", "csv")),
             encoding=data.get("encoding", "utf-8"),
         )
 
@@ -122,7 +123,7 @@ class AutoSaveManager:
         """Start periodic auto-save task."""
         if self.config.mode in [AutoSaveMode.PERIODIC, AutoSaveMode.HYBRID]:
             self.periodic_task = asyncio.create_task(self._periodic_save_loop(save_callback))
-            logger.info(f"Started periodic auto-save for session {self.session_id}")
+            logger.info("Started periodic auto-save for session %s", self.session_id)
 
     async def stop_periodic_save(self) -> None:
         """Stop periodic auto-save task."""
@@ -133,7 +134,7 @@ class AutoSaveManager:
             except asyncio.CancelledError:
                 pass
             self.periodic_task = None
-            logger.info(f"Stopped periodic auto-save for session {self.session_id}")
+            logger.info("Stopped periodic auto-save for session %s", self.session_id)
 
     async def _periodic_save_loop(self, save_callback: SaveCallback) -> None:
         """Periodic save loop."""
@@ -144,10 +145,12 @@ class AutoSaveManager:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Error in periodic save: {e!s}")
+                logger.error("Error in periodic save: %s", str(e))
 
     async def trigger_save(
-        self, save_callback: SaveCallback, trigger: str = "manual"
+        self,
+        save_callback: SaveCallback,
+        trigger: str = "manual",
     ) -> AutoSaveOperationResult:
         """Trigger an auto-save operation."""
         async with self._lock:
@@ -156,7 +159,9 @@ class AutoSaveManager:
                 save_path = self._get_save_path()
 
                 # Perform the save
-                result = await save_callback(save_path, self.config.format, self.config.encoding)
+                result = await save_callback(
+                    save_path, self.config.export_format, self.config.encoding
+                )
 
                 if result.get("success"):
                     self.last_save = datetime.now(UTC)
@@ -170,7 +175,9 @@ class AutoSaveManager:
                         await self._cleanup_old_backups()
 
                     logger.info(
-                        f"Auto-save successful for session {self.session_id} (trigger: {trigger})"
+                        "Auto-save successful for session %s (trigger: %s)",
+                        self.session_id,
+                        trigger,
                     )
 
                     return {
@@ -182,7 +189,7 @@ class AutoSaveManager:
                     }
                 else:
                     logger.error(
-                        f"Auto-save failed for session {self.session_id}: {result.get('error')}"
+                        "Auto-save failed for session %s: %s", self.session_id, result.get("error")
                     )
                     return {
                         "success": False,
@@ -191,7 +198,7 @@ class AutoSaveManager:
                     }
 
             except Exception as e:
-                logger.error(f"Auto-save error for session {self.session_id}: {e!s}")
+                logger.error("Auto-save error for session %s: %s", self.session_id, str(e))
                 return {"success": False, "error": str(e), "trigger": trigger}
 
     def _get_save_path(self) -> str:
@@ -207,16 +214,16 @@ class AutoSaveManager:
 
         elif self.config.strategy == AutoSaveStrategy.BACKUP:
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
-            filename = f"backup_{self.session_id}_{timestamp}.{self.config.format.value}"
+            filename = f"backup_{self.session_id}_{timestamp}.{self.config.export_format.value}"
             return str(Path(self.config.backup_dir) / filename)
 
         elif self.config.strategy == AutoSaveStrategy.VERSIONED:
             version = self.save_count + 1
-            filename = f"version_{self.session_id}_v{version:04d}.{self.config.format.value}"
+            filename = f"version_{self.session_id}_v{version:04d}.{self.config.export_format.value}"
             return str(Path(self.config.backup_dir) / filename)
 
         else:
-            return f"session_{self.session_id}.{self.config.format.value}"
+            return f"session_{self.session_id}.{self.config.export_format.value}"
 
     async def _cleanup_old_backups(self) -> None:
         """Remove old backup files beyond max_backups limit."""
@@ -239,10 +246,10 @@ class AutoSaveManager:
             while len(backup_files) > self.config.max_backups:
                 oldest = backup_files.pop(0)
                 Path(oldest["path"]).unlink()
-                logger.info(f"Removed old backup: {oldest['path']}")
+                logger.info("Removed old backup: %s", oldest["path"])
 
         except Exception as e:
-            logger.error(f"Error cleaning up backups: {e!s}")
+            logger.error("Error cleaning up backups: %s", str(e))
 
     def should_save_after_operation(self) -> bool:
         """Check if auto-save should trigger after an operation."""

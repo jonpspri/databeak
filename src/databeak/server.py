@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+# All MCP tools have been migrated to specialized server modules
+import logging
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -17,12 +19,10 @@ from .servers.statistics_server import statistics_server
 from .servers.system_server import system_server
 from .servers.transformation_server import transformation_server
 from .servers.validation_server import validation_server
-
-# All MCP tools have been migrated to specialized server modules
-from .utils.logging_config import get_logger, set_correlation_id, setup_structured_logging
+from .utils.logging_config import set_correlation_id, setup_structured_logging
 
 # Configure structured logging
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -36,10 +36,10 @@ def _load_instructions() -> str:
     try:
         return instructions_path.read_text(encoding="utf-8")
     except FileNotFoundError:
-        logger.warning(f"Instructions file not found at {instructions_path}")
+        logger.warning("Instructions file not found at %s", instructions_path)
         return "DataBeak MCP Server - Instructions file not available"
     except (PermissionError, OSError, UnicodeDecodeError) as e:
-        logger.error(f"Error loading instructions: {e}")
+        logger.error("Error loading instructions: %s", e)
         return "DataBeak MCP Server - Error loading instructions"
 
 
@@ -130,12 +130,15 @@ def main() -> None:
     server_correlation_id = set_correlation_id()
 
     logger.info(
-        f"Starting DataBeak with {args.transport} transport",
-        transport=args.transport,
-        host=args.host if args.transport != "stdio" else None,
-        port=args.port if args.transport != "stdio" else None,
-        log_level=args.log_level,
-        server_id=server_correlation_id,
+        "Starting DataBeak with %s transport",
+        args.transport,
+        extra={
+            "transport": args.transport,
+            "host": args.host if args.transport != "stdio" else None,
+            "port": args.port if args.transport != "stdio" else None,
+            "log_level": args.log_level,
+            "server_id": server_correlation_id,
+        },
     )
 
     # Run the server

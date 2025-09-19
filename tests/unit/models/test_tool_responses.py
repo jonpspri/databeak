@@ -73,7 +73,7 @@ class TestSessionInfo:
     """Test SessionInfo model."""
 
     @pytest.mark.parametrize(
-        "session_data,expected_attrs",
+        ("session_data", "expected_attrs"),
         [
             (
                 {
@@ -573,7 +573,7 @@ class TestSessionListResult:
                 column_count=5,
                 columns=["a", "b", "c", "d", "e"],
                 memory_usage_mb=2.0,
-            )
+            ),
         ]
         result = SessionListResult(
             sessions=sessions,
@@ -616,7 +616,7 @@ class TestStatisticsResult:
                 percentile_50=35.0,
                 percentile_75=43.0,
                 max=65.0,
-            )
+            ),
         }
         result = StatisticsResult(
             statistics=stats,
@@ -733,7 +733,7 @@ class TestOutliersResult:
             "age": [
                 OutlierInfo(row_index=42, value=95.0, z_score=3.2),
                 OutlierInfo(row_index=15, value=-5.0, z_score=-2.8),
-            ]
+            ],
         }
         result = OutliersResult(
             outliers_found=2,
@@ -995,10 +995,14 @@ class TestColumnOperationResult:
             original_sample=[1, "text", 3.14, None, True],
             updated_sample=[1, "TEXT", 3.14, "N/A", True],
         )
-        assert result.original_sample is not None and result.original_sample[1] == "text"
-        assert result.updated_sample is not None and result.updated_sample[1] == "TEXT"
-        assert result.original_sample is not None and result.original_sample[3] is None
-        assert result.updated_sample is not None and result.updated_sample[3] == "N/A"
+        assert result.original_sample is not None
+        assert result.original_sample[1] == "text"
+        assert result.updated_sample is not None
+        assert result.updated_sample[1] == "TEXT"
+        assert result.original_sample is not None
+        assert result.original_sample[3] is None
+        assert result.updated_sample is not None
+        assert result.updated_sample[3] == "N/A"
 
     def test_serialization_with_optional_fields(self):
         """Test serialization handles optional fields correctly."""
@@ -1149,7 +1153,7 @@ class TestSortDataResult:
     """Test SortDataResult model."""
 
     @pytest.mark.parametrize(
-        "session_id,sorted_by,ascending,rows_processed,description",
+        ("session_id", "sorted_by", "ascending", "rows_processed", "description"),
         [
             ("sort-123", ["department", "salary"], [True, False], 100, "multi-column sort"),
             ("single-sort", ["name"], [True], 50, "single column sort"),
@@ -1157,7 +1161,12 @@ class TestSortDataResult:
         ],
     )
     def test_sort_data_result_creation(
-        self, session_id, sorted_by, ascending, rows_processed, description
+        self,
+        session_id,
+        sorted_by,
+        ascending,
+        rows_processed,
+        description,
     ):
         """Test SortDataResult creation with various configurations."""
         result = SortDataResult(
@@ -1182,7 +1191,7 @@ class TestSortDataResult:
         assert restored == original
 
 
-# TODO: SelectColumnsResult model not yet implemented in tool_responses
+# NOTE: SelectColumnsResult model not yet implemented in tool_responses
 # Uncomment this test class when the model is available
 # class TestSelectColumnsResult:
 #     """Test SelectColumnsResult model."""

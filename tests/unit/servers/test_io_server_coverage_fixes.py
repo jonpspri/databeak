@@ -153,7 +153,10 @@ class TestLoadCsvEncodingFallbackPaths:
     async def test_load_csv_memory_check_in_fallback_encoding(self):
         """Test memory limit check during encoding fallback."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="latin1"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="latin1",
         ) as f:
             f.write("col1,col2\n1,2")
             temp_path = f.name
@@ -165,7 +168,8 @@ class TestLoadCsvEncodingFallbackPaths:
             with (
                 patch("pandas.read_csv") as mock_read_csv,
                 patch(
-                    "src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001
+                    "src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB",
+                    0.001,
                 ),  # Very low limit
             ):
                 # First call fails with encoding error, second returns large df
@@ -183,7 +187,10 @@ class TestLoadCsvEncodingFallbackPaths:
     async def test_load_csv_row_limit_in_fallback_encoding(self):
         """Test row limit check during encoding fallback."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="latin1"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="latin1",
         ) as f:
             f.write("col1,col2\n1,2")
             temp_path = f.name
@@ -294,7 +301,9 @@ class TestLoadCsvFromUrlEncodingFallbacks:
             pytest.raises(ToolError),
         ):
             await load_csv_from_url(
-                create_mock_context(), url="http://example.com/data.csv", encoding="utf-8"
+                create_mock_context(),
+                url="http://example.com/data.csv",
+                encoding="utf-8",
             )
 
     @patch("src.databeak.servers.io_server.urlopen")
@@ -317,7 +326,9 @@ class TestLoadCsvFromUrlEncodingFallbacks:
 
         with patch("src.databeak.servers.io_server.MAX_ROWS", 5), pytest.raises(ToolError):
             await load_csv_from_url(
-                create_mock_context(), url="http://example.com/data.csv", encoding="utf-8"
+                create_mock_context(),
+                url="http://example.com/data.csv",
+                encoding="utf-8",
             )
 
 
@@ -340,7 +351,8 @@ class TestLoadCsvFromUrlErrorPaths:
         """Test URLError handling."""
         with (
             patch(
-                "src.databeak.servers.io_server.urlopen", side_effect=URLError("Connection failed")
+                "src.databeak.servers.io_server.urlopen",
+                side_effect=URLError("Connection failed"),
             ),
             pytest.raises(ToolError, match="Network error"),
         ):
@@ -369,7 +381,8 @@ class TestLoadCsvFromUrlErrorPaths:
         # Mock pandas to succeed
         with patch("pandas.read_csv", return_value=pd.DataFrame({"col": [1, 2]})):
             result = await load_csv_from_url(
-                create_mock_context(), url="http://example.com/data.csv"
+                create_mock_context(),
+                url="http://example.com/data.csv",
             )
             assert result.success
 
@@ -546,7 +559,10 @@ class TestSpecificCoveragePaths:
     async def test_load_csv_other_exception_in_fallback(self):
         """Test non-UnicodeDecodeError exception during encoding fallback."""
         with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".csv", delete=False, encoding="latin1"
+            mode="w",
+            suffix=".csv",
+            delete=False,
+            encoding="latin1",
         ) as f:
             f.write("col1,col2\n1,2")
             temp_path = f.name
@@ -561,7 +577,9 @@ class TestSpecificCoveragePaths:
                 ]
 
                 result = await load_csv(
-                    create_mock_context(), file_path=temp_path, encoding="utf-8"
+                    create_mock_context(),
+                    file_path=temp_path,
+                    encoding="utf-8",
                 )
                 assert result.success
                 assert mock_read_csv.call_count == 3
@@ -586,7 +604,9 @@ class TestSpecificCoveragePaths:
         ]
 
         result = await load_csv_from_url(
-            create_mock_context(), url="http://example.com/data.csv", encoding="utf-8"
+            create_mock_context(),
+            url="http://example.com/data.csv",
+            encoding="utf-8",
         )
 
         assert result.success

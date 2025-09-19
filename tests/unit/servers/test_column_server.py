@@ -43,7 +43,7 @@ class TestColumnServerSelect:
     """Test select_columns server function."""
 
     @pytest.mark.parametrize(
-        "columns,expected_count,description",
+        ("columns", "expected_count", "description"),
         [
             (["first_name", "last_name", "email"], 3, "basic selection"),
             (["email", "id", "first_name"], 3, "reordered selection"),
@@ -264,7 +264,9 @@ class TestColumnServerUpdate:
         """Test map operation with dictionary."""
         mapping = {"John": "Jonathan", "Jane": "Janet"}
         result = await update_column(
-            ctx_fixture, "first_name", {"operation": "map", "value": mapping}
+            ctx_fixture,
+            "first_name",
+            {"operation": "map", "value": mapping},
         )
 
         assert result.operation == "update_map"
@@ -285,14 +287,18 @@ class TestColumnServerUpdate:
         """Test replace operation with missing parameters."""
         with pytest.raises(ToolError, match="Invalid value"):
             await update_column(
-                ctx_fixture, "first_name", {"operation": "replace", "pattern": "test"}
+                ctx_fixture,
+                "first_name",
+                {"operation": "replace", "pattern": "test"},
             )
 
     async def test_update_map_invalid_value(self, ctx_fixture):
         """Test map operation with invalid value type."""
         with pytest.raises(ToolError, match="Invalid value"):
             await update_column(
-                ctx_fixture, "first_name", {"operation": "map", "value": "not_a_dict"}
+                ctx_fixture,
+                "first_name",
+                {"operation": "map", "value": "not_a_dict"},
             )
 
     async def test_update_nonexistent_column(self, ctx_fixture):

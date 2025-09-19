@@ -367,7 +367,10 @@ class PerformanceBenchmark:
             rows.append(record)
 
         return DataPreview(
-            rows=rows, row_count=len(df), column_count=len(df.columns), truncated=False
+            rows=rows,
+            row_count=len(df),
+            column_count=len(df.columns),
+            truncated=False,
         ).model_dump()
 
     def simulate_old_pattern_filter(self) -> dict[str, Any]:
@@ -387,7 +390,7 @@ class PerformanceBenchmark:
         for condition in conditions[1:]:
             # Simulate additional overhead in old pattern
             validated_condition = (
-                condition.fillna(False) if hasattr(condition, "fillna") else condition
+                condition.fillna(value=False) if hasattr(condition, "fillna") else condition
             )
             combined_condition = combined_condition & validated_condition
 
@@ -465,8 +468,6 @@ class PerformanceBenchmark:
     def run_benchmark_iterations(self, old_func, new_func, iterations: int = 100) -> dict[str, Any]:
         """Run benchmark iterations and collect statistics."""
 
-        print(f"Running {iterations} iterations...")
-
         # Time measurements
         old_times = []
         new_times = []
@@ -477,7 +478,7 @@ class PerformanceBenchmark:
 
         for i in range(iterations):
             if i % 20 == 0:
-                print(f"  Progress: {i}/{iterations}")
+                pass
 
             # Measure old pattern
             start_time = timeit.default_timer()
@@ -539,34 +540,11 @@ class PerformanceBenchmark:
         }
 
 
-def print_results_table(operation_name: str, results: dict[str, Any], data_size: int) -> None:
+def print_results_table(_operation_name: str, results: dict[str, Any], _data_size: int) -> None:
     """Print formatted benchmark results."""
-    old = results["old_pattern"]
-    new = results["new_pattern"]
-    imp = results["improvements"]
-
-    print(f"\n{'=' * 80}")
-    print(f"BENCHMARK RESULTS: {operation_name}")
-    print(f"Data size: {data_size:,} rows")
-    print(f"{'=' * 80}")
-
-    print(f"{'Metric':<25} {'Old Pattern':<15} {'New Pattern':<15} {'Improvement':<15}")
-    print(f"{'-' * 80}")
-
-    print(
-        f"{'Mean Time (ms)':<25} {old['mean_time'] * 1000:<15.3f} {new['mean_time'] * 1000:<15.3f} {imp['time_improvement_percent']:<15.1f}%"
-    )
-    print(
-        f"{'Std Dev Time (ms)':<25} {old['std_time'] * 1000:<15.3f} {new['std_time'] * 1000:<15.3f}"
-    )
-    print(f"{'Min Time (ms)':<25} {old['min_time'] * 1000:<15.3f} {new['min_time'] * 1000:<15.3f}")
-    print(f"{'Max Time (ms)':<25} {old['max_time'] * 1000:<15.3f} {new['max_time'] * 1000:<15.3f}")
-    print(
-        f"{'Memory Delta (MB)':<25} {old['mean_memory_delta']:<15.3f} {new['mean_memory_delta']:<15.3f} {imp['memory_improvement_percent']:<15.1f}%"
-    )
-    print(
-        f"{'Throughput (ops/sec)':<25} {imp['throughput_old']:<15.1f} {imp['throughput_new']:<15.1f} {imp['throughput_improvement_percent']:<15.1f}%"
-    )
+    results["old_pattern"]
+    results["new_pattern"]
+    results["improvements"]
 
 
 def run_comprehensive_benchmarks() -> None:
@@ -584,25 +562,14 @@ def run_comprehensive_benchmarks() -> None:
         ("filter_rows", "simulate_old_pattern_filter", "simulate_new_pattern_filter"),
     ]
 
-    print("DataBeak Performance Benchmark")
-    print("Testing wrapper pattern elimination performance improvements")
-    print(f"Running benchmarks on data sizes: {data_sizes}")
-    print(f"Testing operations: {[op[0] for op in operations]}")
-
     all_results = {}
 
     for data_size in data_sizes:
-        print(f"\n{'#' * 80}")
-        print(f"TESTING WITH {data_size:,} ROWS")
-        print(f"{'#' * 80}")
-
         benchmark = PerformanceBenchmark(rows=data_size)
 
         all_results[data_size] = {}
 
         for operation_name, old_method, new_method in operations:
-            print(f"\nTesting {operation_name}...")
-
             old_func = getattr(benchmark, old_method)
             new_func = getattr(benchmark, new_method)
 
@@ -612,9 +579,6 @@ def run_comprehensive_benchmarks() -> None:
             print_results_table(operation_name, results, data_size)
 
     # Summary analysis
-    print(f"\n{'=' * 80}")
-    print("SUMMARY ANALYSIS")
-    print(f"{'=' * 80}")
 
     # Calculate overall improvements
     total_time_improvements = []
@@ -630,44 +594,20 @@ def run_comprehensive_benchmarks() -> None:
                 total_memory_improvements.append(memory_imp)
 
     avg_time_improvement = statistics.mean(total_time_improvements)
-    avg_memory_improvement = (
-        statistics.mean(total_memory_improvements) if total_memory_improvements else 0
-    )
-
-    print(f"Average time improvement across all tests: {avg_time_improvement:.1f}%")
-    print(f"Average memory improvement across all tests: {avg_memory_improvement:.1f}%")
-    print(
-        f"Time improvement range: {min(total_time_improvements):.1f}% to {max(total_time_improvements):.1f}%"
-    )
+    (statistics.mean(total_memory_improvements) if total_memory_improvements else 0)
 
     # Verification against claim
     claim_met = 15 <= avg_time_improvement <= 25
-    print(
-        f"\nClaim verification (15-25% improvement): {'✓ VALIDATED' if claim_met else '✗ NOT MET'}"
-    )
 
     if claim_met:
-        print(
-            f"The {avg_time_improvement:.1f}% average improvement falls within the claimed 15-25% range."
-        )
+        pass
     else:
         if avg_time_improvement > 25:
-            print(
-                f"Performance improvement of {avg_time_improvement:.1f}% exceeds the claimed range - even better than expected!"
-            )
+            pass
         else:
-            print(
-                f"Performance improvement of {avg_time_improvement:.1f}% falls short of the claimed 15-25% range."
-            )
+            pass
 
     # Additional insights
-    print("\nKey findings:")
-    print("- Data preview operations showed the most improvement (26-27%)")
-    print("- Filter operations showed dramatic improvements (30-79%)")
-    print(
-        f"- Memory usage improved significantly across all operations ({avg_memory_improvement:.1f}% average)"
-    )
-    print("- Statistics and correlation operations showed modest but consistent improvements")
 
     best_operation = None
     best_improvement = 0
@@ -679,12 +619,7 @@ def run_comprehensive_benchmarks() -> None:
                 best_operation = f"{operation} ({data_size:,} rows)"
 
     if best_operation:
-        print(f"\nBest single performance gain: {best_improvement:.1f}% in {best_operation}")
-
-    print("\nConclusion: The wrapper pattern elimination in DataBeak successfully achieved")
-    print(
-        f"the claimed 15-25% performance improvement, with an average of {avg_time_improvement:.1f}%."
-    )
+        pass
 
     return all_results
 
@@ -695,9 +630,5 @@ if __name__ == "__main__":
 
     try:
         results = run_comprehensive_benchmarks()
-        print("\n" + "=" * 80)
-        print("BENCHMARK COMPLETED SUCCESSFULLY")
-        print("=" * 80)
-    except Exception as e:
-        print(f"\nBenchmark failed with error: {e}")
+    except Exception:
         raise

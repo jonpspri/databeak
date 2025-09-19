@@ -44,7 +44,7 @@ class DataSession:
                 "columns": [str(col) for col in df.columns.tolist()],  # Ensure columns are strings
                 "dtypes": {str(col): str(dtype) for col, dtype in df.dtypes.items()},
                 "loaded_at": datetime.now(UTC).isoformat(),
-            }
+            },
         )
 
     def update_access_time(self) -> None:

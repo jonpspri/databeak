@@ -262,8 +262,9 @@ class SecureExpressionEvaluator:
             result = self._evaluator.eval(expression)
             return result
         except NameNotDefined as e:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression",
+                msg,
                 expression,
                 f"Unknown variable or function: {e}",
             ) from e
@@ -271,8 +272,9 @@ class SecureExpressionEvaluator:
             # Let ZeroDivisionError bubble up as expected by tests
             raise
         except Exception as e:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression",
+                msg,
                 expression,
                 f"Evaluation failed: {e}",
             ) from e
@@ -291,22 +293,29 @@ class SecureExpressionEvaluator:
             InvalidParameterError: If the expression contains unsafe operations
         """
         if not expression or not isinstance(expression, str):
+            msg = "expression"
             raise InvalidParameterError(
-                "expression", expression, "Expression must be a non-empty string"
+                msg,
+                expression,
+                "Expression must be a non-empty string",
             )
 
         # Check for dangerous patterns
         for pattern in self.DANGEROUS_PATTERNS:
             if re.search(pattern, expression, re.IGNORECASE):
+                msg = "expression"
                 raise InvalidParameterError(
-                    "expression", expression, f"Expression contains dangerous pattern: {pattern}"
+                    msg,
+                    expression,
+                    f"Expression contains dangerous pattern: {pattern}",
                 )
 
         # Try to parse the expression as valid Python syntax
         try:
             tree = ast.parse(expression, mode="eval")
         except SyntaxError as e:
-            raise InvalidParameterError("expression", expression, f"Invalid syntax: {e}") from e
+            msg = "expression"
+            raise InvalidParameterError(msg, expression, f"Invalid syntax: {e}") from e
 
         # Validate AST nodes
         self._validate_ast_nodes(tree)
@@ -375,8 +384,11 @@ class SecureExpressionEvaluator:
         )
 
         if not isinstance(node, allowed_node_types):
+            msg = "expression"
             raise InvalidParameterError(
-                "expression", str(node), f"Unsafe AST node type: {type(node).__name__}"
+                msg,
+                str(node),
+                f"Unsafe AST node type: {type(node).__name__}",
             )
 
         # Validate function calls
@@ -404,12 +416,18 @@ class SecureExpressionEvaluator:
             if isinstance(node.func.value, ast.Name) and node.func.value.id == "np":
                 func_name = f"np.{node.func.attr}"
             else:
+                msg = "expression"
                 raise InvalidParameterError(
-                    "expression", str(node.func), "Only np.* attribute access is allowed"
+                    msg,
+                    str(node.func),
+                    "Only np.* attribute access is allowed",
                 )
         else:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression", str(node.func), "Only simple function calls are allowed"
+                msg,
+                str(node.func),
+                "Only simple function calls are allowed",
             )
 
         # Check if function is in allowlist
@@ -417,15 +435,19 @@ class SecureExpressionEvaluator:
         evaluator_functions = set(self._evaluator.functions.keys())
         all_safe_functions = evaluator_functions | set(self.SAFE_NUMPY_FUNCTIONS.keys())
         if func_name not in all_safe_functions:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression",
+                msg,
                 func_name,
                 f"Function '{func_name}' is not allowed. "
                 f"Allowed functions: {', '.join(sorted(all_safe_functions))}",
             )
 
     def evaluate_column_expression(
-        self, expression: str, dataframe: pd.DataFrame, column_context: dict[str, str] | None = None
+        self,
+        expression: str,
+        dataframe: pd.DataFrame,
+        column_context: dict[str, str] | None = None,
     ) -> pd.Series:
         """Safely evaluate a mathematical expression with column references.
 
@@ -451,8 +473,11 @@ class SecureExpressionEvaluator:
         if column_context:
             for var_name, column_name in column_context.items():
                 if column_name not in dataframe.columns:
+                    msg = "column"
                     raise InvalidParameterError(
-                        "column", column_name, f"Column '{column_name}' not found in DataFrame"
+                        msg,
+                        column_name,
+                        f"Column '{column_name}' not found in DataFrame",
                     )
                 context[var_name] = dataframe[column_name]
 
@@ -483,15 +508,19 @@ class SecureExpressionEvaluator:
             return result  # type: ignore[no-any-return]
 
         except NameNotDefined as e:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression",
+                msg,
                 expression,
                 f"Undefined variable in expression: {e}. "
                 f"Available columns: {list(dataframe.columns)}",
             ) from e
         except Exception as e:
+            msg = "expression"
             raise InvalidParameterError(
-                "expression", expression, f"Expression evaluation failed: {e}"
+                msg,
+                expression,
+                f"Expression evaluation failed: {e}",
             ) from e
 
     def evaluate_simple_formula(self, formula: str, dataframe: pd.DataFrame) -> pd.Series:
@@ -550,7 +579,9 @@ def _get_secure_evaluator() -> SecureExpressionEvaluator:
 
 
 def evaluate_expression_safely(
-    expression: str, dataframe: pd.DataFrame, column_context: dict[str, str] | None = None
+    expression: str,
+    dataframe: pd.DataFrame,
+    column_context: dict[str, str] | None = None,
 ) -> pd.Series:
     """Convenience function for safe expression evaluation.
 

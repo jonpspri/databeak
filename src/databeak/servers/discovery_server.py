@@ -116,10 +116,10 @@ class OutliersResult(BaseToolResponse):
 
     outliers_found: int = Field(description="Total number of outliers detected")
     outliers_by_column: dict[str, list[OutlierInfo]] = Field(
-        description="Outliers grouped by column name"
+        description="Outliers grouped by column name",
     )
     method: Literal["zscore", "iqr", "isolation_forest"] = Field(
-        description="Detection method used"
+        description="Detection method used",
     )
     threshold: float = Field(description="Threshold value used for detection")
 
@@ -207,10 +207,12 @@ async def detect_outliers(
         Field(description="List of numerical columns to analyze for outliers (None = all numeric)"),
     ] = None,
     method: Annotated[
-        str, Field(description="Detection algorithm: zscore, iqr, or isolation_forest")
+        str,
+        Field(description="Detection algorithm: zscore, iqr, or isolation_forest"),
     ] = "iqr",
     threshold: Annotated[
-        float, Field(description="Sensitivity threshold (higher = less sensitive)")
+        float,
+        Field(description="Sensitivity threshold (higher = less sensitive)"),
     ] = 1.5,
 ) -> OutliersResult:
     """Detect outliers in numerical columns using various algorithms.
@@ -255,23 +257,27 @@ async def detect_outliers(
         session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
-            raise ToolError(f"Invalid session or no data loaded: {session_id}")
+            msg = f"Invalid session or no data loaded: {session_id}"
+            raise ToolError(msg)
 
         df = session.df
         if df is None:  # Additional defensive check
-            raise ToolError(f"No data available in session: {session_id}")
+            msg = f"No data available in session: {session_id}"
+            raise ToolError(msg)
 
         # Select numeric columns
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
             numeric_df = df[columns].select_dtypes(include=[np.number])
         else:
             numeric_df = df.select_dtypes(include=[np.number])
 
         if numeric_df.empty:
-            raise ToolError("No numeric columns found")
+            msg = "No numeric columns found"
+            raise ToolError(msg)
 
         outliers_by_column = {}
         total_outliers_count = 0
@@ -304,7 +310,7 @@ async def detect_outliers(
                         iqr_score = float((value - upper_bound) / iqr) if iqr > 0 else 0.0
 
                     outlier_infos.append(
-                        OutlierInfo(row_index=int(idx), value=value, iqr_score=iqr_score)
+                        OutlierInfo(row_index=int(idx), value=value, iqr_score=iqr_score),
                     )
 
                 outliers_by_column[col] = outlier_infos
@@ -330,14 +336,15 @@ async def detect_outliers(
                     z_score = float(abs((value - col_mean) / col_std)) if col_std > 0 else 0.0
 
                     outlier_infos.append(
-                        OutlierInfo(row_index=int(idx), value=value, z_score=z_score)
+                        OutlierInfo(row_index=int(idx), value=value, z_score=z_score),
                     )
 
                 outliers_by_column[col] = outlier_infos
                 total_outliers_count += len(outlier_indices)
 
         else:
-            raise ToolError(f"Unknown method: {method}")
+            msg = f"Unknown method: {method}"
+            raise ToolError(msg)
 
         session.record_operation(
             OperationType.ANALYZE,
@@ -365,17 +372,21 @@ async def detect_outliers(
         )
 
     except Exception as e:
-        logger.error(f"Error detecting outliers: {e!s}")
-        raise ToolError(f"Error detecting outliers: {e}") from e
+        logger.error("Error detecting outliers: %s", str(e))
+        msg = f"Error detecting outliers: {e}"
+        raise ToolError(msg) from e
 
 
 async def profile_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
+    *,
     include_correlations: Annotated[
-        bool, Field(description="Include correlation analysis in profile")
+        bool,
+        Field(description="Include correlation analysis in profile"),
     ] = True,
     include_outliers: Annotated[
-        bool, Field(description="Include outlier detection in profile")
+        bool,
+        Field(description="Include outlier detection in profile"),
     ] = True,
 ) -> ProfileResult:
     """Generate comprehensive data profile with statistical insights.
@@ -422,11 +433,13 @@ async def profile_data(
         session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
-            raise ToolError(f"Invalid session or no data loaded: {session_id}")
+            msg = f"Invalid session or no data loaded: {session_id}"
+            raise ToolError(msg)
 
         df = session.df
         if df is None:  # Additional defensive check
-            raise ToolError(f"No data available in session: {session_id}")
+            msg = f"No data available in session: {session_id}"
+            raise ToolError(msg)
 
         # Create ProfileInfo for each column (simplified to match model)
         profile_dict = {}
@@ -484,14 +497,16 @@ async def profile_data(
         )
 
     except Exception as e:
-        logger.error(f"Error profiling data: {e!s}")
-        raise ToolError(f"Error profiling data: {e}") from e
+        logger.error("Error profiling data: %s", str(e))
+        msg = f"Error profiling data: {e}"
+        raise ToolError(msg) from e
 
 
 async def group_by_aggregate(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     group_by: Annotated[
-        list[str], Field(description="List of columns to group by for segmentation analysis")
+        list[str],
+        Field(description="List of columns to group by for segmentation analysis"),
     ],
     aggregations: Annotated[
         dict[str, list[str]],
@@ -546,22 +561,26 @@ async def group_by_aggregate(
         session = manager.get_or_create_session(session_id)
 
         if not session or not session.has_data():
-            raise ToolError(f"Invalid session or no data loaded: {session_id}")
+            msg = f"Invalid session or no data loaded: {session_id}"
+            raise ToolError(msg)
 
         df = session.df
         if df is None:  # Additional defensive check
-            raise ToolError(f"No data available in session: {session_id}")
+            msg = f"No data available in session: {session_id}"
+            raise ToolError(msg)
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]
         if missing_cols:
-            raise ToolError(f"Group by columns not found: {missing_cols}")
+            msg = f"Group by columns not found: {missing_cols}"
+            raise ToolError(msg)
 
         # Validate aggregation columns
         agg_cols = list(aggregations.keys())
         missing_agg_cols = [col for col in agg_cols if col not in df.columns]
         if missing_agg_cols:
-            raise ToolError(f"Aggregation columns not found: {missing_agg_cols}")
+            msg = f"Aggregation columns not found: {missing_agg_cols}"
+            raise ToolError(msg)
 
         # Perform groupby to get group statistics
         grouped = df.groupby(group_by)
@@ -612,18 +631,22 @@ async def group_by_aggregate(
         )
 
     except Exception as e:
-        logger.error(f"Error in group by aggregate: {e!s}")
-        raise ToolError(f"Error in group by aggregate: {e}") from e
+        logger.error("Error in group by aggregate: %s", str(e))
+        msg = f"Error in group by aggregate: {e}"
+        raise ToolError(msg) from e
 
 
 async def find_cells_with_value(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     value: Annotated[Any, Field(description="The value to search for (any data type)")],
+    *,
     columns: Annotated[
-        list[str] | None, Field(description="List of columns to search (None = all columns)")
+        list[str] | None,
+        Field(description="List of columns to search (None = all columns)"),
     ] = None,
     exact_match: Annotated[
-        bool, Field(description="True for exact match, False for substring search")
+        bool,
+        Field(description="True for exact match, False for substring search"),
     ] = True,
 ) -> FindCellsResult:
     """Find all cells containing a specific value for data discovery.
@@ -673,7 +696,8 @@ async def find_cells_with_value(
         if columns is not None:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
             columns_to_search = columns
         else:
             columns_to_search = df.columns.tolist()
@@ -721,7 +745,7 @@ async def find_cells_with_value(
                         row=int(row_idx),
                         column=col,
                         value=processed_value,
-                    )
+                    ),
                 )
 
         return FindCellsResult(
@@ -738,20 +762,25 @@ async def find_cells_with_value(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Error finding cells with value: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error finding cells with value: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
     except Exception as e:
-        logger.error(f"Error finding cells with value: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error finding cells with value: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
 
 
 async def get_data_summary(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
+    *,
     include_preview: Annotated[
-        bool, Field(description="Include sample data rows in summary")
+        bool,
+        Field(description="Include sample data rows in summary"),
     ] = True,
     max_preview_rows: Annotated[
-        int, Field(description="Maximum number of preview rows to include")
+        int,
+        Field(description="Maximum number of preview rows to include"),
     ] = 10,
 ) -> DataSummaryResult:
     """Get comprehensive data overview and structural summary.
@@ -884,11 +913,13 @@ async def get_data_summary(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Error getting data summary: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error getting data summary: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
     except Exception as e:
-        logger.error(f"Error getting data summary: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error getting data summary: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
 
 
 async def inspect_data_around(
@@ -896,7 +927,8 @@ async def inspect_data_around(
     row: Annotated[int, Field(description="Row index to center the inspection (0-based)")],
     column_name: Annotated[str, Field(description="Name of the column to center on")],
     radius: Annotated[
-        int, Field(description="Number of rows/columns to include around center point")
+        int,
+        Field(description="Number of rows/columns to include around center point"),
     ] = 2,
 ) -> InspectDataResult:
     """Inspect data around a specific coordinate for contextual analysis.
@@ -945,12 +977,14 @@ async def inspect_data_around(
         column = column_name
         if isinstance(column, int):
             if column < 0 or column >= len(df.columns):
-                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
+                msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
+                raise ToolError(msg)
             column_name = df.columns[column]
             col_index = column
         else:
             if column not in df.columns:
-                raise ToolError(f"Column '{column}' not found")
+                msg = f"Column '{column}' not found"
+                raise ToolError(msg)
             column_name = column
             col_index_result = df.columns.get_loc(column)
             col_index = col_index_result if isinstance(col_index_result, int) else 0
@@ -990,7 +1024,10 @@ async def inspect_data_around(
 
         # Create DataPreview from the records
         surrounding_data = DataPreview(
-            rows=records, row_count=len(records), column_count=len(cols_slice), truncated=False
+            rows=records,
+            row_count=len(records),
+            column_count=len(cols_slice),
+            truncated=False,
         )
 
         return InspectDataResult(
@@ -1005,11 +1042,13 @@ async def inspect_data_around(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Error inspecting data around cell: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error inspecting data around cell: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
     except Exception as e:
-        logger.error(f"Error inspecting data around cell: {e!s}")
-        raise ToolError(f"Error: {e}") from e
+        logger.error("Error inspecting data around cell: %s", str(e))
+        msg = f"Error: {e}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================

@@ -147,7 +147,7 @@ class TestUpdateColumnDiscriminatedUnions:
     async def test_invalid_expression_apply(self, update_session):
         """Test apply operation with invalid expression."""
         operation = ApplyOperation(
-            expression="import os; os.system('ls')"  # Dangerous expression
+            expression="import os; os.system('ls')",  # Dangerous expression
         )
 
         with pytest.raises(ToolError, match="Invalid value for parameter"):
@@ -216,7 +216,7 @@ class TestUpdateColumnDiscriminatedUnions:
             create_mock_context(update_session),
             column="category",
             operation=MapOperation(
-                mapping={"Category 1": "Premium", "Category 2": "Standard", "Category 3": "Basic"}
+                mapping={"Category 1": "Premium", "Category 2": "Standard", "Category 3": "Basic"},
             ),
         )
         assert result3.success is True

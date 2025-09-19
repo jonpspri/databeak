@@ -134,7 +134,7 @@ class LoadCSVFromContentParams(BaseModel):
     content: str = Field(description="CSV content as string")
     delimiter: str = Field(",", description="Column delimiter")
     session_id: str | None = Field(None, description="Optional existing session ID")
-    has_header: bool = Field(True, description="Whether first row is header")
+    has_header: bool = Field(default=True, description="Whether first row is header")
 
 
 class ExportCSVParams(BaseModel):
@@ -150,7 +150,7 @@ class ExportCSVParams(BaseModel):
         "csv", description="Export format"
     )
     encoding: str = Field("utf-8", description="Output encoding")
-    index: bool = Field(False, description="Whether to include index in output")
+    index: bool = Field(default=False, description="Whether to include index in output")
 
 
 # ============================================================================
@@ -175,18 +175,21 @@ def detect_file_encoding(file_path: str) -> str:
             detected_encoding = detection["encoding"]
             if detected_encoding:
                 logger.debug(
-                    f"Chardet detected encoding: {detected_encoding} (confidence: {detection['confidence']:.2f})"
+                    "Chardet detected encoding: %s (confidence: %.2f)",
+                    detected_encoding,
+                    detection["confidence"],
                 )
                 return detected_encoding.lower()
             else:
                 logger.debug("Chardet detected encoding is None, using fallbacks")
 
         logger.debug(
-            f"Chardet detection low confidence ({detection['confidence'] if detection else 0:.2f}), using fallbacks"
+            "Chardet detection low confidence (%.2f), using fallbacks",
+            detection["confidence"] if detection else 0,
         )
 
     except (ImportError, AttributeError, UnicodeError, OSError) as e:
-        logger.debug(f"Chardet detection failed: {e}, using fallbacks")
+        logger.debug("Chardet detection failed: %s, using fallbacks", e)
 
     # Fallback to common encodings in priority order
     # UTF-8 first (most common), then Windows encodings, then Latin variants
@@ -271,7 +274,9 @@ async def load_csv(
         # Validate file path
         is_valid, validated_path = validate_file_path(file_path)
         if not is_valid:
-            raise ToolError(f"Invalid file path: {validated_path}")
+            msg = f"Invalid file path: {validated_path}"
+
+            raise ToolError(msg)
 
         await ctx.info(f"Loading CSV file: {validated_path}")
         await ctx.report_progress(0.1)
@@ -279,7 +284,9 @@ async def load_csv(
         # Check file size before attempting to load
         file_size_mb = Path(validated_path).stat().st_size / (1024 * 1024)
         if file_size_mb > MAX_FILE_SIZE_MB:
-            raise ToolError(f"File size {file_size_mb:.1f}MB exceeds limit of {MAX_FILE_SIZE_MB}MB")
+            msg = f"File size {file_size_mb:.1f}MB exceeds limit of {MAX_FILE_SIZE_MB}MB"
+
+            raise ToolError(msg)
 
         await ctx.info(f"File size: {file_size_mb:.2f} MB")
 
@@ -313,15 +320,15 @@ async def load_csv(
 
             # Check memory usage and row count limits
             if len(df) > MAX_ROWS:
-                raise ToolError(
-                    f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                )
+                msg = f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+
+                raise ToolError(msg)
 
             memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
             if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                raise ToolError(
-                    f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                )
+                msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+
+                raise ToolError(msg)
         except UnicodeDecodeError as e:
             # Use optimized encoding detection and fallbacks
             df = None
@@ -333,7 +340,7 @@ async def load_csv(
             try:
                 detected_encoding = detect_file_encoding(validated_path)
                 if detected_encoding != encoding:
-                    logger.info(f"Auto-detected encoding: {detected_encoding}")
+                    logger.info("Auto-detected encoding: %s", detected_encoding)
                     await ctx.info(f"Auto-detected encoding: {detected_encoding}")
 
                     read_params["encoding"] = detected_encoding
@@ -341,23 +348,23 @@ async def load_csv(
 
                     # Apply memory checks to detected encoding
                     if len(df) > MAX_ROWS:
-                        raise ToolError(
-                            f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                        )
+                        msg = f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+
+                        raise ToolError(msg)
 
                     memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
                     if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                        raise ToolError(
-                            f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                        )
+                        msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+
+                        raise ToolError(msg)
 
                     logger.info(
-                        f"Successfully loaded with auto-detected encoding: {detected_encoding}"
+                        "Successfully loaded with auto-detected encoding: %s", detected_encoding
                     )
 
             except Exception as detection_error:
                 logger.debug(
-                    f"Auto-detection failed: {detection_error}, trying prioritized fallbacks"
+                    "Auto-detection failed: %s, trying prioritized fallbacks", detection_error
                 )
 
                 # Fall back to optimized encoding list
@@ -371,18 +378,18 @@ async def load_csv(
 
                             # Apply same memory checks to fallback encoding
                             if len(df) > MAX_ROWS:
-                                raise ToolError(
-                                    f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                                )
+                                msg = f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+
+                                raise ToolError(msg)
 
                             memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
                             if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                                raise ToolError(
-                                    f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                                )
+                                msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+
+                                raise ToolError(msg)
 
                             logger.warning(
-                                f"Used fallback encoding {alt_encoding} instead of {encoding}"
+                                "Used fallback encoding %s instead of %s", alt_encoding, encoding
                             )
                             await ctx.info(
                                 f"Used fallback encoding {alt_encoding} due to encoding error"
@@ -392,19 +399,17 @@ async def load_csv(
                             last_error = fallback_error
                             continue
                         except Exception as other_error:
-                            logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
+                            logger.debug("Failed with encoding %s: %s", alt_encoding, other_error)
                             continue
                 else:
                     # All encodings failed
-                    raise ToolError(
-                        f"Encoding error with all attempted encodings: {last_error}. "
-                        "Try specifying a different encoding or check file format."
-                    ) from last_error
+                    msg = f"Encoding error with all attempted encodings: {last_error}. Try specifying a different encoding or check file format."
+                    raise ToolError(msg) from last_error
 
             if df is None:
-                raise ToolError(
-                    f"Failed to load CSV with any encoding: {last_error}"
-                ) from last_error
+                msg = f"Failed to load CSV with any encoding: {last_error}"
+
+                raise ToolError(msg) from last_error
 
         await ctx.report_progress(0.8)
 
@@ -431,22 +436,29 @@ async def load_csv(
         )
 
     except OSError as e:
-        logger.error(f"File I/O error while loading CSV: {e}")
-        await ctx.error(f"File access error: {e!s}")
-        raise ToolError(f"File access error: {e}") from e
+        logger.error("File I/O error while loading CSV: %s", e)
+        await ctx.error(f"File access error: {e}")
+        msg = f"File access error: {e}"
+
+        raise ToolError(msg) from e
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
-        logger.error(f"CSV parsing error: {e}")
-        await ctx.error(f"CSV format error: {e!s}")
-        raise ToolError(f"CSV format error: {e}") from e
+        logger.error("CSV parsing error: %s", e)
+        await ctx.error(f"CSV format error: {e}")
+        msg = f"CSV format error: {e}"
+
+        raise ToolError(msg) from e
     except MemoryError as e:
-        logger.error(f"Insufficient memory to load CSV: {e}")
+        logger.error("Insufficient memory to load CSV: %s", e)
         await ctx.error("File too large - insufficient memory")
-        raise ToolError("File too large - insufficient memory") from e
+        msg = "File too large - insufficient memory"
+        raise ToolError(msg) from e
     except Exception as e:
         # Fallback for unexpected errors - more specific logging
-        logger.error(f"Unexpected error while loading CSV: {type(e).__name__}: {e}")
-        await ctx.error(f"Unexpected error: {e!s}")
-        raise ToolError(f"Failed to load CSV: {e}") from e
+        logger.error("Unexpected error while loading CSV: %s: %s", type(e).__name__, e)
+        await ctx.error(f"Unexpected error: {e}")
+        msg = f"Failed to load CSV: {e}"
+
+        raise ToolError(msg) from e
 
 
 # Implementation: HTTP/HTTPS download with security validation and timeouts
@@ -475,7 +487,9 @@ async def load_csv_from_url(
         # Validate URL
         is_valid, validated_url = validate_url(url)
         if not is_valid:
-            raise ToolError(f"Invalid URL: {validated_url}")
+            msg = f"Invalid URL: {validated_url}"
+
+            raise ToolError(msg)
 
         await ctx.info(f"Loading CSV from URL: {url}")
         await ctx.report_progress(0.1)
@@ -503,16 +517,16 @@ async def load_csv_from_url(
                 ]
 
                 if content_type and not any(ct in content_type for ct in valid_content_types):
-                    logger.warning(f"Unexpected content-type: {content_type}. Proceeding anyway.")
+                    logger.warning("Unexpected content-type: %s. Proceeding anyway.", content_type)
                     await ctx.info(f"Warning: Content-type is {content_type}, expected CSV format")
 
                 # Check content length
                 if content_length:
                     size_mb = int(content_length) / (1024 * 1024)
                     if size_mb > MAX_URL_SIZE_MB:
-                        raise ToolError(
-                            f"Download too large: {size_mb:.1f} MB exceeds limit of {MAX_URL_SIZE_MB} MB"
-                        )
+                        msg = f"Download too large: {size_mb:.1f} MB exceeds limit of {MAX_URL_SIZE_MB} MB"
+
+                        raise ToolError(msg)
 
                 await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
                 await ctx.report_progress(0.3)
@@ -522,20 +536,22 @@ async def load_csv_from_url(
 
             # Apply memory and row limits to downloaded data
             if len(df) > MAX_ROWS:
-                raise ToolError(
-                    f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                )
+                msg = f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+
+                raise ToolError(msg)
 
             memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
             if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                raise ToolError(
-                    f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                )
+                msg = f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+
+                raise ToolError(msg)
 
         except (TimeoutError, URLError, HTTPError) as e:
-            logger.error(f"Network error downloading URL: {e}")
-            await ctx.error(f"Network error: {e!s}")
-            raise ToolError(f"Network error: {e}") from e
+            logger.error("Network error downloading URL: %s", e)
+            await ctx.error(f"Network error: {e}")
+            msg = f"Network error: {e}"
+
+            raise ToolError(msg) from e
         except UnicodeDecodeError as e:
             # Use optimized encoding fallbacks for URL downloads
             df = None
@@ -553,18 +569,18 @@ async def load_csv_from_url(
 
                         # Apply same memory checks to fallback encoding
                         if len(df) > MAX_ROWS:
-                            raise ToolError(
-                                f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
-                            )
+                            msg = f"Downloaded file too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+
+                            raise ToolError(msg)
 
                         memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
                         if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-                            raise ToolError(
-                                f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
-                            )
+                            msg = f"Downloaded file too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+
+                            raise ToolError(msg)
 
                         logger.warning(
-                            f"Used fallback encoding {alt_encoding} instead of {encoding}"
+                            "Used fallback encoding %s instead of %s", alt_encoding, encoding
                         )
                         await ctx.info(
                             f"Used fallback encoding {alt_encoding} due to encoding error"
@@ -574,18 +590,16 @@ async def load_csv_from_url(
                         last_error = fallback_error
                         continue
                     except Exception as other_error:
-                        logger.debug(f"Failed with encoding {alt_encoding}: {other_error}")
+                        logger.debug("Failed with encoding %s: %s", alt_encoding, other_error)
                         continue
             else:
-                raise ToolError(
-                    f"Encoding error with all attempted encodings: {last_error}. "
-                    "Try specifying a different encoding."
-                ) from last_error
+                msg = f"Encoding error with all attempted encodings: {last_error}. Try specifying a different encoding."
+                raise ToolError(msg) from last_error
 
             if df is None:
-                raise ToolError(
-                    f"Failed to download CSV with any encoding: {last_error}"
-                ) from last_error
+                msg = f"Failed to download CSV with any encoding: {last_error}"
+
+                raise ToolError(msg) from last_error
 
         await ctx.report_progress(0.8)
 
@@ -594,7 +608,8 @@ async def load_csv_from_url(
         session = session_manager.get_or_create_session(session_id)
 
         if df is None:
-            raise ToolError("Failed to load data from URL")
+            msg = "Failed to load data from URL"
+            raise ToolError(msg)
 
         session.load_data(df, url)
 
@@ -618,21 +633,28 @@ async def load_csv_from_url(
         )
 
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
-        logger.error(f"CSV parsing error from URL: {e}")
-        await ctx.error(f"CSV format error from URL: {e!s}")
-        raise ToolError(f"CSV format error from URL: {e}") from e
+        logger.error("CSV parsing error from URL: %s", e)
+        await ctx.error(f"CSV format error from URL: {e}")
+        msg = f"CSV format error from URL: {e}"
+
+        raise ToolError(msg) from e
     except OSError as e:
-        logger.error(f"Network/file error while loading from URL: {e}")
-        await ctx.error(f"Network error: {e!s}")
-        raise ToolError(f"Network error: {e}") from e
+        logger.error("Network/file error while loading from URL: %s", e)
+        await ctx.error(f"Network error: {e}")
+        msg = f"Network error: {e}"
+
+        raise ToolError(msg) from e
     except MemoryError as e:
-        logger.error(f"Insufficient memory to load CSV from URL: {e}")
+        logger.error("Insufficient memory to load CSV from URL: %s", e)
         await ctx.error("Downloaded file too large - insufficient memory")
-        raise ToolError("Downloaded file too large - insufficient memory") from e
+        msg = "Downloaded file too large - insufficient memory"
+        raise ToolError(msg) from e
     except Exception as e:
-        logger.error(f"Unexpected error while loading CSV from URL: {type(e).__name__}: {e}")
-        await ctx.error(f"Unexpected error: {e!s}")
-        raise ToolError(f"Failed to load CSV from URL: {e}") from e
+        logger.error("Unexpected error while loading CSV from URL: %s: %s", type(e).__name__, e)
+        await ctx.error(f"Unexpected error: {e}")
+        msg = f"Failed to load CSV from URL: {e}"
+
+        raise ToolError(msg) from e
 
 
 # Implementation: parses CSV from string using StringIO with pandas read_csv
@@ -644,6 +666,7 @@ async def load_csv_from_content(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
+    *,
     has_header: Annotated[
         bool, Field(description="Whether first row contains column headers")
     ] = True,
@@ -660,7 +683,8 @@ async def load_csv_from_content(
         await ctx.info("Loading CSV from content string")
 
         if not content or not content.strip():
-            raise ToolError("Content cannot be empty")
+            msg = "Content cannot be empty"
+            raise ToolError(msg)
 
         # Parse CSV from string using StringIO
         try:
@@ -670,12 +694,16 @@ async def load_csv_from_content(
                 header=0 if has_header else None,
             )
         except pd.errors.EmptyDataError as e:
-            raise ToolError("CSV content is empty or contains no data") from e
+            msg = "CSV content is empty or contains no data"
+            raise ToolError(msg) from e
         except pd.errors.ParserError as e:
-            raise ToolError(f"CSV parsing error: {e}") from e
+            msg = f"CSV parsing error: {e}"
+
+            raise ToolError(msg) from e
 
         if df.empty:
-            raise ToolError("Parsed CSV contains no data rows")
+            msg = "Parsed CSV contains no data rows"
+            raise ToolError(msg)
 
         # Get or create session
         session_manager = get_session_manager()
@@ -701,9 +729,11 @@ async def load_csv_from_content(
         )
 
     except Exception as e:
-        logger.error(f"Failed to parse CSV content: {e}")
-        await ctx.error(f"Failed to parse CSV content: {e!s}")
-        raise ToolError(f"Failed to parse CSV content: {e}") from e
+        logger.error("Failed to parse CSV content: %s", e)
+        await ctx.error(f"Failed to parse CSV content: {e}")
+        msg = f"Failed to parse CSV content: {e}"
+
+        raise ToolError(msg) from e
 
 
 # Implementation: supports 7 export formats with auto-generated filenames using tempfile
@@ -719,6 +749,7 @@ async def export_csv(
     encoding: Annotated[
         str, Field(description="Text encoding for output file (utf-8, latin1, cp1252, etc.)")
     ] = "utf-8",
+    *,
     index: Annotated[bool, Field(description="Whether to include row index in output")] = False,
 ) -> ExportResult:
     """Export session data to various file formats.
@@ -735,13 +766,17 @@ async def export_csv(
         session = session_manager.get_or_create_session(session_id)
 
         if not session or session.df is None:
-            raise ToolError(f"Session not found or no data loaded: {session_id}")
+            msg = f"Session not found or no data loaded: {session_id}"
+
+            raise ToolError(msg)
 
         # Validate and parse the file path
         try:
             path_obj = Path(file_path)
         except Exception as path_error:
-            raise ToolError(f"Invalid file path provided: {file_path}") from path_error
+            msg = f"Invalid file path provided: {file_path}"
+
+            raise ToolError(msg) from path_error
 
         # Infer format from file extension
         suffix = path_obj.suffix.lower()
@@ -788,19 +823,21 @@ async def export_csv(
             elif format_enum == ExportFormat.MARKDOWN:
                 df.to_markdown(path_obj, index=index, tablefmt="github")
             else:
-                raise ToolError(f"Unsupported format: {format_enum}")
+                msg = f"Unsupported format: {format_enum}"
+
+                raise ToolError(msg)
         except (OSError, pd.errors.EmptyDataError, ValueError, ImportError) as export_error:
             # Provide format-specific error guidance
             if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
-                raise ToolError(
-                    "Excel export requires openpyxl package. Install with: pip install openpyxl"
-                ) from export_error
+                msg = "Excel export requires openpyxl package. Install with: pip install openpyxl"
+                raise ToolError(msg) from export_error
             elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
-                raise ToolError(
-                    "Parquet export requires pyarrow package. Install with: pip install pyarrow"
-                ) from export_error
+                msg = "Parquet export requires pyarrow package. Install with: pip install pyarrow"
+                raise ToolError(msg) from export_error
             else:
-                raise ToolError(f"Export failed: {export_error}") from export_error
+                msg = f"Export failed: {export_error}"
+
+                raise ToolError(msg) from export_error
 
         # Record operation in session history
         session.record_operation(
@@ -822,9 +859,11 @@ async def export_csv(
         )
 
     except Exception as e:
-        logger.error(f"Failed to export data: {e}")
-        await ctx.error(f"Failed to export data: {e!s}")
-        raise ToolError(f"Failed to export data: {e}") from e
+        logger.error("Failed to export data: %s", e)
+        await ctx.error(f"Failed to export data: {e}")
+        msg = f"Failed to export data: {e}"
+
+        raise ToolError(msg) from e
 
 
 # Implementation: retrieves session metadata from session manager
@@ -846,7 +885,9 @@ async def get_session_info(
         session = session_manager.get_or_create_session(session_id)
 
         if not session:
-            raise ToolError(f"Session not found: {session_id}")
+            msg = f"Session not found: {session_id}"
+
+            raise ToolError(msg)
 
         await ctx.info(f"Retrieved info for session {session_id}")
 
@@ -863,9 +904,10 @@ async def get_session_info(
         )
 
     except Exception as e:
-        logger.error(f"Failed to get session info: {e}")
-        await ctx.error(f"Failed to get session info: {e!s}")
-        raise ToolError(f"Failed to get session info: {e}") from e
+        await ctx.error(f"Failed to get session info: {e}")
+        msg = f"Failed to get session info: {e}"
+
+        raise ToolError(msg) from e
 
 
 # Implementation: retrieves all sessions from session manager with statistics
@@ -904,8 +946,7 @@ async def list_sessions(
         )
 
     except Exception as e:
-        logger.error(f"Failed to list sessions: {e}")
-        await ctx.error(f"Failed to list sessions: {e!s}")
+        await ctx.error(f"Failed to list sessions: {e}")
         # Return empty list on error for consistency
         return SessionListResult(sessions=[], total_sessions=0, active_sessions=0)
 
@@ -930,7 +971,9 @@ async def close_session(
         removed = await session_manager.remove_session(session_id)
 
         if not removed:
-            raise ToolError(f"Session not found: {session_id}")
+            msg = f"Session not found: {session_id}"
+
+            raise ToolError(msg)
 
         await ctx.info(f"Closed session {session_id}")
 
@@ -940,9 +983,10 @@ async def close_session(
         )
 
     except Exception as e:
-        logger.error(f"Failed to close session: {e}")
-        await ctx.error(f"Failed to close session: {e!s}")
-        raise ToolError(f"Failed to close session: {e}") from e
+        await ctx.error(f"Failed to close session: {e}")
+        msg = f"Failed to close session: {e}"
+
+        raise ToolError(msg) from e
 
 
 # ============================================================================

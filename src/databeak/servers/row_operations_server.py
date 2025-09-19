@@ -52,7 +52,8 @@ class CellCoordinates(BaseModel):
     def validate_row_index(cls, v: int) -> int:
         """Validate row index is non-negative."""
         if v < 0:
-            raise ValueError("Row index must be non-negative")
+            msg = "Row index must be non-negative"
+            raise ValueError(msg)
         return v
 
 
@@ -63,13 +64,14 @@ class RowInsertRequest(BaseModel):
 
     row_index: int = Field(description="Index where to insert row (-1 to append at end)")
     data: dict[str, CellValue] | list[CellValue] | str = Field(
-        description="Row data as dict, list, or JSON string"
+        description="Row data as dict, list, or JSON string",
     )
 
     @field_validator("data")
     @classmethod
     def parse_json_data(
-        cls, v: dict[str, CellValue] | list[CellValue] | str
+        cls,
+        v: dict[str, CellValue] | list[CellValue] | str,
     ) -> dict[str, CellValue] | list[CellValue]:
         """Parse JSON string data for Claude Code compatibility."""
         return parse_json_string_to_dict_or_list(v)
@@ -88,7 +90,8 @@ class RowUpdateRequest(BaseModel):
     def validate_row_index(cls, v: int) -> int:
         """Validate row index is non-negative."""
         if v < 0:
-            raise ValueError("Row index must be non-negative")
+            msg = "Row index must be non-negative"
+            raise ValueError(msg)
         return v
 
     @field_validator("data")
@@ -112,7 +115,8 @@ class ColumnDataRequest(BaseModel):
     def validate_row_indices(cls, v: int | None) -> int | None:
         """Validate row indices are non-negative."""
         if v is not None and v < 0:
-            raise ValueError("Row indices must be non-negative")
+            msg = "Row indices must be non-negative"
+            raise ValueError(msg)
         return v
 
 
@@ -128,7 +132,8 @@ def get_cell_value(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     row_index: Annotated[int, Field(description="Row index (0-based) to retrieve cell from")],
     column: Annotated[
-        str | int, Field(description="Column name or column index (0-based) to retrieve")
+        str | int,
+        Field(description="Column name or column index (0-based) to retrieve"),
     ],
 ) -> CellValueResult:
     """Get value of specific cell with coordinate targeting.
@@ -141,19 +146,22 @@ def get_cell_value(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
 
         # Handle column specification
         if isinstance(column, int):
             # Column index
             if column < 0 or column >= len(df.columns):
-                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
+                msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
+                raise ToolError(msg)
             column_name = df.columns[column]
         else:
             # Column name
@@ -193,8 +201,9 @@ def get_cell_value(
     except (ColumnNotFoundError, ToolError):
         raise
     except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.error(f"Error getting cell value: {e!s}")
-        raise ToolError(f"Error getting cell value: {e!s}") from e
+        logger.error("Error getting cell value: %s", str(e))
+        msg = f"Error getting cell value: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates coordinates, tracks old/new values for audit
@@ -204,7 +213,8 @@ def set_cell_value(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     row_index: Annotated[int, Field(description="Row index (0-based) to update cell in")],
     column: Annotated[
-        str | int, Field(description="Column name or column index (0-based) to update")
+        str | int,
+        Field(description="Column name or column index (0-based) to update"),
     ],
     value: Annotated[
         CellValue,
@@ -221,19 +231,22 @@ def set_cell_value(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
 
         # Handle column specification
         if isinstance(column, int):
             # Column index
             if column < 0 or column >= len(df.columns):
-                raise ToolError(f"Column index {column} out of range (0-{len(df.columns) - 1})")
+                msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
+                raise ToolError(msg)
             column_name = df.columns[column]
         else:
             # Column name
@@ -283,8 +296,9 @@ def set_cell_value(
     except (ColumnNotFoundError, ToolError):
         raise
     except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.error(f"Error setting cell value: {e!s}")
-        raise ToolError(f"Error setting cell value: {e!s}") from e
+        logger.error("Error setting cell value: %s", str(e))
+        msg = f"Error setting cell value: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates row bounds, optional column filtering
@@ -308,13 +322,15 @@ def get_row_data(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
 
         # Handle column filtering
         if columns is None:
@@ -356,8 +372,9 @@ def get_row_data(
     except (ColumnNotFoundError, ToolError):
         raise
     except Exception as e:
-        logger.error(f"Error getting row data: {e!s}")
-        raise ToolError(f"Error getting row data: {e!s}") from e
+        logger.error("Error getting row data: %s", str(e))
+        msg = f"Error getting row data: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates column exists and row range bounds
@@ -367,10 +384,12 @@ def get_column_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to retrieve data from")],
     start_row: Annotated[
-        int | None, Field(description="Starting row index (inclusive, 0-based) for data slice")
+        int | None,
+        Field(description="Starting row index (inclusive, 0-based) for data slice"),
     ] = None,
     end_row: Annotated[
-        int | None, Field(description="Ending row index (exclusive, 0-based) for data slice")
+        int | None,
+        Field(description="Ending row index (exclusive, 0-based) for data slice"),
     ] = None,
 ) -> ColumnDataResult:
     """Get data from specific column with optional row range slicing.
@@ -382,7 +401,8 @@ def get_column_data(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
 
@@ -392,15 +412,20 @@ def get_column_data(
 
         # Validate and set row range
         if start_row is not None and start_row < 0:
-            raise InvalidParameterError("start_row", start_row, "must be non-negative")
+            msg = "start_row"
+            raise InvalidParameterError(msg, start_row, "must be non-negative")
         if end_row is not None and end_row < 0:
-            raise InvalidParameterError("end_row", end_row, "must be non-negative")
+            msg = "end_row"
+            raise InvalidParameterError(msg, end_row, "must be non-negative")
         if start_row is not None and start_row >= len(df):
-            raise ToolError(f"start_row {start_row} out of range (0-{len(df) - 1})")
+            msg = f"start_row {start_row} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
         if end_row is not None and end_row > len(df):
-            raise ToolError(f"end_row {end_row} out of range (0-{len(df)})")
+            msg = f"end_row {end_row} out of range (0-{len(df)})"
+            raise ToolError(msg)
         if start_row is not None and end_row is not None and start_row >= end_row:
-            raise InvalidParameterError("start_row", start_row, "must be less than end_row")
+            msg = "start_row"
+            raise InvalidParameterError(msg, start_row, "must be less than end_row")
 
         # Apply row range slicing
         if start_row is None and end_row is None:
@@ -442,8 +467,9 @@ def get_column_data(
     except (ColumnNotFoundError, InvalidParameterError, ToolError):
         raise
     except Exception as e:
-        logger.error(f"Error getting column data: {e!s}")
-        raise ToolError(f"Error getting column data: {e!s}") from e
+        logger.error("Error getting column data: %s", str(e))
+        msg = f"Error getting column data: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: supports dict, list, and JSON string data formats
@@ -452,10 +478,12 @@ def get_column_data(
 def insert_row(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     row_index: Annotated[
-        int, Field(description="Index to insert row at (0-based, -1 to append at end)")
+        int,
+        Field(description="Index to insert row at (0-based, -1 to append at end)"),
     ],
     data: Annotated[
-        RowData | str, Field(description="Row data as dict, list, or JSON string")
+        RowData | str,
+        Field(description="Row data as dict, list, or JSON string"),
     ],  # Accept string for Claude Code compatibility
 ) -> InsertRowResult:
     """Insert new row at specified index with multiple data formats.
@@ -469,13 +497,15 @@ def insert_row(
             try:
                 data = parse_json_string_to_dict(data)
             except ValueError as e:
-                raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
+                msg = f"Invalid JSON string in data parameter: {e}"
+                raise ToolError(msg) from e
 
         session_id = ctx.session_id
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
         rows_before = len(df)
@@ -486,7 +516,8 @@ def insert_row(
 
         # Validate row index for insertion (0 to N is valid for insertion)
         if row_index < 0 or row_index > len(df):
-            raise ToolError(f"Row index {row_index} out of range for insertion (0-{len(df)})")
+            msg = f"Row index {row_index} out of range for insertion (0-{len(df)})"
+            raise ToolError(msg)
 
         # Process data based on type
         if isinstance(data, dict):
@@ -499,11 +530,13 @@ def insert_row(
             try:
                 row_data = dict(zip(df.columns, data, strict=True))
             except ValueError as e:
+                msg = f"List data length ({len(data)}) must match column count ({len(df.columns)})"
                 raise ToolError(
-                    f"List data length ({len(data)}) must match column count ({len(df.columns)})"
+                    msg,
                 ) from e
         else:
-            raise ToolError(f"Unsupported data type: {type(data)}. Use dict, list, or JSON string")
+            msg = f"Unsupported data type: {type(data)}. Use dict, list, or JSON string"
+            raise ToolError(msg)
 
         # Create new row as DataFrame
         new_row = pd.DataFrame([row_data])
@@ -556,8 +589,9 @@ def insert_row(
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error inserting row: {e!s}")
-        raise ToolError(f"Error inserting row: {e!s}") from e
+        logger.error("Error inserting row: %s", str(e))
+        msg = f"Error inserting row: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates row_index bounds, captures deleted data for undo
@@ -577,14 +611,16 @@ def delete_row(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
         rows_before = len(df)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
 
         # Get the data that will be deleted for tracking
         deleted_data = df.iloc[row_index].to_dict()
@@ -623,8 +659,9 @@ def delete_row(
     except ToolError:
         raise
     except Exception as e:
-        logger.error(f"Error deleting row: {e!s}")
-        raise ToolError(f"Error deleting row: {e!s}") from e
+        logger.error("Error deleting row: %s", str(e))
+        msg = f"Error deleting row: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates row bounds, supports dict and JSON string data
@@ -649,22 +686,26 @@ def update_row(
             try:
                 data = parse_json_string_to_dict(data)
             except ValueError as e:
-                raise ToolError(f"Invalid JSON string in data parameter: {e}") from e
+                msg = f"Invalid JSON string in data parameter: {e}"
+                raise ToolError(msg) from e
 
         if not isinstance(data, dict):
-            raise ToolError("Update data must be a dictionary or JSON string")
+            msg = "Update data must be a dictionary or JSON string"
+            raise ToolError(msg)
 
         session_id = ctx.session_id
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check above
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
-            raise ToolError(f"Row index {row_index} out of range (0-{len(df) - 1})")
+            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+            raise ToolError(msg)
 
         # Validate all columns exist
         missing_columns = [col for col in data if col not in df.columns]
@@ -722,8 +763,9 @@ def update_row(
     except (ColumnNotFoundError, ToolError):
         raise
     except Exception as e:
-        logger.error(f"Error updating row: {e!s}")
-        raise ToolError(f"Error updating row: {e!s}") from e
+        logger.error("Error updating row: %s", str(e))
+        msg = f"Error updating row: {e!s}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================
@@ -732,7 +774,8 @@ def update_row(
 
 # Create row operations server
 row_operations_server = FastMCP(
-    "DataBeak-RowOperations", instructions="Row operations server for DataBeak"
+    "DataBeak-RowOperations",
+    instructions="Row operations server for DataBeak",
 )
 
 # Register functions directly as MCP tools (no wrapper functions needed)

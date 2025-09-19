@@ -143,14 +143,16 @@ class TestGetStatistics:
 
     async def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session ID."""
+        ctx = create_mock_context("invalid-session-id")
+
         with pytest.raises(ToolError, match="No data loaded in session"):
-            ctx = create_mock_context("invalid-session-id")
             await get_statistics(ctx)
 
     async def test_get_statistics_invalid_columns(self, stats_session):
         """Test statistics with non-existent columns."""
+        ctx = create_mock_context(stats_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(stats_session)
             await get_statistics(ctx, columns=["nonexistent", "fake_column"])
 
 
@@ -231,8 +233,9 @@ class TestGetColumnStatistics:
 
     async def test_invalid_column(self, stats_session):
         """Test with non-existent column."""
+        ctx = create_mock_context(stats_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(stats_session)
             await get_column_statistics(ctx, "fake_column")
 
 
@@ -302,14 +305,16 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_insufficient_columns(self, stats_session):
         """Test correlation with only one numeric column."""
+        ctx = create_mock_context(stats_session)
+
         with pytest.raises(ToolError, match="at least two numeric columns"):
-            ctx = create_mock_context(stats_session)
             await get_correlation_matrix(ctx, columns=["age"])
 
     async def test_correlation_non_numeric(self, stats_session):
         """Test correlation with non-numeric columns."""
+        ctx = create_mock_context(stats_session)
+
         with pytest.raises(ToolError, match="numeric"):
-            ctx = create_mock_context(stats_session)
             await get_correlation_matrix(ctx, columns=["name", "department"])
 
 
@@ -364,8 +369,9 @@ class TestGetValueCounts:
 
     async def test_value_counts_invalid_column(self, stats_session):
         """Test value counts with invalid column."""
+        ctx = create_mock_context(stats_session)
+
         with pytest.raises(ToolError, match="Column.*not found"):
-            ctx = create_mock_context(stats_session)
             await get_value_counts(ctx, "nonexistent")
 
 

@@ -34,12 +34,14 @@ class DataBeakSettings(BaseSettings):
     """Configuration settings for session management."""
 
     csv_history_dir: str = Field(
-        default=".", description="Directory for storing session history files"
+        default=".",
+        description="Directory for storing session history files",
     )
     max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
     session_timeout: int = Field(default=3600, description="Session timeout in seconds")
     chunk_size: int = Field(
-        default=10000, description="Default chunk size for processing large datasets"
+        default=10000,
+        description="Default chunk size for processing large datasets",
     )
     auto_save: bool = Field(default=True, description="Enable auto-save functionality by default")
 
@@ -68,6 +70,7 @@ class CSVSession:
         session_id: str | None = None,
         ttl_minutes: int = 60,
         auto_save_config: AutoSaveConfig | None = None,
+        *,
         enable_history: bool = True,
         history_storage: HistoryStorage = HistoryStorage.JSON,
     ):
@@ -157,7 +160,9 @@ class CSVSession:
         )
 
     def record_operation(
-        self, operation_type: str | OperationType, details: dict[str, Any]
+        self,
+        operation_type: str | OperationType,
+        details: dict[str, Any],
     ) -> None:
         """Record an operation in history."""
         # Handle both string and OperationType inputs
@@ -171,7 +176,7 @@ class CSVSession:
                 "timestamp": datetime.now(UTC).isoformat(),
                 "type": operation_value,
                 "details": details,
-            }
+            },
         )
         self.update_access_time()
 
@@ -195,10 +200,11 @@ class CSVSession:
     async def trigger_auto_save_if_needed(self) -> AutoSaveOperationResult | None:
         """Trigger auto-save after operation if configured."""
         if self.auto_save_manager.should_save_after_operation() and self._data_session.metadata.get(
-            "needs_autosave"
+            "needs_autosave",
         ):
             result = await self.auto_save_manager.trigger_save(
-                self._save_callback, "after_operation"
+                self._save_callback,
+                "after_operation",
             )
             if result.get("success"):
                 self._data_session.metadata["needs_autosave"] = False
@@ -206,7 +212,10 @@ class CSVSession:
         return None
 
     async def _save_callback(
-        self, file_path: str, format: ExportFormat, encoding: str
+        self,
+        file_path: str,
+        export_format: ExportFormat,
+        encoding: str,
     ) -> dict[str, Any]:
         """Callback for auto-save operations."""
         try:
@@ -217,18 +226,18 @@ class CSVSession:
             path_obj = Path(file_path)
             path_obj.parent.mkdir(parents=True, exist_ok=True)
 
-            if format == ExportFormat.CSV:
+            if export_format == ExportFormat.CSV:
                 self._data_session.df.to_csv(path_obj, index=False, encoding=encoding)
-            elif format == ExportFormat.TSV:
+            elif export_format == ExportFormat.TSV:
                 self._data_session.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
-            elif format == ExportFormat.JSON:
+            elif export_format == ExportFormat.JSON:
                 self._data_session.df.to_json(path_obj, orient="records", indent=2)
-            elif format == ExportFormat.EXCEL:
+            elif export_format == ExportFormat.EXCEL:
                 self._data_session.df.to_excel(path_obj, index=False)
-            elif format == ExportFormat.PARQUET:
+            elif export_format == ExportFormat.PARQUET:
                 self._data_session.df.to_parquet(path_obj, index=False)
             else:
-                return {"success": False, "error": f"Unsupported format: {format}"}
+                return {"success": False, "error": f"Unsupported format: {export_format}"}
 
             return {
                 "success": True,
@@ -323,10 +332,10 @@ class CSVSession:
                 return {"success": False, "error": "No snapshot available for undo"}
 
         except HistoryNotEnabledError as e:
-            logger.error(f"History operation failed: {e.message}")
+            logger.error("History operation failed: %s", e.message)
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Unexpected error during undo: {e!s}")
+            logger.error("Unexpected error during undo: %s", str(e))
             return {
                 "success": False,
                 "error": {"type": "UnexpectedError", "message": str(e)},
@@ -361,10 +370,10 @@ class CSVSession:
                 return {"success": False, "error": "No snapshot available for redo"}
 
         except HistoryNotEnabledError as e:
-            logger.error(f"History operation failed: {e.message}")
+            logger.error("History operation failed: %s", e.message)
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Unexpected error during redo: {e!s}")
+            logger.error("Unexpected error during redo: %s", str(e))
             return {
                 "success": False,
                 "error": {"type": "UnexpectedError", "message": str(e)},
@@ -386,10 +395,10 @@ class CSVSession:
 
             return {"success": True, "history": history, "statistics": stats}
         except HistoryError as e:
-            logger.error(f"History operation failed: {e.message}")
+            logger.error("History operation failed: %s", e.message)
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Unexpected error getting history: {e!s}")
+            logger.error("Unexpected error getting history: %s", str(e))
             return {
                 "success": False,
                 "error": {"type": "UnexpectedError", "message": str(e)},
@@ -424,10 +433,10 @@ class CSVSession:
                 }
 
         except HistoryNotEnabledError as e:
-            logger.error(f"History operation failed: {e.message}")
+            logger.error("History operation failed: %s", e.message)
             return {"success": False, "error": e.to_dict()}
         except Exception as e:
-            logger.error(f"Unexpected error during restore: {e!s}")
+            logger.error("Unexpected error during restore: %s", str(e))
             return {
                 "success": False,
                 "error": {"type": "UnexpectedError", "message": str(e)},
@@ -472,7 +481,7 @@ class SessionManager:
 
             session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
             self.sessions[session.session_id] = session
-            logger.info(f"Created new session: {session.session_id}")
+            logger.info("Created new session: %s", session.session_id)
         else:
             session.update_access_time()
         return session
@@ -482,7 +491,7 @@ class SessionManager:
         if session_id in self.sessions:
             await self.sessions[session_id].clear()
             del self.sessions[session_id]
-            logger.info(f"Removed session: {session_id}")
+            logger.info("Removed session: %s", session_id)
             return True
         return False
 
@@ -496,7 +505,7 @@ class SessionManager:
         expired = [sid for sid, session in self.sessions.items() if session.is_expired()]
         self.sessions_to_cleanup.update(expired)
         if expired:
-            logger.info(f"Marked {len(expired)} expired sessions for cleanup")
+            logger.info("Marked %s expired sessions for cleanup", len(expired))
 
     async def cleanup_marked_sessions(self) -> None:
         """Clean up sessions marked for removal."""

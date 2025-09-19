@@ -151,7 +151,8 @@ class ColumnSchema(BaseModel):
     min_value: float | int | str | None = Field(default=None, description="Minimum value")
     max_value: float | int | str | None = Field(default=None, description="Maximum value")
     allowed_values: list[CellValue] | None = Field(
-        default=None, description="List of allowed values"
+        default=None,
+        description="List of allowed values",
     )
     pattern: str | None = Field(default=None, description="Regex pattern for validation")
 
@@ -211,7 +212,8 @@ class DataQualityRule(BaseModel):
     description: str = Field(..., description="Rule description")
     column: str | None = Field(default=None, description="Column to check (if applicable)")
     rule_type: Literal["completeness", "uniqueness", "validity", "consistency", "accuracy"] = Field(
-        ..., description="Type of quality check"
+        ...,
+        description="Type of quality check",
     )
     expression: str | None = Field(default=None, description="Expression to evaluate")
     threshold: float | None = Field(default=None, description="Threshold for pass/fail")
@@ -266,7 +268,7 @@ class DataPreview(BaseModel):
     rows: list[dict[str, CellValue]] = Field(description="Sample rows from dataset")
     row_count: int = Field(description="Total number of rows in dataset")
     column_count: int = Field(description="Total number of columns in dataset")
-    truncated: bool = Field(False, description="Whether preview is truncated")
+    truncated: bool = Field(default=False, description="Whether preview is truncated")
     # top_values: dict[str, int] | None = Field(
     #     default=None, description="Top 10 most frequent values"
     # )

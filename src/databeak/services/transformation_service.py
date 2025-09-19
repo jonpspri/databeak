@@ -184,8 +184,9 @@ async def filter_rows_with_pydantic(
             elif operator == "not_null":
                 condition_mask = col_data.notna()
             else:
+                msg = "operator"
                 raise InvalidParameterError(
-                    "operator",
+                    msg,
                     operator,
                     "Valid operators: ==, !=, >, <, >=, <=, contains, starts_with, ends_with, in, not_in, is_null, not_null",
                 )
@@ -222,17 +223,19 @@ async def filter_rows_with_pydantic(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Filter operation failed: {e.message}")
+        logger.error("Filter operation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error in filter_rows: {e}")
-        raise ToolError(f"Filter operation failed: {e!s}") from e
+        logger.error("Unexpected error in filter_rows: %s", e)
+        msg = f"Filter operation failed: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: Multi-column sorting with flexible column specification and sort order
 async def sort_data_with_pydantic(
     session_id: str,
     columns: list[str] | list[dict[str, Any]],
+    *,
     ascending: bool | list[bool] = True,
 ) -> SortResult:
     """Sort DataFrame by one or more columns."""
@@ -257,11 +260,12 @@ async def sort_data_with_pydantic(
         # Validate columns
         missing_cols = [col for col in sort_columns if col not in df.columns]
         if missing_cols:
-            raise ToolError(f"Columns not found: {missing_cols}")
+            msg = f"Columns not found: {missing_cols}"
+            raise ToolError(msg)
 
         # Sort data
         session.df = df.sort_values(by=sort_columns, ascending=sort_ascending).reset_index(
-            drop=True
+            drop=True,
         )
 
         # Record operation
@@ -280,8 +284,9 @@ async def sort_data_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Sort operation failed: {e}")
-        raise ToolError(f"Sort operation failed: {e!s}") from e
+        logger.error("Sort operation failed: %s", e)
+        msg = f"Sort operation failed: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: Duplicate row removal with column subset and keep strategy options
@@ -298,7 +303,8 @@ async def remove_duplicates_with_pydantic(
         if subset:
             missing_cols = [col for col in subset if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
 
         # Remove duplicates
         deduped_df = df.drop_duplicates(subset=subset, keep=keep).reset_index(drop=True)
@@ -328,8 +334,9 @@ async def remove_duplicates_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Remove duplicates failed: {e}")
-        raise ToolError(f"Failed to remove duplicates: {e!s}") from e
+        logger.error("Remove duplicates failed: %s", e)
+        msg = f"Failed to remove duplicates: {e!s}"
+        raise ToolError(msg) from e
 
 
 # ============================================================================
@@ -352,7 +359,8 @@ async def fill_missing_values_with_pydantic(
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                raise ToolError(f"Columns not found: {missing_cols}")
+                msg = f"Columns not found: {missing_cols}"
+                raise ToolError(msg)
             target_cols = columns
         else:
             target_cols = df.columns.tolist()
@@ -365,7 +373,8 @@ async def fill_missing_values_with_pydantic(
             session.df = df.dropna(subset=target_cols)
         elif strategy == "fill":
             if value is None:
-                raise ToolError("Value required for 'fill' strategy")
+                msg = "Value required for 'fill' strategy"
+                raise ToolError(msg)
             df[target_cols] = df[target_cols].fillna(value)
         elif strategy == "forward":
             df[target_cols] = df[target_cols].ffill()
@@ -385,7 +394,8 @@ async def fill_missing_values_with_pydantic(
                 if len(mode_val) > 0:
                     df[col] = df[col].fillna(mode_val[0])
         else:
-            raise ToolError(f"Unknown strategy: {strategy}")
+            msg = f"Unknown strategy: {strategy}"
+            raise ToolError(msg)
 
         # Update session DataFrame for non-drop strategies
         if strategy != "drop":
@@ -418,8 +428,9 @@ async def fill_missing_values_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Fill missing values failed: {e}")
-        raise ToolError(f"Failed to fill missing values: {e!s}") from e
+        logger.error("Fill missing values failed: %s", e)
+        msg = f"Failed to fill missing values: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: Text case transformation (upper, lower, title, capitalize)
@@ -433,7 +444,8 @@ async def transform_column_case_with_pydantic(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            raise ToolError(f"Column '{column}' not found")
+            msg = f"Column '{column}' not found"
+            raise ToolError(msg)
 
         # Get sample before
         sample_before = df[column].head(5).tolist()
@@ -448,7 +460,8 @@ async def transform_column_case_with_pydantic(
         elif transform == "capitalize":
             df[column] = df[column].astype(str).str.capitalize()
         else:
-            raise ToolError(f"Unknown transform: {transform}")
+            msg = f"Unknown transform: {transform}"
+            raise ToolError(msg)
 
         # Get sample after
         sample_after = df[column].head(5).tolist()
@@ -471,8 +484,9 @@ async def transform_column_case_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Transform column case failed: {e}")
-        raise ToolError(f"Failed to transform column case: {e!s}") from e
+        logger.error("Transform column case failed: %s", e)
+        msg = f"Failed to transform column case: {e!s}"
+        raise ToolError(msg) from e
 
 
 # Implementation: Whitespace removal from string values
@@ -485,7 +499,8 @@ async def strip_column_with_pydantic(
         session, df = _get_session_data(session_id)
 
         if column not in df.columns:
-            raise ToolError(f"Column '{column}' not found")
+            msg = f"Column '{column}' not found"
+            raise ToolError(msg)
 
         # Get sample before
         sample_before = df[column].head(5).tolist()
@@ -514,5 +529,6 @@ async def strip_column_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Strip column failed: {e}")
-        raise ToolError(f"Failed to strip column: {e!s}") from e
+        logger.error("Strip column failed: %s", e)
+        msg = f"Failed to strip column: {e!s}"
+        raise ToolError(msg) from e

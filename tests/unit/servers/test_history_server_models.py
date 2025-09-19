@@ -59,7 +59,7 @@ class TestHistoryOperation:
         """Test that all required fields must be provided."""
         with pytest.raises(ValidationError):
             HistoryOperation(  # type: ignore[call-arg]  # Intentionally missing required args for test
-                operation_id="test_id"
+                operation_id="test_id",
                 # Missing: operation_type, timestamp, description, can_undo, can_redo
             )
 
@@ -248,7 +248,10 @@ class TestRestoreResult:
     def test_valid_restore_result_success(self):
         """Test valid successful restore result."""
         result = RestoreResult(
-            success=True, restored_to_operation="op_123", operations_undone=2, final_position=1
+            success=True,
+            restored_to_operation="op_123",
+            operations_undone=2,
+            final_position=1,
         )
 
         assert result.success is True
@@ -300,7 +303,10 @@ class TestExportHistoryResult:
     def test_valid_export_history_result(self):
         """Test valid export history result."""
         result = ExportHistoryResult(
-            success=True, file_path="/path/to/export.json", format="json", operations_exported=10
+            success=True,
+            file_path="/path/to/export.json",
+            format="json",
+            operations_exported=10,
         )
 
         assert result.success is True
@@ -311,7 +317,10 @@ class TestExportHistoryResult:
     def test_export_history_result_failure(self):
         """Test failed export history result."""
         result = ExportHistoryResult(
-            success=False, file_path="", format="json", operations_exported=0
+            success=False,
+            file_path="",
+            format="json",
+            operations_exported=0,
         )
 
         assert result.success is False
@@ -325,7 +334,11 @@ class TestAutoSaveConfig:
     def test_valid_auto_save_config(self):
         """Test valid auto save config."""
         config = AutoSaveConfig(
-            enabled=True, mode="periodic", strategy="backup", interval_seconds=300, max_backups=10
+            enabled=True,
+            mode="periodic",
+            strategy="backup",
+            interval_seconds=300,
+            max_backups=10,
         )
 
         assert config.enabled is True
@@ -359,7 +372,11 @@ class TestAutoSaveConfig:
     def test_auto_save_config_disabled(self):
         """Test disabled auto save config."""
         config = AutoSaveConfig(
-            enabled=False, mode="disabled", strategy="overwrite", interval_seconds=60, max_backups=5
+            enabled=False,
+            mode="disabled",
+            strategy="overwrite",
+            interval_seconds=60,
+            max_backups=5,
         )
 
         assert config.enabled is False
@@ -372,7 +389,11 @@ class TestAutoSaveConfigResult:
     def test_valid_auto_save_config_result(self):
         """Test valid auto save config result."""
         config = AutoSaveConfig(
-            enabled=True, mode="periodic", strategy="backup", interval_seconds=300, max_backups=10
+            enabled=True,
+            mode="periodic",
+            strategy="backup",
+            interval_seconds=300,
+            max_backups=10,
         )
 
         result = AutoSaveConfigResult(success=True, config=config)
@@ -398,7 +419,11 @@ class TestAutoSaveStatusResult:
     def test_valid_auto_save_status_result(self):
         """Test valid auto save status result."""
         config = AutoSaveConfig(
-            enabled=True, mode="periodic", strategy="backup", interval_seconds=300, max_backups=10
+            enabled=True,
+            mode="periodic",
+            strategy="backup",
+            interval_seconds=300,
+            max_backups=10,
         )
 
         status = AutoSaveStatus(
@@ -411,7 +436,8 @@ class TestAutoSaveStatusResult:
 
         result = AutoSaveStatusResult(success=True, status=status)
 
-        assert result.status.config is not None and result.status.config.enabled is True
+        assert result.status.config is not None
+        assert result.status.config.enabled is True
         assert result.status.last_save_time == "2024-01-15T10:30:00Z"
         assert result.status.next_scheduled_save == "2024-01-15T10:35:00Z"
         assert result.status.save_count == 5
@@ -419,7 +445,11 @@ class TestAutoSaveStatusResult:
     def test_auto_save_status_result_never_saved(self):
         """Test auto save status when never saved."""
         config = AutoSaveConfig(
-            enabled=True, mode="periodic", strategy="backup", interval_seconds=300, max_backups=10
+            enabled=True,
+            mode="periodic",
+            strategy="backup",
+            interval_seconds=300,
+            max_backups=10,
         )
 
         status = AutoSaveStatus(enabled=True, config=config, save_count=0)
@@ -451,7 +481,10 @@ class TestAutoSaveDisableResult:
     def test_auto_save_disable_result_failure(self):
         """Test failed auto save disable result."""
         result = AutoSaveDisableResult(
-            success=False, was_enabled=False, final_save_performed=False, final_save_path=None
+            success=False,
+            was_enabled=False,
+            final_save_performed=False,
+            final_save_path=None,
         )
 
         assert result.success is False

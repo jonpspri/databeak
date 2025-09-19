@@ -84,7 +84,8 @@ class FillNaOperation(UpdateOperation):
 
 # Discriminated union for update operations
 UpdateOperationType = Annotated[
-    ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation, Field(discriminator="type")
+    ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation,
+    Field(discriminator="type"),
 ]
 
 
@@ -93,10 +94,11 @@ class UpdateColumnRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     operation: Literal["replace", "map", "apply", "fillna"] = Field(
-        description="Type of update operation"
+        description="Type of update operation",
     )
     value: Any | None = Field(  # Any justified: operation-dependent type (CellValue|dict|str)
-        None, description="Value for the operation (depends on operation type)"
+        None,
+        description="Value for the operation (depends on operation type)",
     )
     pattern: str | None = Field(None, description="Pattern for replace operation")
     replacement: str | None = Field(None, description="Replacement for replace operation")
@@ -159,7 +161,8 @@ async def select_columns(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101 # Validated by has_data() check
 
@@ -188,11 +191,12 @@ async def select_columns(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Select columns failed with {type(e).__name__}: {e.message}")
+        await ctx.error(f"Select columns failed with {type(e).__name__}: {e.message}")
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error selecting columns: {e!s}")
-        raise ToolError(f"Failed to select columns: {e}") from e
+        await ctx.error(f"Unexpected error selecting columns: {e}")
+        msg = f"Failed to select columns: {e}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates old column names exist in mapping keys, checks for naming conflicts
@@ -200,7 +204,8 @@ async def select_columns(
 async def rename_columns(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     mapping: Annotated[
-        dict[str, str], Field(description="Dictionary mapping old column names to new names")
+        dict[str, str],
+        Field(description="Dictionary mapping old column names to new names"),
     ],
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
@@ -228,7 +233,8 @@ async def rename_columns(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -250,11 +256,12 @@ async def rename_columns(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Rename columns failed with {type(e).__name__}: {e.message}")
+        logger.error("Rename columns failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error renaming columns: {e!s}")
-        raise ToolError(f"Failed to rename columns: {e}") from e
+        logger.error("Unexpected error renaming columns: %s", str(e))
+        msg = f"Failed to rename columns: {e}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates column name doesn't exist, supports single value, list, or pandas eval formula
@@ -269,7 +276,7 @@ async def add_column(
     formula: Annotated[
         SecureExpression | str | None,
         Field(
-            description="Safe mathematical expression to compute column values (e.g., 'col1 + col2')"
+            description="Safe mathematical expression to compute column values (e.g., 'col1 + col2')",
         ),
     ] = None,
 ) -> ColumnOperationResult:
@@ -302,12 +309,14 @@ async def add_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
         if name in df.columns:
-            raise InvalidParameterError("name", name, f"Column '{name}' already exists")
+            msg = "name"
+            raise InvalidParameterError(msg, name, f"Column '{name}' already exists")
 
         if formula:
             try:
@@ -320,11 +329,13 @@ async def add_column(
                 result = evaluator.evaluate_simple_formula(formula.expression, df)
                 df[name] = result
             except Exception as e:
-                raise InvalidParameterError("formula", formula, f"Invalid formula: {e}") from e
+                msg = "formula"
+                raise InvalidParameterError(msg, formula, f"Invalid formula: {e}") from e
         elif isinstance(value, list):
             if len(value) != len(df):
+                msg = "value"
                 raise InvalidParameterError(
-                    "value",
+                    msg,
                     str(value),
                     f"List length ({len(value)}) must match row count ({len(df)})",
                 )
@@ -352,11 +363,12 @@ async def add_column(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, InvalidParameterError) as e:
-        logger.error(f"Add column failed with {type(e).__name__}: {e.message}")
+        logger.error("Add column failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error adding column: {e!s}")
-        raise ToolError(f"Failed to add column: {e}") from e
+        logger.error("Unexpected error adding column: %s", str(e))
+        msg = f"Failed to add column: {e}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates columns exist before removal, prevents removing all columns
@@ -364,7 +376,8 @@ async def add_column(
 async def remove_columns(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
-        list[str], Field(description="List of column names to remove from the dataframe")
+        list[str],
+        Field(description="List of column names to remove from the dataframe"),
     ],
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
@@ -391,7 +404,8 @@ async def remove_columns(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -413,11 +427,12 @@ async def remove_columns(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error(f"Remove columns failed with {type(e).__name__}: {e.message}")
+        logger.error("Remove columns failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error removing columns: {e!s}")
-        raise ToolError(f"Failed to remove columns: {e}") from e
+        logger.error("Unexpected error removing columns: %s", str(e))
+        msg = f"Failed to remove columns: {e}"
+        raise ToolError(msg) from e
 
 
 # Implementation: validates column exists, maps dtype to pandas types
@@ -432,7 +447,7 @@ async def change_column_type(
     errors: Annotated[
         Literal["raise", "coerce"],
         Field(
-            description="Error handling: 'raise' for errors, 'coerce' to replace invalid values with NaN"
+            description="Error handling: 'raise' for errors, 'coerce' to replace invalid values with NaN",
         ),
     ] = "coerce",
 ) -> ColumnOperationResult:
@@ -467,7 +482,8 @@ async def change_column_type(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -489,7 +505,8 @@ async def change_column_type(
 
         target_dtype = type_map.get(dtype)
         if not target_dtype:
-            raise InvalidParameterError("dtype", dtype, f"Unsupported type: {dtype}")
+            msg = "dtype"
+            raise InvalidParameterError(msg, dtype, f"Unsupported type: {dtype}")
 
         try:
             if dtype == "datetime":
@@ -507,8 +524,11 @@ async def change_column_type(
 
         except (ValueError, TypeError) as e:
             if errors == "raise":
+                msg = "column"
                 raise InvalidParameterError(
-                    "column", column, f"Cannot convert to {dtype}: {e}"
+                    msg,
+                    column,
+                    f"Cannot convert to {dtype}: {e}",
                 ) from e
             # If errors='coerce', the conversion has already handled invalid values
 
@@ -537,11 +557,12 @@ async def change_column_type(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Change column type failed with {type(e).__name__}: {e.message}")
+        logger.error("Change column type failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error changing column type: {e!s}")
-        raise ToolError(f"Failed to change column type: {e}") from e
+        logger.error("Unexpected error changing column type: %s", str(e))
+        msg = f"Failed to change column type: {e}"
+        raise ToolError(msg) from e
 
 
 async def update_column(
@@ -593,7 +614,8 @@ async def update_column(
         session_id = ctx.session_id
         session = _get_session_data(session_id)
         if not session.has_data():
-            raise ToolError("No data loaded in session")
+            msg = "No data loaded in session"
+            raise ToolError(msg)
         df = session.df
         assert df is not None  # noqa: S101  # Validated by has_data() check
 
@@ -606,7 +628,8 @@ async def update_column(
 
         # Handle discriminated union operations
         if isinstance(
-            operation, ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation
+            operation,
+            ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation,
         ):
             if isinstance(operation, ReplaceOperation):
                 operation_type = "replace"
@@ -635,8 +658,9 @@ async def update_column(
                     elif expr == "x.title()":
                         df[column] = df[column].str.title()
                     else:
+                        msg = "expression"
                         raise InvalidParameterError(
-                            "expression",
+                            msg,
                             operation.expression,
                             "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                         )
@@ -650,8 +674,9 @@ async def update_column(
                         result = evaluator.evaluate_column_expression(expr, df, column_context)
                         df[column] = result
                     except Exception as e:
+                        msg = "expression"
                         raise InvalidParameterError(
-                            "expression",
+                            msg,
                             operation.expression,
                             f"Invalid expression. Use 'x' to reference column values. Error: {e}",
                         ) from e
@@ -669,7 +694,8 @@ async def update_column(
                             replace_op = ReplaceOperation(**operation)
                             operation_type = "replace"
                             df[column] = df[column].replace(
-                                replace_op.pattern, replace_op.replacement
+                                replace_op.pattern,
+                                replace_op.replacement,
                             )
                         elif operation["type"] == "map":
                             map_op = MapOperation(**operation)
@@ -697,8 +723,9 @@ async def update_column(
                                 elif expr == "x.title()":
                                     df[column] = df[column].str.title()
                                 else:
+                                    msg = "expression"
                                     raise InvalidParameterError(
-                                        "expression",
+                                        msg,
                                         apply_op.expression,
                                         "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                                     )
@@ -710,12 +737,15 @@ async def update_column(
                                     # Use secure evaluator instead of pandas.eval
                                     evaluator = _get_secure_evaluator()
                                     result = evaluator.evaluate_column_expression(
-                                        expr, df, column_context
+                                        expr,
+                                        df,
+                                        column_context,
                                     )
                                     df[column] = result
                                 except Exception as e:
+                                    msg = "expression"
                                     raise InvalidParameterError(
-                                        "expression",
+                                        msg,
                                         apply_op.expression,
                                         f"Invalid expression. Use 'x' to reference column values. Error: {e}",
                                     ) from e
@@ -724,14 +754,18 @@ async def update_column(
                             operation_type = "fillna"
                             df[column] = df[column].fillna(fillna_op.value)
                         else:
+                            msg = "type"
                             raise InvalidParameterError(
-                                "type",
+                                msg,
                                 operation["type"],
                                 "Supported types: replace, map, apply, fillna",
                             )
                     except Exception as e:
+                        msg = "operation"
                         raise InvalidParameterError(
-                            "operation", str(operation), f"Invalid operation specification: {e}"
+                            msg,
+                            str(operation),
+                            f"Invalid operation specification: {e}",
                         ) from e
                 else:
                     # Legacy format with "operation" field
@@ -740,26 +774,30 @@ async def update_column(
 
                     if update_request.operation == "replace":
                         if update_request.pattern is None or update_request.replacement is None:
+                            msg = "pattern/replacement"
                             raise InvalidParameterError(
-                                "pattern/replacement",
+                                msg,
                                 f"{update_request.pattern}/{update_request.replacement}",
                                 "Both pattern and replacement required for replace operation",
                             )
                         df[column] = df[column].replace(
-                            update_request.pattern, update_request.replacement
+                            update_request.pattern,
+                            update_request.replacement,
                         )
                     elif update_request.operation == "map":
                         if not isinstance(update_request.value, dict):
+                            msg = "value"
                             raise InvalidParameterError(
-                                "value",
+                                msg,
                                 str(update_request.value),
                                 "Dictionary mapping required for map operation",
                             )
                         df[column] = df[column].map(update_request.value)
                     elif update_request.operation == "apply":
                         if update_request.value is None:
+                            msg = "value"
                             raise InvalidParameterError(
-                                "value",
+                                msg,
                                 str(update_request.value),
                                 "Expression required for apply operation",
                             )
@@ -783,8 +821,9 @@ async def update_column(
                                 elif expr == "x.title()":
                                     df[column] = df[column].str.title()
                                 else:
+                                    msg = "value"
                                     raise InvalidParameterError(
-                                        "value",
+                                        msg,
                                         update_request.value,
                                         "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
                                     )
@@ -796,12 +835,15 @@ async def update_column(
                                     # Use secure evaluator instead of pandas.eval
                                     evaluator = _get_secure_evaluator()
                                     result = evaluator.evaluate_column_expression(
-                                        expr, df, column_context
+                                        expr,
+                                        df,
+                                        column_context,
                                     )
                                     df[column] = result
                                 except Exception as e:
+                                    msg = "value"
                                     raise InvalidParameterError(
-                                        "value",
+                                        msg,
                                         update_request.value,
                                         f"Invalid expression. Use 'x' to reference column values. Error: {e}",
                                     ) from e
@@ -809,15 +851,17 @@ async def update_column(
                             df[column] = df[column].apply(update_request.value)
                     elif update_request.operation == "fillna":
                         if update_request.value is None:
+                            msg = "value"
                             raise InvalidParameterError(
-                                "value",
+                                msg,
                                 str(update_request.value),
                                 "Fill value required for fillna operation",
                             )
                         df[column] = df[column].fillna(update_request.value)
                     else:
+                        msg = "operation"
                         raise InvalidParameterError(
-                            "operation",
+                            msg,
                             update_request.operation,
                             "Supported operations: replace, map, apply, fillna",
                         )
@@ -851,11 +895,12 @@ async def update_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error(f"Update column failed with {type(e).__name__}: {e.message}")
+        logger.error("Update column failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error(f"Unexpected error updating column: {e!s}")
-        raise ToolError(f"Failed to update column: {e}") from e
+        logger.error("Unexpected error updating column: %s", str(e))
+        msg = f"Failed to update column: {e}"
+        raise ToolError(msg) from e
 
 
 # =============================================================================

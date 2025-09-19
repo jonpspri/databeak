@@ -38,7 +38,7 @@ async def demonstrate_auto_save():
                 "Electronics",
                 "Audio",
             ],
-        }
+        },
     )
 
     # Create a temporary directory for our backups
@@ -146,7 +146,7 @@ async def demonstrate_auto_save():
             "mode": "disabled",  # Only manual saves
             "strategy": "backup",
             "backup_dir": backup_dir,
-        }
+        },
     )
 
     print("Triggering manual save...")

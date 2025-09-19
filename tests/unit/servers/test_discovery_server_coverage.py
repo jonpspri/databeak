@@ -48,7 +48,7 @@ def mock_session_with_outliers():
             "nulls": [None if i % 10 == 0 else i for i in range(100)],
             "dates": pd.date_range("2024-01-01", periods=100),
             "mixed": [i if i % 2 == 0 else f"text_{i}" for i in range(100)],
-        }
+        },
     )
     session.df = df
     return session
@@ -94,8 +94,9 @@ class TestDetectOutliers:
 
     async def test_outliers_isolation_forest(self, session_id_with_outliers):
         """Test that isolation_forest method is not supported."""
+        ctx = create_mock_context(session_id_with_outliers)
+
         with pytest.raises(ToolError, match="Unknown method: isolation_forest"):
-            ctx = create_mock_context(session_id_with_outliers)
             await detect_outliers(
                 ctx,
                 columns=["values", "values2"],
@@ -114,14 +115,16 @@ class TestDetectOutliers:
 
     async def test_outliers_invalid_method(self, session_id_with_outliers):
         """Test outlier detection with invalid method."""
+        ctx = create_mock_context(session_id_with_outliers)
+
         with pytest.raises(ToolError, match="Unknown method: invalid_method"):
-            ctx = create_mock_context(session_id_with_outliers)
             await detect_outliers(ctx, method="invalid_method")
 
     async def test_outliers_non_numeric_columns(self, session_id_with_outliers):
         """Test outlier detection on non-numeric columns."""
+        ctx = create_mock_context(session_id_with_outliers)
+
         with pytest.raises(ToolError, match="No numeric columns found"):
-            ctx = create_mock_context(session_id_with_outliers)
             await detect_outliers(ctx, columns=["text"])
 
     async def test_outliers_no_outliers_found(self, session_id_with_outliers):
@@ -132,8 +135,8 @@ class TestDetectOutliers:
         uniform_session = manager.get_or_create_session(uniform_session_id)
         uniform_df = pd.DataFrame(
             {
-                "uniform": np.ones(100) * 50  # All same value
-            }
+                "uniform": np.ones(100) * 50,  # All same value
+            },
         )
         uniform_session.df = uniform_df
 
@@ -339,10 +342,13 @@ class TestGroupByAggregate:
 
     async def test_group_by_invalid_column(self, session_id_with_outliers):
         """Test grouping by invalid column."""
+        ctx = create_mock_context(session_id_with_outliers)
+
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(session_id_with_outliers)
             await group_by_aggregate(
-                ctx, group_by=["invalid_col"], aggregations={"values": ["mean"]}
+                ctx,
+                group_by=["invalid_col"],
+                aggregations={"values": ["mean"]},
             )
 
     async def test_group_by_invalid_aggregation(self, session_id_with_outliers):
@@ -350,7 +356,9 @@ class TestGroupByAggregate:
         # Server ignores invalid aggregations and uses defaults
         ctx = create_mock_context(session_id_with_outliers)
         result = await group_by_aggregate(
-            ctx, group_by=["category"], aggregations={"values": ["invalid_agg"]}
+            ctx,
+            group_by=["category"],
+            aggregations={"values": ["invalid_agg"]},
         )
         assert result.success is True
 
@@ -358,7 +366,9 @@ class TestGroupByAggregate:
         """Test aggregating non-numeric columns."""
         ctx = create_mock_context(session_id_with_outliers)
         result = await group_by_aggregate(
-            ctx, group_by=["category"], aggregations={"text": ["count", "nunique"]}
+            ctx,
+            group_by=["category"],
+            aggregations={"text": ["count", "nunique"]},
         )
 
         assert result.success is True
@@ -368,7 +378,9 @@ class TestGroupByAggregate:
         """Test grouping with null values."""
         ctx = create_mock_context(session_id_with_outliers)
         result = await group_by_aggregate(
-            ctx, group_by=["category"], aggregations={"nulls": ["mean", "count"]}
+            ctx,
+            group_by=["category"],
+            aggregations={"nulls": ["mean", "count"]},
         )
 
         assert result.success is True
@@ -581,8 +593,9 @@ class TestInspectDataAround:
 
     async def test_inspect_around_invalid_column(self, session_id_with_outliers):
         """Test inspecting around invalid column."""
+        ctx = create_mock_context(session_id_with_outliers)
+
         with pytest.raises(ToolError, match="Column"):
-            ctx = create_mock_context(session_id_with_outliers)
             await inspect_data_around(ctx, 50, "invalid_col")
 
     async def test_inspect_around_large_radius(self, session_id_with_outliers):
@@ -610,23 +623,26 @@ class TestErrorHandling:
     """Test error handling across all functions."""
 
     @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior"
+        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
     )
     async def test_session_not_found(self):
         """Test all functions with invalid session."""
         with patch("src.databeak.servers.discovery_server.get_session_manager") as manager:
             manager.return_value.get_session.return_value = None
 
+            ctx = create_mock_context("invalid-session")
+
             with pytest.raises(ToolError, match="Invalid session"):
-                ctx = create_mock_context("invalid-session")
                 await detect_outliers(ctx)
 
-            with pytest.raises(ToolError, match="Invalid session"):
-                ctx = create_mock_context("invalid-session")
-                await profile_data(ctx)
+            ctx = create_mock_context("invalid-session")
 
             with pytest.raises(ToolError, match="Invalid session"):
-                ctx = create_mock_context("invalid-session")
+                await profile_data(ctx)
+
+            ctx = create_mock_context("invalid-session")
+
+            with pytest.raises(ToolError, match="Invalid session"):
                 await group_by_aggregate(ctx, group_by=["col"], aggregations={"val": ["mean"]})
 
     @pytest.mark.skip(reason="TODO: Update error message expectations")
@@ -637,12 +653,14 @@ class TestErrorHandling:
             session.has_data.return_value = False
             manager.return_value.get_session.return_value = session
 
-            with pytest.raises(ToolError, match="Invalid session or no data"):
-                ctx = create_mock_context("no-data")
-                await detect_outliers(ctx)
+            ctx = create_mock_context("no-data")
 
             with pytest.raises(ToolError, match="Invalid session or no data"):
-                ctx = create_mock_context("no-data")
+                await detect_outliers(ctx)
+
+            ctx = create_mock_context("no-data")
+
+            with pytest.raises(ToolError, match="Invalid session or no data"):
                 await profile_data(ctx)
 
     async def test_edge_cases(self, session_id_with_outliers):

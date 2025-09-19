@@ -110,6 +110,18 @@ guidance.
 - Default values defined in the Settings class, not scattered `os.getenv()`
   calls
 
+### Logging Guidelines
+
+**Context-Based Logging Rule**: When a FastMCP `Context` object is available
+(e.g., in MCP tool functions), use the Context for all logging operations
+instead of standard Python loggers.
+
+- **Use**: `await ctx.info("Message")`, `await ctx.error("Error")`
+- **Not**: `logger.info("Message")`, `logger.error("Error")`
+- **Benefit**: Better traceability, MCP protocol integration, client visibility
+- **Standard loggers**: Only use in non-MCP functions (utilities, internal
+  logic)
+
 ### Architecture Notes
 
 - Session-based design with automatic cleanup

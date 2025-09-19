@@ -50,7 +50,7 @@ async def main() -> None:
             "Key Requirements Match": ["High"],
             "Salary Range": ["120-150k"],
             "Notes": ["Applied through referral"],
-        }
+        },
     )
 
     session.load_data(initial_data)

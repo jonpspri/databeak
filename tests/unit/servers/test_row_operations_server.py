@@ -44,7 +44,7 @@ class TestGetCellValue:
     """Test get_cell_value server function."""
 
     @pytest.mark.parametrize(
-        "row_index,column,expected_value,description",
+        ("row_index", "column", "expected_value", "description"),
         [
             (0, "first_name", "John", "string value by column name"),
             (1, "age", 25, "integer value by column name"),
@@ -55,7 +55,12 @@ class TestGetCellValue:
         ],
     )
     async def test_get_cell_value_success(
-        self, row_operations_session, row_index, column, expected_value, description
+        self,
+        row_operations_session,
+        row_index,
+        column,
+        expected_value,
+        description,
     ):
         """Test successful cell value retrieval with various coordinates."""
         ctx = create_mock_context(row_operations_session)
@@ -81,7 +86,7 @@ class TestGetCellValue:
         assert result.coordinates["column"] == "email"
 
     @pytest.mark.parametrize(
-        "row_index,column,expected_error,description",
+        ("row_index", "column", "expected_error", "description"),
         [
             (-1, "first_name", ToolError, "negative row index"),
             (10, "first_name", ToolError, "row index too large"),
@@ -91,7 +96,12 @@ class TestGetCellValue:
         ],
     )
     async def test_get_cell_value_boundary_errors(
-        self, row_operations_session, row_index, column, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        column,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -112,7 +122,7 @@ class TestSetCellValue:
     """Test set_cell_value server function."""
 
     @pytest.mark.parametrize(
-        "row_index,column,new_value,description",
+        ("row_index", "column", "new_value", "description"),
         [
             (0, "first_name", "Johnny", "update string by column name"),
             (1, "age", 26, "update integer by column name"),
@@ -123,7 +133,12 @@ class TestSetCellValue:
         ],
     )
     async def test_set_cell_value_success(
-        self, row_operations_session, row_index, column, new_value, description
+        self,
+        row_operations_session,
+        row_index,
+        column,
+        new_value,
+        description,
     ):
         """Test successful cell value updates."""
         # Get original value first
@@ -161,7 +176,7 @@ class TestSetCellValue:
         assert str(result.new_value) == "42"
 
     @pytest.mark.parametrize(
-        "row_index,column,expected_error,description",
+        ("row_index", "column", "expected_error", "description"),
         [
             (-1, "first_name", ToolError, "negative row index"),
             (10, "first_name", ToolError, "row index too large"),
@@ -171,7 +186,12 @@ class TestSetCellValue:
         ],
     )
     async def test_set_cell_value_boundary_errors(
-        self, row_operations_session, row_index, column, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        column,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -233,14 +253,18 @@ class TestGetRowData:
         assert result.data["salary"] is None
 
     @pytest.mark.parametrize(
-        "row_index,expected_error,description",
+        ("row_index", "expected_error", "description"),
         [
             (-1, ToolError, "negative row index"),
             (10, ToolError, "row index too large"),
         ],
     )
     async def test_get_row_data_boundary_errors(
-        self, row_operations_session, row_index, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -333,7 +357,7 @@ class TestGetColumnData:
         assert all(isinstance(v, bool) for v in result.values)
 
     @pytest.mark.parametrize(
-        "column,start_row,end_row,expected_error,description",
+        ("column", "start_row", "end_row", "expected_error", "description"),
         [
             ("nonexistent", None, None, ColumnNotFoundError, "invalid column name"),
             ("age", -1, None, InvalidParameterError, "negative start_row"),
@@ -344,7 +368,13 @@ class TestGetColumnData:
         ],
     )
     async def test_get_column_data_boundary_errors(
-        self, row_operations_session, column, start_row, end_row, expected_error, description
+        self,
+        row_operations_session,
+        column,
+        start_row,
+        end_row,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -420,7 +450,7 @@ class TestInsertRow:
                 "salary": 56000,
                 "is_active": False,
                 "join_date": "2023-06-01",
-            }
+            },
         )
 
         ctx = create_mock_context(row_operations_session)
@@ -474,7 +504,7 @@ class TestInsertRow:
         assert row_result.data["last_name"] is None
 
     @pytest.mark.parametrize(
-        "row_index,data,expected_error,description",
+        ("row_index", "data", "expected_error", "description"),
         [
             (-2, {"first_name": "Test"}, ToolError, "invalid negative row index"),
             (10, {"first_name": "Test"}, ToolError, "row index too large"),
@@ -484,7 +514,12 @@ class TestInsertRow:
         ],
     )
     async def test_insert_row_boundary_errors(
-        self, row_operations_session, row_index, data, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        data,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -561,14 +596,18 @@ class TestDeleteRow:
         assert result.deleted_data["salary"] is None
 
     @pytest.mark.parametrize(
-        "row_index,expected_error,description",
+        ("row_index", "expected_error", "description"),
         [
             (-1, ToolError, "negative row index"),
             (10, ToolError, "row index too large"),
         ],
     )
     async def test_delete_row_boundary_errors(
-        self, row_operations_session, row_index, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)
@@ -681,7 +720,7 @@ class TestUpdateRow:
         assert result.new_values["age"] == current_age
 
     @pytest.mark.parametrize(
-        "row_index,data,expected_error,description",
+        ("row_index", "data", "expected_error", "description"),
         [
             (-1, {"age": 30}, ToolError, "negative row index"),
             (10, {"age": 30}, ToolError, "row index too large"),
@@ -691,7 +730,12 @@ class TestUpdateRow:
         ],
     )
     async def test_update_row_boundary_errors(
-        self, row_operations_session, row_index, data, expected_error, description
+        self,
+        row_operations_session,
+        row_index,
+        data,
+        expected_error,
+        description,
     ):
         """Test boundary condition error handling."""
         ctx = create_mock_context(row_operations_session)

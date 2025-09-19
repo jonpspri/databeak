@@ -59,7 +59,10 @@ class TestLoadCsvWithEncoding:
         """Test loading CSV with encoding that needs fallback."""
         # Create a file with Latin-1 encoding
         with tempfile.NamedTemporaryFile(
-            mode="w", encoding="latin-1", suffix=".csv", delete=False
+            mode="w",
+            encoding="latin-1",
+            suffix=".csv",
+            delete=False,
         ) as f:
             f.write("name,city\n")
             f.write("José,São Paulo\n")  # Latin-1 characters

@@ -42,7 +42,9 @@ class SessionLifecycle:
     def extend_ttl(self, additional_minutes: int) -> None:
         """Extend the session TTL."""
         self.ttl += timedelta(minutes=additional_minutes)
-        logger.info(f"Extended TTL for session {self.session_id} by {additional_minutes} minutes")
+        logger.info(
+            "Extended TTL for session %s by %s minutes", self.session_id, additional_minutes
+        )
 
     def get_lifecycle_info(self) -> dict[str, Any]:
         """Get session lifecycle information."""

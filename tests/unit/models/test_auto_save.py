@@ -22,7 +22,7 @@ def sample_df() -> pd.DataFrame:
             "name": ["Alice", "Bob", "Charlie"],
             "age": [25, 30, 35],
             "city": ["New York", "London", "Paris"],
-        }
+        },
     )
 
 
@@ -240,7 +240,8 @@ async def test_hybrid_mode(sample_df, temp_dir) -> None:
     # Trigger operation-based save
     session.record_operation("test_op", {"test": "data"})
     result = await session.trigger_auto_save_if_needed()
-    assert result is not None and result["success"] is True
+    assert result is not None
+    assert result["success"] is True
 
     # Wait for periodic save
     await asyncio.sleep(2.5)
@@ -258,26 +259,27 @@ async def test_different_export_formats(sample_df, temp_dir) -> None:
     """Test auto-save with different export formats."""
     formats = [ExportFormat.CSV, ExportFormat.JSON, ExportFormat.TSV]
 
-    for format in formats:
+    for export_format in formats:
         config = AutoSaveConfig(
             enabled=True,
             mode=AutoSaveMode.AFTER_OPERATION,
             strategy=AutoSaveStrategy.BACKUP,
             backup_dir=temp_dir,
-            format=format,
+            export_format=export_format,
         )
 
         session = CSVSession(auto_save_config=config)
         session.load_data(sample_df)
 
         # Trigger save
-        session.record_operation("test_op", {"format": format.value})
+        session.record_operation("test_op", {"format": export_format.value})
         result = await session.trigger_auto_save_if_needed()
 
-        assert result is not None and result["success"] is True
+        assert result is not None
+        assert result["success"] is True
 
         # Check file was created with correct extension
-        pattern = f"*{session.session_id}*.{format.value}"
+        pattern = f"*{session.session_id}*.{export_format.value}"
         files = list(Path(temp_dir).glob(pattern))
         assert len(files) == 1
 

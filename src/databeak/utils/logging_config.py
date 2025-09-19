@@ -97,78 +97,66 @@ def clear_correlation_id() -> None:
     correlation_id.set("")
 
 
-class CorrelatedLogger:
-    """Logger wrapper that includes correlation ID and structured fields."""
-
-    def __init__(self, name: str):
-        """Initialize correlated logger."""
-        self.logger = logging.getLogger(name)
-
-    def _log_with_context(
-        self, level: int, msg: str, **kwargs: Any
-    ) -> None:  # Any justified: arbitrary logging context
-        """Log message with additional context."""
-        extra = {"correlation_id": get_correlation_id(), **kwargs}
-        self.logger.log(level, msg, extra=extra)
-
-    def debug(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
-        """Log debug message with context."""
-        self._log_with_context(logging.DEBUG, msg, **kwargs)
-
-    def info(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
-        """Log info message with context."""
-        self._log_with_context(logging.INFO, msg, **kwargs)
-
-    def warning(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
-        """Log warning message with context."""
-        self._log_with_context(logging.WARNING, msg, **kwargs)
-
-    def error(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
-        """Log error message with context."""
-        self._log_with_context(logging.ERROR, msg, **kwargs)
-
-    def critical(self, msg: str, **kwargs: Any) -> None:  # Any justified: logging context
-        """Log critical message with context."""
-        self._log_with_context(logging.CRITICAL, msg, **kwargs)
-
-
-def get_logger(name: str) -> CorrelatedLogger:
-    """Get a correlated logger instance."""
-    return CorrelatedLogger(name)
+def get_logger(name: str) -> logging.Logger:
+    """Get a standard logger instance."""
+    return logging.getLogger(name)
 
 
 def log_operation_start(operation: str, session_id: str | None = None, **context: Any) -> None:
     """Log the start of an operation."""
-    logger = get_logger("databeak.operations")
+    logger = logging.getLogger("databeak.operations")
     logger.info(
-        f"Operation started: {operation}",
-        session_id=session_id,
-        operation_type=operation,
-        operation_phase="start",
-        **context,
+        "Operation started: %s",
+        operation,
+        extra={
+            "session_id": session_id,
+            "operation_type": operation,
+            "operation_phase": "start",
+            **context,
+        },
     )
 
 
 def log_operation_end(
-    operation: str, session_id: str | None = None, success: bool = True, **context: Any
+    operation: str, session_id: str | None = None, *, success: bool = True, **context: Any
 ) -> None:
     """Log the end of an operation."""
-    logger = get_logger("databeak.operations")
-    level_method = logger.info if success else logger.error
-    level_method(
-        f"Operation {'completed' if success else 'failed'}: {operation}",
-        session_id=session_id,
-        operation_type=operation,
-        operation_phase="end",
-        operation_success=success,
-        **context,
-    )
+    logger = logging.getLogger("databeak.operations")
+    status = "completed" if success else "failed"
+    if success:
+        logger.info(
+            "Operation %s: %s",
+            status,
+            operation,
+            extra={
+                "session_id": session_id,
+                "operation_type": operation,
+                "operation_phase": "end",
+                "operation_success": success,
+                **context,
+            },
+        )
+    else:
+        logger.error(
+            "Operation %s: %s",
+            status,
+            operation,
+            extra={
+                "session_id": session_id,
+                "operation_type": operation,
+                "operation_phase": "end",
+                "operation_success": success,
+                **context,
+            },
+        )
 
 
 def log_session_event(event: str, session_id: str, **context: Any) -> None:
     """Log a session-related event."""
-    logger = get_logger("databeak.sessions")
-    logger.info(f"Session event: {event}", session_id=session_id, event_type=event, **context)
+    logger = logging.getLogger("databeak.sessions")
+    logger.info(
+        "Session event: %s", event, extra={"session_id": session_id, "event_type": event, **context}
+    )
 
 
 # Convenience function for backward compatibility

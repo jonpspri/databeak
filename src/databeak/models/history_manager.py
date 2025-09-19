@@ -57,7 +57,9 @@ class OperationHistory:
 
     @classmethod
     def from_dict(
-        cls, data: dict[str, Any], data_snapshot: pd.DataFrame | None = None
+        cls,
+        data: dict[str, Any],
+        data_snapshot: pd.DataFrame | None = None,
     ) -> OperationHistory:
         """Create from dictionary."""
         return cls(
@@ -79,6 +81,7 @@ class HistoryManager:
         storage_type: HistoryStorage = HistoryStorage.MEMORY,
         history_dir: str | None = None,
         max_history: int = 100,
+        *,
         enable_snapshots: bool = True,
         snapshot_interval: int = 5,  # Take snapshot every N operations
     ):
@@ -131,7 +134,9 @@ class HistoryManager:
 
                         self.current_index = data.get("current_index", -1)
                         logger.info(
-                            f"Loaded {len(self.history)} history entries for session {self.session_id}"
+                            "Loaded %s history entries for session %s",
+                            len(self.history),
+                            self.session_id,
                         )
 
             elif self.storage_type == HistoryStorage.PICKLE:
@@ -142,7 +147,9 @@ class HistoryManager:
                         self.history = data.get("history", [])
                         self.current_index = data.get("current_index", -1)
                         logger.info(
-                            f"Loaded {len(self.history)} history entries for session {self.session_id}"
+                            "Loaded %s history entries for session %s",
+                            len(self.history),
+                            self.session_id,
                         )
 
         except (
@@ -152,7 +159,7 @@ class HistoryManager:
             pickle.PickleError,
             ValueError,
         ) as e:
-            logger.error(f"Error loading history: {e!s}")
+            logger.error("Error loading history: %s", str(e))
 
     def _save_history(self) -> None:
         """Save history to persistent storage."""
@@ -188,7 +195,9 @@ class HistoryManager:
                 with Path(history_file).open("wb") as f:
                     pickle.dump(data, f)
 
-            logger.debug(f"Saved {len(self.history)} history entries for session {self.session_id}")
+            logger.debug(
+                "Saved %s history entries for session %s", len(self.history), self.session_id
+            )
 
         except (
             OSError,
@@ -197,7 +206,7 @@ class HistoryManager:
             pickle.PickleError,
             ValueError,
         ) as e:
-            logger.error(f"Error saving history: {e!s}")
+            logger.error("Error saving history: %s", str(e))
 
     def add_operation(
         self,
@@ -255,7 +264,7 @@ class HistoryManager:
         if self.storage_type != HistoryStorage.MEMORY:
             self._save_history()
 
-        logger.info(f"Added operation {operation_id}: {operation_type}")
+        logger.info("Added operation %s: %s", operation_id, operation_type)
         return operation_id
 
     def can_undo(self) -> bool:
@@ -290,7 +299,7 @@ class HistoryManager:
         if self.storage_type != HistoryStorage.MEMORY:
             self._save_history()
 
-        logger.info(f"Undid operation: {current_op.operation_type}")
+        logger.info("Undid operation: %s", current_op.operation_type)
 
         # Return the operation that was undone and the data to restore
         return current_op, snapshot
@@ -317,7 +326,7 @@ class HistoryManager:
         if self.storage_type != HistoryStorage.MEMORY:
             self._save_history()
 
-        logger.info(f"Redid operation: {operation.operation_type}")
+        logger.info("Redid operation: %s", operation.operation_type)
 
         return operation, snapshot
 
@@ -353,7 +362,7 @@ class HistoryManager:
                 break
 
         if target_index is None:
-            logger.error(f"Operation {operation_id} not found")
+            logger.error("Operation %s not found", operation_id)
             return None
 
         # Find the nearest snapshot at or before target
@@ -371,10 +380,10 @@ class HistoryManager:
                 if self.storage_type != HistoryStorage.MEMORY:
                     self._save_history()
 
-                logger.info(f"Restored to operation {operation_id}")
+                logger.info("Restored to operation %s", operation_id)
                 return snapshot
 
-        logger.error(f"No snapshot available for operation {operation_id}")
+        logger.error("No snapshot available for operation %s", operation_id)
         return None
 
     def clear_history(self) -> None:
@@ -398,12 +407,12 @@ class HistoryManager:
 
                 shutil.rmtree(snapshot_dir)
 
-        logger.info(f"Cleared history for session {self.session_id}")
+        logger.info("Cleared history for session %s", self.session_id)
 
-    def export_history(self, file_path: str, format: str = "json") -> bool:
+    def export_history(self, file_path: str, export_format: str = "json") -> bool:
         """Export history to a file."""
         try:
-            if format == "json":
+            if export_format == "json":
                 data = {
                     "session_id": self.session_id,
                     "exported_at": datetime.now(UTC).isoformat(),
@@ -415,7 +424,7 @@ class HistoryManager:
                 with Path(file_path).open("w") as f:
                     json.dump(data, f, indent=2)
 
-            elif format == "csv":
+            elif export_format == "csv":
                 # Export as CSV with operation details
                 history_data = []
                 for entry in self.history:
@@ -425,17 +434,17 @@ class HistoryManager:
                             "operation_type": entry.operation_type,
                             "details": json.dumps(entry.details),
                             "has_snapshot": entry.data_snapshot is not None,
-                        }
+                        },
                     )
 
                 df = pd.DataFrame(history_data)
                 df.to_csv(file_path, index=False)
 
-            logger.info(f"Exported history to {file_path}")
+            logger.info("Exported history to %s", file_path)
             return True
 
         except (OSError, PermissionError, json.JSONDecodeError, ValueError, TypeError) as e:
-            logger.error(f"Error exporting history: {e!s}")
+            logger.error("Error exporting history: %s", str(e))
             return False
 
     def get_statistics(self) -> dict[str, Any]:

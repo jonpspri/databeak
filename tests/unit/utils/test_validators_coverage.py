@@ -187,7 +187,7 @@ class TestURLValidation:
         """Test validation when DNS resolves to private IP."""
         # Mock DNS resolution to return private IP
         mock_getaddrinfo.return_value = [
-            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.100", 80))
+            (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("192.168.1.100", 80)),
         ]
 
         is_valid, message = validate_url("http://internal.company.com/data.csv")
@@ -273,7 +273,7 @@ class TestDataframeValidation:
                 "name": ["Alice", "Bob", "Charlie"],
                 "age": [25, 30, 35],
                 "salary": [50000, 60000, 70000],
-            }
+            },
         )
 
         result = validate_dataframe(df)
@@ -447,7 +447,7 @@ class TestUtilityFunctions:
         # Test with regular values
         assert convert_pandas_na_to_none("string") == "string"
         assert convert_pandas_na_to_none(123) == 123
-        assert convert_pandas_na_to_none(True) is True
+        assert convert_pandas_na_to_none(True) is True  # noqa: FBT003
 
     def test_convert_pandas_na_to_none_na_values(self) -> None:
         """Test conversion of pandas NA values to None."""

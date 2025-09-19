@@ -1,5 +1,7 @@
 """Unit tests for exception classes."""
 
+import pytest
+
 from src.databeak.exceptions import (
     ColumnNotFoundError,
     DatabeakError,
@@ -83,27 +85,43 @@ class TestExceptionChaining:
 
     def test_exception_chaining(self):
         """Test that exceptions can be chained properly."""
-        try:
-            raise ValueError("Original error")
-        except ValueError as e:
-            # Chain with DataBeak exception
+
+        # Test exception chaining using pytest.raises
+        def raise_chained_error():
             try:
-                raise DatabeakError("DataBeak error") from e
-            except DatabeakError as chained_error:
-                assert chained_error.__cause__ is e
-                assert isinstance(chained_error.__cause__, ValueError)
+                msg = "Original error"
+                raise ValueError(msg)
+            except ValueError as e:
+                msg = "DataBeak error"
+                raise DatabeakError(msg) from e
+
+        with pytest.raises(DatabeakError) as exc_info:
+            raise_chained_error()
+
+        # Verify chaining worked correctly
+        chained_error = exc_info.value
+        assert chained_error.__cause__ is not None
+        assert isinstance(chained_error.__cause__, ValueError)
 
     def test_nested_exception_handling(self):
         """Test nested exception scenarios."""
-        try:
-            # Simulate nested operations that might fail
+
+        # Test nested exception handling using pytest.raises
+        def raise_nested_error():
             try:
-                raise ColumnNotFoundError("missing_col", ["available_col"])
+                msg = "missing_col"
+                raise ColumnNotFoundError(msg, ["available_col"])
             except ColumnNotFoundError as col_error:
-                raise OperationError("Operation failed due to column issue") from col_error
-        except OperationError as op_error:
-            assert isinstance(op_error.__cause__, ColumnNotFoundError)
-            assert "missing_col" in str(op_error.__cause__)
+                msg = "Operation failed due to column issue"
+                raise OperationError(msg) from col_error
+
+        with pytest.raises(OperationError) as exc_info:
+            raise_nested_error()
+
+        # Verify nested exception structure
+        op_error = exc_info.value
+        assert isinstance(op_error.__cause__, ColumnNotFoundError)
+        assert "missing_col" in str(op_error.__cause__)
 
 
 class TestErrorMessageFormatting:

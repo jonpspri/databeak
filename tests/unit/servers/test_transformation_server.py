@@ -217,30 +217,34 @@ class TestTransformationServerErrorHandling:
         """Test filtering with invalid session."""
         conditions = [FilterCondition(column="test", operator="=", value="test")]
 
+        ctx = create_mock_context("invalid-session-id")
+
         with pytest.raises(ToolError, match="Invalid session"):
-            ctx = create_mock_context("invalid-session-id")
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_session(self):
         """Test sorting with invalid session."""
         columns = [SortColumn(column="test", ascending=True)]
 
+        ctx = create_mock_context("invalid-session-id")
+
         with pytest.raises(ToolError, match="Invalid session"):
-            ctx = create_mock_context("invalid-session-id")
             sort_data(ctx, columns)
 
     async def test_filter_invalid_column(self, transformation_session):
         """Test filtering with invalid column name."""
         conditions = [FilterCondition(column="nonexistent", operator="=", value="test")]
 
+        ctx = create_mock_context(transformation_session)
+
         with pytest.raises(ToolError, match="not found"):
-            ctx = create_mock_context(transformation_session)
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_column(self, transformation_session):
         """Test sorting with invalid column name."""
         columns = [SortColumn(column="nonexistent", ascending=True)]
 
+        ctx = create_mock_context(transformation_session)
+
         with pytest.raises(ToolError):
-            ctx = create_mock_context(transformation_session)
             sort_data(ctx, columns)

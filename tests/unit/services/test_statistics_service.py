@@ -27,7 +27,7 @@ class TestStatisticsService:
                 "numeric_col": [1, 2, 3, 4, 5],
                 "text_col": ["a", "b", "c", "d", "e"],
                 "nullable_numeric": [1.0, 2.0, None, 4.0, 5.0],
-            }
+            },
         )
         return mock_session, mock_df
 
@@ -80,7 +80,9 @@ class TestStatisticsService:
         with (
             patch.object(service, "get_session_and_data", return_value=(mock_session, mock_df)),
             patch.object(
-                service, "validate_columns_exist", side_effect=ToolError("Column not found")
+                service,
+                "validate_columns_exist",
+                side_effect=ToolError("Column not found"),
             ),
             pytest.raises(ToolError, match="Column not found"),
         ):
@@ -160,7 +162,8 @@ class TestStatisticsService:
             patch.object(service, "validate_columns_exist"),
         ):
             result = await service.get_correlation_matrix(
-                "test_session", columns=["numeric_col", "nullable_numeric"]
+                "test_session",
+                columns=["numeric_col", "nullable_numeric"],
             )
 
             assert len(result.columns_analyzed) == 2

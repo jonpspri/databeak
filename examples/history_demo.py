@@ -32,7 +32,7 @@ async def demonstrate_history():
             "price": [999.99, 29.99, 79.99, 299.99],
             "stock": [50, 200, 150, 75],
             "category": ["Electronics", "Accessories", "Accessories", "Electronics"],
-        }
+        },
     )
 
     # Create session with history enabled (JSON persistence)
@@ -102,7 +102,7 @@ async def demonstrate_history():
     if undo_result["success"]:
         print(f"✓ {undo_result['message']}")
         print(
-            f"Products order: {session.df['product'].tolist() if session.df is not None else 'N/A'}"
+            f"Products order: {session.df['product'].tolist() if session.df is not None else 'N/A'}",
         )
 
     print("\n2. Undoing again (add discount column)...")
@@ -266,7 +266,9 @@ async def demonstrate_history_recovery():
 
     # Create new session with same ID - should load history
     session2 = CSVSession(
-        session_id=session1_id, enable_history=True, history_storage=HistoryStorage.JSON
+        session_id=session1_id,
+        enable_history=True,
+        history_storage=HistoryStorage.JSON,
     )
 
     # Load the data (in real scenario, would load from file)
@@ -276,7 +278,7 @@ async def demonstrate_history_recovery():
     history_result = session2.get_history()
     if history_result["success"]:
         print(
-            f"✓ History recovered! Found {history_result['statistics']['total_operations']} operations"
+            f"✓ History recovered! Found {history_result['statistics']['total_operations']} operations",
         )
 
         # Can we undo operations from previous session?

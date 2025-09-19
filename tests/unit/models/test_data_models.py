@@ -187,7 +187,11 @@ class TestColumnSchema:
     def test_column_schema_with_constraints(self):
         """Test column schema with constraints."""
         schema = ColumnSchema(
-            name="age", dtype=DataType.INTEGER, nullable=False, min_value=0, max_value=150
+            name="age",
+            dtype=DataType.INTEGER,
+            nullable=False,
+            min_value=0,
+            max_value=150,
         )
         assert schema.min_value == 0
         assert schema.max_value == 150
@@ -230,7 +234,9 @@ class TestOperationResult:
     def test_operation_result_success(self):
         """Test successful operation result."""
         result = OperationResult(
-            success=True, rows_affected=25, message="Filter applied successfully"
+            success=True,
+            rows_affected=25,
+            message="Filter applied successfully",
         )
         assert result.success is True
         assert result.rows_affected == 25
@@ -239,7 +245,9 @@ class TestOperationResult:
     def test_operation_result_failure(self):
         """Test failed operation result."""
         result = OperationResult(
-            success=False, message="Operation failed", error="Invalid sort column"
+            success=False,
+            message="Operation failed",
+            error="Invalid sort column",
         )
         assert result.success is False
         assert result.error == "Invalid sort column"
