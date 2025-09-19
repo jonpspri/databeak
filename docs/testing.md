@@ -318,20 +318,6 @@ def create_csv_content(rows=5):
 
 ## Performance Testing
 
-### Benchmarking
-
-Use pytest-benchmark for performance tests:
-
-```python
-def test_large_dataset_performance(benchmark):
-    """Test performance with large dataset."""
-    df = create_test_dataframe(rows=100000)
-
-    result = benchmark(process_dataframe, df)
-    assert result is not None
-    assert benchmark.stats["mean"] < 1.0  # Should complete in < 1 second
-```
-
 ### Load Testing
 
 Test system limits:
