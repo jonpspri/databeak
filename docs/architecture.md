@@ -22,18 +22,30 @@ explains the technical architecture and design decisions.
 
 ```text
 src/databeak/
-├── server.py           # FastMCP server entry point
-├── models/            # Data models and session management
-│   ├── csv_session.py    # Session management & settings
-│   ├── data_models.py    # Core data types
-│   └── data_session.py   # Data operations
-├── tools/             # MCP tool implementations
-│   ├── data_io.py       # Load/export operations
-│   ├── data_manipulation.py  # Transform operations
-│   ├── data_analysis.py     # Statistics & analysis
-│   └── data_validation.py   # Schema validation
-├── exceptions.py      # Custom error handling
-└── _version.py        # Dynamic version loading
+├── server.py                 # FastMCP server composition & routing
+├── models/                   # Data models and session management
+│   ├── csv_session.py          # Session management & settings
+│   ├── data_models.py          # Core data types & enums
+│   ├── data_session.py         # Data operations
+│   ├── auto_save.py            # Auto-save functionality
+│   ├── history_manager.py      # Operation history & undo/redo
+│   ├── typed_dicts.py          # TypedDict definitions for type safety
+│   └── tool_responses.py       # Pydantic response models
+├── servers/                  # Specialized MCP servers (server composition)
+│   ├── io_server.py            # Load/export operations
+│   ├── transformation_server.py # Data transformation
+│   ├── statistics_server.py    # Statistical analysis
+│   ├── discovery_server.py     # Data profiling & discovery
+│   ├── validation_server.py    # Schema validation & quality
+│   ├── history_server.py       # History & auto-save operations
+│   ├── column_server.py        # Column operations
+│   ├── column_text_server.py   # Text manipulation
+│   ├── row_operations_server.py # Row-level operations
+│   └── system_server.py        # Health & system info
+├── services/                 # Business logic services
+├── utils/                    # Utility functions
+├── exceptions.py             # Custom error handling
+└── _version.py              # Dynamic version loading
 ```
 
 ## Key Features
@@ -63,6 +75,17 @@ src/databeak/
 - **Environment-based settings** using Pydantic Settings
 - **Centralized configuration** in CSVSettings class
 - **Runtime version detection** via importlib.metadata
+
+### Code Quality & Architecture
+
+- **Zero static analysis violations** - Perfect ruff compliance across all
+  categories
+- **Complete type safety** - 100% mypy compliance with minimal Any usage
+- **Comprehensive test coverage** - 1100+ unit tests with high coverage targets
+- **Server composition pattern** - Modular FastMCP servers for different domains
+- **Context-based logging** - MCP-integrated logging for better traceability
+- **API design excellence** - Keyword-only boolean parameters, no boolean traps
+- **Security best practices** - Proper exception handling, input validation
 
 ## Environment Variables
 

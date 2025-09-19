@@ -24,10 +24,10 @@ modules in isolation:
 ```
 tests/unit/
 ├── models/         # Data models and session management
-├── servers/        # MCP server modules
-├── tools/          # Individual tool operations
+├── servers/        # MCP server modules (FastMCP composition)
+├── services/       # Business logic services
 ├── utils/          # Utility functions
-└── resources/      # Resource handling
+└── security/       # Security and validation tests
 ```
 
 **Characteristics:**
@@ -332,14 +332,14 @@ Example for a new feature:
 
 ```bash
 # 1. Create unit test file
-touch tests/unit/tools/test_new_feature.py
+touch tests/unit/servers/test_new_feature.py
 
 # 2. Write tests
 # 3. Run tests
-uv run -m pytest tests/unit/tools/test_new_feature.py
+uv run -m pytest tests/unit/servers/test_new_feature.py
 
 # 4. Check coverage
-uv run pytest tests/unit/tools/test_new_feature.py --cov=src/databeak/tools/new_feature
+uv run pytest tests/unit/servers/test_new_feature.py --cov=src/databeak/servers/new_feature
 ```
 
 ## Resources

@@ -34,7 +34,7 @@ tests/
 ├── unit/                    # Fast, isolated module tests
 │   ├── models/             # Data models and session management
 │   ├── servers/            # MCP server modules
-│   ├── tools/              # Individual tool operations
+│   ├── servers/            # MCP server modules
 │   ├── utils/              # Utility functions
 │   └── resources/          # Resource handling
 ├── integration/            # Component interaction tests
@@ -208,7 +208,7 @@ async def test_statistics_to_export_workflow(self):
    - Validation branches
    - Async operation error paths
 
-1. **Tool Operations** (`src/databeak/tools/`)
+1. **Server Operations** (`src/databeak/servers/`)
 
    - Data transformation edge cases
    - Type conversion error handling

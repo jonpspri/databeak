@@ -1,56 +1,57 @@
-# CSV Editor Examples
+# DataBeak Examples
 
-This directory contains example scripts demonstrating how to use the CSV Editor
-MCP Server.
+This directory contains example scripts demonstrating DataBeak's capabilities.
 
 ## Available Examples
 
-### basic_usage.py
+### auto_save_demo.py
 
-Demonstrates basic CSV operations:
+Demonstrates auto-save functionality with different strategies:
 
-- Loading CSV data
-- Calculating statistics
-- Filtering data
-- Sorting data
-- Exporting to different formats
+- Configuring auto-save settings
+- Multiple save strategies (backup, versioned, overwrite)
+- Testing auto-save behavior
 
-**Run it:**
+### auto_save_overwrite.py
+
+Shows auto-save with overwrite strategy for seamless file updates.
+
+### history_demo.py
+
+Comprehensive history and undo/redo demonstration:
+
+- Operation tracking
+- Undo/redo capabilities
+- History export
+- Session management
+
+### dependency_injection_demo.py
+
+Advanced example showing dependency injection patterns for testing and
+modularity.
+
+### claude_code_null_example.py
+
+Demonstrates null value handling and data validation.
+
+### update_consignee_example.py
+
+Real-world example updating business data with validation.
+
+### test_default_autosave.py
+
+Testing example for default auto-save behavior.
+
+## Running Examples
 
 ```bash
-uv run python examples/basic_usage.py
+uv run python examples/auto_save_demo.py
+uv run python examples/history_demo.py
+# etc.
 ```
 
-### demo.py
+## Architecture
 
-Comprehensive feature demonstration:
-
-- Data quality assessment
-- Statistical analysis
-- High performer analysis
-- Data profiling
-- Correlation detection
-
-**Run it:**
-
-```bash
-uv run python examples/demo.py
-```
-
-## Creating Your Own Examples
-
-To create your own example:
-
-1. Import the necessary tools:
-
-```python
-from src.databeak.tools.io_operations import load_csv_from_content
-from src.databeak.tools.transformations import filter_rows
-from src.databeak.tools.analytics import get_statistics
-```
-
-1. Load your data and get a session ID
-1. Perform operations using the session ID
-1. Export or analyze results
-
-See the existing examples for detailed patterns.
+Examples demonstrate the current server composition architecture with
+specialized FastMCP servers for different operations (I/O, transformation,
+statistics, etc.).

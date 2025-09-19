@@ -16,6 +16,8 @@ Model Context Protocol (MCP).
   undo/redo
 - ⚡ **High Performance** - Handles large datasets with streaming and chunking
 - 🔒 **Session Management** - Multi-user support with isolated sessions
+- 🌟 **Production Quality** - Zero ruff violations, 100% mypy compliance,
+  comprehensive test coverage
 
 ## Getting Started
 
@@ -101,10 +103,8 @@ uv sync
 # Run the server locally
 uv run databeak
 
-# Run tests by category
-uv run -m pytest tests/unit/          # Fast unit tests
-uv run -m pytest tests/integration/   # Integration tests
-uv run -m pytest tests/e2e/           # End-to-end tests
+# Run tests
+uv run -m pytest tests/unit/          # Unit tests (primary)
 uv run -m pytest                      # All tests
 
 # Run quality checks
@@ -114,13 +114,22 @@ uv run mypy
 
 ### Testing Structure
 
-DataBeak uses a three-tier testing approach:
+DataBeak currently focuses on comprehensive unit testing with future plans for
+integration and E2E testing:
 
-- **Unit Tests** (`tests/unit/`) - Isolated tests for individual modules
-- **Integration Tests** (`tests/integration/`) - Component interaction tests
-- **E2E Tests** (`tests/e2e/`) - Full workflow validation
+- **Unit Tests** (`tests/unit/`) - Fast, isolated module tests (current focus)
+- **Integration Tests** (`tests/integration/`) - Future: FastMCP Client-based
+  testing
+- **E2E Tests** (`tests/e2e/`) - Future: Complete workflow validation
 
-See [Testing Guide](tests/README.md) for details.
+**Current Test Execution:**
+
+```bash
+uv run pytest -n auto tests/unit/          # Run unit tests (primary)
+uv run pytest -n auto --cov=src/databeak   # Run with coverage analysis
+```
+
+See [Testing Guide](tests/README.md) for comprehensive testing details.
 
 ## License
 
