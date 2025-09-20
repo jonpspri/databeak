@@ -161,7 +161,7 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
         return issues
 
     # Check for completely null columns
-    null_cols = df.columns[df.isnull().all()].tolist()
+    null_cols = df.columns[df.isna().all()].tolist()
     if null_cols:
         issues["warnings"].append(f"Completely null columns: {null_cols}")
 

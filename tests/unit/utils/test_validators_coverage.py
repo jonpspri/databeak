@@ -39,7 +39,7 @@ class TestFilePathValidation:
             test_file = tmp_path / f"test{ext}"
             test_file.write_text("data")
 
-            is_valid, message = validate_file_path(str(test_file))
+            is_valid, _message = validate_file_path(str(test_file))
             assert is_valid is True
 
     def test_validate_file_path_invalid_extension(self, tmp_path) -> None:
@@ -65,7 +65,7 @@ class TestFilePathValidation:
         """Test validation when file doesn't exist but is optional."""
         nonexistent_file = "/tmp/new_file.csv"
 
-        is_valid, message = validate_file_path(nonexistent_file, must_exist=False)
+        is_valid, _message = validate_file_path(nonexistent_file, must_exist=False)
 
         assert is_valid is True
 
@@ -131,7 +131,7 @@ class TestURLValidation:
         """Test validation of valid HTTPS URL."""
         url = "https://data.example.com/dataset.csv"
 
-        is_valid, message = validate_url(url)
+        is_valid, _message = validate_url(url)
 
         assert is_valid is True
 
@@ -154,7 +154,7 @@ class TestURLValidation:
         malformed_urls = ["not-a-url", "http://", "https://", "", "http:///missing-domain"]
 
         for url in malformed_urls:
-            is_valid, message = validate_url(url)
+            is_valid, _message = validate_url(url)
             assert is_valid is False
 
     def test_validate_url_private_ip_addresses(self) -> None:
@@ -179,7 +179,7 @@ class TestURLValidation:
         ]
 
         for url in loopback_urls:
-            is_valid, message = validate_url(url)
+            is_valid, _message = validate_url(url)
             assert is_valid is False
 
     @patch("socket.getaddrinfo")
@@ -200,7 +200,7 @@ class TestURLValidation:
         """Test validation when DNS resolution fails."""
         mock_getaddrinfo.side_effect = socket.gaierror("Name resolution failed")
 
-        is_valid, message = validate_url("http://nonexistent-domain.com/data.csv")
+        is_valid, _message = validate_url("http://nonexistent-domain.com/data.csv")
 
         # DNS failure should be allowed but handled gracefully
         assert isinstance(is_valid, bool)
@@ -208,7 +208,7 @@ class TestURLValidation:
     def test_validate_url_exception_handling(self) -> None:
         """Test exception handling in URL validation."""
         # Test with a malformed URL that might cause issues
-        is_valid, message = validate_url("not-a-url-at-all")
+        is_valid, _message = validate_url("not-a-url-at-all")
 
         assert is_valid is False
         # Could be various error messages depending on what fails first
@@ -231,7 +231,7 @@ class TestColumnNameValidation:
         ]
 
         for name in valid_names:
-            is_valid, message = validate_column_name(name)
+            is_valid, _message = validate_column_name(name)
             assert is_valid is True, f"Failed for valid name: {name}"
 
     def test_validate_column_name_invalid(self) -> None:
@@ -250,7 +250,7 @@ class TestColumnNameValidation:
         ]
 
         for name in invalid_names:
-            is_valid, message = validate_column_name(name)
+            is_valid, _message = validate_column_name(name)
             assert is_valid is False, f"Should have failed for invalid name: {name}"
 
     def test_validate_column_name_non_string(self) -> None:
@@ -358,7 +358,7 @@ class TestExpressionValidation:
             assert is_valid is True, f"Failed for valid expression: {expr}"
 
         # Test data.mean() separately as it has method call
-        is_valid, message = validate_expression("data + 1", allowed_vars)
+        is_valid, _message = validate_expression("data + 1", allowed_vars)
         assert is_valid is True
 
     def test_validate_expression_invalid_variables(self) -> None:
@@ -374,12 +374,12 @@ class TestExpressionValidation:
         ]
 
         for expr in invalid_expressions:
-            is_valid, message = validate_expression(expr, allowed_vars)
+            is_valid, _message = validate_expression(expr, allowed_vars)
             assert is_valid is False, f"Should have failed for: {expr}"
 
     def test_validate_expression_empty(self) -> None:
         """Test validation of empty expression."""
-        is_valid, message = validate_expression("", [])
+        is_valid, _message = validate_expression("", [])
 
         # Empty expression is technically valid in this implementation
         assert is_valid is True
@@ -399,7 +399,7 @@ class TestExpressionValidation:
         ]
 
         for expr in dangerous_expressions:
-            is_valid, message = validate_expression(expr, allowed_vars)
+            is_valid, _message = validate_expression(expr, allowed_vars)
             assert is_valid is False
 
 
@@ -510,7 +510,7 @@ class TestValidatorEdgeCases:
     def test_unicode_handling(self) -> None:
         """Test handling of unicode characters."""
         # Column names with unicode
-        is_valid, message = validate_column_name("tēst_cōlumn")
+        is_valid, _message = validate_column_name("tēst_cōlumn")
         assert isinstance(is_valid, bool)
 
         # Filenames with unicode

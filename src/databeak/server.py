@@ -102,7 +102,7 @@ Consider:
 
 
 def main() -> None:
-    """Main entry point for the server."""
+    """Start the DataBeak server."""
     import argparse
 
     parser = argparse.ArgumentParser(description="DataBeak")

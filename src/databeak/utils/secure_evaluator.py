@@ -582,7 +582,7 @@ def evaluate_expression_safely(
     dataframe: pd.DataFrame,
     column_context: dict[str, str] | None = None,
 ) -> pd.Series:
-    """Convenience function for safe expression evaluation.
+    """Evaluate mathematical expression safely.
 
     Args:
         expression: Mathematical expression to evaluate
@@ -600,7 +600,7 @@ def evaluate_expression_safely(
 
 
 def validate_expression_safety(expression: str) -> None:
-    """Convenience function to validate expression syntax.
+    """Validate mathematical expression syntax.
 
     Args:
         expression: Expression to validate

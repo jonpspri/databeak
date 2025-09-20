@@ -250,7 +250,7 @@ async def get_column_statistics(
         col_data = df[column]
         dtype = str(col_data.dtype)
         count = int(col_data.count())
-        null_count = int(col_data.isnull().sum())
+        null_count = int(col_data.isna().sum())
         unique_count = int(col_data.nunique())
 
         # Initialize statistics dict using ColumnStatistics structure

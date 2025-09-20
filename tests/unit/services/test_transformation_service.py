@@ -103,7 +103,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_equals_condition(self, session_with_data):
         """Test filtering with equals condition."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "city", "operator": "==", "value": "NYC"}]
         result = await filter_rows_with_pydantic(session_id, conditions)
@@ -118,7 +118,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_greater_than(self, session_with_data):
         """Test filtering with greater than condition."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "age", "operator": ">", "value": 30}]
         result = await filter_rows_with_pydantic(session_id, conditions)
@@ -128,7 +128,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_contains(self, session_with_data):
         """Test filtering with contains condition."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "name", "operator": "contains", "value": "i"}]
         result = await filter_rows_with_pydantic(session_id, conditions)
@@ -140,7 +140,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_in_condition(self, session_with_data):
         """Test filtering with 'in' condition."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "city", "operator": "in", "value": ["NYC", "LA"]}]
         result = await filter_rows_with_pydantic(session_id, conditions)
@@ -150,7 +150,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_or_mode(self, session_with_data):
         """Test filtering with OR mode."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [
             {"column": "age", "operator": "<", "value": 27},
@@ -163,7 +163,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_column_not_found(self, session_with_data):
         """Test filtering with non-existent column."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "nonexistent", "operator": "==", "value": "test"}]
 
@@ -173,7 +173,7 @@ class TestFilterRows:
     @pytest.mark.asyncio
     async def test_filter_rows_invalid_operator(self, session_with_data):
         """Test filtering with invalid operator."""
-        session_id, original_df = session_with_data
+        session_id, _original_df = session_with_data
 
         conditions = [{"column": "age", "operator": "invalid_op", "value": 30}]
 

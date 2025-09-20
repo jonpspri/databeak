@@ -69,7 +69,7 @@ class TestGetStatistics:
 
     async def test_statistics_all_columns(self, session_with_test_data):
         """Test getting statistics for all columns."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx)
 
@@ -89,7 +89,7 @@ class TestGetStatistics:
 
     async def test_statistics_specific_columns(self, session_with_test_data):
         """Test getting statistics for specific columns."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx, columns=["numeric1", "numeric2"])
 
@@ -99,7 +99,7 @@ class TestGetStatistics:
 
     async def test_statistics_with_nulls(self, session_with_test_data):
         """Test statistics with null values."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx, columns=["numeric3", "mostly_null"])
 
@@ -115,7 +115,7 @@ class TestGetStatistics:
         """Test statistics for non-numeric columns."""
         # get_statistics only works with numeric columns
         # Non-numeric columns are silently skipped
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx, columns=["categorical", "boolean"])
 
@@ -124,7 +124,7 @@ class TestGetStatistics:
 
     async def test_statistics_empty_dataframe(self, session_with_empty_data):
         """Test statistics on empty dataframe."""
-        session_id, df = session_with_empty_data
+        session_id, _df = session_with_empty_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx)
         assert result.success is True
@@ -134,7 +134,7 @@ class TestGetStatistics:
 
     async def test_statistics_invalid_columns(self, session_with_test_data):
         """Test statistics with invalid column names."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="not found"):
@@ -142,7 +142,7 @@ class TestGetStatistics:
 
     async def test_statistics_mixed_valid_invalid_columns(self, session_with_test_data):
         """Test statistics with mix of valid and invalid columns."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="not found"):
@@ -176,7 +176,7 @@ class TestGetStatistics:
 
     async def test_statistics_all_null_column(self, session_with_test_data):
         """Test statistics for column with all null values."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_statistics(ctx, columns=["all_null"])
 
@@ -214,7 +214,7 @@ class TestGetColumnStatistics:
         expected_percentile_25,
     ):
         """Test column statistics for different data types."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_column_statistics(ctx, column)
 
@@ -238,7 +238,7 @@ class TestGetColumnStatistics:
 
     async def test_column_statistics_invalid_column(self, session_with_test_data):
         """Test column statistics with invalid column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="Column"):
@@ -246,7 +246,7 @@ class TestGetColumnStatistics:
 
     async def test_column_statistics_with_nulls(self, session_with_test_data):
         """Test column statistics handling null values."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_column_statistics(ctx, "numeric3")
 
@@ -263,7 +263,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_default(self, session_with_test_data):
         """Test correlation matrix with default settings."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_correlation_matrix(ctx)
 
@@ -286,7 +286,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_specific_columns(self, session_with_test_data):
         """Test correlation matrix for specific columns."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_correlation_matrix(ctx, columns=["numeric1", "numeric2", "numeric3"])
 
@@ -296,7 +296,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_spearman(self, session_with_test_data):
         """Test correlation matrix with Spearman method."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_correlation_matrix(ctx, method="spearman")
 
@@ -305,7 +305,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_kendall(self, session_with_test_data):
         """Test correlation matrix with Kendall method."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         pytest.importorskip("scipy", reason="scipy not installed")
         ctx = create_mock_context(session_id)
         result = await get_correlation_matrix(ctx, method="kendall")
@@ -315,7 +315,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_min_correlation(self, session_with_test_data):
         """Test correlation matrix with minimum correlation filter."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_correlation_matrix(ctx, min_correlation=0.5)
 
@@ -339,7 +339,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_invalid_method(self, session_with_test_data):
         """Test correlation matrix with invalid method."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="method"):
@@ -347,7 +347,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_invalid_columns(self, session_with_test_data):
         """Test correlation matrix with invalid columns."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="not found"):
@@ -355,7 +355,7 @@ class TestGetCorrelationMatrix:
 
     async def test_correlation_matrix_single_column(self, session_with_test_data):
         """Test correlation matrix with single column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         # Single column should raise an error since correlation needs at least 2 columns
         ctx = create_mock_context(session_id)
 
@@ -369,7 +369,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_categorical(self, session_with_test_data):
         """Test value counts for categorical column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "categorical")
 
@@ -386,7 +386,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_numeric(self, session_with_test_data):
         """Test value counts for numeric column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "numeric1")
 
@@ -396,7 +396,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_with_nulls(self, session_with_test_data):
         """Test value counts with null values."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "mostly_null")
 
@@ -406,7 +406,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_dropna(self, session_with_test_data):
         """Test value counts dropping null values."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "mostly_null")
 
@@ -416,7 +416,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_normalized(self, session_with_test_data):
         """Test normalized value counts."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "categorical", normalize=True)
 
@@ -426,7 +426,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_top_n(self, session_with_test_data):
         """Test value counts with top N limit."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "categorical", top_n=2)
 
@@ -435,7 +435,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_invalid_column(self, session_with_test_data):
         """Test value counts with invalid column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
 
         with pytest.raises(ToolError, match="Column"):
@@ -443,7 +443,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_empty_column(self, session_with_test_data):
         """Test value counts for empty/all-null column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "all_null")
 
@@ -453,7 +453,7 @@ class TestGetValueCounts:
 
     async def test_value_counts_datetime(self, session_with_test_data):
         """Test value counts for datetime column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_value_counts(ctx, "dates")
 
@@ -566,7 +566,7 @@ class TestEdgeCases:
 
     async def test_mixed_type_column_statistics(self, session_with_test_data):
         """Test statistics for mixed type column."""
-        session_id, df = session_with_test_data
+        session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
         result = await get_column_statistics(ctx, "mixed")
 

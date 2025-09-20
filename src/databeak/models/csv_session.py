@@ -59,6 +59,18 @@ class DataBeakSettings(BaseSettings):
     session_capacity_warning_threshold: float = Field(
         default=0.90, description="Session capacity ratio that triggers warning (0.0-1.0)"
     )
+    max_validation_violations: int = Field(
+        default=1000, description="Maximum number of validation violations to report"
+    )
+    validation_memory_limit_mb: int = Field(
+        default=512, description="Memory limit for validation operations in MB"
+    )
+    validation_timeout_seconds: int = Field(
+        default=300, description="Timeout for long-running validation operations in seconds"
+    )
+    max_anomaly_sample_size: int = Field(
+        default=10000, description="Maximum sample size for anomaly detection operations"
+    )
 
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
@@ -257,7 +269,7 @@ class CSVSession:
         export_format: ExportFormat,
         encoding: str,
     ) -> dict[str, Any]:
-        """Callback for auto-save operations."""
+        """Handle auto-save operations."""
         try:
             if self._data_session.df is None:
                 return {"success": False, "error": "No data to save"}
