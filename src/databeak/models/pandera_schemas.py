@@ -14,21 +14,15 @@ import pandera as pa
 from pandera import DataFrameModel, Field
 from pandera.typing import DataFrame, Series
 
-from .csv_session import get_csv_settings
-
 
 class DataBeakBaseSchema(DataFrameModel):
-
     """Base schema class for DataBeak with common configuration."""
 
     class Config:
-
         """Pandera schema configuration."""
 
         # Enable coercion for flexible data loading
         coerce = True
-        # Report all errors, not just the first one
-        lazy = True
         # Allow additional columns not defined in schema
         strict = False
 
@@ -51,10 +45,7 @@ def create_pandera_schema_from_validation_rules(
         }
         Schema = create_pandera_schema_from_validation_rules(rules)
         validated_df = Schema.validate(df)
-
     """
-    settings = get_csv_settings()
-
     # Build schema attributes dynamically
     schema_attrs = {}
 
@@ -106,10 +97,13 @@ def create_pandera_schema_from_validation_rules(
         unique = rules.get("unique", False)
 
         # Create the field with constraints
+        # Note: For now, we'll handle nullable through pandas extension dtypes
+        # rather than typing.Optional which causes issues with pandas dtype interpretation
+
         if field_constraints:
-            schema_attrs[col_name] = Series[dtype](Field(**field_constraints), nullable=nullable)
+            schema_attrs[col_name] = Series[dtype](Field(**field_constraints))
         else:
-            schema_attrs[col_name] = Series[dtype](nullable=nullable)
+            schema_attrs[col_name] = Series[dtype]()
 
         # Handle uniqueness at schema level
         if unique:
@@ -127,10 +121,7 @@ def create_pandera_schema_from_validation_rules(
         (),
         {
             "coerce": True,
-            "lazy": True,
             "strict": False,
-            # Limit error reporting to prevent resource exhaustion
-            "max_errors": settings.max_validation_violations,
         },
     )
 
@@ -152,14 +143,13 @@ def validate_dataframe_with_pandera(
 
     Raises:
         SchemaError: If validation fails with critical errors
-
     """
     try:
         # Create schema from validation rules
         schema_class = create_pandera_schema_from_validation_rules(validation_rules)
 
         # Validate the DataFrame
-        validated_df = schema_class.validate(df, lazy=True)
+        validated_df = schema_class.validate(df)
 
         return validated_df, []
 
@@ -195,30 +185,27 @@ def validate_dataframe_with_pandera(
 
 # Example schemas for common DataBeak use cases
 class NumericDataSchema(DataBeakBaseSchema):
-
     """Schema for numeric data with basic constraints."""
 
-    value: Series[float] = Field(ge=0, nullable=True)
-    category: Series[str] = Field(nullable=False)
+    value: Series[float] = Field(ge=0)
+    category: Series[str] = Field()
 
 
 class TimeSeriesSchema(DataBeakBaseSchema):
-
     """Schema for time series data."""
 
-    timestamp: Series[pd.Timestamp] = Field(nullable=False)
-    value: Series[float] = Field(nullable=True)
-    metric: Series[str] = Field(nullable=False)
+    timestamp: Series[pd.Timestamp] = Field()
+    value: Series[float] = Field()
+    metric: Series[str] = Field()
 
 
 class FinancialDataSchema(DataBeakBaseSchema):
-
     """Schema for financial data with business rules."""
 
-    amount: Series[float] = Field(ge=0, nullable=False)
-    currency: Series[str] = Field(isin=["USD", "EUR", "GBP"], nullable=False)
-    date: Series[pd.Timestamp] = Field(nullable=False)
-    account_id: Series[str] = Field(str_length={"min_value": 5, "max_value": 20}, nullable=False)
+    amount: Series[float] = Field(ge=0)
+    currency: Series[str] = Field(isin=["USD", "EUR", "GBP"])
+    date: Series[pd.Timestamp] = Field()
+    account_id: Series[str] = Field(str_length={"min_value": 5, "max_value": 20})
 
     @pa.check("amount", element_wise=False)
     def check_amount_distribution(self, series: pd.Series) -> bool:
@@ -243,7 +230,6 @@ def create_typed_dataframe(
         data = {"age": [25, 30, 35], "name": ["Alice", "Bob", "Charlie"]}
         typed_df = create_typed_dataframe(data, MySchema)
         # typed_df is now type-annotated with MySchema
-
     """
     df = pd.DataFrame(data)
     return schema_class.validate(df)

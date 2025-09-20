@@ -6,7 +6,6 @@ from typing import Any
 
 
 class DatabeakError(Exception):
-
     """Base exception with error details and serialization."""
 
     def __init__(self, message: str, error_code: str | None = None, details: dict | None = None):
@@ -27,12 +26,10 @@ class DatabeakError(Exception):
 
 
 class SessionError(DatabeakError):
-
     """Session management errors."""
 
 
 class SessionNotFoundError(SessionError):
-
     """Session not found or expired."""
 
     def __init__(self, session_id: str):
@@ -45,7 +42,6 @@ class SessionNotFoundError(SessionError):
 
 
 class SessionExpiredError(SessionError):
-
     """Session has expired."""
 
     def __init__(self, session_id: str):
@@ -58,12 +54,10 @@ class SessionExpiredError(SessionError):
 
 
 class DataError(DatabeakError):
-
     """Data validation and processing errors."""
 
 
 class NoDataLoadedError(DataError):
-
     """No data loaded in session."""
 
     def __init__(self, session_id: str):
@@ -76,7 +70,6 @@ class NoDataLoadedError(DataError):
 
 
 class ColumnNotFoundError(DataError):
-
     """Column not found in dataset."""
 
     def __init__(self, column_name: str, available_columns: list[str] | None = None):
@@ -92,7 +85,6 @@ class ColumnNotFoundError(DataError):
 
 
 class InvalidRowIndexError(DataError):
-
     """Row index is invalid or out of bounds."""
 
     def __init__(self, row_index: int, max_index: int | None = None):
@@ -105,7 +97,6 @@ class InvalidRowIndexError(DataError):
 
 
 class DataValidationError(DataError):
-
     """Data validation failed."""
 
     def __init__(self, message: str, validation_errors: list | None = None):
@@ -118,12 +109,10 @@ class DataValidationError(DataError):
 
 
 class FileError(DatabeakError):
-
     """File access and format errors."""
 
 
 class DataBeakFileNotFoundError(FileError):
-
     """File does not exist."""
 
     def __init__(self, file_path: str):
@@ -136,7 +125,6 @@ class DataBeakFileNotFoundError(FileError):
 
 
 class FilePermissionError(FileError):
-
     """File permission denied."""
 
     def __init__(self, file_path: str, operation: str):
@@ -149,7 +137,6 @@ class FilePermissionError(FileError):
 
 
 class FileFormatError(FileError):
-
     """File format is invalid or unsupported."""
 
     def __init__(self, file_path: str, expected_format: str | None = None):
@@ -162,12 +149,10 @@ class FileFormatError(FileError):
 
 
 class OperationError(DatabeakError):
-
     """Data operation execution errors."""
 
 
 class InvalidOperationError(OperationError):
-
     """Operation cannot be performed in current state."""
 
     def __init__(self, operation: str, reason: str):
@@ -180,15 +165,13 @@ class InvalidOperationError(OperationError):
 
 
 class ParameterError(DatabeakError):
-
     """Function parameter validation errors."""
 
 
 class InvalidParameterError(ParameterError):
-
     """Invalid parameter value."""
 
-    def __init__(
+    def __init__(  # type: ignore[explicit-any]
         self,
         parameter: str,
         value: Any,
@@ -207,7 +190,6 @@ class InvalidParameterError(ParameterError):
 
 
 class MissingParameterError(ParameterError):
-
     """Required parameter is missing."""
 
     def __init__(self, parameter: str):
@@ -220,12 +202,10 @@ class MissingParameterError(ParameterError):
 
 
 class HistoryError(DatabeakError):
-
     """Operation history management errors."""
 
 
 class HistoryNotEnabledError(HistoryError):
-
     """History tracking is not enabled."""
 
     def __init__(self, session_id: str):
@@ -238,7 +218,6 @@ class HistoryNotEnabledError(HistoryError):
 
 
 class InvalidHistoryOperationError(HistoryError):
-
     """Invalid history operation."""
 
     def __init__(self, operation: str, reason: str):
@@ -251,12 +230,10 @@ class InvalidHistoryOperationError(HistoryError):
 
 
 class AutoSaveError(DatabeakError):
-
     """Auto-save configuration and execution errors."""
 
 
 class AutoSaveConfigError(AutoSaveError):
-
     """Auto-save configuration error."""
 
     def __init__(self, message: str, config_details: dict | None = None):

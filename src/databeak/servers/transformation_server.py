@@ -29,7 +29,6 @@ CellValue = str | int | float | bool | None
 
 
 class SortColumn(BaseModel):
-
     """Column specification for sorting."""
 
     model_config = ConfigDict(extra="forbid")
@@ -83,7 +82,6 @@ def filter_rows(
             {"column": "status", "operator": "==", "value": "active"},
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
-
     """
     try:
         session_id = ctx.session_id
@@ -229,7 +227,6 @@ def sort_data(
             SortColumn(column="name", ascending=True),
             SortColumn(column="age", ascending=False)
         ])
-
     """
     try:
         session_id = ctx.session_id
@@ -320,7 +317,6 @@ def remove_duplicates(
 
         # Remove all duplicates (keep none)
         remove_duplicates(ctx, subset=["email"], keep="none")
-
     """
     try:
         session_id = ctx.session_id
@@ -413,7 +409,6 @@ def fill_missing_values(
 
         # Fill with column mean for numeric columns
         fill_missing_values(ctx, strategy="mean", columns=["age", "salary"])
-
     """
     try:
         session_id = ctx.session_id
