@@ -25,24 +25,48 @@ from ..exceptions import SessionNotFoundError
 from ..models import get_session_manager
 
 
-def safe_int(value: Any, default: int = 0) -> int:
-    """Safely convert object to int."""
+def safe_int(*, value: Any, default: int = 0) -> int:
+    """Safely convert object to int with proper type constraints.
+
+    Args:
+        value: Value to convert (str, int, float, bool, or None) - keyword-only
+        default: Default value if conversion fails - keyword-only
+
+    Returns:
+        Converted integer or default value
+    """
     try:
         return int(value) if value is not None else default
     except (TypeError, ValueError):
         return default
 
 
-def safe_str(value: Any, default: str = "") -> str:
-    """Safely convert object to str."""
+def safe_str(*, value: Any, default: str = "") -> str:
+    """Safely convert object to str with proper type constraints.
+
+    Args:
+        value: Value to convert (str, int, float, bool, or None) - keyword-only
+        default: Default value if conversion fails - keyword-only
+
+    Returns:
+        Converted string or default value
+    """
     try:
         return str(value) if value is not None else default
     except (TypeError, ValueError):
         return default
 
 
-def safe_bool(value: Any, *, default: bool = False) -> bool:
-    """Safely convert object to bool."""
+def safe_bool(*, value: Any, default: bool = False) -> bool:
+    """Safely convert object to bool with proper type constraints.
+
+    Args:
+        value: Value to convert (str, int, float, bool, or None)
+        default: Default value if conversion fails (keyword-only)
+
+    Returns:
+        Converted boolean or default value
+    """
     try:
         return bool(value) if value is not None else default
     except (TypeError, ValueError):
@@ -242,7 +266,10 @@ async def undo_operation(
         await ctx.info(f"Undoing last operation for session {session_id}")
 
         session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
+        session = session_manager.get_session(session_id)
+
+        if not session:
+            raise SessionNotFoundError(session_id)
 
         # Perform undo operation
         result = await session.undo()
@@ -260,17 +287,16 @@ async def undo_operation(
                 can_redo=result.get("can_redo", False),
                 current_position=0,  # Would need to track position in session
             )
-        else:
-            await ctx.warning(f"Undo failed: {result.get('error', 'Unknown error')}")
+        await ctx.warning(f"Undo failed: {result.get('error', 'Unknown error')}")
 
-            return HistoryOperationResult(
-                success=False,
-                message=f"Undo failed: {result.get('error', 'Unknown error')}",
-                operation_details=None,
-                can_undo=False,
-                can_redo=False,
-                current_position=0,
-            )
+        return HistoryOperationResult(
+            success=False,
+            message=f"Undo failed: {result.get('error', 'Unknown error')}",
+            operation_details=None,
+            can_undo=False,
+            can_redo=False,
+            current_position=0,
+        )
 
     except Exception as e:
         logger.error("Undo operation failed for session %s: %s", session_id, str(e))
@@ -292,7 +318,7 @@ async def redo_operation(
         await ctx.info(f"Redoing last undone operation for session {session_id}")
 
         session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
+        session = session_manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -313,17 +339,16 @@ async def redo_operation(
                 can_redo=result.get("can_redo", False),
                 current_position=0,
             )
-        else:
-            await ctx.warning(f"Redo failed: {result.get('error', 'Unknown error')}")
+        await ctx.warning(f"Redo failed: {result.get('error', 'Unknown error')}")
 
-            return HistoryOperationResult(
-                success=False,
-                message=f"Redo failed: {result.get('error', 'Unknown error')}",
-                operation_details=None,
-                can_undo=False,
-                can_redo=False,
-                current_position=0,
-            )
+        return HistoryOperationResult(
+            success=False,
+            message=f"Redo failed: {result.get('error', 'Unknown error')}",
+            operation_details=None,
+            can_undo=False,
+            can_redo=False,
+            current_position=0,
+        )
 
     except SessionNotFoundError as e:
         await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")
@@ -370,12 +395,9 @@ async def configure_auto_save(
                 config=config,
                 previous_config=None,  # Would need to track previous config
             )
-        else:
-            await ctx.error(
-                f"Auto-save configuration failed: {result.get('error', 'Unknown error')}"
-            )
-            msg = f"Auto-save configuration failed: {result.get('error', 'Unknown error')}"
-            raise ToolError(msg)
+        await ctx.error(f"Auto-save configuration failed: {result.get('error', 'Unknown error')}")
+        msg = f"Auto-save configuration failed: {result.get('error', 'Unknown error')}"
+        raise ToolError(msg)
 
     except SessionNotFoundError as e:
         await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")
@@ -431,10 +453,9 @@ async def disable_auto_save(
                 was_enabled=was_enabled,
                 final_save_performed=final_save_performed,
             )
-        else:
-            await ctx.error(f"Failed to disable auto-save: {result.get('error', 'Unknown error')}")
-            msg = f"Failed to disable auto-save: {result.get('error', 'Unknown error')}"
-            raise ToolError(msg)
+        await ctx.error(f"Failed to disable auto-save: {result.get('error', 'Unknown error')}")
+        msg = f"Failed to disable auto-save: {result.get('error', 'Unknown error')}"
+        raise ToolError(msg)
 
     except SessionNotFoundError as e:
         await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")
@@ -472,9 +493,9 @@ async def get_auto_save_status(
         auto_save_status = AutoSaveStatus(
             enabled=status_dict.get("enabled", False),
             config=None,  # Would need to convert config format
-            last_save_time=safe_str(status_dict.get("last_save_time")),
-            last_save_success=safe_bool(status_dict.get("last_save_success")),
-            next_save_time=safe_str(status_dict.get("next_save_time")),
+            last_save_time=safe_str(value=status_dict.get("last_save_time"), default=""),
+            last_save_success=safe_bool(value=status_dict.get("last_save_success"), default=False),
+            next_save_time=safe_str(value=status_dict.get("next_save_time"), default=""),
         )
 
         await ctx.info("Auto-save status retrieved successfully")
@@ -521,15 +542,14 @@ async def trigger_manual_save(
 
             return ManualSaveResult(
                 success=True,
-                file_path=safe_str(result.get("file_path"), ""),
-                rows_saved=safe_int(result.get("rows"), 0),
-                columns_saved=safe_int(result.get("columns"), 0),
-                save_time=safe_str(result.get("timestamp"), ""),
+                file_path=safe_str(value=result.get("file_path"), default=""),
+                rows_saved=safe_int(value=result.get("rows"), default=0),
+                columns_saved=safe_int(value=result.get("columns"), default=0),
+                save_time=safe_str(value=result.get("timestamp"), default=""),
             )
-        else:
-            await ctx.error(f"Manual save failed: {result.get('error', 'Unknown error')}")
-            msg = f"Manual save failed: {result.get('error', 'Unknown error')}"
-            raise ToolError(msg)
+        await ctx.error(f"Manual save failed: {result.get('error', 'Unknown error')}")
+        msg = f"Manual save failed: {result.get('error', 'Unknown error')}"
+        raise ToolError(msg)
 
     except SessionNotFoundError as e:
         await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")
@@ -558,7 +578,7 @@ async def get_session_history(
         await ctx.info(f"Getting history for session {session_id}")
 
         session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
+        session = session_manager.get_session(session_id)
 
         if not session:
             raise SessionNotFoundError(session_id)
@@ -580,12 +600,9 @@ async def get_session_history(
                 can_undo=len(operations) > 0,
                 can_redo=False,  # Would need to track redo stack
             )
-        else:
-            await ctx.error(
-                f"Failed to get history: {history_result.get('error', 'Unknown error')}"
-            )
-            msg = f"Failed to get history: {history_result.get('error', 'Unknown error')}"
-            raise ToolError(msg)
+        await ctx.error(f"Failed to get history: {history_result.get('error', 'Unknown error')}")
+        msg = f"Failed to get history: {history_result.get('error', 'Unknown error')}"
+        raise ToolError(msg)
 
     except SessionNotFoundError as e:
         await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")

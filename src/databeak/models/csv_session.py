@@ -50,6 +50,15 @@ class DataBeakSettings(BaseSettings):
     max_history_operations: int = Field(
         default=1000, description="Maximum operations to keep in session history before cleanup"
     )
+    memory_warning_threshold: float = Field(
+        default=0.75, description="Memory usage ratio that triggers warning status (0.0-1.0)"
+    )
+    memory_critical_threshold: float = Field(
+        default=0.90, description="Memory usage ratio that triggers critical status (0.0-1.0)"
+    )
+    session_capacity_warning_threshold: float = Field(
+        default=0.90, description="Session capacity ratio that triggers warning (0.0-1.0)"
+    )
 
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
@@ -139,6 +148,16 @@ class CSVSession:
         """Check if data is loaded."""
         return self._data_session.has_data()
 
+    @property
+    def metadata(self) -> dict[str, Any]:
+        """Get session metadata."""
+        return self._data_session.metadata
+
+    @metadata.setter
+    def metadata(self, value: dict[str, Any]) -> None:
+        """Set session metadata."""
+        self._data_session.metadata = value
+
     def load_data(self, df: pd.DataFrame, file_path: str | None = None) -> None:
         """Load data into the session."""
         self._data_session.load_data(df, file_path)
@@ -216,11 +235,11 @@ class CSVSession:
             )
 
         # Mark that auto-save is needed
-        self._data_session.metadata["needs_autosave"] = True
+        self.metadata["needs_autosave"] = True
 
     async def trigger_auto_save_if_needed(self) -> AutoSaveOperationResult | None:
         """Trigger auto-save after operation if configured."""
-        if self.auto_save_manager.should_save_after_operation() and self._data_session.metadata.get(
+        if self.auto_save_manager.should_save_after_operation() and self.metadata.get(
             "needs_autosave",
         ):
             result = await self.auto_save_manager.trigger_save(
@@ -228,7 +247,7 @@ class CSVSession:
                 "after_operation",
             )
             if result.get("success"):
-                self._data_session.metadata["needs_autosave"] = False
+                self.metadata["needs_autosave"] = False
             return result
         return None
 
@@ -349,8 +368,7 @@ class CSVSession:
                     "can_undo": self.history_manager.can_undo(),
                     "can_redo": self.history_manager.can_redo(),
                 }
-            else:
-                return {"success": False, "error": "No snapshot available for undo"}
+            return {"success": False, "error": "No snapshot available for undo"}
 
         except HistoryNotEnabledError as e:
             logger.error("History operation failed: %s", e.message)
@@ -387,8 +405,7 @@ class CSVSession:
                     "can_undo": self.history_manager.can_undo(),
                     "can_redo": self.history_manager.can_redo(),
                 }
-            else:
-                return {"success": False, "error": "No snapshot available for redo"}
+            return {"success": False, "error": "No snapshot available for redo"}
 
         except HistoryNotEnabledError as e:
             logger.error("History operation failed: %s", e.message)
@@ -447,11 +464,10 @@ class CSVSession:
                         self._data_session.df.shape if self._data_session.df is not None else (0, 0)
                     ),
                 }
-            else:
-                return {
-                    "success": False,
-                    "error": f"Could not restore to operation {operation_id}",
-                }
+            return {
+                "success": False,
+                "error": f"Could not restore to operation {operation_id}",
+            }
 
         except HistoryNotEnabledError as e:
             logger.error("History operation failed: %s", e.message)
@@ -487,6 +503,23 @@ class SessionManager:
         self.max_sessions = max_sessions
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
+
+    def get_session(self, session_id: str) -> CSVSession | None:
+        """Get a session by ID without creating it if it doesn't exist.
+
+        Use this for read-only operations to avoid unwanted session creation side effects.
+
+        Args:
+            session_id: The session identifier
+
+        Returns:
+            The session if it exists, None otherwise
+        """
+        session = self.sessions.get(session_id)
+        if session and not session.is_expired():
+            session.update_access_time()
+            return session
+        return None
 
     def get_or_create_session(self, session_id: str) -> CSVSession:
         """Get a session by ID, creating it if it doesn't exist."""
@@ -542,7 +575,7 @@ class SessionManager:
             session_id=session.session_id,
             created_at=session.lifecycle.created_at.isoformat(),
             operations=session.operations_history,
-            metadata=session._data_session.metadata,
+            metadata=session.metadata,
         )
 
 

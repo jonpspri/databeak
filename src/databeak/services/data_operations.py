@@ -92,17 +92,16 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
     try:
         if target_type == "int":
             return pd.to_numeric(series, errors="coerce").astype("Int64")
-        elif target_type == "float":
+        if target_type == "float":
             return pd.to_numeric(series, errors="coerce")
-        elif target_type == "string":
+        if target_type == "string":
             return series.astype(str)
-        elif target_type == "datetime":
+        if target_type == "datetime":
             return pd.to_datetime(series, errors="coerce")
-        elif target_type == "boolean":
+        if target_type == "boolean":
             return series.astype(bool)
-        else:
-            msg = f"Unsupported type: {target_type}"
-            raise ValueError(msg)
+        msg = f"Unsupported type: {target_type}"
+        raise ValueError(msg)
     except (ValueError, TypeError, OverflowError) as e:
         msg = f"Failed to convert to {target_type}: {e}"
         raise ValueError(msg) from e
