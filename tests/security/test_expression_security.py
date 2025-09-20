@@ -13,6 +13,7 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
+from pydantic import ValidationError
 
 from src.databeak.exceptions import InvalidParameterError
 from src.databeak.models.expression_models import SecureExpression
@@ -244,9 +245,9 @@ class TestExpressionSecurity:
         with pytest.raises(InvalidParameterError):
             validate_expression_safety(None)
 
-        # Very long expression (should be blocked by Pydantic)
+        # Very long expression (should be blocked by Pydantic length validation)
         long_expr = "col1 + " * 1000 + "col2"
-        with pytest.raises(ValueError, match=r"(?i)unsafe"):
+        with pytest.raises(ValidationError, match=r"String should have at most 1000 characters"):
             SecureExpression(expression=long_expr)
 
         # Division by zero handling (should produce inf, not raise error)

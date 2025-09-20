@@ -28,6 +28,8 @@ class TestDataBeakSettings:
         assert settings.session_timeout == 3600
         assert settings.csv_history_dir == "."
         assert settings.max_file_size_mb == 1024
+        assert settings.memory_threshold_mb == 2048
+        assert settings.max_history_operations == 1000
 
 
 class TestCSVSession:
@@ -1116,3 +1118,113 @@ class TestSessionManager:
         result = manager.export_session_history("nonexistent-id")
         assert result is not None
         assert result["session_id"] == "nonexistent-id"
+
+
+class TestHistoryLimits:
+    """Test operation history limit functionality."""
+
+    def test_history_limit_enforcement_in_settings(self):
+        """Test that history limits are configurable via settings."""
+        settings = DataBeakSettings(max_history_operations=500)
+        assert settings.max_history_operations == 500
+
+    def test_memory_threshold_configuration(self):
+        """Test that memory threshold is configurable via settings."""
+        settings = DataBeakSettings(memory_threshold_mb=4096)
+        assert settings.memory_threshold_mb == 4096
+
+    def test_session_uses_configurable_history_limit(self):
+        """Test that CSVSession uses configurable history limit from settings."""
+        with patch("src.databeak.models.csv_session.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.csv_history_dir = "."
+            mock_config.max_history_operations = 250
+            mock_settings.return_value = mock_config
+
+            session = CSVSession(enable_history=True)
+
+            # Verify HistoryManager was created with correct limit
+            assert session.history_manager is not None
+            assert session.history_manager.max_history == 250
+
+    def test_operations_history_trimming(self):
+        """Test that operations history is trimmed when it exceeds limits."""
+        with patch("src.databeak.models.csv_session.get_csv_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.csv_history_dir = "."
+            mock_config.max_history_operations = 5  # Small limit for testing
+            mock_settings.return_value = mock_config
+
+            session = CSVSession(enable_history=False)  # Disable history manager for pure test
+
+            # Add more operations than the limit
+            for i in range(10):
+                session.record_operation(f"operation_{i}", {"data": i})
+
+            # Should have only the limit number of operations (most recent)
+            assert len(session.operations_history) == 5
+
+            # Should have kept the most recent operations
+            operation_types = [op["type"] for op in session.operations_history]
+            assert operation_types == [
+                "operation_5",
+                "operation_6",
+                "operation_7",
+                "operation_8",
+                "operation_9",
+            ]
+
+    def test_operations_history_trimming_with_logger(self):
+        """Test that history trimming logs appropriate messages."""
+        with (
+            patch("src.databeak.models.csv_session.get_csv_settings") as mock_settings,
+            patch("src.databeak.models.csv_session.logger") as mock_logger,
+        ):
+            mock_config = Mock()
+            mock_config.csv_history_dir = "."
+            mock_config.max_history_operations = 3  # Very small limit
+            mock_settings.return_value = mock_config
+
+            session = CSVSession(enable_history=False)
+
+            # Add operations to trigger trimming
+            for i in range(6):
+                session.record_operation(f"operation_{i}", {"data": i})
+
+            # Should have logged trimming operations
+            mock_logger.info.assert_called()
+            # Check that the log message contains expected information
+            log_calls = mock_logger.info.call_args_list
+            trim_logs = [call for call in log_calls if "Trimmed" in str(call)]
+            assert len(trim_logs) > 0  # Should have at least one trim log
+
+    @pytest.mark.asyncio
+    async def test_environment_variable_configuration(self):
+        """Test that memory settings can be configured via environment variables."""
+        import os
+
+        # Set environment variables
+        old_memory = os.environ.get("DATABEAK_MEMORY_THRESHOLD_MB")
+        old_history = os.environ.get("DATABEAK_MAX_HISTORY_OPERATIONS")
+
+        try:
+            os.environ["DATABEAK_MEMORY_THRESHOLD_MB"] = "4096"
+            os.environ["DATABEAK_MAX_HISTORY_OPERATIONS"] = "2000"
+
+            # Create new settings instance to pick up env vars
+            settings = DataBeakSettings()
+
+            assert settings.memory_threshold_mb == 4096
+            assert settings.max_history_operations == 2000
+
+        finally:
+            # Clean up environment variables
+            if old_memory is not None:
+                os.environ["DATABEAK_MEMORY_THRESHOLD_MB"] = old_memory
+            else:
+                os.environ.pop("DATABEAK_MEMORY_THRESHOLD_MB", None)
+
+            if old_history is not None:
+                os.environ["DATABEAK_MAX_HISTORY_OPERATIONS"] = old_history
+            else:
+                os.environ.pop("DATABEAK_MAX_HISTORY_OPERATIONS", None)

@@ -44,6 +44,12 @@ class DataBeakSettings(BaseSettings):
         description="Default chunk size for processing large datasets",
     )
     auto_save: bool = Field(default=True, description="Enable auto-save functionality by default")
+    memory_threshold_mb: int = Field(
+        default=2048, description="Memory usage threshold in MB for health monitoring"
+    )
+    max_history_operations: int = Field(
+        default=1000, description="Maximum operations to keep in session history before cleanup"
+    )
 
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
@@ -94,6 +100,7 @@ class CSVSession:
                 session_id=self.session_id,
                 storage_type=(history_storage if enable_history else HistoryStorage.MEMORY),
                 history_dir=settings.csv_history_dir,
+                max_history=settings.max_history_operations,
                 enable_snapshots=True,
                 snapshot_interval=5,  # Take snapshot every 5 operations
             )
@@ -178,6 +185,20 @@ class CSVSession:
                 "details": details,
             },
         )
+
+        # Apply history limits to prevent unbounded growth
+        settings = get_csv_settings()
+        if len(self.operations_history) > settings.max_history_operations:
+            # Keep only the most recent operations
+            excess = len(self.operations_history) - settings.max_history_operations
+            self.operations_history = self.operations_history[excess:]
+            logger.info(
+                "Trimmed %d old operations from session %s history (limit: %d)",
+                excess,
+                self.session_id,
+                settings.max_history_operations,
+            )
+
         self.update_access_time()
 
         # New persistent history

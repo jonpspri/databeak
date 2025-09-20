@@ -138,6 +138,262 @@ class TestHealthCheck:
             assert isinstance(result.active_sessions, int)
             assert isinstance(result.max_sessions, int)
             assert isinstance(result.session_ttl_minutes, int)
+            # New memory monitoring fields
+            assert isinstance(result.memory_usage_mb, float)
+            assert isinstance(result.memory_threshold_mb, float)
+            assert isinstance(result.memory_status, str)
+            assert isinstance(result.history_operations_total, int)
+            assert isinstance(result.history_limit_per_session, int)
+
+    @pytest.mark.asyncio
+    async def test_health_check_memory_monitoring_normal(self):
+        """Test health check with normal memory usage."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings,
+            patch(
+                "src.databeak.servers.system_server.count_total_history_operations"
+            ) as mock_history,
+        ):
+            # Mock normal conditions
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            mock_memory.return_value = 500.0  # 500MB usage
+            mock_history.return_value = 50  # 50 operations
+
+            mock_config = Mock()
+            mock_config.memory_threshold_mb = 2048  # 2GB threshold
+            mock_config.max_history_operations = 1000
+            mock_settings.return_value = mock_config
+
+            result = await health_check(create_mock_context())
+
+            assert result.success is True
+            assert result.status == "healthy"
+            assert result.memory_usage_mb == 500.0
+            assert result.memory_threshold_mb == 2048.0
+            assert result.memory_status == "normal"
+            assert result.history_operations_total == 50
+            assert result.history_limit_per_session == 1000
+
+    @pytest.mark.asyncio
+    async def test_health_check_memory_warning(self):
+        """Test health check with high memory usage (warning level)."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings,
+            patch(
+                "src.databeak.servers.system_server.count_total_history_operations"
+            ) as mock_history,
+        ):
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            mock_memory.return_value = 1600.0  # 1.6GB usage (75% of 2GB threshold)
+            mock_history.return_value = 100
+
+            mock_config = Mock()
+            mock_config.memory_threshold_mb = 2048  # 2GB threshold
+            mock_config.max_history_operations = 1000
+            mock_settings.return_value = mock_config
+
+            result = await health_check(create_mock_context())
+
+            assert result.success is True
+            assert result.status == "degraded"  # Should be degraded due to high memory
+            assert result.memory_usage_mb == 1600.0
+            assert result.memory_status == "warning"
+
+    @pytest.mark.asyncio
+    async def test_health_check_memory_critical(self):
+        """Test health check with critical memory usage."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings,
+            patch(
+                "src.databeak.servers.system_server.count_total_history_operations"
+            ) as mock_history,
+        ):
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            mock_memory.return_value = 1900.0  # 1.9GB usage (92% of 2GB threshold)
+            mock_history.return_value = 200
+
+            mock_config = Mock()
+            mock_config.memory_threshold_mb = 2048  # 2GB threshold
+            mock_config.max_history_operations = 1000
+            mock_settings.return_value = mock_config
+
+            result = await health_check(create_mock_context())
+
+            assert result.success is True
+            assert result.status == "unhealthy"  # Should be unhealthy due to critical memory
+            assert result.memory_usage_mb == 1900.0
+            assert result.memory_status == "critical"
+
+    @pytest.mark.asyncio
+    async def test_health_check_high_history_operations(self):
+        """Test health check with excessive history operations."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings,
+            patch(
+                "src.databeak.servers.system_server.count_total_history_operations"
+            ) as mock_history,
+        ):
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {}
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            mock_memory.return_value = 500.0  # Normal memory
+            mock_history.return_value = 15000  # 15x the limit of 1000
+
+            mock_config = Mock()
+            mock_config.memory_threshold_mb = 2048
+            mock_config.max_history_operations = 1000
+            mock_settings.return_value = mock_config
+
+            result = await health_check(create_mock_context())
+
+            assert result.success is True
+            assert result.status == "degraded"  # Should be degraded due to high history count
+            assert result.history_operations_total == 15000
+            assert result.memory_status == "normal"  # Memory is fine
+
+    @pytest.mark.asyncio
+    async def test_health_check_multiple_issues(self):
+        """Test health check with multiple concurrent issues."""
+        with (
+            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings,
+            patch(
+                "src.databeak.servers.system_server.count_total_history_operations"
+            ) as mock_history,
+        ):
+            # High session load + critical memory + high history
+            mock_session_manager = Mock()
+            mock_session_manager.sessions = {f"session_{i}": Mock() for i in range(95)}  # 95% load
+            mock_session_manager.max_sessions = 100
+            mock_session_manager.ttl_minutes = 60
+            mock_manager.return_value = mock_session_manager
+
+            mock_memory.return_value = 1950.0  # Critical memory (95% of 2GB)
+            mock_history.return_value = 20000  # Very high history count
+
+            mock_config = Mock()
+            mock_config.memory_threshold_mb = 2048
+            mock_config.max_history_operations = 1000
+            mock_settings.return_value = mock_config
+
+            result = await health_check(create_mock_context())
+
+            assert result.success is True
+            assert result.status == "unhealthy"  # Critical memory overrides other issues
+            assert result.active_sessions == 95
+            assert result.memory_status == "critical"
+            assert result.history_operations_total == 20000
+
+
+class TestMemoryMonitoringUtils:
+    """Test memory monitoring utility functions."""
+
+    def test_get_memory_status_normal(self):
+        """Test memory status calculation for normal usage."""
+        from src.databeak.servers.system_server import get_memory_status
+
+        # 50% usage - should be normal
+        status = get_memory_status(1024.0, 2048.0)
+        assert status == "normal"
+
+    def test_get_memory_status_warning(self):
+        """Test memory status calculation for warning level."""
+        from src.databeak.servers.system_server import get_memory_status
+
+        # 80% usage - should be warning
+        status = get_memory_status(1638.4, 2048.0)
+        assert status == "warning"
+
+    def test_get_memory_status_critical(self):
+        """Test memory status calculation for critical level."""
+        from src.databeak.servers.system_server import get_memory_status
+
+        # 95% usage - should be critical
+        status = get_memory_status(1945.6, 2048.0)
+        assert status == "critical"
+
+    def test_get_memory_status_zero_threshold(self):
+        """Test memory status with zero threshold (edge case)."""
+        from src.databeak.servers.system_server import get_memory_status
+
+        status = get_memory_status(100.0, 0.0)
+        assert status == "normal"  # Should default to normal
+
+    def test_count_total_history_operations_empty(self):
+        """Test history operation counting with empty sessions."""
+        from src.databeak.servers.system_server import count_total_history_operations
+
+        mock_manager = Mock()
+        mock_manager.sessions = {}
+
+        count = count_total_history_operations(mock_manager)
+        assert count == 0
+
+    def test_count_total_history_operations_with_data(self):
+        """Test history operation counting with session data."""
+        from src.databeak.servers.system_server import count_total_history_operations
+
+        # Mock sessions with history
+        mock_session1 = Mock()
+        mock_session1.history_manager = Mock()
+        mock_session1.history_manager.history = [1, 2, 3]  # 3 operations
+        mock_session1.operations_history = [1, 2]  # 2 legacy operations
+
+        mock_session2 = Mock()
+        mock_session2.history_manager = None
+        mock_session2.operations_history = [1, 2, 3, 4]  # 4 legacy operations
+
+        mock_manager = Mock()
+        mock_manager.sessions = {
+            "session1": mock_session1,
+            "session2": mock_session2,
+        }
+
+        count = count_total_history_operations(mock_manager)
+        assert count == 9  # 3 + 2 + 4 = 9 total operations
+
+    def test_count_total_history_operations_handles_errors(self):
+        """Test history operation counting handles session structure errors gracefully."""
+        from src.databeak.servers.system_server import count_total_history_operations
+
+        # Mock session with missing attributes
+        mock_session = Mock()
+        del mock_session.history_manager  # Remove attribute to trigger error
+        del mock_session.operations_history
+
+        mock_manager = Mock()
+        mock_manager.sessions = {"session1": mock_session}
+
+        # Should not raise exception, should return 0
+        count = count_total_history_operations(mock_manager)
+        assert count == 0
 
 
 class TestServerInfo:
