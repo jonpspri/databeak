@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
 
 class SessionManagerProtocol(Protocol):
+
     """Protocol defining the session manager interface."""
 
     def get_or_create_session(self, session_id: str) -> CSVSession:
@@ -35,6 +36,7 @@ class SessionManagerProtocol(Protocol):
 
 
 class SessionService(ABC):
+
     """Abstract base service for operations that require session management.
 
     This class provides a foundation for implementing server modules with dependency injection for
@@ -46,6 +48,7 @@ class SessionService(ABC):
 
         Args:
             session_manager: The session manager implementation to use
+
         """
         self.session_manager = session_manager
 
@@ -60,6 +63,7 @@ class SessionService(ABC):
 
         Raises:
             ValueError: If session not found or no data loaded
+
         """
         session = self.session_manager.get_or_create_session(session_id)
 
@@ -87,6 +91,7 @@ class SessionService(ABC):
 
         Raises:
             ValueError: If any columns are missing
+
         """
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
@@ -100,6 +105,7 @@ class SessionService(ABC):
 
 
 class SessionServiceFactory:
+
     """Factory for creating session services with proper dependency injection."""
 
     def __init__(self, session_manager: SessionManagerProtocol) -> None:
@@ -107,6 +113,7 @@ class SessionServiceFactory:
 
         Args:
             session_manager: The session manager to inject into services
+
         """
         self.session_manager = session_manager
 
@@ -118,6 +125,7 @@ class SessionServiceFactory:
 
         Returns:
             Configured service instance
+
         """
         return service_class(self.session_manager)
 
@@ -131,6 +139,7 @@ def get_default_session_service_factory() -> SessionServiceFactory:
 
 
 class MockSessionManager:
+
     """Mock session manager for testing.
 
     This provides a simple in-memory implementation suitable for unit testing without requiring the

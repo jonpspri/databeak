@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class StatisticsService(SessionService):
+
     """Service for statistical analysis operations."""
 
     def get_service_name(self) -> str:

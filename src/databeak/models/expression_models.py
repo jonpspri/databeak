@@ -16,6 +16,7 @@ from ..utils.secure_evaluator import validate_expression_safety
 
 
 class SecureExpression(BaseModel):
+
     """Unified secure mathematical expression with validation and context support.
 
     This is the single expression type used throughout DataBeak for all mathematical
@@ -76,6 +77,7 @@ class SecureExpression(BaseModel):
 
         Raises:
             ValueError: If expression contains unsafe operations
+
         """
         try:
             validate_expression_safety(v)
@@ -103,6 +105,7 @@ class SecureExpression(BaseModel):
 
         Returns:
             Expression string with column reference
+
         """
         # Safely quote column name for pandas
         safe_column_ref = f"`{column_name.replace('`', '')}`"
@@ -135,6 +138,7 @@ class SecureExpression(BaseModel):
 
         Example:
             SecureExpression.formula("col1 + col2", "Sum of columns")
+
         """
         return cls(expression=expression, description=description)
 
@@ -151,6 +155,7 @@ class SecureExpression(BaseModel):
 
         Example:
             SecureExpression.apply_operation("x * 2 + 1", "x")
+
         """
         return cls(expression=expression, variable_name=variable)
 
@@ -167,6 +172,7 @@ class SecureExpression(BaseModel):
 
         Example:
             SecureExpression.condition("col1 > 0", "Positive values")
+
         """
         return cls(expression=expression, description=description or "Conditional expression")
 

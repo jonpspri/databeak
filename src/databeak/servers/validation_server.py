@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationError(BaseModel):
+
     """Individual validation error details."""
 
     model_config = ConfigDict(extra="forbid")
@@ -67,6 +68,7 @@ class ValidationError(BaseModel):
 
 
 class ValidationSummary(BaseModel):
+
     """Summary of validation results."""
 
     model_config = ConfigDict(extra="forbid")
@@ -81,6 +83,7 @@ class ValidationSummary(BaseModel):
 
 
 class ValidateSchemaResult(BaseModel):
+
     """Response model for schema validation operations."""
 
     valid: bool = Field(description="Whether validation passed overall")
@@ -92,6 +95,7 @@ class ValidateSchemaResult(BaseModel):
 
 
 class QualityIssue(BaseModel):
+
     """Individual quality issue details."""
 
     type: str = Field(description="Type of quality issue identified")
@@ -107,6 +111,7 @@ class QualityIssue(BaseModel):
 
 
 class QualityRuleResult(BaseModel):
+
     """Result of a single quality rule check."""
 
     rule_type: str = Field(description="Type of quality rule that was checked")
@@ -120,6 +125,7 @@ class QualityRuleResult(BaseModel):
 
 
 class QualityResults(BaseModel):
+
     """Comprehensive quality check results."""
 
     model_config = ConfigDict(extra="forbid")
@@ -136,12 +142,14 @@ class QualityResults(BaseModel):
 
 
 class DataQualityResult(BaseModel):
+
     """Response model for data quality check operations."""
 
     quality_results: QualityResults = Field(description="Comprehensive quality assessment results")
 
 
 class StatisticalAnomaly(BaseModel):
+
     """Statistical anomaly detection result."""
 
     anomaly_count: int = Field(description="Number of statistical anomalies detected")
@@ -154,6 +162,7 @@ class StatisticalAnomaly(BaseModel):
 
 
 class PatternAnomaly(BaseModel):
+
     """Pattern-based anomaly detection result."""
 
     anomaly_count: int = Field(description="Number of pattern anomalies detected")
@@ -163,6 +172,7 @@ class PatternAnomaly(BaseModel):
 
 
 class MissingAnomaly(BaseModel):
+
     """Missing value anomaly detection result.
 
     Represents anomalies found in missing value patterns within a column.
@@ -176,6 +186,7 @@ class MissingAnomaly(BaseModel):
         missing_indices: Row indices where missing values occur (limited to first 100)
         sequential_clusters: Number of consecutive missing value sequences found
         pattern: Distribution pattern of missing values ('clustered' or 'random')
+
     """
 
     missing_count: int = Field(
@@ -199,6 +210,7 @@ class MissingAnomaly(BaseModel):
 
 
 class AnomalySummary(BaseModel):
+
     """Summary of anomaly detection results."""
 
     total_anomalies: int = Field(description="Total number of anomalies found across all columns")
@@ -209,6 +221,7 @@ class AnomalySummary(BaseModel):
 
 
 class AnomalyResults(BaseModel):
+
     """Comprehensive anomaly detection results."""
 
     model_config = ConfigDict(extra="forbid")
@@ -223,6 +236,7 @@ class AnomalyResults(BaseModel):
 
 
 class FindAnomaliesResult(BaseModel):
+
     """Response model for anomaly detection operations."""
 
     anomalies: AnomalyResults = Field(description="Comprehensive anomaly detection results")
@@ -239,6 +253,7 @@ class FindAnomaliesResult(BaseModel):
 
 
 class ColumnValidationRules(BaseModel):
+
     """Validation rules for a single column."""
 
     type: Literal["int", "float", "str", "bool", "datetime"] | None = Field(
@@ -272,6 +287,7 @@ class ColumnValidationRules(BaseModel):
 
 
 class QualityRule(BaseModel):
+
     """Base class for quality rules."""
 
     model_config = ConfigDict(extra="forbid")
@@ -280,6 +296,7 @@ class QualityRule(BaseModel):
 
 
 class CompletenessRule(QualityRule):
+
     """Rule for checking data completeness."""
 
     type: Literal["completeness"] = Field(
@@ -299,6 +316,7 @@ class CompletenessRule(QualityRule):
 
 
 class DuplicatesRule(QualityRule):
+
     """Rule for checking duplicate rows."""
 
     type: Literal["duplicates"] = Field(default="duplicates", description="Rule type identifier")
@@ -315,6 +333,7 @@ class DuplicatesRule(QualityRule):
 
 
 class UniquenessRule(QualityRule):
+
     """Rule for checking column uniqueness."""
 
     type: Literal["uniqueness"] = Field(default="uniqueness", description="Rule type identifier")
@@ -326,12 +345,14 @@ class UniquenessRule(QualityRule):
 
 
 class DataTypesRule(QualityRule):
+
     """Rule for checking data type consistency."""
 
     type: Literal["data_types"] = Field(default="data_types", description="Rule type identifier")
 
 
 class OutliersRule(QualityRule):
+
     """Rule for checking outliers in numeric columns."""
 
     type: Literal["outliers"] = Field(default="outliers", description="Rule type identifier")
@@ -344,6 +365,7 @@ class OutliersRule(QualityRule):
 
 
 class ConsistencyRule(QualityRule):
+
     """Rule for checking data consistency between columns."""
 
     type: Literal["consistency"] = Field(default="consistency", description="Rule type identifier")
@@ -354,6 +376,7 @@ class ConsistencyRule(QualityRule):
 
 
 class ValidationSchema(RootModel[dict[str, ColumnValidationRules]]):
+
     """Schema definition for data validation."""
 
 
@@ -375,6 +398,7 @@ def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missin
 
 
 class AnomalyDetectionParams(BaseModel):
+
     """Parameters for anomaly detection."""
 
     columns: list[str] | None = Field(
@@ -408,6 +432,7 @@ def apply_violation_limits(violations: list, limit: int, operation_name: str) ->
 
     Returns:
         Tuple of (limited_violations, was_truncated)
+
     """
     if len(violations) > limit:
         logger.info(
@@ -432,6 +457,7 @@ def sample_large_dataset(
 
     Returns:
         Sampled DataFrame (or original if under limit)
+
     """
     if len(df) > max_sample_size:
         logger.info(
@@ -464,6 +490,7 @@ def validate_schema(
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
+
     """
     try:
         session_id = ctx.session_id
@@ -729,6 +756,7 @@ def check_data_quality(
 
     Returns:
         DataQualityResult with comprehensive quality assessment results
+
     """
     try:
         session_id = ctx.session_id
@@ -1101,6 +1129,7 @@ def find_anomalies(
 
     Returns:
         FindAnomaliesResult with comprehensive anomaly detection results
+
     """
     try:
         session_id = ctx.session_id

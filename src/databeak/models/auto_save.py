@@ -20,6 +20,7 @@ SaveCallback = Callable[[str, ExportFormat, str], Awaitable[dict[str, Any]]]
 
 
 class AutoSaveMode(str, Enum):
+
     """Auto-save trigger modes."""
 
     DISABLED = "disabled"
@@ -29,6 +30,7 @@ class AutoSaveMode(str, Enum):
 
 
 class AutoSaveStrategy(str, Enum):
+
     """Auto-save file strategies."""
 
     OVERWRITE = "overwrite"  # Overwrite original file
@@ -38,6 +40,7 @@ class AutoSaveStrategy(str, Enum):
 
 
 class AutoSaveConfig:
+
     """Configuration for auto-save functionality."""
 
     def __init__(
@@ -102,6 +105,7 @@ class AutoSaveConfig:
 
 
 class AutoSaveManager:
+
     """Manages auto-save operations for a CSV session."""
 
     def __init__(

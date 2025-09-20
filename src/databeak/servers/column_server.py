@@ -19,6 +19,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
+
 # Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.expression_models import SecureExpression
@@ -37,6 +38,7 @@ CellValue = str | int | float | bool | None
 
 
 class ColumnMapping(BaseModel):
+
     """Column rename mapping."""
 
     model_config = ConfigDict(extra="forbid")
@@ -47,6 +49,7 @@ class ColumnMapping(BaseModel):
 
 # Base class for update operations
 class UpdateOperation(BaseModel):
+
     """Base class for update operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -54,6 +57,7 @@ class UpdateOperation(BaseModel):
 
 
 class ReplaceOperation(UpdateOperation):
+
     """Replace operation specification."""
 
     type: Literal["replace"] = "replace"
@@ -62,6 +66,7 @@ class ReplaceOperation(UpdateOperation):
 
 
 class MapOperation(UpdateOperation):
+
     """Map operation specification."""
 
     type: Literal["map"] = "map"
@@ -69,6 +74,7 @@ class MapOperation(UpdateOperation):
 
 
 class ApplyOperation(UpdateOperation):
+
     """Apply operation specification."""
 
     type: Literal["apply"] = "apply"
@@ -76,6 +82,7 @@ class ApplyOperation(UpdateOperation):
 
 
 class FillNaOperation(UpdateOperation):
+
     """Fill NA operation specification."""
 
     type: Literal["fillna"] = "fillna"
@@ -90,6 +97,7 @@ UpdateOperationType = Annotated[
 
 
 class UpdateColumnRequest(BaseModel):
+
     """Request parameters for column update operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -110,6 +118,7 @@ class UpdateColumnRequest(BaseModel):
 
 
 class SelectColumnsResult(BaseToolResponse):
+
     """Result of selecting specific columns."""
 
     model_config = ConfigDict(extra="forbid")
@@ -120,6 +129,7 @@ class SelectColumnsResult(BaseToolResponse):
 
 
 class RenameColumnsResult(BaseToolResponse):
+
     """Result of renaming columns."""
 
     model_config = ConfigDict(extra="forbid")
@@ -220,6 +230,7 @@ async def rename_columns(
             "LastName": "last_name",
             "EmailAddress": "email"
         })
+
     """
     try:
         # Get session_id from FastMCP context
@@ -293,6 +304,7 @@ async def add_column(
 
         # Add column with complex formula
         add_column(ctx, "full_name", formula="first_name + ' ' + last_name")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -378,6 +390,7 @@ async def remove_columns(
 
         # Clean up after analysis
         remove_columns(ctx, ["_temp", "_backup", "old_value"])
+
     """
     try:
         # Get session_id from FastMCP context
@@ -453,6 +466,7 @@ async def change_column_type(
 
         # Convert to boolean
         change_column_type(ctx, "is_active", "bool")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -467,9 +481,7 @@ async def change_column_type(
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
 
-        # Track before state
-        original_dtype = str(df[column].dtype)
-        null_count_before = df[column].isna().sum()
+        # Convert column type
 
         # Map string dtype to pandas dtype
         type_map = {
@@ -509,8 +521,7 @@ async def change_column_type(
                 ) from e
             # If errors='coerce', the conversion has already handled invalid values
 
-        # Track after state
-        null_count_after = df[column].isna().sum()
+        # Operation completed
 
         # No longer recording operations (simplified MCP architecture)
 
@@ -577,6 +588,7 @@ async def update_column(
             "operation": "fillna",
             "value": 0
         })
+
     """
     try:
         # Get session_id from FastMCP context
@@ -592,7 +604,7 @@ async def update_column(
             raise ColumnNotFoundError(column, df.columns.tolist())
 
         # Track initial state
-        null_count_before = df[column].isna().sum()
+        # Update column operation (no longer tracking null count changes)
         operation_type = "unknown"
 
         # Handle discriminated union operations
@@ -840,8 +852,7 @@ async def update_column(
                 operation_type = update_request.operation
                 # ... (same logic as above legacy handling)
 
-        # Track changes
-        null_count_after = df[column].isna().sum()
+        # Operation completed
 
         # No longer recording operations (simplified MCP architecture)
 

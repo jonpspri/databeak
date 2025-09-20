@@ -19,6 +19,7 @@ CsvCellValue = str | int | float | bool | None
 
 
 class DataTypeInfo(BaseModel):
+
     """Data type information for columns."""
 
     type: Literal["int64", "float64", "object", "bool", "datetime64", "category"] = Field(
@@ -30,6 +31,7 @@ class DataTypeInfo(BaseModel):
 
 
 class MissingDataInfo(BaseModel):
+
     """Missing data summary."""
 
     total_missing: int = Field(description="Total number of missing values across all columns")
@@ -38,6 +40,7 @@ class MissingDataInfo(BaseModel):
 
 
 class CellLocation(BaseModel):
+
     """Cell location and value information."""
 
     row: int = Field(description="Row index (0-based)")
@@ -46,6 +49,7 @@ class CellLocation(BaseModel):
 
 
 class BaseToolResponse(BaseModel):
+
     """Base response model for all MCP tool operations."""
 
     success: bool = Field(default=True, description="Whether operation completed successfully")
@@ -57,6 +61,7 @@ class BaseToolResponse(BaseModel):
 
 
 class HealthResult(BaseToolResponse):
+
     """Response model for system health check with memory monitoring."""
 
     status: str = Field(description="Server health status: healthy, degraded, or unhealthy")
@@ -72,6 +77,7 @@ class HealthResult(BaseToolResponse):
 
 
 class ServerInfoResult(BaseToolResponse):
+
     """Response model for server information and capabilities."""
 
     name: str = Field(description="Server name and identification")
@@ -91,6 +97,7 @@ class ServerInfoResult(BaseToolResponse):
 
 
 class CellValueResult(BaseToolResponse):
+
     """Response model for cell value operations."""
 
     value: str | int | float | bool | None = Field(description="Cell value (None if null/missing)")
@@ -101,6 +108,7 @@ class CellValueResult(BaseToolResponse):
 
 
 class SetCellResult(BaseToolResponse):
+
     """Response model for cell update operations."""
 
     coordinates: dict[str, str | int] = Field(
@@ -114,6 +122,7 @@ class SetCellResult(BaseToolResponse):
 
 
 class RowDataResult(BaseToolResponse):
+
     """Response model for row data operations."""
 
     row_index: int = Field(description="Row index (0-based)")
@@ -124,6 +133,7 @@ class RowDataResult(BaseToolResponse):
 
 
 class ColumnDataResult(BaseToolResponse):
+
     """Response model for column data operations."""
 
     column: str = Field(description="Column name")
@@ -139,6 +149,7 @@ class ColumnDataResult(BaseToolResponse):
 
 
 class InsertRowResult(BaseToolResponse):
+
     """Response model for row insertion operations."""
 
     operation: str = Field(default="insert_row", description="Operation type identifier")
@@ -152,6 +163,7 @@ class InsertRowResult(BaseToolResponse):
 
 
 class DeleteRowResult(BaseToolResponse):
+
     """Response model for row deletion operations."""
 
     operation: str = Field(default="delete_row", description="Operation type identifier")
@@ -162,6 +174,7 @@ class DeleteRowResult(BaseToolResponse):
 
 
 class UpdateRowResult(BaseToolResponse):
+
     """Response model for row update operations."""
 
     operation: str = Field(default="update_row", description="Operation type identifier")
@@ -182,6 +195,7 @@ class UpdateRowResult(BaseToolResponse):
 
 
 class FilterOperationResult(BaseToolResponse):
+
     """Response model for row filtering operations."""
 
     rows_before: int = Field(description="Row count before filtering")
@@ -191,6 +205,7 @@ class FilterOperationResult(BaseToolResponse):
 
 
 class ColumnOperationResult(BaseToolResponse):
+
     """Response model for column operations (add, remove, rename, etc.)."""
 
     operation: str = Field(description="Type of operation performed")
@@ -219,6 +234,7 @@ class ColumnOperationResult(BaseToolResponse):
 
 
 class SortDataResult(BaseToolResponse):
+
     """Response model for data sorting operations."""
 
     sorted_by: list[str] = Field(description="Column names used for sorting")

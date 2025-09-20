@@ -33,6 +33,7 @@ RowData = dict[str, CsvCellValue] | list[CsvCellValue]
 
 
 class TransformationResult(BaseToolResponse):
+
     """Base transformation operation response."""
 
     session_id: str
@@ -43,6 +44,7 @@ class TransformationResult(BaseToolResponse):
 
 
 class FilterResult(BaseToolResponse):
+
     """Filter operation response."""
 
     session_id: str
@@ -53,6 +55,7 @@ class FilterResult(BaseToolResponse):
 
 
 class SortResult(BaseToolResponse):
+
     """Sort operation response."""
 
     session_id: str
@@ -62,6 +65,7 @@ class SortResult(BaseToolResponse):
 
 
 class ColumnTransformResult(BaseToolResponse):
+
     """Column transformation response."""
 
     session_id: str
@@ -73,6 +77,7 @@ class ColumnTransformResult(BaseToolResponse):
 
 
 class DuplicateRemovalResult(BaseToolResponse):
+
     """Duplicate removal response."""
 
     session_id: str
@@ -84,6 +89,7 @@ class DuplicateRemovalResult(BaseToolResponse):
 
 
 class FillMissingResult(BaseToolResponse):
+
     """Fill missing values response."""
 
     session_id: str
@@ -95,6 +101,7 @@ class FillMissingResult(BaseToolResponse):
 
 
 class StringOperationResult(BaseToolResponse):
+
     """String operation response."""
 
     session_id: str

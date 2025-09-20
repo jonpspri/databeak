@@ -23,7 +23,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.csv_session import CSVSession
 
 # Import response models - needed at runtime for FastMCP
@@ -69,21 +69,12 @@ async def get_statistics(
         list[str] | None,
         Field(description="List of specific columns to analyze (None = all numeric columns)"),
     ] = None,
-    include_percentiles: Annotated[
-        bool,
-        Field(description="Whether to include 25th, 50th, 75th percentiles"),
-    ] = True,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
     Computes descriptive statistics for all or specified numerical columns including
     count, mean, standard deviation, min/max values, and percentiles. Optimized for
     AI workflows with clear statistical insights and data understanding.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: Optional list of specific columns to analyze (default: all numeric)
-        include_percentiles: Whether to include 25th, 50th, 75th percentiles
 
     Returns:
         Comprehensive statistical analysis with per-column summaries
@@ -102,19 +93,20 @@ async def get_statistics(
         # Analyze specific columns only
         stats = await get_statistics("session_123", columns=["price", "quantity"])
 
-        # Skip percentiles for faster computation
-        stats = await get_statistics("session_123", include_percentiles=False)
+        # Analyze all numeric columns (percentiles always included)
+        stats = await get_statistics("session_123")
 
     AI Workflow Integration:
         1. Essential for data understanding and quality assessment
         2. Identifies data distribution and potential issues
         3. Guides feature engineering and analysis decisions
         4. Provides context for outlier detection thresholds
+
     """
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -231,11 +223,12 @@ async def get_column_statistics(
         2. Data quality assessment for individual features
         3. Understanding column characteristics for modeling
         4. Validation of data transformations
+
     """
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -426,11 +419,12 @@ async def get_correlation_matrix(
         2. Multicollinearity detection before modeling
         3. Understanding variable relationships
         4. Data validation and quality assessment
+
     """
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -560,11 +554,12 @@ async def get_value_counts(
         2. Data quality assessment (identifying rare values)
         3. Understanding distribution for sampling strategies
         4. Feature engineering insights for categorical variables
+
     """
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())

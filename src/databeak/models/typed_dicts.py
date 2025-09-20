@@ -18,6 +18,7 @@ CellValue = str | int | float | bool | None
 
 # Validation and Quality Check Results
 class ValidationResult(TypedDict):
+
     """Result of DataFrame schema validation."""
 
     valid: bool
@@ -26,6 +27,7 @@ class ValidationResult(TypedDict):
 
 
 class DataValidationIssues(TypedDict):
+
     """Issues found during DataFrame validation."""
 
     errors: list[str]
@@ -34,6 +36,7 @@ class DataValidationIssues(TypedDict):
 
 
 class QualityCheckResult(TypedDict):
+
     """Result of data quality assessment."""
 
     rule_name: str
@@ -44,6 +47,7 @@ class QualityCheckResult(TypedDict):
 
 
 class DataStatisticsDict(TypedDict):
+
     """Statistical summary of column data (internal use - use DataStatistics Pydantic model for API responses)."""
 
     count: int
@@ -57,6 +61,7 @@ class DataStatisticsDict(TypedDict):
 
 
 class ColumnProfile(TypedDict):
+
     """Comprehensive column profiling information."""
 
     name: str
@@ -68,6 +73,7 @@ class ColumnProfile(TypedDict):
 
 # Session and Operation Metadata
 class SessionMetadataDict(TypedDict):
+
     """Session state and configuration metadata (internal use)."""
 
     created_at: str
@@ -78,6 +84,7 @@ class SessionMetadataDict(TypedDict):
 
 
 class DataSessionMetadata(TypedDict):
+
     """Metadata stored in DataSession for loaded data."""
 
     file_path: str | None
@@ -88,6 +95,7 @@ class DataSessionMetadata(TypedDict):
 
 
 class SessionHistoryExport(TypedDict):
+
     """Exported session history data."""
 
     session_id: str
@@ -97,6 +105,7 @@ class SessionHistoryExport(TypedDict):
 
 
 class OperationMetadata(TypedDict):
+
     """Metadata for tracking operations in session history."""
 
     operation_type: str
@@ -108,6 +117,7 @@ class OperationMetadata(TypedDict):
 
 
 class FilterConditionDict(TypedDict):
+
     """Filter condition as dictionary (for legacy compatibility)."""
 
     column: str
@@ -117,6 +127,7 @@ class FilterConditionDict(TypedDict):
 
 
 class SortSpecification(TypedDict):
+
     """Sort specification for column sorting."""
 
     column: str
@@ -125,6 +136,7 @@ class SortSpecification(TypedDict):
 
 # I/O and Data Processing
 class CsvReadParams(TypedDict):
+
     """Parameters for CSV reading operations."""
 
     sep: NotRequired[str]
@@ -138,6 +150,7 @@ class CsvReadParams(TypedDict):
 
 
 class ExportOptions(TypedDict):
+
     """Options for data export operations."""
 
     format: str  # 'csv', 'json', 'excel', etc.
@@ -149,6 +162,7 @@ class ExportOptions(TypedDict):
 
 # Data Transformation Structures
 class TransformationStep(TypedDict):
+
     """Single step in a data transformation pipeline."""
 
     operation: str
@@ -157,6 +171,7 @@ class TransformationStep(TypedDict):
 
 
 class TransformationPipeline(TypedDict):
+
     """Complete transformation pipeline specification."""
 
     steps: list[TransformationStep]
@@ -166,6 +181,7 @@ class TransformationPipeline(TypedDict):
 
 # Column Operation Structures
 class UpdateColumnOperation(TypedDict):
+
     """Column update operation specification."""
 
     operation_type: str  # "replace", "map", "apply", "fillna"
@@ -178,6 +194,7 @@ class UpdateColumnOperation(TypedDict):
 
 
 class ColumnStatistics(TypedDict):
+
     """Statistical information for a column."""
 
     count: int
@@ -195,6 +212,7 @@ class ColumnStatistics(TypedDict):
 
 
 class AutoSaveConfigDict(TypedDict):
+
     """Auto-save configuration parameters."""
 
     enabled: bool
@@ -209,6 +227,7 @@ class AutoSaveConfigDict(TypedDict):
 
 
 class AutoSaveOperationResult(TypedDict):
+
     """Result of auto-save operations (enable/disable/status/manual save)."""
 
     success: NotRequired[bool]
@@ -227,6 +246,7 @@ class AutoSaveOperationResult(TypedDict):
 
 
 class UndoRedoOperationResult(TypedDict):
+
     """Result of undo/redo operations."""
 
     success: bool
@@ -242,6 +262,7 @@ class UndoRedoOperationResult(TypedDict):
 
 
 class HistoryResult(TypedDict):
+
     """Result of history retrieval operations."""
 
     success: bool
@@ -255,6 +276,7 @@ class HistoryResult(TypedDict):
 
 # Internal operation results (for legacy transformation functions)
 class ColumnSelectionResult(TypedDict):
+
     """Result of internal column selection operation."""
 
     session_id: str
@@ -264,6 +286,7 @@ class ColumnSelectionResult(TypedDict):
 
 
 class RowUpdateResult(TypedDict):
+
     """Result of internal row update operation."""
 
     session_id: str
@@ -273,6 +296,7 @@ class RowUpdateResult(TypedDict):
 
 
 class ColumnRenameResult(TypedDict):
+
     """Result of internal column rename operation."""
 
     session_id: str
@@ -282,6 +306,7 @@ class ColumnRenameResult(TypedDict):
 
 # Tool Response Components
 class OperationResultDict(TypedDict):
+
     """Standard operation result structure (internal use - use OperationResult Pydantic model for API responses)."""
 
     success: bool
@@ -293,6 +318,7 @@ class OperationResultDict(TypedDict):
 
 
 class ErrorDetails(TypedDict):
+
     """Detailed error information."""
 
     error_type: str
@@ -303,6 +329,7 @@ class ErrorDetails(TypedDict):
 
 # Discovery and Analysis Results
 class ColumnAnalysis(TypedDict):
+
     """Analysis results for a single column."""
 
     column_name: str
@@ -315,6 +342,7 @@ class ColumnAnalysis(TypedDict):
 
 
 class DataProfileResult(TypedDict):
+
     """Complete data profiling results."""
 
     total_rows: int
@@ -327,6 +355,7 @@ class DataProfileResult(TypedDict):
 
 # Configuration and Settings
 class ServerConfig(TypedDict):
+
     """Server configuration parameters."""
 
     host: str
@@ -338,6 +367,7 @@ class ServerConfig(TypedDict):
 
 
 class ToolConfig(TypedDict):
+
     """Individual tool configuration."""
 
     enabled: bool
@@ -348,6 +378,7 @@ class ToolConfig(TypedDict):
 
 # Data Preview Structures
 class DataPreviewRecord(TypedDict):
+
     """Single record in data preview with row index."""
 
     __row_index__: int  # Original DataFrame row index
@@ -355,6 +386,7 @@ class DataPreviewRecord(TypedDict):
 
 
 class DataPreviewResult(TypedDict):
+
     """Complete data preview with metadata."""
 
     records: list[dict[str, CellValue]]  # Preview records with actual column data
@@ -365,6 +397,7 @@ class DataPreviewResult(TypedDict):
 
 
 class CsvDataResource(TypedDict):
+
     """CSV data resource response for MCP resource endpoint."""
 
     session_id: str
@@ -374,6 +407,7 @@ class CsvDataResource(TypedDict):
 
 
 class InternalDataSummary(TypedDict):
+
     """Internal data summary structure (not an MCP tool response)."""
 
     session_id: str

@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
-# Removed: OperationType (no longer tracking operations), get_session_manager
+from ..models import get_session_manager
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -40,6 +40,7 @@ RowData = dict[str, CellValue] | list[CellValue]
 
 
 class CellCoordinates(BaseModel):
+
     """Cell coordinate specification for precise targeting."""
 
     model_config = ConfigDict(extra="forbid")
@@ -58,6 +59,7 @@ class CellCoordinates(BaseModel):
 
 
 class RowInsertRequest(BaseModel):
+
     """Request parameters for row insertion operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -78,6 +80,7 @@ class RowInsertRequest(BaseModel):
 
 
 class RowUpdateRequest(BaseModel):
+
     """Request parameters for row update operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -102,6 +105,7 @@ class RowUpdateRequest(BaseModel):
 
 
 class ColumnDataRequest(BaseModel):
+
     """Request parameters for column data retrieval."""
 
     model_config = ConfigDict(extra="forbid")

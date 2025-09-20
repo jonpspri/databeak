@@ -12,6 +12,7 @@ from .tool_responses import BaseToolResponse
 
 
 class StatisticsSummary(BaseModel):
+
     """Statistical summary for a single column."""
 
     model_config = ConfigDict(populate_by_name=True)
@@ -53,6 +54,7 @@ class StatisticsSummary(BaseModel):
 
 
 class StatisticsResult(BaseToolResponse):
+
     """Response model for dataset statistical analysis."""
 
     statistics: dict[str, StatisticsSummary] = Field(
@@ -64,6 +66,7 @@ class StatisticsResult(BaseToolResponse):
 
 
 class ColumnStatisticsResult(BaseToolResponse):
+
     """Response model for individual column statistical analysis."""
 
     column: str = Field(description="Name of the analyzed column")
@@ -75,6 +78,7 @@ class ColumnStatisticsResult(BaseToolResponse):
 
 
 class CorrelationResult(BaseToolResponse):
+
     """Response model for correlation matrix analysis."""
 
     correlation_matrix: dict[str, dict[str, float]] = Field(
@@ -89,6 +93,7 @@ class CorrelationResult(BaseToolResponse):
 
 
 class ValueCountsResult(BaseToolResponse):
+
     """Response model for value frequency analysis."""
 
     column: str = Field(description="Name of the analyzed column")

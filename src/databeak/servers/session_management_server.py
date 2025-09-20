@@ -34,6 +34,7 @@ def safe_int(*, value: Any, default: int = 0) -> int:
 
     Returns:
         Converted integer or default value
+
     """
     try:
         return int(value) if value is not None else default
@@ -50,6 +51,7 @@ def safe_str(*, value: Any, default: str = "") -> str:
 
     Returns:
         Converted string or default value
+
     """
     try:
         return str(value) if value is not None else default
@@ -66,6 +68,7 @@ def safe_bool(*, value: Any, default: bool = False) -> bool:
 
     Returns:
         Converted boolean or default value
+
     """
     try:
         return bool(value) if value is not None else default
@@ -81,6 +84,7 @@ logger = logging.getLogger(__name__)
 
 
 class AutoSaveConfig(BaseModel):
+
     """Unified auto-save configuration model (replaces duplicate definitions)."""
 
     model_config = ConfigDict(extra="forbid")
@@ -130,6 +134,7 @@ class AutoSaveConfig(BaseModel):
 
 
 class AutoSaveStatus(BaseModel):
+
     """Auto-save status information."""
 
     model_config = ConfigDict(extra="forbid")
@@ -154,6 +159,7 @@ class AutoSaveStatus(BaseModel):
 
 
 class SessionOperationResult(BaseModel):
+
     """Unified response model for session management operations."""
 
     success: bool = Field(default=True, description="Whether operation completed successfully")
@@ -167,6 +173,7 @@ class SessionOperationResult(BaseModel):
 
 # Response models for specific operations
 class AutoSaveConfigResult(BaseModel):
+
     """Response model for auto-save configuration operations."""
 
     success: bool = Field(
@@ -180,6 +187,7 @@ class AutoSaveConfigResult(BaseModel):
 
 
 class AutoSaveStatusResult(BaseModel):
+
     """Response model for auto-save status operations."""
 
     success: bool = Field(default=True, description="Whether the status retrieval was successful")
@@ -187,6 +195,7 @@ class AutoSaveStatusResult(BaseModel):
 
 
 class AutoSaveDisableResult(BaseModel):
+
     """Response model for auto-save disable operations."""
 
     success: bool = Field(default=True, description="Whether the disable operation was successful")
@@ -201,6 +210,7 @@ class AutoSaveDisableResult(BaseModel):
 
 
 class ManualSaveResult(BaseModel):
+
     """Response model for manual save operations."""
 
     success: bool = Field(default=True, description="Whether the manual save was successful")
@@ -211,6 +221,7 @@ class ManualSaveResult(BaseModel):
 
 
 class HistoryOperationResult(BaseModel):
+
     """Response model for history operations (undo/redo)."""
 
     success: bool = Field(default=True, description="Whether the history operation was successful")
@@ -225,6 +236,7 @@ class HistoryOperationResult(BaseModel):
 
 
 class HistoryListResult(BaseModel):
+
     """Response model for history listing operations."""
 
     success: bool = Field(default=True, description="Whether the history retrieval was successful")
@@ -238,6 +250,7 @@ class HistoryListResult(BaseModel):
 
 
 class HistoryExportResult(BaseModel):
+
     """Response model for history export operations."""
 
     success: bool = Field(default=True, description="Whether the history export was successful")

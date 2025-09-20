@@ -11,7 +11,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management from the main package
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
 from ..models.typed_dicts import FilterConditionDict
 
@@ -29,6 +29,7 @@ CellValue = str | int | float | bool | None
 
 
 class SortColumn(BaseModel):
+
     """Column specification for sorting."""
 
     model_config = ConfigDict(extra="forbid")
@@ -82,6 +83,7 @@ def filter_rows(
             {"column": "status", "operator": "==", "value": "active"},
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
+
     """
     try:
         session_id = ctx.session_id
@@ -227,6 +229,7 @@ def sort_data(
             SortColumn(column="name", ascending=True),
             SortColumn(column="age", ascending=False)
         ])
+
     """
     try:
         session_id = ctx.session_id
@@ -317,6 +320,7 @@ def remove_duplicates(
 
         # Remove all duplicates (keep none)
         remove_duplicates(ctx, subset=["email"], keep="none")
+
     """
     try:
         session_id = ctx.session_id
@@ -409,6 +413,7 @@ def fill_missing_values(
 
         # Fill with column mean for numeric columns
         fill_missing_values(ctx, strategy="mean", columns=["age", "salary"])
+
     """
     try:
         session_id = ctx.session_id
@@ -420,7 +425,6 @@ def fill_missing_values(
             raise ToolError(msg)
 
         df = session.df
-        rows_before = len(df)
 
         # Validate and set target columns
         if columns:

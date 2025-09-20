@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class HistoryStorage(str, Enum):
+
     """Storage strategies for operation history."""
 
     MEMORY = "memory"  # In-memory only (lost on session end)
@@ -25,6 +26,7 @@ class HistoryStorage(str, Enum):
 
 
 class OperationHistory:
+
     """Single operation record with snapshot and metadata."""
 
     def __init__(
@@ -73,6 +75,7 @@ class OperationHistory:
 
 
 class HistoryManager:
+
     """Manages operation history with persistence and undo/redo capabilities."""
 
     def __init__(

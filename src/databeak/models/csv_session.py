@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings
 
 from ..exceptions import HistoryError, HistoryNotEnabledError
 from .auto_save import AutoSaveConfig, AutoSaveManager
-from .data_models import SessionInfo
+from .data_models import ExportFormat, SessionInfo
 from .data_session import DataSession
 from .history_manager import HistoryManager, HistoryStorage
 from .session_lifecycle import SessionLifecycle
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataBeakSettings(BaseSettings):
+
     """Configuration settings for session management."""
 
     csv_history_dir: str = Field(
@@ -89,6 +90,7 @@ def get_csv_settings() -> DataBeakSettings:
 
 
 class CSVSession:
+
     """CSV editing session with auto-save and history management."""
 
     # Implementation: Session initialization with TTL, auto-save, and persistent history components
@@ -506,6 +508,7 @@ class CSVSession:
 
 
 class SessionManager:
+
     """Manages multiple CSV sessions with lifecycle and cleanup."""
 
     # Implementation: Session manager with capacity limits and TTL management
@@ -526,6 +529,7 @@ class SessionManager:
 
         Returns:
             The session if it exists, None otherwise
+
         """
         session = self.sessions.get(session_id)
         if session and not session.is_expired():
@@ -615,6 +619,7 @@ def get_or_create_session(session_id: str) -> CSVSession:
 
     Returns:
         CSVSession (existing or newly created)
+
     """
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
