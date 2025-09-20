@@ -13,6 +13,9 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
 from ..models import OperationType, get_session_manager
+from ..models.csv_session import get_csv_settings
+
+# from ..models.pandera_schemas import validate_dataframe_with_pandera
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +370,7 @@ QualityRuleType = Annotated[
 
 
 def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missing"]]:
-    """Default methods for anomaly detection."""
+    """Return default methods for anomaly detection."""
     return ["statistical", "pattern", "missing"]
 
 
@@ -388,6 +391,57 @@ class AnomalyDetectionParams(BaseModel):
         default_factory=_default_anomaly_methods,
         description="Anomaly detection methods to apply",
     )
+
+
+# ============================================================================
+# VALIDATION RESOURCE MANAGEMENT
+# ============================================================================
+
+
+def apply_violation_limits(violations: list, limit: int, operation_name: str) -> tuple[list, bool]:
+    """Apply resource limits to violation collections.
+
+    Args:
+        violations: List of violations to limit
+        limit: Maximum number of violations to keep
+        operation_name: Name of operation for logging
+
+    Returns:
+        Tuple of (limited_violations, was_truncated)
+    """
+    if len(violations) > limit:
+        logger.info(
+            "%s found %d violations, limiting to %d for resource management",
+            operation_name,
+            len(violations),
+            limit,
+        )
+        return violations[:limit], True
+    return violations, False
+
+
+def sample_large_dataset(
+    df: pd.DataFrame, max_sample_size: int, operation_name: str
+) -> pd.DataFrame:
+    """Sample large datasets for memory-efficient operations.
+
+    Args:
+        df: DataFrame to sample
+        max_sample_size: Maximum sample size
+        operation_name: Name of operation for logging
+
+    Returns:
+        Sampled DataFrame (or original if under limit)
+    """
+    if len(df) > max_sample_size:
+        logger.info(
+            "%s dataset has %d rows, sampling %d for resource management",
+            operation_name,
+            len(df),
+            max_sample_size,
+        )
+        return df.sample(n=max_sample_size, random_state=42)
+    return df
 
 
 # ============================================================================
@@ -421,9 +475,20 @@ def validate_schema(
             raise ToolError(msg)
 
         df = session.df
+        settings = get_csv_settings()
         validation_errors: dict[str, list[ValidationError]] = {}
 
         parsed_schema = schema.root
+
+        # Apply resource management for large datasets
+        logger.info("Validating schema for %d rows, %d columns", len(df), len(df.columns))
+        if len(df) > settings.max_anomaly_sample_size:
+            logger.warning(
+                "Large dataset (%d rows), using sample of %d for validation",
+                len(df),
+                settings.max_anomaly_sample_size,
+            )
+            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Schema validation")
 
         # Convert validation_summary to ValidationSummary
         validation_summary = ValidationSummary(
@@ -626,14 +691,26 @@ def validate_schema(
             },
         )
 
-        # Flatten all validation errors
+        # Flatten all validation errors with resource limits
         all_errors = []
         for error_list in validation_errors.values():
             all_errors.extend(error_list)
 
+        # Apply violation limits to prevent resource exhaustion
+        limited_errors, was_truncated = apply_violation_limits(
+            all_errors, settings.max_validation_violations, "Schema validation"
+        )
+
+        if was_truncated:
+            logger.warning(
+                "Validation found %d errors, limited to %d",
+                len(all_errors),
+                settings.max_validation_violations,
+            )
+
         return ValidateSchemaResult(
             valid=is_valid,
-            errors=all_errors,
+            errors=limited_errors,
             summary=validation_summary,
             validation_errors=validation_errors,
         )
@@ -670,9 +747,20 @@ def check_data_quality(
             raise ToolError(msg)
 
         df = session.df
+        settings = get_csv_settings()
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
         recommendations: list[str] = []
+
+        # Apply resource management for large datasets
+        logger.info("Checking data quality for %d rows, %d columns", len(df), len(df.columns))
+        if len(df) > settings.max_anomaly_sample_size:
+            logger.warning(
+                "Large dataset (%d rows), using sample of %d for quality check",
+                len(df),
+                settings.max_anomaly_sample_size,
+            )
+            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Data quality check")
 
         # Use default rules if none provided
         if rules is None:
@@ -960,14 +1048,26 @@ def check_data_quality(
         passed_rules = sum(1 for rule in rule_results if rule.passed)
         failed_rules = len(rule_results) - passed_rules
 
+        # Apply limits to quality issues to prevent resource exhaustion
+        limited_issues, was_truncated = apply_violation_limits(
+            quality_issues, settings.max_validation_violations, "Data quality check"
+        )
+
+        if was_truncated:
+            logger.warning(
+                "Quality check found %d issues, limited to %d",
+                len(quality_issues),
+                settings.max_validation_violations,
+            )
+
         # Create QualityResults
         quality_results = QualityResults(
             overall_score=overall_score,
             passed_rules=passed_rules,
             failed_rules=failed_rules,
-            total_issues=len(quality_issues),
+            total_issues=len(limited_issues),
             rule_results=rule_results,
-            issues=quality_issues,
+            issues=limited_issues,
             recommendations=recommendations,
         )
 
@@ -1026,6 +1126,17 @@ def find_anomalies(
             raise ToolError(msg)
 
         df = session.df
+        settings = get_csv_settings()
+
+        # Apply resource management for large datasets
+        logger.info("Finding anomalies in %d rows, %d columns", len(df), len(df.columns))
+        if len(df) > settings.max_anomaly_sample_size:
+            logger.warning(
+                "Large dataset (%d rows), using sample of %d for anomaly detection",
+                len(df),
+                settings.max_anomaly_sample_size,
+            )
+            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Anomaly detection")
 
         if columns:
             missing_cols = [col for col in columns if col not in df.columns]
@@ -1260,6 +1371,10 @@ def find_anomalies(
         raise ToolError(msg) from e
 
 
+# TODO: Complete Pandera integration - https://github.com/jonpspri/databeak/issues/100
+# Complex FastMCP/Pydantic compatibility issues need resolution
+
+
 # ============================================================================
 # FASTMCP SERVER SETUP
 # ============================================================================
@@ -1274,5 +1389,6 @@ validation_server = FastMCP(
 
 # Register the logic functions directly as MCP tools (no wrapper functions needed)
 validation_server.tool(name="validate_schema")(validate_schema)
+# validation_server.tool(name="validate_with_pandera_schema")(validate_with_pandera_schema)
 validation_server.tool(name="check_data_quality")(check_data_quality)
 validation_server.tool(name="find_anomalies")(find_anomalies)

@@ -189,7 +189,7 @@ class DataSchema(BaseModel):
             col_data = df[col_schema.name]
 
             # Check nullability
-            if not col_schema.nullable and col_data.isnull().any():
+            if not col_schema.nullable and col_data.isna().any():
                 errors.append(f"Column {col_schema.name} contains null values")
 
             # Check uniqueness

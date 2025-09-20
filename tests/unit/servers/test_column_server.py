@@ -25,7 +25,6 @@ from tests.test_mock_context import create_mock_context
 @pytest.fixture
 async def ctx_fixture():
     """Create a test session with column operation data."""
-
     csv_content = """id,first_name,last_name,age,email,salary,is_active,join_date
 1,John,Doe,30,john@example.com,50000,true,2023-01-15
 2,Jane,Smith,25,jane@test.com,55000,true,2023-02-01

@@ -92,6 +92,6 @@ class DataSession:
         return {
             "row_count": len(self.df),
             "column_count": len(self.df.columns),
-            "null_counts": self.df.isnull().sum().to_dict(),
+            "null_counts": self.df.isna().sum().to_dict(),
             "memory_usage_mb": round(self.df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
         }

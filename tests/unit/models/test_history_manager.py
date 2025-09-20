@@ -294,7 +294,7 @@ class TestHistoryManagerPersistenceJSON:
 
     def test_load_history_json_no_file(self, temp_manager):
         """Test loading history when no file exists."""
-        manager, temp_dir = temp_manager
+        manager, _temp_dir = temp_manager
 
         # Directly call _load_history (it's called in __init__)
         manager._load_history()
@@ -492,7 +492,7 @@ class TestHistoryManagerPersistencePickle:
 
     def test_load_history_pickle_no_file(self, temp_manager):
         """Test loading history when no pickle file exists."""
-        manager, temp_dir = temp_manager
+        manager, _temp_dir = temp_manager
 
         manager._load_history()
 
@@ -787,7 +787,7 @@ class TestHistoryManagerUndoRedo:
         manager_with_history.undo()
         initial_index = manager_with_history.current_index
 
-        redone_op, snapshot = manager_with_history.redo()
+        redone_op, _snapshot = manager_with_history.redo()
 
         assert manager_with_history.current_index == initial_index + 1
         assert len(manager_with_history.redo_stack) == 0
@@ -980,7 +980,7 @@ class TestHistoryManagerRestore:
 
     def test_restore_to_operation_with_snapshot(self, manager_with_snapshots):
         """Test restoring to operation that has a snapshot."""
-        manager, op1_id, op2_id, op3_id = manager_with_snapshots
+        manager, op1_id, _op2_id, _op3_id = manager_with_snapshots
 
         restored_data = manager.restore_to_operation(op1_id)
 
@@ -991,7 +991,7 @@ class TestHistoryManagerRestore:
 
     def test_restore_to_operation_without_direct_snapshot(self, manager_with_snapshots):
         """Test restoring to operation without direct snapshot."""
-        manager, op1_id, op2_id, op3_id = manager_with_snapshots
+        manager, _op1_id, op2_id, _op3_id = manager_with_snapshots
 
         # Restore to op2 (no snapshot) should find nearest previous snapshot (op1)
         restored_data = manager.restore_to_operation(op2_id)
@@ -1002,7 +1002,7 @@ class TestHistoryManagerRestore:
 
     def test_restore_to_operation_not_found(self, manager_with_snapshots):
         """Test restoring to non-existing operation."""
-        manager, op1_id, op2_id, op3_id = manager_with_snapshots
+        manager, _op1_id, _op2_id, _op3_id = manager_with_snapshots
 
         with patch("src.databeak.models.history_manager.logger.error") as mock_logger:
             restored_data = manager.restore_to_operation("nonexistent_id")
@@ -1403,7 +1403,7 @@ class TestHistoryManagerStorageTypes:
         assert manager.current_index == 0
 
         # Test redo
-        redone_op, snapshot = manager.redo()
+        redone_op, _snapshot = manager.redo()
         assert redone_op is not None
         assert redone_op.operation_type == "sort"
         assert manager.current_index == 1

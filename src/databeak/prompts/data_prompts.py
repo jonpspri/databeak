@@ -4,12 +4,15 @@ from __future__ import annotations
 
 
 def analyze_csv_prompt(session_id: str, analysis_type: str) -> str:
+    """Generate CSV analysis prompt for AI assistants."""
     return f"Analyze CSV data in session {session_id} for {analysis_type}"
 
 
 def suggest_transformations_prompt(session_id: str, goal: str) -> str:
+    """Generate transformation suggestion prompt for AI assistants."""
     return f"Suggest transformations for session {session_id} to achieve: {goal}"
 
 
 def data_cleaning_prompt(session_id: str, issues: list[str]) -> str:
+    """Generate data cleaning prompt for AI assistants."""
     return f"Suggest cleaning for session {session_id} with issues: {', '.join(issues)}"

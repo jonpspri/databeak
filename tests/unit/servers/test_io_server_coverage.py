@@ -265,7 +265,7 @@ class TestExportCsvAdvanced:
             # Verify quotes are properly handled
             df = pd.read_csv(temp_path)
             assert len(df) == 2
-            assert "Smith, John" in df["name"].values
+            assert "Smith, John" in df["name"].to_numpy()
         finally:
             Path(temp_path).unlink()
 

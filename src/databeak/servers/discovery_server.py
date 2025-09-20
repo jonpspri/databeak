@@ -297,7 +297,7 @@ async def detect_outliers(
                 # Create OutlierInfo objects for each outlier
                 outlier_infos = []
                 for idx in outlier_indices[:100]:  # Limit to first 100
-                    raw_value = df.at[idx, col]
+                    raw_value = df.loc[idx, col]
                     try:
                         value = float(cast("Any", raw_value))
                     except (ValueError, TypeError):
@@ -327,7 +327,7 @@ async def detect_outliers(
                 # Create OutlierInfo objects for each outlier
                 outlier_infos = []
                 for idx in outlier_indices[:100]:  # Limit to first 100
-                    raw_value = df.at[idx, col]
+                    raw_value = df.loc[idx, col]
                     try:
                         value = float(cast("Any", raw_value))
                     except (ValueError, TypeError):
@@ -689,7 +689,7 @@ async def find_cells_with_value(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)
         matches = []
 
         # Determine columns to search
@@ -723,7 +723,7 @@ async def find_cells_with_value(
             matching_rows = df.index[mask].tolist()
 
             for row_idx in matching_rows:
-                cell_value = df.at[row_idx, col]
+                cell_value = df.loc[row_idx, col]
                 # Convert to CsvCellValue compatible type
                 processed_value: CsvCellValue
                 if pd.isna(cell_value):
@@ -792,7 +792,7 @@ async def get_data_summary(
     Args:
         ctx: FastMCP context for session access
         include_preview: Include sample data rows in summary
-        ctx: FastMCP context for progress reporting
+        max_preview_rows: Maximum number of preview rows to include
 
     Returns:
         Comprehensive data overview with structural information
@@ -820,7 +820,7 @@ async def get_data_summary(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)
 
         # Create coordinate system
         coordinate_system = {
@@ -855,9 +855,9 @@ async def get_data_summary(
                     "Literal['int64', 'float64', 'object', 'bool', 'datetime64', 'category']",
                     mapped_dtype,
                 ),
-                nullable=bool(df[col].isnull().any()),
+                nullable=bool(df[col].isna().any()),
                 unique_count=int(df[col].nunique()),
-                null_count=int(df[col].isnull().sum()),
+                null_count=int(df[col].isna().sum()),
             )
 
         # Create data types categorization (convert column names to strings)
@@ -869,8 +869,8 @@ async def get_data_summary(
         }
 
         # Create missing data info
-        total_missing = int(df.isnull().sum().sum())
-        missing_by_column = {str(col): int(df[col].isnull().sum()) for col in df.columns}
+        total_missing = int(df.isna().sum().sum())
+        missing_by_column = {str(col): int(df[col].isna().sum()) for col in df.columns}
         # Handle empty dataframe
         total_cells = len(df) * len(df.columns)
         missing_percentage = round(total_missing / total_cells * 100, 2) if total_cells > 0 else 0.0
@@ -971,7 +971,7 @@ async def inspect_data_around(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)
 
         # Handle column specification
         column = column_name

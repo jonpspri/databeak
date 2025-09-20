@@ -266,7 +266,7 @@ async def extract_from_column(
 
         # Count successful extractions (non-null results)
         if expand and isinstance(extracted, pd.DataFrame):
-            successful_extractions = int((~extracted.isnull()).any(axis=1).sum())
+            successful_extractions = int((~extracted.isna()).any(axis=1).sum())
         else:
             successful_extractions = (
                 int(extracted.notna().sum()) if hasattr(extracted, "notna") else len(extracted)
@@ -598,7 +598,7 @@ async def strip_column(
         Field(description="Characters to strip (None for whitespace, string for specific chars)"),
     ] = None,
 ) -> ColumnOperationResult:
-    """Strip whitespace or specified characters from column values.
+    r"""Strip whitespace or specified characters from column values.
 
     Args:
         ctx: FastMCP context for session access
