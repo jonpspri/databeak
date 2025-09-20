@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
-from ..models import OperationType, get_session_manager
+# Removed: OperationType (no longer tracking operations), get_session_manager
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -181,16 +181,7 @@ def get_cell_value(
         # Get column data type
         data_type = str(df[column_name].dtype)
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_cell_value",
-                "row_index": row_index,
-                "column": column_name,
-                "value_type": type(value).__name__,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return CellValueResult(
             value=value,  # type: ignore[arg-type]
@@ -274,17 +265,7 @@ def set_cell_value(
         # Get column data type
         data_type = str(df[column_name].dtype)
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "set_cell_value",
-                "row_index": row_index,
-                "column": column_name,
-                "old_value": old_value,
-                "new_value": new_value,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SetCellResult(
             coordinates={"row": row_index, "column": column_name},
@@ -352,16 +333,7 @@ def get_row_data(
             elif hasattr(value, "item"):  # numpy scalar
                 row_data[key] = value.item()
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_row_data",
-                "row_index": row_index,
-                "columns_retrieved": len(selected_columns),
-                "filtered": columns is not None,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return RowDataResult(
             row_index=row_index,
@@ -444,17 +416,7 @@ def get_column_data(
         # Convert to list and handle pandas/numpy types
         values = convert_pandas_na_list(column_data.tolist())
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_column_data",
-                "column": column,
-                "values_retrieved": len(values),
-                "start_row": start_row,
-                "end_row": end_row,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnDataResult(
             column=column,
@@ -567,16 +529,7 @@ def insert_row(
             else:
                 data_inserted[key] = value
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "insert_row",
-                "row_index": row_index,
-                "rows_added": 1,
-                "data_type": "dict" if isinstance(data, dict) else "list",
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return InsertRowResult(
             row_index=row_index,
@@ -638,16 +591,7 @@ def delete_row(
         # Update session data
         session.df = df_new
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "delete_row",
-                "row_index": row_index,
-                "rows_removed": 1,
-                "deleted_columns": list(deleted_data.keys()),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return DeleteRowResult(
             row_index=row_index,
@@ -741,16 +685,7 @@ def update_row(
             old_values[column] = old_value
             new_values[column] = updated_value
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "update_row",
-                "row_index": row_index,
-                "columns_updated": len(columns_updated),
-                "columns": columns_updated,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return UpdateRowResult(
             row_index=row_index,

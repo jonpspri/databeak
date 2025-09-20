@@ -177,16 +177,7 @@ def filter_rows(
                     },
                 )
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILTER,
-            {
-                "conditions": serializable_conditions,
-                "mode": mode,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return FilterOperationResult(
             rows_before=rows_before,
@@ -275,15 +266,7 @@ def sort_data(
         # Perform sort
         session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
 
-        # Record operation
-        session.record_operation(
-            OperationType.SORT,
-            {
-                "columns": sort_columns,
-                "ascending": ascending,
-                "rows_processed": len(df),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SortDataResult(
             sorted_by=sort_columns,
@@ -363,17 +346,7 @@ def remove_duplicates(
         rows_after = len(session.df)
         rows_removed = rows_before - rows_after
 
-        # Record operation
-        session.record_operation(
-            OperationType.REMOVE_DUPLICATES,
-            {
-                "subset": subset,
-                "keep": keep,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-                "rows_removed": rows_removed,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="remove_duplicates",
@@ -514,18 +487,7 @@ def fill_missing_values(
         missing_after = session.df[target_cols].isna().sum().sum()
         values_filled = missing_before - missing_after
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILL_MISSING,
-            {
-                "strategy": strategy,
-                "value": str(value) if value is not None else None,
-                "columns": target_cols,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-                "values_filled": int(values_filled),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="fill_missing_values",

@@ -13,7 +13,7 @@ from pydantic_settings import BaseSettings
 
 from ..exceptions import HistoryError, HistoryNotEnabledError
 from .auto_save import AutoSaveConfig, AutoSaveManager
-from .data_models import ExportFormat, OperationType, SessionInfo
+from .data_models import SessionInfo
 from .data_session import DataSession
 from .history_manager import HistoryManager, HistoryStorage
 from .session_lifecycle import SessionLifecycle
@@ -174,7 +174,7 @@ class CSVSession:
         """Load data into the session."""
         self._data_session.load_data(df, file_path)
         self.update_access_time()
-        self.record_operation(OperationType.LOAD, {"file_path": file_path, "shape": df.shape})
+        # No longer recording operations (simplified MCP architecture)
 
         # Update auto-save manager with original file path
         if file_path:
@@ -199,7 +199,7 @@ class CSVSession:
 
     def record_operation(
         self,
-        operation_type: str | OperationType,
+        operation_type: str,  # Simplified: only string types needed
         details: dict[str, Any],
     ) -> None:
         """Record an operation in history."""

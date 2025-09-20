@@ -19,7 +19,6 @@ from databeak.services.statistics_service import StatisticsService  # type: igno
 
 async def demonstrate_before_after() -> None:
     """Demonstrate the improvements from dependency injection."""
-
     print("=== DataBeak Dependency Injection Demo ===\n")
 
     # === BEFORE: Tight coupling with global session manager ===
@@ -188,7 +187,6 @@ async def demonstrate_before_after() -> None:
 
 def demonstrate_testing_patterns() -> None:
     """Show how the new architecture improves testing."""
-
     print("\n=== Testing Patterns Demo ===\n")
 
     print("OLD Testing Approach:")

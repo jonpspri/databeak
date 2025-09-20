@@ -837,11 +837,7 @@ async def export_csv(
 
             raise ToolError(msg) from export_error
 
-        # Record operation in session history
-        session.record_operation(
-            OperationType.EXPORT,
-            {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         await ctx.report_progress(1.0)
         await ctx.info(f"Exported {len(df)} rows to {file_path}")
@@ -898,7 +894,7 @@ async def get_session_info(
             data_loaded=session.df is not None,
             row_count=info.row_count if session.df is not None else None,
             column_count=info.column_count if session.df is not None else None,
-            auto_save_enabled=session.auto_save_config.enabled,
+            auto_save_enabled=False,  # Auto-save eliminated for simplified architecture
         )
 
     except Exception as e:

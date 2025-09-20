@@ -19,7 +19,6 @@ from src.databeak.models.data_models import OperationType
 
 async def overwrite_same_file_example():
     """Demonstrate auto-save that updates the same file."""
-
     print("=" * 60)
     print("Auto-Save: Overwrite Same File Example")
     print("=" * 60)
@@ -116,7 +115,6 @@ async def overwrite_same_file_example():
 
 async def hybrid_example_with_overwrite():
     """Example showing overwrite with periodic saves."""
-
     print("\n" + "=" * 60)
     print("Hybrid Mode with Overwrite Example")
     print("=" * 60)
@@ -178,7 +176,6 @@ async def hybrid_example_with_overwrite():
 
 async def main():
     """Run all examples."""
-
     # Example 1: Simple overwrite
     await overwrite_same_file_example()
 

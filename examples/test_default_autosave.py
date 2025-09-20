@@ -19,7 +19,6 @@ from src.databeak.models.data_models import OperationType
 
 async def test_default_autosave():
     """Test that auto-save is enabled by default."""
-
     print("=" * 60)
     print("Testing Default Auto-Save Configuration")
     print("=" * 60)

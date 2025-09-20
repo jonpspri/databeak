@@ -173,14 +173,7 @@ async def get_statistics(
 
             stats_dict[col] = col_stats
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "statistics",
-                "columns": list(stats_dict.keys()),
-                "include_percentiles": include_percentiles,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return StatisticsResult(
             statistics=stats_dict,
@@ -300,14 +293,7 @@ async def get_column_statistics(
                 additional_stats["most_frequent"] = str(most_frequent)
                 additional_stats["most_frequent_count"] = int(col_data.value_counts().iloc[0])
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "column_statistics",
-                "column": column,
-                "dtype": dtype,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         # Convert statistics dict to StatisticsSummary
         from ..models.statistics_models import StatisticsSummary
@@ -492,15 +478,7 @@ async def get_correlation_matrix(
                     filtered_dict[col1] = filtered_col
             correlation_dict = filtered_dict
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "correlation",
-                "method": method,
-                "columns": list(numeric_df.columns),
-                "min_correlation": min_correlation,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return CorrelationResult(
             method=method,
@@ -621,16 +599,7 @@ async def get_value_counts(
         total_count = int(df[column].count())  # Non-null count
         unique_count = int(df[column].nunique())
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "value_counts",
-                "column": column,
-                "normalize": normalize,
-                "top_n": top_n,
-                "unique_values": unique_count,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ValueCountsResult(
             column=column,

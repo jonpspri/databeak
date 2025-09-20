@@ -19,7 +19,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType
+# Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
@@ -175,14 +175,7 @@ async def select_columns(
         columns_before = len(df.columns)
 
         session.df = df[columns].copy()
-        session.record_operation(
-            OperationType.SELECT,
-            {
-                "columns": columns,
-                "columns_before": df.columns.tolist(),
-                "columns_after": columns,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SelectColumnsResult(
             selected_columns=columns,
@@ -245,10 +238,7 @@ async def rename_columns(
 
         # Apply renaming
         session.df = df.rename(columns=mapping)
-        session.record_operation(
-            OperationType.RENAME,
-            {"mapping": mapping, "renamed_count": len(mapping)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return RenameColumnsResult(
             renamed=mapping,
@@ -344,17 +334,7 @@ async def add_column(
             # Single value for all rows
             df[name] = value
 
-        session.record_operation(
-            OperationType.ADD_COLUMN,
-            {
-                "column": name,
-                "value_type": "formula"
-                if formula
-                else "list"
-                if isinstance(value, list)
-                else "scalar",
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="add",
@@ -415,10 +395,7 @@ async def remove_columns(
             raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
 
         session.df = df.drop(columns=columns)
-        session.record_operation(
-            OperationType.REMOVE_COLUMN,
-            {"columns": columns, "count": len(columns)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="remove",
@@ -535,15 +512,7 @@ async def change_column_type(
         # Track after state
         null_count_after = df[column].isna().sum()
 
-        session.record_operation(
-            OperationType.CHANGE_TYPE,
-            {
-                "column": column,
-                "from_type": original_dtype,
-                "to_type": dtype,
-                "nulls_created": int(null_count_after - null_count_before),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation=f"change_type_to_{dtype}",
@@ -874,14 +843,7 @@ async def update_column(
         # Track changes
         null_count_after = df[column].isna().sum()
 
-        session.record_operation(
-            OperationType.UPDATE_COLUMN,
-            {
-                "column": column,
-                "operation": operation_type,
-                "nulls_changed": int(null_count_after - null_count_before),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation=f"update_{operation_type}",

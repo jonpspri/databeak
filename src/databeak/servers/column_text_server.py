@@ -21,7 +21,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType
+# Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import ColumnOperationResult
 

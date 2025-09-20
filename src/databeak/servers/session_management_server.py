@@ -23,7 +23,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 # Import session management from the main package
 from ..exceptions import SessionNotFoundError
 from ..models import get_session_manager
-from ..models.typed_dicts import OperationDetails, SessionMetadataKeys
 
 
 def safe_int(*, value: Any, default: int = 0) -> int:
@@ -161,8 +160,8 @@ class SessionOperationResult(BaseModel):
     message: str = Field(description="Operation result message")
     session_id: str = Field(description="Session ID")
     operation_type: str = Field(description="Type of operation performed")
-    metadata: OperationDetails = Field(
-        default_factory=dict, description="Structured operation metadata"
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional operation metadata"
     )
 
 

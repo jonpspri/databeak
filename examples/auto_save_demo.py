@@ -20,7 +20,6 @@ from src.databeak.models.data_models import OperationType
 
 async def demonstrate_auto_save():
     """Demonstrate various auto-save configurations and use cases."""
-
     print("=" * 60)
     print("CSV Editor Auto-Save Feature Demonstration")
     print("=" * 60)

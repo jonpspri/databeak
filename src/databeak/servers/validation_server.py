@@ -12,7 +12,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
@@ -682,14 +682,7 @@ def validate_schema(
 
         is_valid = len(validation_errors) == 0 and len(validation_summary.missing_columns) == 0
 
-        session.record_operation(
-            OperationType.VALIDATE,
-            {
-                "type": "schema_validation",
-                "is_valid": is_valid,
-                "errors_count": len(validation_errors),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         # Flatten all validation errors with resource limits
         all_errors = []
@@ -1071,14 +1064,7 @@ def check_data_quality(
             recommendations=recommendations,
         )
 
-        session.record_operation(
-            OperationType.QUALITY_CHECK,
-            {
-                "rules_count": len(rules),
-                "overall_score": overall_score,
-                "issues_count": len(quality_issues),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return DataQualityResult(
             quality_results=quality_results,
@@ -1349,14 +1335,7 @@ def find_anomalies(
             by_method=by_method,
         )
 
-        session.record_operation(
-            OperationType.ANOMALY_DETECTION,
-            {
-                "methods": methods,
-                "sensitivity": sensitivity,
-                "anomalies_found": total_anomalies,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return FindAnomaliesResult(
             anomalies=anomaly_results,

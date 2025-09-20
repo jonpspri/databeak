@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Any
 import pandas as pd
 
 from ..exceptions import NoDataLoadedError
-from .typed_dicts import DataStatisticsDict
 
 if TYPE_CHECKING:
     pass
@@ -26,7 +25,7 @@ class DataSession:
         self.df: pd.DataFrame | None = None
         self.original_df: pd.DataFrame | None = None
         self.file_path: str | None = None
-        self.metadata: dict[str, Any] = {}  # Flexible session metadata (intentionally Any for user data)
+        self.metadata: dict[str, Any] = {}  # Any justified: flexible session metadata
         self.created_at = datetime.now(UTC)
         self.last_accessed = datetime.now(UTC)
 
@@ -52,7 +51,7 @@ class DataSession:
         """Update the last accessed time."""
         self.last_accessed = datetime.now(UTC)
 
-    def get_data_info(self) -> dict[str, Any]:  # Any justified: flexible data info format
+    def get_data_info(self) -> dict[str, Any]:  # Any justified: flexible data info
         """Get information about the loaded data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
@@ -63,7 +62,7 @@ class DataSession:
             "session_id": self.session_id,
             "shape": self.df.shape,
             "columns": [str(col) for col in self.df.columns.tolist()],  # Ensure columns are strings
-            "dtypes": {str(col): str(dtype) for col, dtype in self.df.dtypes.items()},
+            "dtypes": {col: str(dtype) for col, dtype in self.df.dtypes.items()},
             "memory_usage_mb": round(memory_usage, 2),
             "file_path": self.file_path,
             "created_at": self.created_at,
@@ -85,15 +84,14 @@ class DataSession:
         """Check if data is loaded."""
         return self.df is not None
 
-    def get_basic_stats(self) -> DataStatisticsDict:
+    def get_basic_stats(self) -> dict[str, Any]:  # Any justified: flexible stats data
         """Get basic statistics about the data."""
         if self.df is None:
             raise NoDataLoadedError(self.session_id)
 
-        null_counts = self.df.isna().sum()
         return {
-            "count": len(self.df),
-            "unique_count": self.df.nunique().sum(),
-            "null_count": null_counts.sum(),
-            "dtype": "mixed",  # Multiple columns
+            "row_count": len(self.df),
+            "column_count": len(self.df.columns),
+            "null_counts": self.df.isna().sum().to_dict(),
+            "memory_usage_mb": round(self.df.memory_usage(deep=True).sum() / (1024 * 1024), 2),
         }

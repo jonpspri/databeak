@@ -29,7 +29,7 @@ class TestDataBeakSettings:
         assert settings.csv_history_dir == "."
         assert settings.max_file_size_mb == 1024
         assert settings.memory_threshold_mb == 2048
-        assert settings.max_history_operations == 1000
+        # Removed: max_history_operations (history eliminated)
 
 
 class TestCSVSession:

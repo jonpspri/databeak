@@ -20,7 +20,6 @@ from src.databeak.models.history_manager import HistoryStorage
 
 async def demonstrate_history():
     """Demonstrate history tracking with undo/redo capabilities."""
-
     print("=" * 60)
     print("CSV Editor History & Undo/Redo Demonstration")
     print("=" * 60)
@@ -231,7 +230,6 @@ async def demonstrate_history():
 
 async def demonstrate_history_recovery():
     """Demonstrate recovering history from a previous session."""
-
     print("\n" + "=" * 60)
     print("History Recovery from Previous Session")
     print("=" * 60)
@@ -294,7 +292,6 @@ async def demonstrate_history_recovery():
 
 async def main():
     """Run all history demonstrations."""
-
     # Demo 1: Basic history with undo/redo
     await demonstrate_history()
 

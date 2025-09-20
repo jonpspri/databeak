@@ -14,7 +14,7 @@ from .data_models import (
     FilterCondition,
     LogicalOperator,
     OperationResult,
-    OperationType,
+    OperationType,  # Still used in some places, can be removed in cleanup phase
     SessionInfo,
     SortSpec,
 )
