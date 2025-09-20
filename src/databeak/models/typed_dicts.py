@@ -30,7 +30,7 @@ class DataValidationIssues(TypedDict):
 
     errors: list[str]
     warnings: list[str]
-    info: dict[str, Any]  # Any justified: flexible validation metadata
+    info: dict[str, Any]  # Any justified: needs dynamic keys like "{col}_high_cardinality"
 
 
 class QualityCheckResult(TypedDict):
@@ -85,6 +85,40 @@ class DataSessionMetadata(TypedDict):
     columns: list[str]
     dtypes: dict[str, str]
     loaded_at: str
+    needs_autosave: NotRequired[bool]  # Auto-save trigger flag
+    encoding: NotRequired[str]  # File encoding used
+    delimiter: NotRequired[str]  # CSV delimiter used
+    memory_usage_mb: NotRequired[float]  # Memory usage tracking
+
+
+class SessionMetadataKeys(TypedDict):
+    """Common session metadata keys with type constraints."""
+
+    # Core session info
+    created_at: NotRequired[str]
+    last_accessed: NotRequired[str]
+    session_type: NotRequired[str]  # "csv", "json", etc.
+
+    # Data info
+    original_shape: NotRequired[tuple[int, int]]
+    current_shape: NotRequired[tuple[int, int]]
+    data_source: NotRequired[str]  # "file", "url", "content"
+
+    # Operation tracking
+    operations_count: NotRequired[int]
+    last_operation: NotRequired[str]
+    last_operation_time: NotRequired[str]
+
+    # Auto-save status
+    needs_autosave: NotRequired[bool]
+    last_save_time: NotRequired[str]
+
+    # Performance tracking
+    memory_usage_mb: NotRequired[float]
+    processing_time_ms: NotRequired[float]
+
+    # User-defined metadata (still flexible)
+    user_metadata: NotRequired[dict[str, str | int | float | bool]]
 
 
 class SessionHistoryExport(TypedDict):
@@ -251,6 +285,82 @@ class HistoryResult(TypedDict):
     statistics: NotRequired[dict[str, Any]]  # Any justified: flexible statistics structure
     message: NotRequired[str]
     error: NotRequired[str | dict[str, str]]  # Can be string or structured error
+
+
+# Operation Details Structures (replacing common dict[str, Any] patterns)
+class LoadOperationDetails(TypedDict):
+    """Details for data loading operations."""
+
+    file_path: NotRequired[str | None]
+    shape: NotRequired[tuple[int, int]]
+    encoding: NotRequired[str]
+    delimiter: NotRequired[str]
+    rows_loaded: NotRequired[int]
+    columns_detected: NotRequired[list[str]]
+
+
+class FilterOperationDetails(TypedDict):
+    """Details for row filtering operations."""
+
+    conditions_applied: int
+    rows_before: int
+    rows_after: int
+    rows_filtered: int
+    filter_mode: NotRequired[str]  # "and" or "or"
+
+
+class TransformOperationDetails(TypedDict):
+    """Details for data transformation operations."""
+
+    operation_type: str
+    columns_affected: list[str]
+    rows_affected: int
+    transformation_params: NotRequired[dict[str, CellValue]]
+
+
+class ValidationOperationDetails(TypedDict):
+    """Details for validation operations."""
+
+    validation_type: str  # "schema_validation", "quality_check", "anomaly_detection"
+    is_valid: bool
+    errors_count: int
+    validation_engine: NotRequired[str]  # "builtin" or "pandera"
+    rules_count: NotRequired[int]
+    overall_score: NotRequired[float]
+    anomalies_found: NotRequired[int]
+    methods: NotRequired[list[str]]
+    sensitivity: NotRequired[float]
+
+
+class StatisticsOperationDetails(TypedDict):
+    """Details for statistical analysis operations."""
+
+    columns_analyzed: list[str]
+    operation_type: str  # "basic_stats", "correlation", "value_counts"
+    method: NotRequired[str]  # correlation method, etc.
+    numeric_columns: NotRequired[list[str]]
+
+
+class ExportOperationDetails(TypedDict):
+    """Details for data export operations."""
+
+    file_path: str
+    format: str
+    rows_exported: int
+    columns_exported: list[str]
+    file_size_bytes: NotRequired[int]
+    encoding: NotRequired[str]
+
+
+# Union type for all operation details
+OperationDetails = (
+    LoadOperationDetails
+    | FilterOperationDetails
+    | TransformOperationDetails
+    | ValidationOperationDetails
+    | StatisticsOperationDetails
+    | ExportOperationDetails
+)
 
 
 # Internal operation results (for legacy transformation functions)
