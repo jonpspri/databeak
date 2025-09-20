@@ -180,8 +180,7 @@ def detect_file_encoding(file_path: str) -> str:
                     detection["confidence"],
                 )
                 return detected_encoding.lower()
-            else:
-                logger.debug("Chardet detected encoding is None, using fallbacks")
+            logger.debug("Chardet detected encoding is None, using fallbacks")
 
         logger.debug(
             "Chardet detection low confidence (%.2f), using fallbacks",
@@ -831,13 +830,12 @@ async def export_csv(
             if format_enum == ExportFormat.EXCEL and "openpyxl" in str(export_error):
                 msg = "Excel export requires openpyxl package. Install with: pip install openpyxl"
                 raise ToolError(msg) from export_error
-            elif format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
+            if format_enum == ExportFormat.PARQUET and "pyarrow" in str(export_error):
                 msg = "Parquet export requires pyarrow package. Install with: pip install pyarrow"
                 raise ToolError(msg) from export_error
-            else:
-                msg = f"Export failed: {export_error}"
+            msg = f"Export failed: {export_error}"
 
-                raise ToolError(msg) from export_error
+            raise ToolError(msg) from export_error
 
         # Record operation in session history
         session.record_operation(

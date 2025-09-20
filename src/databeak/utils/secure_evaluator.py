@@ -259,8 +259,7 @@ class SecureExpressionEvaluator:
 
         try:
             # Evaluate using the configured safe evaluator
-            result = self._evaluator.eval(expression)
-            return result
+            return self._evaluator.eval(expression)
         except NameNotDefined as e:
             msg = "expression"
             raise InvalidParameterError(

@@ -57,13 +57,18 @@ class BaseToolResponse(BaseModel):
 
 
 class HealthResult(BaseToolResponse):
-    """Response model for system health check."""
+    """Response model for system health check with memory monitoring."""
 
     status: str = Field(description="Server health status: healthy, degraded, or unhealthy")
     version: str = Field(description="DataBeak server version")
     active_sessions: int = Field(description="Number of currently active data sessions")
     max_sessions: int = Field(description="Maximum allowed concurrent sessions")
     session_ttl_minutes: int = Field(description="Session timeout in minutes")
+    memory_usage_mb: float = Field(description="Current memory usage in MB")
+    memory_threshold_mb: float = Field(description="Memory usage threshold in MB")
+    memory_status: str = Field(description="Memory status: normal, warning, critical")
+    history_operations_total: int = Field(description="Total operations in all session histories")
+    history_limit_per_session: int = Field(description="Maximum operations per session history")
 
 
 class ServerInfoResult(BaseToolResponse):

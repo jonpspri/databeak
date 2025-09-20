@@ -133,11 +133,10 @@ def validate_column_name(column_name: str) -> tuple[bool, str]:
     # Check for invalid characters
     if re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", column_name):
         return True, column_name
-    else:
-        return (
-            False,
-            "Column name must start with letter/underscore and contain only letters, numbers, underscores",
-        )
+    return (
+        False,
+        "Column name must start with letter/underscore and contain only letters, numbers, underscores",
+    )
 
 
 # Implementation: Comprehensive DataFrame validation checking shape, duplicates, types, cardinality

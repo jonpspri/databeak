@@ -384,6 +384,11 @@ class TestHealthResult:
             active_sessions=3,
             max_sessions=10,
             session_ttl_minutes=30,
+            memory_usage_mb=512.0,
+            memory_threshold_mb=2048.0,
+            memory_status="normal",
+            history_operations_total=25,
+            history_limit_per_session=1000,
         )
         assert health.success is True  # Inherited default
         assert health.status == "healthy"

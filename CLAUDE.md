@@ -40,6 +40,8 @@ DataBeak maintains strict code quality standards:
 - **High test coverage** - 1100+ unit tests with good coverage targets
 - **Clear API design** - No boolean traps, keyword-only parameters for clarity
 - **Defensive practices** - No silent exception handling, proper validation
+- **No magic numbers** - Use configurable settings with defaults instead of
+  hardcoded values
 
 **Use the `quality-gate-runner` agent** for comprehensive quality pipeline
 execution including linting, formatting, type checking, testing, and coverage
@@ -129,6 +131,40 @@ instead of standard Python loggers.
 - **Benefit**: Better traceability, MCP protocol integration, client visibility
 - **Standard loggers**: Only use in non-MCP functions (utilities, internal
   logic)
+
+### Configuration and Magic Numbers
+
+**Avoid Magic Numbers Rule**: Replace hardcoded values with configurable
+settings that have sensible defaults and can be overridden via environment
+variables.
+
+**Examples of proper configuration:**
+
+```python
+# ❌ Avoid: Magic numbers hardcoded
+if memory_usage > 1024 * 0.75:  # What's this threshold?
+    status = "warning"
+
+# ✅ Prefer: Configurable settings with defaults
+settings = get_csv_settings()
+if memory_usage > threshold * settings.memory_warning_threshold:
+    status = "warning"
+```
+
+**Configuration Guidelines:**
+
+- **Use DataBeakSettings class** for all configurable values
+- **Environment variable support** with `DATABEAK_` prefix
+- **Sensible defaults** that work out of the box
+- **Clear documentation** of what each setting controls
+- **Type safety** with Pydantic Field validation
+
+**Common Configuration Categories:**
+
+- **Thresholds**: Memory limits, capacity warnings, timeouts
+- **Limits**: History operations, file sizes, session counts
+- **Behavior**: Auto-save settings, cleanup intervals, retry attempts
+- **Performance**: Cache TTLs, chunk sizes, batch limits
 
 ### Architecture Notes
 

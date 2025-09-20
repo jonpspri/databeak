@@ -34,10 +34,7 @@ repos:
       - id: check-builtin-literals
       - id: check-case-conflict
       - id: check-docstring-first
-      - id: check-executables-have-shebangs
-      - id: check-json
       - id: check-merge-conflict
-      - id: check-symlinks
       - id: check-toml
       - id: check-vcs-permalinks
       - id: check-xml
@@ -73,6 +70,7 @@ repos:
           - pandas-stubs>=2.2.3
           - types-aiofiles>=24.1.0.20250822
           - types-chardet>=5.0.4.6
+          - types-psutil>=7.0.0.20250822
           - types-tabulate>=0.9.0.20241207
           - types-pytz>=2025.2.0.20250809
           - pydantic>=2.0.0

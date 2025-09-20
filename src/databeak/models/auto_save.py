@@ -187,15 +187,14 @@ class AutoSaveManager:
                         "save_count": self.save_count,
                         "timestamp": self.last_save.isoformat(),
                     }
-                else:
-                    logger.error(
-                        "Auto-save failed for session %s: %s", self.session_id, result.get("error")
-                    )
-                    return {
-                        "success": False,
-                        "error": str(result.get("error", "Unknown error")),
-                        "trigger": trigger,
-                    }
+                logger.error(
+                    "Auto-save failed for session %s: %s", self.session_id, result.get("error")
+                )
+                return {
+                    "success": False,
+                    "error": str(result.get("error", "Unknown error")),
+                    "trigger": trigger,
+                }
 
             except Exception as e:
                 logger.error("Auto-save error for session %s: %s", self.session_id, str(e))
@@ -206,24 +205,23 @@ class AutoSaveManager:
         if self.config.strategy == AutoSaveStrategy.CUSTOM:
             return self.config.custom_path or f"session_{self.session_id}.csv"
 
-        elif self.config.strategy == AutoSaveStrategy.OVERWRITE:
+        if self.config.strategy == AutoSaveStrategy.OVERWRITE:
             # Use the original file path if available, otherwise fall back
             if self.original_file_path:
                 return self.original_file_path
             return f"session_{self.session_id}_autosave.csv"
 
-        elif self.config.strategy == AutoSaveStrategy.BACKUP:
+        if self.config.strategy == AutoSaveStrategy.BACKUP:
             timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
             filename = f"backup_{self.session_id}_{timestamp}.{self.config.export_format.value}"
             return str(Path(self.config.backup_dir) / filename)
 
-        elif self.config.strategy == AutoSaveStrategy.VERSIONED:
+        if self.config.strategy == AutoSaveStrategy.VERSIONED:
             version = self.save_count + 1
             filename = f"version_{self.session_id}_v{version:04d}.{self.config.export_format.value}"
             return str(Path(self.config.backup_dir) / filename)
 
-        else:
-            return f"session_{self.session_id}.{self.config.export_format.value}"
+        return f"session_{self.session_id}.{self.config.export_format.value}"
 
     async def _cleanup_old_backups(self) -> None:
         """Remove old backup files beyond max_backups limit."""

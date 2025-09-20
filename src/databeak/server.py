@@ -12,9 +12,9 @@ from fastmcp import FastMCP
 from .servers.column_server import column_server
 from .servers.column_text_server import column_text_server
 from .servers.discovery_server import discovery_server
-from .servers.history_server import history_server
 from .servers.io_server import io_server
 from .servers.row_operations_server import row_operations_server
+from .servers.session_management_server import session_management_server
 from .servers.statistics_server import statistics_server
 from .servers.system_server import system_server
 from .servers.transformation_server import transformation_server
@@ -52,7 +52,7 @@ mcp = FastMCP("DataBeak", instructions=_load_instructions())
 # Mount specialized servers
 mcp.mount(system_server)
 mcp.mount(io_server)
-mcp.mount(history_server)
+mcp.mount(session_management_server)
 mcp.mount(row_operations_server)
 mcp.mount(statistics_server)
 mcp.mount(discovery_server)

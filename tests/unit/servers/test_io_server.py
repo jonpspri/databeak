@@ -618,14 +618,14 @@ class TestEncodingAndFallback:
                     if call_count[0] == 1:  # First call (original encoding)
                         msg = "utf-8"
                         raise UnicodeDecodeError(msg, b"", 0, 1, "mock error")
-                    elif call_count[0] == 2:  # Second call (auto-detection, same encoding)
+                    if call_count[0] == 2:  # Second call (auto-detection, same encoding)
                         msg = "utf-8"
                         raise UnicodeDecodeError(msg, b"", 0, 1, "auto-detect fails")
-                    elif call_count[0] == 3:  # First fallback fails
+                    if call_count[0] == 3:  # First fallback fails
                         msg = "utf-8-sig"
                         raise UnicodeDecodeError(msg, b"", 0, 1, "fallback 1 fails")
-                    else:  # Eventually succeed
-                        return success_df
+                    # Eventually succeed
+                    return success_df
 
                 mock_read_csv.side_effect = mock_read_side_effect
 
@@ -702,8 +702,8 @@ class TestMemoryAndPerformance:
                     if call_count[0] == 1 or call_count[0] == 2:  # First call (original encoding)
                         msg = "utf-8"
                         raise UnicodeDecodeError(msg, b"", 0, 1, "mock error")
-                    else:  # Fallback encoding succeeds but returns large df
-                        return large_df
+                    # Fallback encoding succeeds but returns large df
+                    return large_df
 
                 mock_read_csv.side_effect = mock_read_side_effect
 

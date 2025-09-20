@@ -413,7 +413,7 @@ class TestServerInitialization:
         server_modules = [
             "system_server",
             "io_server",
-            "history_server",
+            "session_management_server",
             "row_operations_server",
             "statistics_server",
             "discovery_server",
