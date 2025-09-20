@@ -255,7 +255,6 @@ module = [
     "bottleneck",
     "fastparquet",
     "pytest",
-    "psutil",
     "simpleeval",
 ]
 ignore_missing_imports = true
