@@ -244,9 +244,6 @@ async def undo_operation(
         session_manager = get_session_manager()
         session = session_manager.get_or_create_session(session_id)
 
-        if not session:
-            raise SessionNotFoundError(session_id)
-
         # Perform undo operation
         result = await session.undo()
 
@@ -275,10 +272,6 @@ async def undo_operation(
                 current_position=0,
             )
 
-    except SessionNotFoundError as e:
-        await ctx.error(f"Session not found: {e.details.get('session_id', session_id)}")
-        msg = f"Session not found: {session_id}"
-        raise ToolError(msg) from e
     except Exception as e:
         logger.error("Undo operation failed for session %s: %s", session_id, str(e))
         error_msg = f"Undo operation failed: {e}"

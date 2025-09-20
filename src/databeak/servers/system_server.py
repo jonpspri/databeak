@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Annotated, Any
+from typing import Annotated
 
 import psutil
 from fastmcp import Context, FastMCP
@@ -19,7 +19,7 @@ from pydantic import Field
 # Import version and session management from main package
 from .._version import __version__
 from ..models import get_session_manager
-from ..models.csv_session import get_csv_settings
+from ..models.csv_session import SessionManager, get_csv_settings
 from ..models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ def get_memory_status(current_mb: float, threshold_mb: float) -> str:
         return "normal"
 
 
-def count_total_history_operations(session_manager: Any) -> int:
+def count_total_history_operations(session_manager: SessionManager) -> int:
     """Count total operations across all session histories."""
     total_operations = 0
     try:
