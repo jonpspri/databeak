@@ -216,7 +216,7 @@ def run_command(cmd: str, *, check: bool = True) -> subprocess.CompletedProcess[
 
 
 def main() -> None:
-    """Main publishing workflow."""
+    """Execute main publishing workflow."""
     # Ensure we're in the project root
     project_root = Path(__file__).parent.parent
     os.chdir(project_root)

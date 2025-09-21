@@ -53,8 +53,7 @@ def filter_rows(
         Field(description="Logic for combining conditions (and/or)"),
     ] = "and",
 ) -> FilterOperationResult:
-    """Filter rows using flexible conditions with comprehensive null value and text matching
-    support.
+    """Filter rows using flexible conditions: comprehensive null value and text matching support.
 
     Provides powerful filtering capabilities optimized for AI-driven data analysis. Supports
     multiple operators, logical combinations, and comprehensive null value handling.
@@ -82,6 +81,7 @@ def filter_rows(
             {"column": "status", "operator": "==", "value": "active"},
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
+
     """
     try:
         session_id = ctx.session_id

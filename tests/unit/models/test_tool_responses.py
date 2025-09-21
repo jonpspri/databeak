@@ -509,7 +509,6 @@ class TestSessionInfoResult:
             data_loaded=True,
             row_count=100,
             column_count=5,
-            auto_save_enabled=True,
         )
         assert result.data_loaded is True
         assert result.row_count == 100
@@ -520,7 +519,6 @@ class TestSessionInfoResult:
             created_at="2023-01-01T10:00:00Z",
             last_modified="2023-01-01T10:30:00Z",
             data_loaded=False,
-            auto_save_enabled=False,
         )
         assert result.row_count is None
         assert result.column_count is None
@@ -1079,7 +1077,6 @@ class TestComprehensiveEdgeCases:
             created_at="2023-01-01T10:00:00Z",
             last_modified="2023-01-01T10:30:00Z",
             data_loaded=False,
-            auto_save_enabled=True,
         )
 
         json_str = result.model_dump_json()
