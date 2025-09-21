@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..exceptions import NoDataLoadedError, SessionNotFoundError
+from ..exceptions import NoDataLoadedError
 from ..models import get_session_manager
 
 if TYPE_CHECKING:
@@ -44,9 +44,7 @@ def get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
 
-    if not session:
-        raise SessionNotFoundError(session_id)
-
+    # get_or_create_session always returns a session, so no need to check if not session
     if not session.has_data():
         raise NoDataLoadedError(session_id)
 
@@ -77,12 +75,8 @@ def get_session_only(session_id: str) -> CSVSession:
             # Initialize new data
     """
     manager = get_session_manager()
-    session = manager.get_or_create_session(session_id)
-
-    if not session:
-        raise SessionNotFoundError(session_id)
-
-    return session
+    # get_or_create_session always returns a session, so no need to check if not session
+    return manager.get_or_create_session(session_id)
 
 
 def validate_session_has_data(session: CSVSession, session_id: str) -> pd.DataFrame:
