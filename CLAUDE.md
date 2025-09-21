@@ -48,7 +48,8 @@ DataBeak maintains strict code quality standards with automated enforcement:
 ### Quality Enforcement Standards
 
 - **Clear API design** - No boolean traps, keyword-only parameters for clarity
-- **Defensive practices** - No silent exception handling, proper validation
+- **Defensive practices** - No silent exception handling, proper validation,
+  standardized session access patterns
 - **No magic numbers** - Use configurable settings with defaults instead of
   hardcoded values
 - **MCP compliance** - Field descriptions provide parameter docs, comprehensive
@@ -180,11 +181,60 @@ if memory_usage > threshold * settings.memory_warning_threshold:
 
 ### Architecture Notes
 
-- Session-based design with automatic cleanup
-- Auto-save functionality enabled by default
-- Persistent history with undo/redo capabilities
-- Type-safe operations using Pydantic validation
-- Modular tool organization for maintainability
+- **Stateless MCP design** with external context management
+- **Session-based data processing** with automatic cleanup
+- **Defensive programming patterns** with standardized session access
+- **Type-safe operations** using Pydantic validation
+- **Modular tool organization** for maintainability
+
+### Defensive Programming Patterns
+
+DataBeak implements comprehensive defensive programming to eliminate session
+access risks:
+
+#### **Standardized Session Access (Required Pattern)**
+
+```python
+# ✅ Correct: Use centralized session_utils helpers
+from ..utils.session_utils import get_session_data
+
+def my_mcp_tool(ctx: Context) -> Result:
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)  # Safe, validated access
+    # ... process df safely
+```
+
+#### **Available Helper Functions**
+
+- **`get_session_data(session_id)`** - Returns `(session, df)` with full
+  validation
+- **`get_session_only(session_id)`** - Returns session without requiring data
+- **`validate_session_has_data(session, session_id)`** - Validates existing
+  session
+
+#### **Avoided Patterns (Do Not Use)**
+
+```python
+# ❌ Avoid: Direct session.df access with manual validation
+manager = get_session_manager()
+session = manager.get_or_create_session(session_id)
+if not session.has_data():
+    raise ToolError("No data")
+df = session.df
+assert df is not None  # Risky pattern
+
+# ❌ Avoid: Direct session.df access without validation
+session = get_session_manager().get_or_create_session(session_id)
+df = session.df  # Potential null access risk
+```
+
+#### **Benefits of Defensive Patterns**
+
+- **Risk elimination** - No null access possibilities in server tier
+- **Consistent error handling** - Standardized exceptions across modules
+- **Type safety** - MyPy-friendly tuple unpacking validation
+- **Code clarity** - 5-7 line defensive blocks reduced to 1-2 lines
+- **Maintainability** - Centralized session validation logic
 
 ## Common Commands
 

@@ -192,7 +192,7 @@ class TestExportFunctionality:
     async def test_export_invalid_session(self):
         """Test exporting with invalid session."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            with pytest.raises(ToolError, match="Session not found"):
+            with pytest.raises(ToolError, match="No data loaded in session"):
                 await export_csv(create_mock_context("nonexistent-session-id"), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
@@ -206,7 +206,7 @@ class TestExportFunctionality:
         session_manager.get_or_create_session(session_id)
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            with pytest.raises(ToolError, match="no data loaded"):
+            with pytest.raises(ToolError, match="No data loaded in session"):
                 await export_csv(create_mock_context(session_id), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)

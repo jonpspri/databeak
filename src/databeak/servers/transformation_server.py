@@ -11,9 +11,9 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management from the main package
-from ..models import get_session_manager
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
 from ..models.typed_dicts import FilterConditionDict
+from ..utils.session_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -77,14 +77,7 @@ def filter_rows(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
         rows_before = len(df)
 
         # Initialize mask based on mode: AND starts True, OR starts False
@@ -215,14 +208,7 @@ def sort_data(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
 
         # Parse columns into names and ascending flags
         sort_columns: list[str] = []
@@ -297,14 +283,7 @@ def remove_duplicates(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
         rows_before = len(df)
 
         # Validate subset columns if provided
@@ -373,14 +352,7 @@ def fill_missing_values(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
 
         # Validate and set target columns
         if columns:

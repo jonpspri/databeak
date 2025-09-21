@@ -219,7 +219,7 @@ class TestTransformationServerErrorHandling:
 
         ctx = create_mock_context("invalid-session-id")
 
-        with pytest.raises(ToolError, match="Invalid session"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_session(self):
@@ -228,7 +228,7 @@ class TestTransformationServerErrorHandling:
 
         ctx = create_mock_context("invalid-session-id")
 
-        with pytest.raises(ToolError, match="Invalid session"):
+        with pytest.raises(ToolError, match="No data loaded in session"):
             sort_data(ctx, columns)
 
     async def test_filter_invalid_column(self, transformation_session):

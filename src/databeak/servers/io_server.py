@@ -26,6 +26,7 @@ from ..models import DataPreview, ExportFormat, SessionInfo, get_session_manager
 from ..models.data_models import CellValue
 from ..models.tool_responses import BaseToolResponse
 from ..services.data_operations import create_data_preview_with_indices
+from ..utils.session_utils import get_session_data, get_session_only
 from ..utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
@@ -760,13 +761,7 @@ async def export_csv(
         session_id = ctx.session_id
 
         # Get session and validate data
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = f"Session not found or no data loaded: {session_id}"
-
-            raise ToolError(msg)
+        session, df = get_session_data(session_id)
 
         # Validate and parse the file path
         try:
@@ -800,7 +795,6 @@ async def export_csv(
         # Create parent directory if it doesn't exist
         path_obj.parent.mkdir(parents=True, exist_ok=True)
 
-        df = session.df
         await ctx.report_progress(0.5)
 
         # Export based on format with comprehensive options
@@ -874,13 +868,7 @@ async def get_session_info(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
 
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-
-        if not session:
-            msg = f"Session not found: {session_id}"
-
-            raise ToolError(msg)
+        session = get_session_only(session_id)
 
         await ctx.info(f"Retrieved info for session {session_id}")
 
@@ -890,9 +878,9 @@ async def get_session_info(
         return SessionInfoResult(
             created_at=info.created_at.isoformat(),
             last_modified=info.last_accessed.isoformat(),
-            data_loaded=session.df is not None,
-            row_count=info.row_count if session.df is not None else None,
-            column_count=info.column_count if session.df is not None else None,
+            data_loaded=session.has_data(),
+            row_count=info.row_count if session.has_data() else None,
+            column_count=info.column_count if session.has_data() else None,
         )
 
     except Exception as e:
