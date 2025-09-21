@@ -74,8 +74,9 @@ Settings):
         "databeak"
       ],
       "env": {
-        "DATABEAK_MAX_FILE_SIZE_MB": "1024",
-        "DATABEAK_CSV_HISTORY_DIR": "/tmp/csv_history"
+        "DATABEAK_MAX_FILE_SIZE_MB": "2048",
+        "DATABEAK_SESSION_TIMEOUT": "7200",
+        "DATABEAK_CHUNK_SIZE": "20000"
       }
     }
   }
@@ -162,11 +163,17 @@ Edit `~/.config/zed/settings.json`:
 
 Configure DataBeak behavior with these environment variables:
 
-| Variable                    | Default | Description                |
-| --------------------------- | ------- | -------------------------- |
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size in MB    |
-| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout in seconds |
-| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size      |
+| Variable                                      | Default | Description                              |
+| --------------------------------------------- | ------- | ---------------------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB`                   | 1024    | Maximum file size in MB                  |
+| `DATABEAK_SESSION_TIMEOUT`                    | 3600    | Session timeout in seconds               |
+| `DATABEAK_CHUNK_SIZE`                         | 10000   | Processing chunk size for large datasets |
+| `DATABEAK_MEMORY_THRESHOLD_MB`                | 2048    | Memory threshold for health monitoring   |
+| `DATABEAK_MEMORY_WARNING_THRESHOLD`           | 0.75    | Memory ratio triggering warning (0-1)    |
+| `DATABEAK_MEMORY_CRITICAL_THRESHOLD`          | 0.90    | Memory ratio triggering critical (0-1)   |
+| `DATABEAK_SESSION_CAPACITY_WARNING_THRESHOLD` | 0.90    | Session capacity warning ratio (0-1)     |
+| `DATABEAK_MAX_VALIDATION_VIOLATIONS`          | 1000    | Max validation violations to report      |
+| `DATABEAK_MAX_ANOMALY_SAMPLE_SIZE`            | 10000   | Max sample size for anomaly detection    |
 
 ## Verification
 
@@ -225,7 +232,7 @@ mcp-inspector uvx --from \
 - Use uv instead of pip for faster package management
 - Set appropriate `DATABEAK_MAX_FILE_SIZE_MB` for your use case
 - Configure `DATABEAK_CHUNK_SIZE` for large datasets
-- Use SSD storage for `DATABEAK_CSV_HISTORY_DIR`
+- Adjust `DATABEAK_MEMORY_THRESHOLD_MB` for available system memory
 
 ### Getting Help
 

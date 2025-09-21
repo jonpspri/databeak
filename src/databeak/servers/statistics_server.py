@@ -197,10 +197,6 @@ async def get_column_statistics(
     data type information, null value handling, and comprehensive numerical
     statistics when applicable.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Name of the column to analyze
-
     Returns:
         Detailed statistical analysis for the specified column
 
@@ -386,12 +382,6 @@ async def get_correlation_matrix(
     correlation methods. Essential for understanding relationships between
     variables and feature selection in analytical workflows.
 
-    Args:
-        ctx: FastMCP context for session access
-        method: Correlation method - pearson (linear), spearman (rank), kendall (rank)
-        columns: Optional list of columns to include (default: all numeric)
-        min_correlation: Minimum correlation threshold to include in results
-
     Returns:
         Correlation matrix with pairwise correlation coefficients
 
@@ -517,14 +507,6 @@ async def get_value_counts(
     Analyzes the distribution of values in a specified column, providing
     counts and optionally percentages for each unique value. Essential for
     understanding categorical data and identifying common patterns.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Name of the column to analyze
-        normalize: If True, return percentages instead of counts
-        sort: Sort results by frequency
-        ascending: Sort in ascending order (default: False for descending)
-        top_n: Maximum number of values to return (default: all)
 
     Returns:
         Frequency distribution with counts/percentages for each unique value

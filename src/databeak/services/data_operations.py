@@ -97,7 +97,12 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
         if target_type == "string":
             return series.astype(str)
         if target_type == "datetime":
-            return pd.to_datetime(series, errors="coerce")
+            # Suppress format inference warning for flexible datetime parsing
+            import warnings
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                return pd.to_datetime(series, errors="coerce")
         if target_type == "boolean":
             return series.astype(bool)
         msg = f"Unsupported type: {target_type}"

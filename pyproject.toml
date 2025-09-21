@@ -241,6 +241,7 @@ ignore = [
     "RUF059",  # Unused unpacked variable
 ]
 "examples/*" = ["T201", "T203"]  # Allow print() in examples
+"scripts/*" = ["T201", "T203"]  # Allow print() in scripts
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]

@@ -84,13 +84,6 @@ async def replace_in_column(
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to update
-        pattern: Pattern to search for (regex or literal string)
-        replacement: Replacement string
-        regex: Whether to treat pattern as regex (default: True)
-
     Returns:
         ColumnOperationResult with replacement details
 
@@ -187,12 +180,6 @@ async def extract_from_column(
     ] = False,
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to extract from
-        pattern: Regex pattern with capturing groups
-        expand: Whether to expand multiple groups into separate columns
 
     Returns:
         ColumnOperationResult with extraction details
@@ -324,14 +311,6 @@ async def split_column(
     ] = None,
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to split
-        delimiter: String to split on (default: space)
-        part_index: Which part to keep (0-based). None keeps first part
-        expand_to_columns: Whether to expand splits into multiple columns
-        new_columns: Names for new columns when expanding
 
     Returns:
         ColumnOperationResult with split details
@@ -489,15 +468,6 @@ async def transform_column_case(
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to transform
-        transform: Type of case transformation:
-            - "upper": Convert to UPPERCASE
-            - "lower": Convert to lowercase
-            - "title": Convert to Title Case
-            - "capitalize": Capitalize first letter only
-
     Returns:
         ColumnOperationResult with transformation details
 
@@ -601,11 +571,6 @@ async def strip_column(
 ) -> ColumnOperationResult:
     r"""Strip whitespace or specified characters from column values.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to strip
-        chars: Characters to strip (None for whitespace)
-
     Returns:
         ColumnOperationResult with strip details
 
@@ -690,11 +655,6 @@ async def fill_column_nulls(
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to fill
-        value: Value to use for filling nulls
-
     Returns:
         ColumnOperationResult with fill details
 
@@ -739,7 +699,14 @@ async def fill_column_nulls(
         if session.df is None:
             msg = "Session data not available"
             raise ToolError(msg)
-        session.df[column] = df[column].fillna(value)
+        # Use explicit assignment to avoid downcasting warnings
+        import pandas as pd
+
+        with pd.option_context("future.no_silent_downcasting", True):
+            filled_series = df[column].fillna(value)
+            if hasattr(filled_series, "infer_objects"):
+                filled_series = filled_series.infer_objects(copy=False)
+            session.df[column] = filled_series
 
         # Verify fills worked
         nulls_after = int(session.df[column].isna().sum())

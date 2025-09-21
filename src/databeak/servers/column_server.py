@@ -204,10 +204,6 @@ async def rename_columns(
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
 
-    Args:
-        ctx: FastMCP context for session access
-        mapping: Dict of old_name -> new_name
-
     Returns:
         Dict with rename details
 
@@ -272,12 +268,6 @@ async def add_column(
     ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
-
-    Args:
-        ctx: FastMCP context for session access
-        name: Name for the new column
-        value: Single value for all rows, or list of values (one per row)
-        formula: Python expression to compute values (e.g., "col1 + col2")
 
     Returns:
         ColumnOperationResult with operation details
@@ -363,10 +353,6 @@ async def remove_columns(
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
 
-    Args:
-        ctx: FastMCP context for session access
-        columns: List of column names to remove
-
     Returns:
         ColumnOperationResult with removal details
 
@@ -430,14 +416,6 @@ async def change_column_type(
     ] = "coerce",
 ) -> ColumnOperationResult:
     """Change the data type of a column.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to convert
-        dtype: Target data type
-        errors: How to handle conversion errors:
-            - "raise": Raise an error if conversion fails
-            - "coerce": Convert invalid values to NaN/None
 
     Returns:
         ColumnOperationResult with conversion details
@@ -541,11 +519,6 @@ async def update_column(
     ],
 ) -> ColumnOperationResult:
     """Update values in a column using various operations with discriminated unions.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to update
-        operation: Update operation specification (discriminated union or legacy dict)
 
     Returns:
         ColumnOperationResult with update details

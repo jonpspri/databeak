@@ -185,7 +185,12 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
         if sample.empty:
             continue
         try:
-            pd.to_datetime(sample, errors="raise")
+            # Suppress format inference warning for datetime detection
+            import warnings
+
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                pd.to_datetime(sample, errors="raise")
             issues["info"][f"{col}_potential_datetime"] = True
         except (ValueError, TypeError):
             pass

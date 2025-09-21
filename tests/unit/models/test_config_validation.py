@@ -60,7 +60,6 @@ class TestEnvironmentVariableConfiguration:
             # "csv_history_dir" removed - history functionality eliminated
             "DATABEAK_SESSION_TIMEOUT": "session_timeout",
             "DATABEAK_CHUNK_SIZE": "chunk_size",
-            "DATABEAK_MAX_HISTORY_OPERATIONS": "max_history_operations",
         }
 
         for env_var, field_name in documented_vars.items():
@@ -75,7 +74,7 @@ class TestEnvironmentVariableConfiguration:
         # csv_history_dir and auto_save removed - functionality eliminated
         assert settings.session_timeout == 3600
         assert settings.chunk_size == 10000
-        assert settings.max_history_operations == 1000
+        assert settings.max_anomaly_sample_size == 10000
 
     def test_environment_variable_override(self, monkeypatch):
         """Test that environment variables properly override defaults."""
@@ -85,7 +84,7 @@ class TestEnvironmentVariableConfiguration:
         # csv_history_dir removed - history functionality eliminated
         monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
         monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
-        monkeypatch.setenv("DATABEAK_MAX_HISTORY_OPERATIONS", "500")
+        monkeypatch.setenv("DATABEAK_MAX_ANOMALY_SAMPLE_SIZE", "5000")
 
         # Create new settings instance to pick up env vars
         settings = DataBeakSettings()
@@ -94,7 +93,7 @@ class TestEnvironmentVariableConfiguration:
         # csv_history_dir removed - history functionality eliminated
         assert settings.session_timeout == 7200
         assert settings.chunk_size == 5000
-        assert settings.max_history_operations == 500
+        assert settings.max_anomaly_sample_size == 5000
 
 
 class TestCoverageConfiguration:

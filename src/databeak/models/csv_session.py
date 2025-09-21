@@ -44,17 +44,8 @@ class DataBeakSettings(BaseSettings):
     max_validation_violations: int = Field(
         default=1000, description="Maximum number of validation violations to report"
     )
-    validation_memory_limit_mb: int = Field(
-        default=512, description="Memory limit for validation operations in MB"
-    )
-    validation_timeout_seconds: int = Field(
-        default=300, description="Timeout for long-running validation operations in seconds"
-    )
     max_anomaly_sample_size: int = Field(
         default=10000, description="Maximum sample size for anomaly detection operations"
-    )
-    max_history_operations: int = Field(
-        default=1000, description="Maximum number of history operations to store per session"
     )
 
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
@@ -215,9 +206,6 @@ class SessionManager:
 
         Use this for read-only operations to avoid unwanted session creation side effects.
 
-        Args:
-            session_id: The session identifier
-
         Returns:
             The session if it exists, None otherwise
         """
@@ -292,9 +280,6 @@ def get_or_create_session(session_id: str) -> CSVSession:
 
     Provides dictionary-like access: session = get_or_create_session(session_id)
     Returns existing session or creates new empty session.
-
-    Args:
-        session_id: The session identifier
 
     Returns:
         CSVSession (existing or newly created)

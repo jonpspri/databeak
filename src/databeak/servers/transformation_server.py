@@ -58,14 +58,6 @@ def filter_rows(
     Provides powerful filtering capabilities optimized for AI-driven data analysis. Supports
     multiple operators, logical combinations, and comprehensive null value handling.
 
-    Args:
-        ctx: FastMCP context for session access
-        conditions: List of filter conditions with column, operator, and value
-        mode: Logic for combining conditions ("and" or "or")
-
-    Returns:
-        FilterOperationResult with filtering statistics
-
     Examples:
         # Numeric filtering
         filter_rows(ctx, [{"column": "age", "operator": ">", "value": 25}])
@@ -205,13 +197,6 @@ def sort_data(
     and sort directions. Handles mixed data types appropriately and maintains
     data integrity throughout the sorting process.
 
-    Args:
-        ctx: FastMCP context for session access
-        columns: Column specifications - can be strings, SortColumn objects, or dicts
-
-    Returns:
-        SortDataResult with sorting details and statistics
-
     Examples:
         # Simple single column sort
         sort_data(ctx, ["age"])
@@ -297,14 +282,6 @@ def remove_duplicates(
     and different keep strategies. Handles edge cases and provides detailed
     statistics about the deduplication process.
 
-    Args:
-        ctx: FastMCP context for session access
-        subset: Columns to consider for duplicates (None = all columns)
-        keep: Which duplicates to keep ("first", "last", or "none" to drop all)
-
-    Returns:
-        ColumnOperationResult with duplicate removal statistics
-
     Examples:
         # Remove exact duplicate rows
         remove_duplicates(ctx)
@@ -380,22 +357,6 @@ def fill_missing_values(
     Provides multiple strategies for handling missing data, including statistical
     imputation methods. Handles different data types appropriately and validates
     strategy compatibility with column types.
-
-    Args:
-        ctx: FastMCP context for session access
-        strategy: Strategy for handling missing values:
-            - "drop": Remove rows with missing values
-            - "fill": Fill with a specific value
-            - "forward": Forward fill (use previous valid value)
-            - "backward": Backward fill (use next valid value)
-            - "mean": Fill with column mean (numeric only)
-            - "median": Fill with column median (numeric only)
-            - "mode": Fill with most common value
-        value: Value to use when strategy is "fill"
-        columns: Columns to process (None = all columns)
-
-    Returns:
-        ColumnOperationResult with operation statistics
 
     Examples:
         # Drop rows with any missing values

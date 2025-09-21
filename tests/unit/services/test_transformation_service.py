@@ -187,7 +187,6 @@ class TestFilterRows:
         session = MagicMock()
         df = pd.DataFrame({"name": ["Alice", None, "Charlie"], "age": [25, 30, None]})
         session.df = df.copy()
-        session.record_operation = MagicMock()
         mock_get_session.return_value = (session, df)
 
         conditions = [{"column": "name", "operator": "is_null"}]
@@ -219,7 +218,6 @@ class TestSortData:
             {"name": ["Charlie", "Alice", "Bob"], "age": [35, 25, 30], "score": [78.5, 85.5, 90.0]},
         )
         session.df = df.copy()
-        session.record_operation = MagicMock()
         return session, df
 
     @pytest.mark.asyncio
@@ -290,7 +288,6 @@ class TestRemoveDuplicates:
             },
         )
         session.df = df.copy()
-        session.record_operation = MagicMock()
         return session, df
 
     @pytest.mark.asyncio
@@ -371,7 +368,6 @@ class TestFillMissingValues:
             },
         )
         session.df = df.copy()
-        session.record_operation = MagicMock()
         return session, df
 
     @pytest.mark.asyncio
@@ -478,7 +474,6 @@ class TestTransformColumnCase:
             },
         )
         session.df = df.copy()
-        session.record_operation = MagicMock()
         return session, df
 
     @pytest.mark.asyncio
@@ -567,7 +562,6 @@ class TestStripColumn:
             {"name": ["  alice  ", " bob ", "charlie "], "city": [" NYC ", "LA", "  Chicago  "]},
         )
         session.df = df.copy()
-        session.record_operation = MagicMock()
         return session, df
 
     @pytest.mark.asyncio

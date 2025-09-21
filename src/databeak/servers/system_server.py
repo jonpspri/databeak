@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import logging
 import os
-import threading
-import time
 from typing import Annotated
 
 import psutil
@@ -21,7 +19,7 @@ from pydantic import Field
 # Import version and session management from main package
 from .._version import __version__
 from ..models import get_session_manager
-from ..models.csv_session import DataBeakSettings, SessionManager, get_csv_settings
+from ..models.csv_session import DataBeakSettings, get_csv_settings
 from ..models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
@@ -31,46 +29,6 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 # Memory monitoring will use configurable thresholds from DataBeakSettings
-
-
-class HistoryOperationCounter:
-    """Thread-safe cached counter for history operations across all sessions."""
-
-    def __init__(self, cache_ttl_seconds: int = 30):
-        """Initialize counter with cache TTL."""
-        self._cached_count = 0
-        self._last_update = 0.0
-        self._cache_ttl = cache_ttl_seconds
-        self._lock = threading.Lock()
-
-    def get_count(self, session_manager: SessionManager) -> int:
-        """Get total history operations count with thread-safe caching."""
-        now = time.time()
-
-        # Check if cache is still valid
-        with self._lock:
-            if now - self._last_update < self._cache_ttl:
-                return self._cached_count
-
-            # Cache is stale, recalculate
-            self._cached_count = self._calculate_total_operations(session_manager)
-            self._last_update = now
-            return self._cached_count
-
-    def _calculate_total_operations(self, session_manager: SessionManager) -> int:  # noqa: ARG002
-        """Calculate total operations across all sessions (private method)."""
-        # Operations tracking removed in architectural simplification
-        # Return 0 as operations are no longer tracked
-        return 0
-
-    def invalidate_cache(self) -> None:
-        """Invalidate the cache to force recalculation on next access."""
-        with self._lock:
-            self._last_update = 0.0
-
-
-# Global instance for caching history operation counts
-_history_counter = HistoryOperationCounter(cache_ttl_seconds=30)
 
 
 def get_memory_usage() -> float:
@@ -96,11 +54,6 @@ def get_memory_status(
 ) -> str:
     """Determine memory status based on configurable thresholds.
 
-    Args:
-        current_mb: Current memory usage in MB
-        threshold_mb: Maximum threshold in MB
-        settings: DataBeak settings (optional, will get global settings if None)
-
     Returns:
         Status string: 'normal', 'warning', or 'critical'
     """
@@ -114,21 +67,6 @@ def get_memory_status(
     if usage_ratio >= settings.memory_warning_threshold:
         return "warning"
     return "normal"
-
-
-def count_total_history_operations(session_manager: SessionManager) -> int:
-    """Count total operations across all session histories with caching.
-
-    Uses thread-safe cached counter to avoid performance issues when
-    health checks are called frequently.
-
-    Args:
-        session_manager: The session manager instance
-
-    Returns:
-        Total count of history operations across all sessions
-    """
-    return _history_counter.get_count(session_manager)
 
 
 # ============================================================================
@@ -161,9 +99,6 @@ async def health_check(
         memory_threshold_mb = float(settings.memory_threshold_mb)
         memory_status = get_memory_status(current_memory_mb, memory_threshold_mb)
 
-        # Count total history operations
-        total_history_operations = count_total_history_operations(session_manager)
-
         # Determine overall health status
         status = "healthy"
 
@@ -189,16 +124,9 @@ async def health_check(
                 f"High memory usage: {current_memory_mb:.1f}MB / {memory_threshold_mb:.1f}MB"
             )
 
-        # Check history operations
-        if total_history_operations > settings.max_history_operations * 10:  # 10x limit warning
-            if status == "healthy":
-                status = "degraded"
-            await ctx.warning(f"High history operations count: {total_history_operations}")
-
         await ctx.info(
             f"Health check complete - Status: {status}, Sessions: {active_sessions}, "
-            f"Memory: {current_memory_mb:.1f}MB ({memory_status}), "
-            f"History ops: {total_history_operations}"
+            f"Memory: {current_memory_mb:.1f}MB ({memory_status})"
         )
 
         return HealthResult(
@@ -210,8 +138,8 @@ async def health_check(
             memory_usage_mb=current_memory_mb,
             memory_threshold_mb=memory_threshold_mb,
             memory_status=memory_status,
-            history_operations_total=total_history_operations,
-            history_limit_per_session=settings.max_history_operations,
+            history_operations_total=0,  # History operations tracking removed
+            history_limit_per_session=0,  # History operations tracking removed
         )
 
     except (ImportError, AttributeError, ValueError, TypeError) as e:
@@ -227,8 +155,8 @@ async def health_check(
             memory_usage_mb=0.0,
             memory_threshold_mb=2048.0,
             memory_status="unknown",
-            history_operations_total=0,
-            history_limit_per_session=1000,
+            history_operations_total=0,  # History operations tracking removed
+            history_limit_per_session=0,  # History operations tracking removed
         )
     except Exception as e:
         # Treat unexpected session manager errors as recoverable - return unhealthy
@@ -248,8 +176,8 @@ async def health_check(
             memory_usage_mb=0.0,
             memory_threshold_mb=2048.0,
             memory_status="unknown",
-            history_operations_total=0,
-            history_limit_per_session=1000,
+            history_operations_total=0,  # History operations tracking removed
+            history_limit_per_session=0,  # History operations tracking removed
         )
 
 

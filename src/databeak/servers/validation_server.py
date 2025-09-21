@@ -401,11 +401,6 @@ class AnomalyDetectionParams(BaseModel):
 def apply_violation_limits(violations: list, limit: int, operation_name: str) -> tuple[list, bool]:
     """Apply resource limits to violation collections.
 
-    Args:
-        violations: List of violations to limit
-        limit: Maximum number of violations to keep
-        operation_name: Name of operation for logging
-
     Returns:
         Tuple of (limited_violations, was_truncated)
     """
@@ -424,11 +419,6 @@ def sample_large_dataset(
     df: pd.DataFrame, max_sample_size: int, operation_name: str
 ) -> pd.DataFrame:
     """Sample large datasets for memory-efficient operations.
-
-    Args:
-        df: DataFrame to sample
-        max_sample_size: Maximum sample size
-        operation_name: Name of operation for logging
 
     Returns:
         Sampled DataFrame (or original if under limit)
@@ -457,10 +447,6 @@ def validate_schema(
     ],
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition.
-
-    Args:
-        ctx: FastMCP context for session access
-        schema: Schema definition with column validation rules
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
@@ -722,10 +708,6 @@ def check_data_quality(
     ] = None,
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules.
-
-    Args:
-        ctx: FastMCP context for session access
-        rules: List of quality rules to check (None = use default rules)
 
     Returns:
         DataQualityResult with comprehensive quality assessment results
@@ -1092,12 +1074,6 @@ def find_anomalies(
     ] = None,
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: List of columns to analyze (None = all columns)
-        sensitivity: Sensitivity threshold for anomaly detection (0-1)
-        methods: Detection methods to use (None = all methods)
 
     Returns:
         FindAnomaliesResult with comprehensive anomaly detection results

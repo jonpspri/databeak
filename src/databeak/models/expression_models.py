@@ -68,9 +68,6 @@ class SecureExpression(BaseModel):
     def validate_expression_safety(cls, v: str) -> str:
         """Validate that expression contains only safe mathematical operations.
 
-        Args:
-            v: Expression string to validate
-
         Returns:
             The validated expression string
 
@@ -98,9 +95,6 @@ class SecureExpression(BaseModel):
 
         Used for apply operations where a variable represents column values.
 
-        Args:
-            column_name: Name of the column to substitute for the variable
-
         Returns:
             Expression string with column reference
         """
@@ -126,10 +120,6 @@ class SecureExpression(BaseModel):
     def formula(cls, expression: str, description: str | None = None) -> SecureExpression:
         """Create expression for column formulas.
 
-        Args:
-            expression: Mathematical expression referencing column names
-            description: Optional description of the formula
-
         Returns:
             SecureExpression configured for formula usage
 
@@ -142,10 +132,6 @@ class SecureExpression(BaseModel):
     def apply_operation(cls, expression: str, variable: str = "x") -> SecureExpression:
         """Create expression for apply operations.
 
-        Args:
-            expression: Mathematical expression using variable (default 'x')
-            variable: Variable name representing column values
-
         Returns:
             SecureExpression configured for apply operations
 
@@ -157,10 +143,6 @@ class SecureExpression(BaseModel):
     @classmethod
     def condition(cls, expression: str, description: str | None = None) -> SecureExpression:
         """Create expression for conditional operations.
-
-        Args:
-            expression: Boolean expression for conditional logic
-            description: Optional description
 
         Returns:
             SecureExpression configured for conditional usage

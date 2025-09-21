@@ -16,7 +16,7 @@ class TestDataBeakSettings:
         assert settings.max_file_size_mb == 1024
         assert settings.session_timeout == 3600
         assert settings.chunk_size == 10000
-        assert settings.max_history_operations == 1000
+        assert settings.max_anomaly_sample_size == 10000
 
     def test_settings_with_custom_values(self) -> None:
         """Test settings with custom values."""

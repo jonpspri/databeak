@@ -27,7 +27,7 @@ class TestDataBeakSettings:
         # csv_history_dir removed - history functionality eliminated
         assert settings.max_file_size_mb == 1024
         assert settings.memory_threshold_mb == 2048
-        assert settings.max_history_operations == 1000  # Added back for health monitoring
+        assert settings.max_anomaly_sample_size == 10000  # Anomaly detection sample size
 
 
 class TestCSVSession:

@@ -10,8 +10,8 @@ from __future__ import annotations
 from typing import Any
 
 import pandas as pd
-import pandera as pa
-from pandera import DataFrameModel, Field
+import pandera.pandas as pa
+from pandera.pandas import DataFrameModel, Field
 from pandera.typing import DataFrame, Series
 
 
@@ -31,9 +31,6 @@ def create_pandera_schema_from_validation_rules(
     validation_rules: dict[str, dict[str, Any]],
 ) -> type[DataFrameModel]:
     """Create a Pandera SchemaModel from DataBeak validation rules.
-
-    Args:
-        validation_rules: Dictionary mapping column names to validation rules
 
     Returns:
         Dynamically created Pandera SchemaModel class
@@ -134,10 +131,6 @@ def validate_dataframe_with_pandera(
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     """Validate a DataFrame using Pandera with DataBeak validation rules.
 
-    Args:
-        df: DataFrame to validate
-        validation_rules: DataBeak-style validation rules
-
     Returns:
         Tuple of (validated_dataframe, validation_errors)
 
@@ -218,10 +211,6 @@ def create_typed_dataframe(
     data: dict[str, Any], schema_class: type[DataFrameModel]
 ) -> DataFrame[DataFrameModel]:
     """Create a type-annotated DataFrame with Pandera schema validation.
-
-    Args:
-        data: Dictionary of column data
-        schema_class: Pandera SchemaModel class for validation
 
     Returns:
         Type-annotated DataFrame validated against schema

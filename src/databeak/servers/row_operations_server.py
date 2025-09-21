@@ -252,8 +252,20 @@ def set_cell_value(
         elif hasattr(old_value, "item"):  # numpy scalar
             old_value = old_value.item()  # type: ignore[assignment]
 
-        # Set the new value
-        df.iloc[row_index, df.columns.get_loc(column_name)] = value  # type: ignore[index]
+        # Set the new value with explicit type conversion to avoid dtype compatibility warnings
+        col_idx = df.columns.get_loc(column_name)
+        current_dtype = df[column_name].dtype  # Access dtype through column name instead
+
+        # Convert value to match column dtype if possible
+        try:
+            if pd.api.types.is_numeric_dtype(current_dtype) and isinstance(value, str):
+                converted_value = pd.to_numeric(value, errors="coerce")
+            else:
+                converted_value = value
+        except (ValueError, TypeError):
+            converted_value = value
+
+        df.iloc[row_index, col_idx] = converted_value  # type: ignore[index]
 
         # Get the new value for tracking (after pandas type conversion)
         new_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
