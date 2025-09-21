@@ -11,7 +11,7 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import src.databeak.servers.row_operations_server  # noqa: F401
-from src.databeak.exceptions import ColumnNotFoundError, InvalidParameterError
+from src.databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
 from src.databeak.servers.io_server import load_csv_from_content
 from src.databeak.servers.row_operations_server import (
     delete_row,
@@ -113,7 +113,7 @@ class TestGetCellValue:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             get_cell_value(ctx, 0, "first_name")
 
 
@@ -203,7 +203,7 @@ class TestSetCellValue:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             set_cell_value(ctx, 0, "first_name", "test")
 
 
@@ -282,7 +282,7 @@ class TestGetRowData:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             get_row_data(ctx, 0)
 
 
@@ -386,7 +386,7 @@ class TestGetColumnData:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             get_column_data(ctx, "first_name")
 
 
@@ -531,7 +531,7 @@ class TestInsertRow:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             insert_row(ctx, 0, {"first_name": "Test"})
 
 
@@ -619,7 +619,7 @@ class TestDeleteRow:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             delete_row(ctx, 0)
 
 
@@ -747,7 +747,7 @@ class TestUpdateRow:
         from src.databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
-        with pytest.raises((ToolError, SessionNotFoundError)):
+        with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             update_row(ctx, 0, {"age": 30})
 
 

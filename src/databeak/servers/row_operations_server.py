@@ -12,7 +12,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
-from ..models import get_session_manager
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -23,6 +22,7 @@ from ..models.tool_responses import (
     UpdateRowResult,
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
+from ..utils.session_utils import get_session_data
 from ..utils.validators import convert_pandas_na_list
 
 if TYPE_CHECKING:
@@ -143,13 +143,7 @@ def get_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -219,13 +213,7 @@ def set_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -312,13 +300,7 @@ def get_row_data(
     """
     try:
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -382,13 +364,7 @@ def get_column_data(
     """
     try:
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
 
         # Validate column exists
         if column not in df.columns:
@@ -475,13 +451,7 @@ def insert_row(
                 raise ToolError(msg) from e
 
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
         rows_before = len(df)
 
         # Handle special case: append at end
@@ -573,13 +543,7 @@ def delete_row(
     """
     try:
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
         rows_before = len(df)
 
         # Validate row index
@@ -650,13 +614,7 @@ def update_row(
             raise ToolError(msg)
 
         session_id = ctx.session_id
-        session_manager = get_session_manager()
-        session = session_manager.get_or_create_session(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check above
+        session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):

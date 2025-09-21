@@ -21,10 +21,10 @@ from ..exceptions import (
 )
 
 # Removed: OperationType (no longer tracking operations)
-from ..models.csv_session import CSVSession
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 from ..utils.secure_evaluator import _get_secure_evaluator
+from ..utils.session_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -135,11 +135,6 @@ class RenameColumnsResult(BaseToolResponse):
 
 
 # Use elegant session access pattern
-def _get_session_data(session_id: str) -> CSVSession:
-    from ..models import get_session_manager
-
-    return get_session_manager().get_or_create_session(session_id)
-
 
 # =============================================================================
 # TOOL DEFINITIONS (Direct implementations)
@@ -160,12 +155,7 @@ async def select_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101 # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -221,12 +211,7 @@ async def rename_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         # Validate columns exist
         missing_cols = [col for col in mapping if col not in df.columns]
@@ -288,12 +273,7 @@ async def add_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if name in df.columns:
             msg = "name"
@@ -369,12 +349,7 @@ async def remove_columns(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         # Validate columns exist
         missing_cols = [col for col in columns if col not in df.columns]
@@ -436,12 +411,7 @@ async def change_column_type(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -552,12 +522,7 @@ async def update_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())

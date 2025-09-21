@@ -12,8 +12,8 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
-from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
+from ..utils.session_utils import get_session_data
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
 
@@ -453,14 +453,7 @@ def validate_schema(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
         settings = get_csv_settings()
         validation_errors: dict[str, list[ValidationError]] = {}
 
@@ -714,14 +707,7 @@ def check_data_quality(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
         settings = get_csv_settings()
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
@@ -1080,14 +1066,7 @@ def find_anomalies(
     """
     try:
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or session.df is None:
-            msg = "Invalid session or no data loaded"
-            raise ToolError(msg)
-
-        df = session.df
+        session, df = get_session_data(session_id)
         settings = get_csv_settings()
 
         # Apply resource management for large datasets

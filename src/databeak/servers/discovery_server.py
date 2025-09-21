@@ -24,8 +24,7 @@ from ..exceptions import (
 )
 
 # Import session management and data models from the main package
-from ..models import DataPreview, get_session_manager
-from ..models.csv_session import CSVSession
+from ..models import DataPreview
 from ..models.tool_responses import (
     BaseToolResponse,
     CellLocation,
@@ -34,6 +33,7 @@ from ..models.tool_responses import (
     MissingDataInfo,
 )
 from ..models.typed_dicts import DataPreviewResult
+from ..utils.session_utils import get_session_data
 
 # Import data operations function directly to avoid dependency issues
 try:
@@ -179,22 +179,6 @@ class InspectDataResult(BaseToolResponse):
 # ============================================================================
 
 
-def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
-    manager = get_session_manager()
-    session = manager.get_or_create_session(session_id)
-
-    if not session:
-        raise SessionNotFoundError(session_id)
-    if not session.has_data():
-        raise NoDataLoadedError(session_id)
-
-    df = session.df
-    if df is None:  # Additional defensive check
-        raise NoDataLoadedError(session_id)
-    return session, df
-
-
 # ============================================================================
 # DISCOVERY OPERATIONS LOGIC
 # ============================================================================
@@ -246,17 +230,7 @@ async def detect_outliers(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or not session.has_data():
-            msg = f"Invalid session or no data loaded: {session_id}"
-            raise ToolError(msg)
-
-        df = session.df
-        if df is None:  # Additional defensive check
-            msg = f"No data available in session: {session_id}"
-            raise ToolError(msg)
+        session, df = get_session_data(session_id)
 
         # Select numeric columns
         if columns:
@@ -406,17 +380,7 @@ async def profile_data(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or not session.has_data():
-            msg = f"Invalid session or no data loaded: {session_id}"
-            raise ToolError(msg)
-
-        df = session.df
-        if df is None:  # Additional defensive check
-            msg = f"No data available in session: {session_id}"
-            raise ToolError(msg)
+        session, df = get_session_data(session_id)
 
         # Create ProfileInfo for each column (simplified to match model)
         profile_dict = {}
@@ -520,17 +484,7 @@ async def group_by_aggregate(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        manager = get_session_manager()
-        session = manager.get_or_create_session(session_id)
-
-        if not session or not session.has_data():
-            msg = f"Invalid session or no data loaded: {session_id}"
-            raise ToolError(msg)
-
-        df = session.df
-        if df is None:  # Additional defensive check
-            msg = f"No data available in session: {session_id}"
-            raise ToolError(msg)
+        session, df = get_session_data(session_id)
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]
@@ -636,7 +590,7 @@ async def find_cells_with_value(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)
+        _session, df = get_session_data(session_id)
         matches = []
 
         # Determine columns to search
@@ -762,7 +716,7 @@ async def get_data_summary(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Create coordinate system
         coordinate_system = {
@@ -906,7 +860,7 @@ async def inspect_data_around(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Handle column specification
         column = column_name

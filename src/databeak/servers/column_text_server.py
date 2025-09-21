@@ -25,6 +25,7 @@ from ..exceptions import (
 # Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import ColumnOperationResult
+from ..utils.session_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -103,12 +104,7 @@ async def replace_in_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -189,12 +185,7 @@ async def extract_from_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -309,12 +300,7 @@ async def split_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -452,12 +438,7 @@ async def transform_column_case(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -545,12 +526,7 @@ async def strip_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -619,12 +595,7 @@ async def fill_column_nulls(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session = _get_session_data(session_id)
-        if not session.has_data():
-            msg = "No data loaded in session"
-            raise ToolError(msg)
-        df = session.df
-        assert df is not None  # noqa: S101  # Validated by has_data() check
+        session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
