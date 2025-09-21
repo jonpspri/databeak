@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.metadata
-import tempfile
 from pathlib import Path
 
 from src.databeak.models.csv_session import DataBeakSettings
@@ -58,10 +57,10 @@ class TestEnvironmentVariableConfiguration:
         # Verify all documented environment variables have corresponding fields
         documented_vars = {
             "DATABEAK_MAX_FILE_SIZE_MB": "max_file_size_mb",
-            "DATABEAK_CSV_HISTORY_DIR": "csv_history_dir",
+            # "csv_history_dir" removed - history functionality eliminated
             "DATABEAK_SESSION_TIMEOUT": "session_timeout",
             "DATABEAK_CHUNK_SIZE": "chunk_size",
-            "DATABEAK_AUTO_SAVE": "auto_save",
+            "DATABEAK_MAX_HISTORY_OPERATIONS": "max_history_operations",
         }
 
         for env_var, field_name in documented_vars.items():
@@ -73,30 +72,29 @@ class TestEnvironmentVariableConfiguration:
         settings = DataBeakSettings()
 
         assert settings.max_file_size_mb == 1024
-        assert settings.csv_history_dir == "."
+        # csv_history_dir and auto_save removed - functionality eliminated
         assert settings.session_timeout == 3600
         assert settings.chunk_size == 10000
-        assert settings.auto_save is True
+        assert settings.max_history_operations == 1000
 
     def test_environment_variable_override(self, monkeypatch):
         """Test that environment variables properly override defaults."""
-        # Use secure temporary directory
-        with tempfile.TemporaryDirectory() as temp_dir:
-            # Set test environment variables
-            monkeypatch.setenv("DATABEAK_MAX_FILE_SIZE_MB", "2048")
-            monkeypatch.setenv("DATABEAK_CSV_HISTORY_DIR", temp_dir)
-            monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
-            monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
-            monkeypatch.setenv("DATABEAK_AUTO_SAVE", "false")
+        # History functionality removed, so no temp directory needed
+        # Set test environment variables
+        monkeypatch.setenv("DATABEAK_MAX_FILE_SIZE_MB", "2048")
+        # csv_history_dir removed - history functionality eliminated
+        monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
+        monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
+        monkeypatch.setenv("DATABEAK_MAX_HISTORY_OPERATIONS", "500")
 
-            # Create new settings instance to pick up env vars
-            settings = DataBeakSettings()
+        # Create new settings instance to pick up env vars
+        settings = DataBeakSettings()
 
-            assert settings.max_file_size_mb == 2048
-            assert settings.csv_history_dir == temp_dir
+        assert settings.max_file_size_mb == 2048
+        # csv_history_dir removed - history functionality eliminated
         assert settings.session_timeout == 7200
         assert settings.chunk_size == 5000
-        assert settings.auto_save is False
+        assert settings.max_history_operations == 500
 
 
 class TestCoverageConfiguration:

@@ -27,8 +27,7 @@ src/databeak/
 │   ├── csv_session.py          # Session management & settings
 │   ├── data_models.py          # Core data types & enums
 │   ├── data_session.py         # Data operations
-│   ├── auto_save.py            # Auto-save functionality
-│   ├── history_manager.py      # Operation history & undo/redo
+│   ├── pandera_schemas.py      # Pandera schema integration for validation
 │   ├── typed_dicts.py          # TypedDict definitions for type safety
 │   └── tool_responses.py       # Pydantic response models
 ├── servers/                  # Specialized MCP servers (server composition)
@@ -37,7 +36,6 @@ src/databeak/
 │   ├── statistics_server.py    # Statistical analysis
 │   ├── discovery_server.py     # Data profiling & discovery
 │   ├── validation_server.py    # Schema validation & quality
-│   ├── history_server.py       # History & auto-save operations
 │   ├── column_server.py        # Column operations
 │   ├── column_text_server.py   # Text manipulation
 │   ├── row_operations_server.py # Row-level operations
@@ -97,7 +95,6 @@ All configuration uses the `DATABEAK_` prefix:
 | `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
 | `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
 | `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size     |
-| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save          |
 
 ## MCP Integration
 
@@ -114,7 +111,8 @@ The server implements the Model Context Protocol standard:
 1. **Data Manipulation** - Transform, filter, sort, and modify data
 1. **Data Analysis** - Statistics, correlations, outliers, profiling
 1. **Data Validation** - Schema validation, quality checking, anomaly detection
-1. **Session Management** - Auto-save, history, undo/redo operations
+1. **Session Management** - Stateless data processing with external context
+   management
 1. **System Tools** - Health monitoring and server information
 
 ## Design Principles

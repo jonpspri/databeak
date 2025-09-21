@@ -336,7 +336,7 @@ class TestMemoryMonitoringUtils:
         assert count == 0
 
     def test_count_total_history_operations_with_data(self):
-        """Test history operation counting with session data and caching."""
+        """Test history operation counting after cleanup (should return 0)."""
         from src.databeak.servers.system_server import (
             _history_counter,
             count_total_history_operations,
@@ -345,15 +345,9 @@ class TestMemoryMonitoringUtils:
         # Clear cache to ensure fresh calculation
         _history_counter.invalidate_cache()
 
-        # Mock sessions with history
+        # Mock sessions (history functionality removed)
         mock_session1 = Mock()
-        mock_session1.history_manager = Mock()
-        mock_session1.history_manager.history = [1, 2, 3]  # 3 operations
-        mock_session1.operations_history = [1, 2]  # 2 legacy operations
-
         mock_session2 = Mock()
-        mock_session2.history_manager = None
-        mock_session2.operations_history = [1, 2, 3, 4]  # 4 legacy operations
 
         mock_manager = Mock()
         mock_manager.sessions = {
@@ -362,11 +356,11 @@ class TestMemoryMonitoringUtils:
         }
 
         count = count_total_history_operations(mock_manager)
-        assert count == 9  # 3 + 2 + 4 = 9 total operations
+        assert count == 0  # History functionality removed - always returns 0
 
         # Test caching - second call should return cached value
         count2 = count_total_history_operations(mock_manager)
-        assert count2 == 9  # Should be same as cached value
+        assert count2 == 0  # Should be same as cached value
 
     def test_count_total_history_operations_handles_errors(self):
         """Test history operation counting handles session structure errors gracefully."""

@@ -30,7 +30,6 @@ from ..exceptions import InvalidParameterError
 
 
 class SecureExpressionEvaluator:
-
     """Secure mathematical expression evaluator for DataBeak columns.
 
     Replaces unsafe pandas.eval() usage with a restricted execution environment that only allows
@@ -197,7 +196,6 @@ class SecureExpressionEvaluator:
 
         # Create a restricted numpy-like object with only safe functions
         class SafeNumpy:
-
             """Restricted numpy-like object with only mathematical functions."""
 
             # Add safe numpy functions as attributes
@@ -249,7 +247,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the expression is unsafe or evaluation fails
-
         """
         # First validate the expression for safety
         validate_expression_safety(expression)
@@ -293,7 +290,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the expression contains unsafe operations
-
         """
         if not expression or not isinstance(expression, str):
             msg = "expression"
@@ -331,7 +327,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the node contains unsafe operations
-
         """
         allowed_node_types = (
             ast.Constant,
@@ -411,7 +406,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the function call is unsafe
-
         """
         # Get function name
         if isinstance(node.func, ast.Name):
@@ -467,7 +461,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the expression is unsafe or evaluation fails
-
         """
         # Validate expression syntax first
         self.validate_expression_syntax(expression)
@@ -544,7 +537,6 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If the formula is unsafe or evaluation fails
-
         """
         return self.evaluate_column_expression(formula, dataframe)
 
@@ -553,7 +545,6 @@ class SecureExpressionEvaluator:
 
         Returns:
             List of function names that can be used in expressions
-
         """
         evaluator_functions = set(self._evaluator.functions.keys())
         all_functions = evaluator_functions | set(self.SAFE_NUMPY_FUNCTIONS.keys())
@@ -564,7 +555,6 @@ class SecureExpressionEvaluator:
 
         Returns:
             List of operator symbols that can be used in expressions
-
         """
         return ["+", "-", "*", "/", "//", "%", "**", "<<", ">>", "|", "^", "&", "~"]
 
@@ -580,7 +570,6 @@ def _get_secure_evaluator() -> SecureExpressionEvaluator:
 
     Returns:
         SecureExpressionEvaluator: The global evaluator instance
-
     """
     global _secure_evaluator
     if _secure_evaluator is None:
@@ -605,7 +594,6 @@ def evaluate_expression_safely(
 
     Raises:
         InvalidParameterError: If expression is unsafe or evaluation fails
-
     """
     evaluator = _get_secure_evaluator()
     return evaluator.evaluate_column_expression(expression, dataframe, column_context)
@@ -619,7 +607,6 @@ def validate_expression_safety(expression: str) -> None:
 
     Raises:
         InvalidParameterError: If expression contains unsafe operations
-
     """
     evaluator = _get_secure_evaluator()
     evaluator.validate_expression_syntax(expression)

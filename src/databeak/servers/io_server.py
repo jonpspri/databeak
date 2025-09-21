@@ -47,7 +47,6 @@ CsvCellValue = CellValue
 
 
 class LoadResult(BaseToolResponse):
-
     """Response model for data loading operations."""
 
     rows_affected: int = Field(description="Number of rows loaded")
@@ -57,7 +56,6 @@ class LoadResult(BaseToolResponse):
 
 
 class ExportResult(BaseToolResponse):
-
     """Response model for data export operations."""
 
     file_path: str = Field(description="Path to exported file")
@@ -69,7 +67,6 @@ class ExportResult(BaseToolResponse):
 
 
 class SessionInfoResult(BaseToolResponse):
-
     """Response model for session information."""
 
     created_at: str = Field(description="Creation timestamp (ISO format)")
@@ -77,11 +74,9 @@ class SessionInfoResult(BaseToolResponse):
     data_loaded: bool = Field(description="Whether session has data loaded")
     row_count: int | None = Field(None, description="Number of rows if data loaded")
     column_count: int | None = Field(None, description="Number of columns if data loaded")
-    auto_save_enabled: bool = Field(description="Whether auto-save is enabled")
 
 
 class SessionListResult(BaseToolResponse):
-
     """Response model for listing all sessions."""
 
     sessions: list[SessionInfo] = Field(description="List of all sessions")
@@ -90,7 +85,6 @@ class SessionListResult(BaseToolResponse):
 
 
 class CloseSessionResult(BaseToolResponse):
-
     """Response model for session closure operations."""
 
     message: str = Field(description="Operation status message")
@@ -103,7 +97,6 @@ class CloseSessionResult(BaseToolResponse):
 
 
 class LoadCSVParams(BaseModel):
-
     """Parameters for CSV loading operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -122,7 +115,6 @@ class LoadCSVParams(BaseModel):
 
 
 class LoadCSVFromURLParams(BaseModel):
-
     """Parameters for CSV loading from URL operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -134,7 +126,6 @@ class LoadCSVFromURLParams(BaseModel):
 
 
 class LoadCSVFromContentParams(BaseModel):
-
     """Parameters for CSV loading from content operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -146,7 +137,6 @@ class LoadCSVFromContentParams(BaseModel):
 
 
 class ExportCSVParams(BaseModel):
-
     """Parameters for CSV export operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -903,7 +893,6 @@ async def get_session_info(
             data_loaded=session.df is not None,
             row_count=info.row_count if session.df is not None else None,
             column_count=info.column_count if session.df is not None else None,
-            auto_save_enabled=False,  # Auto-save eliminated for simplified architecture
         )
 
     except Exception as e:

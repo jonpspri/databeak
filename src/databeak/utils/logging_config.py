@@ -14,7 +14,6 @@ correlation_id: ContextVar[str] = ContextVar("correlation_id", default="")
 
 
 class CorrelationFilter(logging.Filter):
-
     """Filter that adds correlation ID to log records."""
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -24,7 +23,6 @@ class CorrelationFilter(logging.Filter):
 
 
 class StructuredFormatter(logging.Formatter):
-
     """JSON formatter for structured log output."""
 
     def format(self, record: logging.LogRecord) -> str:

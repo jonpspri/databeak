@@ -12,8 +12,8 @@ Model Context Protocol (MCP).
 - 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data
   profiling
 - ✅ **Data Validation** - Schema validation, quality scoring, anomaly detection
-- 💾 **Auto-Save & History** - Never lose work with configurable strategies and
-  undo/redo
+- 🎯 **Stateless Design** - Clean MCP architecture with external context
+  management
 - ⚡ **High Performance** - Handles large datasets with streaming and chunking
 - 🔒 **Session Management** - Multi-user support with isolated sessions
 - 🌟 **Code Quality** - Zero ruff violations, 100% mypy compliance, high test

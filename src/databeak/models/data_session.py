@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 class DataSession:
-
     """Manages core DataFrame operations and metadata."""
 
     def __init__(self, session_id: str):

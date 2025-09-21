@@ -79,7 +79,6 @@ logger = logging.getLogger(__name__)
 
 
 class OutlierInfo(BaseModel):
-
     """Information about a detected outlier."""
 
     row_index: int = Field(description="Row index where outlier was detected")
@@ -89,7 +88,6 @@ class OutlierInfo(BaseModel):
 
 
 class ProfileInfo(BaseModel):
-
     """Data profiling information for a column."""
 
     column_name: str = Field(description="Name of the profiled column")
@@ -103,7 +101,6 @@ class ProfileInfo(BaseModel):
 
 
 class GroupStatistics(BaseModel):
-
     """Statistics for a grouped data segment."""
 
     count: int = Field(description="Number of records in this group")
@@ -115,7 +112,6 @@ class GroupStatistics(BaseModel):
 
 
 class OutliersResult(BaseToolResponse):
-
     """Response model for outlier detection analysis."""
 
     outliers_found: int = Field(description="Total number of outliers detected")
@@ -129,7 +125,6 @@ class OutliersResult(BaseToolResponse):
 
 
 class ProfileResult(BaseToolResponse):
-
     """Response model for comprehensive data profiling."""
 
     profile: dict[str, ProfileInfo]
@@ -141,7 +136,6 @@ class ProfileResult(BaseToolResponse):
 
 
 class GroupAggregateResult(BaseToolResponse):
-
     """Response model for group aggregation operations."""
 
     groups: dict[str, GroupStatistics]
@@ -151,7 +145,6 @@ class GroupAggregateResult(BaseToolResponse):
 
 
 class DataSummaryResult(BaseToolResponse):
-
     """Response model for data overview and summary."""
 
     coordinate_system: dict[str, str]
@@ -164,7 +157,6 @@ class DataSummaryResult(BaseToolResponse):
 
 
 class FindCellsResult(BaseToolResponse):
-
     """Response model for cell value search operations."""
 
     search_value: CsvCellValue
@@ -175,7 +167,6 @@ class FindCellsResult(BaseToolResponse):
 
 
 class InspectDataResult(BaseToolResponse):
-
     """Response model for contextual data inspection."""
 
     center_coordinates: dict[str, Any]
@@ -258,7 +249,6 @@ async def detect_outliers(
         2. Anomaly detection for fraud/error identification
         3. Data preprocessing for machine learning
         4. Understanding data distribution characteristics
-
     """
     try:
         # Get session_id from FastMCP context
@@ -435,7 +425,6 @@ async def profile_data(
         2. Automated data quality reporting
         3. Feature engineering guidance
         4. Data preprocessing strategy development
-
     """
     try:
         # Get session_id from FastMCP context
@@ -564,7 +553,6 @@ async def group_by_aggregate(
         2. Feature engineering for categorical interactions
         3. Data summarization for reporting and insights
         4. Understanding group-based patterns and trends
-
     """
     try:
         # Get session_id from FastMCP context
@@ -697,7 +685,6 @@ async def find_cells_with_value(
         2. Pattern identification and data validation
         3. Reference data location and verification
         4. Data cleaning and preprocessing guidance
-
     """
     try:
         # Get session_id from FastMCP context
@@ -829,7 +816,6 @@ async def get_data_summary(
         2. Planning analytical approaches based on data structure
         3. Resource planning for large dataset processing
         4. Data quality initial assessment
-
     """
     try:
         # Get session_id from FastMCP context
@@ -981,7 +967,6 @@ async def inspect_data_around(
         2. Pattern recognition in local data areas
         3. Understanding data relationships and context
         4. Validation of data transformations and corrections
-
     """
     try:
         # Get session_id from FastMCP context

@@ -165,10 +165,8 @@ Configure DataBeak behavior with these environment variables:
 | Variable                    | Default | Description                |
 | --------------------------- | ------- | -------------------------- |
 | `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size in MB    |
-| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History directory path     |
 | `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout in seconds |
 | `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size      |
-| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save           |
 
 ## Verification
 

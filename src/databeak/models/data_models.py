@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 
 
 class DataType(str, Enum):
-
     """Supported data types for columns."""
 
     INTEGER = "integer"
@@ -31,7 +30,6 @@ class DataType(str, Enum):
 
 
 class OperationType(str, Enum):
-
     """Types of operations that can be performed."""
 
     LOAD = "load"
@@ -60,7 +58,6 @@ class OperationType(str, Enum):
 
 
 class ComparisonOperator(str, Enum):
-
     """Comparison operators for filtering."""
 
     EQUALS = "="
@@ -80,7 +77,6 @@ class ComparisonOperator(str, Enum):
 
 
 class LogicalOperator(str, Enum):
-
     """Logical operators for combining conditions."""
 
     AND = "AND"
@@ -89,7 +85,6 @@ class LogicalOperator(str, Enum):
 
 
 class AggregateFunction(str, Enum):
-
     """Aggregate functions for data analysis."""
 
     SUM = "sum"
@@ -106,7 +101,6 @@ class AggregateFunction(str, Enum):
 
 
 class ExportFormat(str, Enum):
-
     """Supported export formats."""
 
     CSV = "csv"
@@ -119,7 +113,6 @@ class ExportFormat(str, Enum):
 
 
 class FilterCondition(BaseModel):
-
     """A single filter condition."""
 
     column: str = Field(..., description="Column name to filter on")
@@ -142,7 +135,6 @@ class FilterCondition(BaseModel):
 
 
 class SortSpec(BaseModel):
-
     """Specification for sorting data."""
 
     column: str = Field(..., description="Column to sort by")
@@ -150,7 +142,6 @@ class SortSpec(BaseModel):
 
 
 class ColumnSchema(BaseModel):
-
     """Schema definition for a column."""
 
     name: str = Field(..., description="Column name")
@@ -167,7 +158,6 @@ class ColumnSchema(BaseModel):
 
 
 class DataSchema(BaseModel):
-
     """Complete schema for a dataset."""
 
     columns: list[ColumnSchema] = Field(..., description="Column definitions")
@@ -216,7 +206,6 @@ class DataSchema(BaseModel):
 
 
 class DataQualityRule(BaseModel):
-
     """A data quality rule to check."""
 
     name: str = Field(..., description="Rule name")
@@ -231,7 +220,6 @@ class DataQualityRule(BaseModel):
 
 
 class OperationResult(BaseModel):
-
     """Result of a data operation."""
 
     success: bool = Field(..., description="Whether operation succeeded")
@@ -244,7 +232,6 @@ class OperationResult(BaseModel):
 
 
 class SessionInfo(BaseModel):
-
     """Information about a data session."""
 
     session_id: str = Field(..., description="Unique session identifier")
@@ -259,7 +246,6 @@ class SessionInfo(BaseModel):
 
 
 class DataStatistics(BaseModel):
-
     """Statistical summary of data."""
 
     column: str = Field(..., description="Column name")
@@ -277,7 +263,6 @@ class DataStatistics(BaseModel):
 
 
 class DataPreview(BaseModel):
-
     """Data preview with row samples."""
 
     rows: list[dict[str, CellValue]] = Field(description="Sample rows from dataset")

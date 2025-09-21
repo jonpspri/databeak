@@ -34,7 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 class HistoryOperationCounter:
-
     """Thread-safe cached counter for history operations across all sessions."""
 
     def __init__(self, cache_ttl_seconds: int = 30):
@@ -58,24 +57,11 @@ class HistoryOperationCounter:
             self._last_update = now
             return self._cached_count
 
-    def _calculate_total_operations(self, session_manager: SessionManager) -> int:
+    def _calculate_total_operations(self, session_manager: SessionManager) -> int:  # noqa: ARG002
         """Calculate total operations across all sessions (private method)."""
-        total_operations = 0
-        try:
-            # Create snapshot of sessions to avoid modification during iteration
-            sessions_snapshot = dict(session_manager.sessions)
-
-            for session in sessions_snapshot.values():
-                if hasattr(session, "history_manager") and session.history_manager:
-                    # Count operations in history manager
-                    total_operations += len(session.history_manager.history)
-                if hasattr(session, "operations_history"):
-                    # Count legacy operations history
-                    total_operations += len(session.operations_history)
-        except (AttributeError, TypeError):
-            # Handle cases where history structure differs
-            logger.debug("Error counting history operations, returning partial count")
-        return total_operations
+        # Operations tracking removed in architectural simplification
+        # Return 0 as operations are no longer tracked
+        return 0
 
     def invalidate_cache(self) -> None:
         """Invalidate the cache to force recalculation on next access."""
@@ -95,7 +81,6 @@ def get_memory_usage() -> float:
 
     Raises:
         None - errors are logged and 0.0 is returned for resilience
-
     """
     try:
         process = psutil.Process(os.getpid())
@@ -118,7 +103,6 @@ def get_memory_status(
 
     Returns:
         Status string: 'normal', 'warning', or 'critical'
-
     """
     if settings is None:
         settings = get_csv_settings()
@@ -143,7 +127,6 @@ def count_total_history_operations(session_manager: SessionManager) -> int:
 
     Returns:
         Total count of history operations across all sessions
-
     """
     return _history_counter.get_count(session_manager)
 

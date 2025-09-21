@@ -20,7 +20,7 @@ powerful data analysts that can:
 - Perform complex statistical analysis
 - Validate data quality automatically
 - Transform data with natural language commands
-- Track all changes with undo/redo capabilities
+- Process data through clean, stateless MCP architecture
 
 ## Key Features
 
@@ -29,8 +29,7 @@ powerful data analysts that can:
 - **40+ Tools**: Complete data manipulation toolkit
 - **Multiple Formats**: CSV, JSON, Excel, Parquet, HTML, Markdown
 - **Session Management**: Multi-user support with isolation
-- **Auto-Save**: Never lose work with configurable strategies
-- **History & Undo/Redo**: Full operation tracking with snapshots
+- **Stateless Design**: Clean MCP architecture with external context management
 
 ### 📊 Data Operations
 
@@ -52,7 +51,7 @@ powerful data analysts that can:
 | ---------------------- | ------------------------------- | --------------------- |
 | **AI Integration**     | Native MCP protocol             | Manual operations     |
 | **Auto-Save**          | Automatic with strategies       | Manual save required  |
-| **History Tracking**   | Full undo/redo with snapshots   | Limited or none       |
+| **Architecture**       | Stateless MCP server design     | Varies by tool        |
 | **Session Management** | Multi-user isolated sessions    | Single user           |
 | **Data Validation**    | Built-in quality scoring        | Separate tools needed |
 | **Performance**        | Handles GB+ files with chunking | Memory limitations    |

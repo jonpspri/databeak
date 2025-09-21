@@ -1,0 +1,80 @@
+[
+  {
+    "cell": null,
+    "code": "ARG002",
+    "end_location": {
+      "column": 58,
+      "row": 61
+    },
+    "filename": "/Users/jonpspri/Projects/databeak/src/databeak/servers/system_server.py",
+    "fix": null,
+    "location": {
+      "column": 43,
+      "row": 61
+    },
+    "message": "Unused method argument: `session_manager`",
+    "noqa_row": 61,
+    "url": "https://docs.astral.sh/ruff/rules/unused-method-argument"
+  },
+  {
+    "cell": null,
+    "code": "RET504",
+    "end_location": {
+      "column": 32,
+      "row": 66
+    },
+    "filename": "/Users/jonpspri/Projects/databeak/src/databeak/servers/system_server.py",
+    "fix": {
+      "applicability": "unsafe",
+      "edits": [
+        {
+          "content": "return",
+          "end_location": {
+            "column": 27,
+            "row": 63
+          },
+          "location": {
+            "column": 9,
+            "row": 63
+          }
+        },
+        {
+          "content": "",
+          "end_location": {
+            "column": 1,
+            "row": 67
+          },
+          "location": {
+            "column": 1,
+            "row": 66
+          }
+        }
+      ],
+      "message": "Remove unnecessary assignment"
+    },
+    "location": {
+      "column": 16,
+      "row": 66
+    },
+    "message": "Unnecessary assignment to `total_operations` before `return` statement",
+    "noqa_row": 66,
+    "url": "https://docs.astral.sh/ruff/rules/unnecessary-assign"
+  },
+  {
+    "cell": null,
+    "code": "D205",
+    "end_location": {
+      "column": 8,
+      "row": 86
+    },
+    "filename": "/Users/jonpspri/Projects/databeak/src/databeak/servers/transformation_server.py",
+    "fix": null,
+    "location": {
+      "column": 5,
+      "row": 56
+    },
+    "message": "1 blank line required between summary line and description",
+    "noqa_row": 86,
+    "url": "https://docs.astral.sh/ruff/rules/missing-blank-line-after-summary"
+  }
+]

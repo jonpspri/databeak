@@ -38,7 +38,6 @@ CellValue = str | int | float | bool | None
 
 
 class ColumnMapping(BaseModel):
-
     """Column rename mapping."""
 
     model_config = ConfigDict(extra="forbid")
@@ -49,7 +48,6 @@ class ColumnMapping(BaseModel):
 
 # Base class for update operations
 class UpdateOperation(BaseModel):
-
     """Base class for update operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -57,7 +55,6 @@ class UpdateOperation(BaseModel):
 
 
 class ReplaceOperation(UpdateOperation):
-
     """Replace operation specification."""
 
     type: Literal["replace"] = "replace"
@@ -66,7 +63,6 @@ class ReplaceOperation(UpdateOperation):
 
 
 class MapOperation(UpdateOperation):
-
     """Map operation specification."""
 
     type: Literal["map"] = "map"
@@ -74,7 +70,6 @@ class MapOperation(UpdateOperation):
 
 
 class ApplyOperation(UpdateOperation):
-
     """Apply operation specification."""
 
     type: Literal["apply"] = "apply"
@@ -82,7 +77,6 @@ class ApplyOperation(UpdateOperation):
 
 
 class FillNaOperation(UpdateOperation):
-
     """Fill NA operation specification."""
 
     type: Literal["fillna"] = "fillna"
@@ -97,7 +91,6 @@ UpdateOperationType = Annotated[
 
 
 class UpdateColumnRequest(BaseModel):
-
     """Request parameters for column update operations."""
 
     model_config = ConfigDict(extra="forbid")
@@ -118,7 +111,6 @@ class UpdateColumnRequest(BaseModel):
 
 
 class SelectColumnsResult(BaseToolResponse):
-
     """Result of selecting specific columns."""
 
     model_config = ConfigDict(extra="forbid")
@@ -129,7 +121,6 @@ class SelectColumnsResult(BaseToolResponse):
 
 
 class RenameColumnsResult(BaseToolResponse):
-
     """Result of renaming columns."""
 
     model_config = ConfigDict(extra="forbid")
@@ -230,7 +221,6 @@ async def rename_columns(
             "LastName": "last_name",
             "EmailAddress": "email"
         })
-
     """
     try:
         # Get session_id from FastMCP context
@@ -304,7 +294,6 @@ async def add_column(
 
         # Add column with complex formula
         add_column(ctx, "full_name", formula="first_name + ' ' + last_name")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -390,7 +379,6 @@ async def remove_columns(
 
         # Clean up after analysis
         remove_columns(ctx, ["_temp", "_backup", "old_value"])
-
     """
     try:
         # Get session_id from FastMCP context
@@ -466,7 +454,6 @@ async def change_column_type(
 
         # Convert to boolean
         change_column_type(ctx, "is_active", "bool")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -588,7 +575,6 @@ async def update_column(
             "operation": "fillna",
             "value": 0
         })
-
     """
     try:
         # Get session_id from FastMCP context

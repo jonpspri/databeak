@@ -49,7 +49,6 @@ def _get_session_data(session_id: str) -> CSVSession:
 
 
 class RegexPattern(BaseModel):
-
     """Regex pattern specification."""
 
     pattern: str = Field(description="Regular expression pattern")
@@ -60,7 +59,6 @@ class RegexPattern(BaseModel):
 
 
 class SplitConfig(BaseModel):
-
     """Configuration for column splitting."""
 
     delimiter: str = Field(default=" ", description="String to split on")
@@ -108,7 +106,6 @@ async def replace_in_column(
 
         # Replace multiple spaces with single space
         replace_in_column(ctx, "description", r"\s+", " ")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -212,7 +209,6 @@ async def extract_from_column(
 
         # Extract year from date string
         extract_from_column(ctx, "date", r"\d{4}")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -353,7 +349,6 @@ async def split_column(
         # Expand with custom column names
         split_column(ctx, "name", " ", expand_to_columns=True,
                     new_columns=["first_name", "last_name"])
-
     """
     try:
         # Get session_id from FastMCP context
@@ -518,7 +513,6 @@ async def transform_column_case(
 
         # Capitalize sentences
         transform_column_case(ctx, "description", "capitalize")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -627,7 +621,6 @@ async def strip_column(
 
         # Remove quotes
         strip_column(ctx, "quoted_text", "'\"")
-
     """
     try:
         # Get session_id from FastMCP context
@@ -717,7 +710,6 @@ async def fill_column_nulls(
 
         # Fill missing scores with -1
         fill_column_nulls(ctx, "score", -1)
-
     """
     try:
         # Get session_id from FastMCP context

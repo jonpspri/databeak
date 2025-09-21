@@ -18,7 +18,7 @@ comprehensive error handling.
 - **Row**: Precise row-level and cell-level access and manipulation
 - **Analytics**: Statistical analysis and data profiling
 - **Validation**: Data quality checks and schema validation
-- **History**: Undo/redo and auto-save capabilities
+- **System**: Session management and health monitoring
 
 ## 📐 Coordinate System (Critical for AI Success)
 
@@ -42,9 +42,9 @@ Row 2:             Bob    35    Chicago  <- get_row_data(session, 2) →
 **⚠️ Critical**: All operations use 0-based indexing. Row 1 in a spreadsheet =
 Row 0 in DataBeak.
 
-### 💾 **Auto-Save**
+### 🎯 **Stateless Design**
 
-Configurable automatic saving with multiple strategies
+Clean MCP architecture for AI assistants
 
 ## Getting Started (AI Workflow)
 

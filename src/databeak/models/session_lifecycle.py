@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class SessionLifecycle:
-
     """Manages session TTL and expiration logic."""
 
     def __init__(self, session_id: str, ttl_minutes: int = 60):
