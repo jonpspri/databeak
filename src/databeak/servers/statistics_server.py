@@ -23,8 +23,6 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import get_session_manager
-from ..models.csv_session import CSVSession
 
 # Import response models - needed at runtime for FastMCP
 from ..models.statistics_models import (
@@ -33,28 +31,13 @@ from ..models.statistics_models import (
     StatisticsResult,
     ValueCountsResult,
 )
+from ..utils.session_utils import get_session_data
 
 logger = logging.getLogger(__name__)
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
-
-
-def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
-    """Get session and DataFrame, raising appropriate exceptions if not found."""
-    manager = get_session_manager()
-    session = manager.get_or_create_session(session_id)
-
-    if not session:
-        raise SessionNotFoundError(session_id)
-    if not session.has_data():
-        raise NoDataLoadedError(session_id)
-
-    df = session.df
-    if df is None:  # Type guard since has_data() was checked
-        raise NoDataLoadedError(session_id)
-    return session, df
 
 
 # ============================================================================
@@ -105,7 +88,7 @@ async def get_statistics(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)  # Only need df, not session
+        _session, df = get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -222,7 +205,7 @@ async def get_column_statistics(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)  # Only need df, not session
+        _session, df = get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -411,7 +394,7 @@ async def get_correlation_matrix(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)  # Only need df, not session
+        _session, df = get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -537,7 +520,7 @@ async def get_value_counts(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        _session, df = _get_session_data(session_id)  # Only need df, not session
+        _session, df = get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
