@@ -19,7 +19,8 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType
+
+# Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
@@ -175,14 +176,7 @@ async def select_columns(
         columns_before = len(df.columns)
 
         session.df = df[columns].copy()
-        session.record_operation(
-            OperationType.SELECT,
-            {
-                "columns": columns,
-                "columns_before": df.columns.tolist(),
-                "columns_after": columns,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SelectColumnsResult(
             selected_columns=columns,
@@ -209,10 +203,6 @@ async def rename_columns(
     ],
 ) -> RenameColumnsResult:
     """Rename columns in the dataframe.
-
-    Args:
-        ctx: FastMCP context for session access
-        mapping: Dict of old_name -> new_name
 
     Returns:
         Dict with rename details
@@ -245,10 +235,7 @@ async def rename_columns(
 
         # Apply renaming
         session.df = df.rename(columns=mapping)
-        session.record_operation(
-            OperationType.RENAME,
-            {"mapping": mapping, "renamed_count": len(mapping)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return RenameColumnsResult(
             renamed=mapping,
@@ -281,12 +268,6 @@ async def add_column(
     ] = None,
 ) -> ColumnOperationResult:
     """Add a new column to the dataframe.
-
-    Args:
-        ctx: FastMCP context for session access
-        name: Name for the new column
-        value: Single value for all rows, or list of values (one per row)
-        formula: Python expression to compute values (e.g., "col1 + col2")
 
     Returns:
         ColumnOperationResult with operation details
@@ -344,17 +325,7 @@ async def add_column(
             # Single value for all rows
             df[name] = value
 
-        session.record_operation(
-            OperationType.ADD_COLUMN,
-            {
-                "column": name,
-                "value_type": "formula"
-                if formula
-                else "list"
-                if isinstance(value, list)
-                else "scalar",
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="add",
@@ -381,10 +352,6 @@ async def remove_columns(
     ],
 ) -> ColumnOperationResult:
     """Remove columns from the dataframe.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: List of column names to remove
 
     Returns:
         ColumnOperationResult with removal details
@@ -415,10 +382,7 @@ async def remove_columns(
             raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
 
         session.df = df.drop(columns=columns)
-        session.record_operation(
-            OperationType.REMOVE_COLUMN,
-            {"columns": columns, "count": len(columns)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="remove",
@@ -453,14 +417,6 @@ async def change_column_type(
 ) -> ColumnOperationResult:
     """Change the data type of a column.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to convert
-        dtype: Target data type
-        errors: How to handle conversion errors:
-            - "raise": Raise an error if conversion fails
-            - "coerce": Convert invalid values to NaN/None
-
     Returns:
         ColumnOperationResult with conversion details
 
@@ -490,9 +446,7 @@ async def change_column_type(
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
 
-        # Track before state
-        original_dtype = str(df[column].dtype)
-        null_count_before = df[column].isna().sum()
+        # Convert column type
 
         # Map string dtype to pandas dtype
         type_map = {
@@ -532,18 +486,9 @@ async def change_column_type(
                 ) from e
             # If errors='coerce', the conversion has already handled invalid values
 
-        # Track after state
-        null_count_after = df[column].isna().sum()
+        # Operation completed
 
-        session.record_operation(
-            OperationType.CHANGE_TYPE,
-            {
-                "column": column,
-                "from_type": original_dtype,
-                "to_type": dtype,
-                "nulls_created": int(null_count_after - null_count_before),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation=f"change_type_to_{dtype}",
@@ -574,11 +519,6 @@ async def update_column(
     ],
 ) -> ColumnOperationResult:
     """Update values in a column using various operations with discriminated unions.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to update
-        operation: Update operation specification (discriminated union or legacy dict)
 
     Returns:
         ColumnOperationResult with update details
@@ -623,7 +563,7 @@ async def update_column(
             raise ColumnNotFoundError(column, df.columns.tolist())
 
         # Track initial state
-        null_count_before = df[column].isna().sum()
+        # Update column operation (no longer tracking null count changes)
         operation_type = "unknown"
 
         # Handle discriminated union operations
@@ -871,17 +811,9 @@ async def update_column(
                 operation_type = update_request.operation
                 # ... (same logic as above legacy handling)
 
-        # Track changes
-        null_count_after = df[column].isna().sum()
+        # Operation completed
 
-        session.record_operation(
-            OperationType.UPDATE_COLUMN,
-            {
-                "column": column,
-                "operation": operation_type,
-                "nulls_changed": int(null_count_after - null_count_before),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation=f"update_{operation_type}",

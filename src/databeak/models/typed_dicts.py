@@ -72,7 +72,6 @@ class SessionMetadataDict(TypedDict):
 
     created_at: str
     last_accessed: str
-    auto_save_enabled: bool
     operations_count: int
     data_shape: NotRequired[tuple[int, int]]  # (rows, columns) if data loaded
 
@@ -85,15 +84,6 @@ class DataSessionMetadata(TypedDict):
     columns: list[str]
     dtypes: dict[str, str]
     loaded_at: str
-
-
-class SessionHistoryExport(TypedDict):
-    """Exported session history data."""
-
-    session_id: str
-    created_at: str
-    operations: list[dict[str, Any]]  # Any justified: operation history flexible structure
-    metadata: dict[str, Any]  # Any justified: session metadata flexible structure
 
 
 class OperationMetadata(TypedDict):
@@ -194,65 +184,6 @@ class ColumnStatistics(TypedDict):
     kurtosis: NotRequired[float]  # Numeric columns only
 
 
-class AutoSaveConfigDict(TypedDict):
-    """Auto-save configuration parameters."""
-
-    enabled: bool
-    mode: str
-    strategy: str
-    interval_seconds: int
-    max_backups: int
-    backup_dir: str
-    custom_path: str | None
-    format: str  # Export format for auto-save
-    encoding: str
-
-
-class AutoSaveOperationResult(TypedDict):
-    """Result of auto-save operations (enable/disable/status/manual save)."""
-
-    success: NotRequired[bool]
-    enabled: NotRequired[bool]  # For status operations
-    mode: NotRequired[str]  # For status operations
-    strategy: NotRequired[str]  # For status operations
-    last_save: NotRequired[str | None]  # For status operations
-    save_count: NotRequired[int]  # For status operations
-    periodic_active: NotRequired[bool]  # For status operations
-    save_path: NotRequired[str]  # For manual save operations
-    trigger: NotRequired[str]  # For manual save operations
-    timestamp: NotRequired[str]  # For manual save operations
-    message: NotRequired[str]
-    error: NotRequired[str]
-    config: NotRequired[AutoSaveConfigDict]
-
-
-class UndoRedoOperationResult(TypedDict):
-    """Result of undo/redo operations."""
-
-    success: bool
-    message: NotRequired[str]
-    operation_id: NotRequired[str]
-    operation_type: NotRequired[str]
-    timestamp: NotRequired[str]
-    operation: NotRequired[dict[str, Any]]  # Any justified: flexible operation details
-    can_undo: NotRequired[bool]
-    can_redo: NotRequired[bool]
-    shape: NotRequired[tuple[int, int]]  # For restore operations
-    error: NotRequired[str | dict[str, str]]  # Can be string or structured error
-
-
-class HistoryResult(TypedDict):
-    """Result of history retrieval operations."""
-
-    success: bool
-    history: NotRequired[list[dict[str, CellValue]]]  # Operation history entries
-    total_operations: NotRequired[int]
-    total: NotRequired[int]  # Legacy field name
-    statistics: NotRequired[dict[str, Any]]  # Any justified: flexible statistics structure
-    message: NotRequired[str]
-    error: NotRequired[str | dict[str, str]]  # Can be string or structured error
-
-
 # Internal operation results (for legacy transformation functions)
 class ColumnSelectionResult(TypedDict):
     """Result of internal column selection operation."""
@@ -332,7 +263,6 @@ class ServerConfig(TypedDict):
     host: str
     port: int
     debug: bool
-    auto_save: bool
     session_timeout_minutes: int
     max_memory_mb: NotRequired[int]
 

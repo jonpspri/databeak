@@ -21,7 +21,8 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType
+
+# Removed: OperationType (no longer tracking operations)
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import ColumnOperationResult
 
@@ -83,13 +84,6 @@ async def replace_in_column(
 ) -> ColumnOperationResult:
     r"""Replace patterns in a column with replacement text.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to update
-        pattern: Pattern to search for (regex or literal string)
-        replacement: Replacement string
-        regex: Whether to treat pattern as regex (default: True)
-
     Returns:
         ColumnOperationResult with replacement details
 
@@ -144,17 +138,6 @@ async def replace_in_column(
         changed_mask = original_data.astype(str) != df[column].astype(str)
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "replace_in_column",
-                "column": column,
-                "pattern": pattern,
-                "regex": regex,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation="replace_pattern",
             rows_affected=changes_made,
@@ -186,12 +169,6 @@ async def extract_from_column(
     ] = False,
 ) -> ColumnOperationResult:
     r"""Extract patterns from a column using regex with capturing groups.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to extract from
-        pattern: Regex pattern with capturing groups
-        expand: Whether to expand multiple groups into separate columns
 
     Returns:
         ColumnOperationResult with extraction details
@@ -272,18 +249,6 @@ async def extract_from_column(
                 int(extracted.notna().sum()) if hasattr(extracted, "notna") else len(extracted)
             )
 
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "extract_from_column",
-                "column": column,
-                "pattern": pattern,
-                "expand": expand,
-                "successful_extractions": successful_extractions,
-                "columns_created": len(affected_columns),
-            },
-        )
-
         return ColumnOperationResult(
             operation=operation_desc,
             rows_affected=successful_extractions,
@@ -323,14 +288,6 @@ async def split_column(
     ] = None,
 ) -> ColumnOperationResult:
     """Split column values by delimiter.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to split
-        delimiter: String to split on (default: space)
-        part_index: Which part to keep (0-based). None keeps first part
-        expand_to_columns: Whether to expand splits into multiple columns
-        new_columns: Names for new columns when expanding
 
     Returns:
         ColumnOperationResult with split details
@@ -446,18 +403,6 @@ async def split_column(
                 raise ToolError(msg)
             rows_affected = int(session.df[column].notna().sum())
 
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "split_column",
-                "column": column,
-                "delimiter": delimiter,
-                "part_index": part_index,
-                "expand_to_columns": expand_to_columns,
-                "columns_created": len(affected_columns),
-            },
-        )
-
         return ColumnOperationResult(
             operation=operation_desc,
             rows_affected=rows_affected,
@@ -487,15 +432,6 @@ async def transform_column_case(
     ],
 ) -> ColumnOperationResult:
     """Transform the case of text in a column.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to transform
-        transform: Type of case transformation:
-            - "upper": Convert to UPPERCASE
-            - "lower": Convert to lowercase
-            - "title": Convert to Title Case
-            - "capitalize": Capitalize first letter only
 
     Returns:
         ColumnOperationResult with transformation details
@@ -560,16 +496,6 @@ async def transform_column_case(
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "transform_case",
-                "column": column,
-                "transform": transform,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation=f"case_{transform}",
             rows_affected=changes_made,
@@ -599,11 +525,6 @@ async def strip_column(
     ] = None,
 ) -> ColumnOperationResult:
     r"""Strip whitespace or specified characters from column values.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to strip
-        chars: Characters to strip (None for whitespace)
 
     Returns:
         ColumnOperationResult with strip details
@@ -657,16 +578,6 @@ async def strip_column(
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "strip_column",
-                "column": column,
-                "chars": chars,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation=f"strip_{'whitespace' if chars is None else 'chars'}",
             rows_affected=changes_made,
@@ -688,11 +599,6 @@ async def fill_column_nulls(
     value: Annotated[Any, Field(description="Value to use for filling null/NaN values")],
 ) -> ColumnOperationResult:
     """Fill null/NaN values in a specific column with a specified value.
-
-    Args:
-        ctx: FastMCP context for session access
-        column: Column name to fill
-        value: Value to use for filling nulls
 
     Returns:
         ColumnOperationResult with fill details
@@ -738,23 +644,18 @@ async def fill_column_nulls(
         if session.df is None:
             msg = "Session data not available"
             raise ToolError(msg)
-        session.df[column] = df[column].fillna(value)
+        # Use explicit assignment to avoid downcasting warnings
+        import pandas as pd
+
+        with pd.option_context("future.no_silent_downcasting", True):
+            filled_series = df[column].fillna(value)
+            if hasattr(filled_series, "infer_objects"):
+                filled_series = filled_series.infer_objects(copy=False)
+            session.df[column] = filled_series
 
         # Verify fills worked
         nulls_after = int(session.df[column].isna().sum())
         filled_count = nulls_before - nulls_after
-
-        session.record_operation(
-            OperationType.TRANSFORM,
-            {
-                "operation": "fill_column_nulls",
-                "column": column,
-                "fill_value": str(value),
-                "nulls_filled": filled_count,
-                "nulls_before": nulls_before,
-                "nulls_after": nulls_after,
-            },
-        )
 
         return ColumnOperationResult(
             operation="fill_nulls",

@@ -42,18 +42,11 @@ class SessionService(ABC):
     """
 
     def __init__(self, session_manager: SessionManagerProtocol) -> None:
-        """Initialize with injected session manager.
-
-        Args:
-            session_manager: The session manager implementation to use
-        """
+        """Initialize with injected session manager."""
         self.session_manager = session_manager
 
     def get_session_and_data(self, session_id: str) -> tuple[CSVSession, pd.DataFrame]:
         """Get session and validate data is loaded.
-
-        Args:
-            session_id: The session ID to retrieve
 
         Returns:
             Tuple of (session, dataframe)
@@ -81,10 +74,6 @@ class SessionService(ABC):
     def validate_columns_exist(self, df: pd.DataFrame, columns: list[str]) -> None:
         """Validate that columns exist in the dataframe.
 
-        Args:
-            df: The dataframe to check
-            columns: List of column names to validate
-
         Raises:
             ValueError: If any columns are missing
         """
@@ -103,18 +92,11 @@ class SessionServiceFactory:
     """Factory for creating session services with proper dependency injection."""
 
     def __init__(self, session_manager: SessionManagerProtocol) -> None:
-        """Initialize factory with session manager.
-
-        Args:
-            session_manager: The session manager to inject into services
-        """
+        """Initialize factory with session manager."""
         self.session_manager = session_manager
 
     def create_service(self, service_class: type[SessionService]) -> SessionService:
         """Create a service instance with injected dependencies.
-
-        Args:
-            service_class: The service class to instantiate
 
         Returns:
             Configured service instance

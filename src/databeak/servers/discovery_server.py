@@ -24,7 +24,7 @@ from ..exceptions import (
 )
 
 # Import session management and data models from the main package
-from ..models import DataPreview, OperationType, get_session_manager
+from ..models import DataPreview, get_session_manager
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import (
     BaseToolResponse,
@@ -221,13 +221,6 @@ async def detect_outliers(
     using statistical and machine learning methods. Essential for data quality
     assessment and anomaly detection in analytical workflows.
 
-    Args:
-        ctx: FastMCP context for session access
-        columns: List of numerical columns to analyze for outliers
-        method: Detection algorithm (zscore, iqr, isolation_forest)
-        threshold: Sensitivity threshold (higher = less sensitive)
-        ctx: FastMCP context for progress reporting
-
     Returns:
         Detailed outlier analysis with locations and severity scores
 
@@ -346,16 +339,6 @@ async def detect_outliers(
             msg = f"Unknown method: {method}"
             raise ToolError(msg)
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "outlier_detection",
-                "method": method,
-                "threshold": threshold,
-                "columns": list(outliers_by_column.keys()),
-            },
-        )
-
         # Map method names to match Pydantic model expectations
         if method == "zscore":
             pydantic_method = "zscore"
@@ -394,12 +377,6 @@ async def profile_data(
     Creates a complete analytical profile of the dataset including column
     characteristics, data types, null patterns, correlations, and outliers.
     Provides holistic data understanding for analytical workflows.
-
-    Args:
-        ctx: FastMCP context for session access
-        include_correlations: Include correlation analysis in profile
-        include_outliers: Include outlier detection in profile
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Comprehensive data profile with multi-dimensional analysis
@@ -481,14 +458,6 @@ async def profile_data(
 
         memory_usage_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
 
-        session.record_operation(
-            OperationType.PROFILE,
-            {
-                "include_correlations": include_correlations,
-                "include_outliers": include_outliers,
-            },
-        )
-
         return ProfileResult(
             profile=profile_dict,
             total_rows=len(df),
@@ -518,12 +487,6 @@ async def group_by_aggregate(
     Performs GROUP BY operations with multiple aggregation functions
     per column. Essential for segmentation analysis and understanding patterns
     across different data groups.
-
-    Args:
-        ctx: FastMCP context for session access
-        group_by: List of columns to group by
-        aggregations: Dict mapping column names to list of aggregation functions
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Grouped aggregation results with statistics per group
@@ -614,15 +577,6 @@ async def group_by_aggregate(
                 # No numeric columns, just provide count
                 group_stats[group_key] = GroupStatistics(count=len(group_data))
 
-        session.record_operation(
-            OperationType.GROUP_BY,
-            {
-                "group_by": group_by,
-                "aggregations": aggregations,
-                "total_groups": len(group_stats),
-            },
-        )
-
         return GroupAggregateResult(
             groups=group_stats,
             group_by_columns=group_by,
@@ -654,13 +608,6 @@ async def find_cells_with_value(
     Searches through the dataset to locate all occurrences of a specific value,
     providing coordinates and context. Essential for data validation, quality
     checking, and understanding data patterns.
-
-    Args:
-        ctx: FastMCP context for session access
-        value: The value to search for (any data type)
-        columns: Optional list of columns to search (default: all)
-        exact_match: If True, require exact match; if False, substring search
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Locations of all matching cells with coordinates and context
@@ -788,11 +735,6 @@ async def get_data_summary(
     Provides high-level overview of dataset structure, dimensions, data types,
     and memory usage. Essential first step in data exploration and analysis
     planning workflows.
-
-    Args:
-        ctx: FastMCP context for session access
-        include_preview: Include sample data rows in summary
-        max_preview_rows: Maximum number of preview rows to include
 
     Returns:
         Comprehensive data overview with structural information
@@ -936,13 +878,6 @@ async def inspect_data_around(
     Examines the data surrounding a specific cell to understand context,
     patterns, and relationships. Useful for data validation, error investigation,
     and understanding local data patterns.
-
-    Args:
-        ctx: FastMCP context for session access
-        row: Row index to center the inspection (0-based)
-        column_name: Name of the column to center on
-        radius: Number of rows/columns to include around center point
-        ctx: FastMCP context for progress reporting
 
     Returns:
         Contextual view of data around the specified coordinates

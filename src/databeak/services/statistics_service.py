@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-from ..models.data_models import OperationType
 from ..models.session_service import SessionService
 from ..models.statistics_models import (
     ColumnStatisticsResult,
@@ -39,7 +38,7 @@ class StatisticsService(SessionService):
     ) -> StatisticsResult:
         """Get statistical summary of numerical columns."""
         try:
-            session, df = self.get_session_and_data(session_id)
+            _, df = self.get_session_and_data(session_id)
 
             # Select columns to analyze
             if columns:
@@ -83,10 +82,7 @@ class StatisticsService(SessionService):
 
                 stats[col] = col_stats
 
-            session.record_operation(
-                OperationType.ANALYZE,
-                {"type": "statistics", "columns": list(stats.keys())},
-            )
+            # Operation recording removed - functionality cleaned up
 
             return StatisticsResult(
                 statistics=stats,
@@ -111,7 +107,7 @@ class StatisticsService(SessionService):
     ) -> ColumnStatisticsResult:
         """Get detailed statistics for single column."""
         try:
-            session, df = self.get_session_and_data(session_id)
+            _, df = self.get_session_and_data(session_id)
 
             if column not in df.columns:
                 msg = f"Column '{column}' not found"
@@ -184,10 +180,7 @@ class StatisticsService(SessionService):
                     },
                 )
 
-            session.record_operation(
-                OperationType.ANALYZE,
-                {"type": "column_statistics", "column": column},
-            )
+            # Operation recording removed - functionality cleaned up
 
             return ColumnStatisticsResult(
                 column=column,
@@ -214,7 +207,7 @@ class StatisticsService(SessionService):
     ) -> CorrelationResult:
         """Calculate correlation matrix for numerical columns."""
         try:
-            session, df = self.get_session_and_data(session_id)
+            _, df = self.get_session_and_data(session_id)
 
             # Select columns
             if columns:
@@ -253,14 +246,7 @@ class StatisticsService(SessionService):
                         ):
                             correlations[col1][col2] = round(float_value, 4)
 
-            session.record_operation(
-                OperationType.ANALYZE,
-                {
-                    "type": "correlation",
-                    "method": method,
-                    "columns": list(corr_matrix.columns),
-                },
-            )
+            # Operation recording removed - functionality cleaned up
 
             return CorrelationResult(
                 correlation_matrix=correlations,
@@ -289,7 +275,7 @@ class StatisticsService(SessionService):
     ) -> ValueCountsResult:
         """Get frequency distribution of column values."""
         try:
-            session, df = self.get_session_and_data(session_id)
+            _, df = self.get_session_and_data(session_id)
 
             if column not in df.columns:
                 msg = f"Column '{column}' not found"
@@ -328,15 +314,7 @@ class StatisticsService(SessionService):
             # Calculate additional statistics
             unique_count = df[column].nunique(dropna=False)
 
-            session.record_operation(
-                OperationType.ANALYZE,
-                {
-                    "type": "value_counts",
-                    "column": column,
-                    "normalize": normalize,
-                    "top_n": top_n,
-                },
-            )
+            # Operation recording removed - functionality cleaned up
 
             return ValueCountsResult(
                 column=column,

@@ -238,10 +238,6 @@ class SecureExpressionEvaluator:
     def evaluate(self, expression: str, context: dict[str, Any] | None = None) -> Any:
         """Evaluate a safe mathematical expression and return the result.
 
-        Args:
-            expression: The mathematical expression to evaluate
-            context: Optional dictionary of variables to use in the expression
-
         Returns:
             The result of evaluating the expression
 
@@ -285,9 +281,6 @@ class SecureExpressionEvaluator:
     def validate_expression_syntax(self, expression: str) -> None:
         """Validate that an expression only contains safe operations.
 
-        Args:
-            expression: The mathematical expression to validate
-
         Raises:
             InvalidParameterError: If the expression contains unsafe operations
         """
@@ -321,9 +314,6 @@ class SecureExpressionEvaluator:
 
     def _validate_ast_nodes(self, node: ast.AST) -> None:
         """Recursively validate AST nodes for security.
-
-        Args:
-            node: AST node to validate
 
         Raises:
             InvalidParameterError: If the node contains unsafe operations
@@ -401,9 +391,6 @@ class SecureExpressionEvaluator:
     def _validate_function_call(self, node: ast.Call) -> None:
         """Validate that a function call is safe.
 
-        Args:
-            node: Function call AST node
-
         Raises:
             InvalidParameterError: If the function call is unsafe
         """
@@ -449,12 +436,6 @@ class SecureExpressionEvaluator:
         column_context: dict[str, str] | None = None,
     ) -> pd.Series:
         """Safely evaluate a mathematical expression with column references.
-
-        Args:
-            expression: Mathematical expression (e.g., "col1 + col2 * 2")
-            dataframe: DataFrame containing the columns
-            column_context: Optional mapping of expression variables to column names
-                          (e.g., {"x": "actual_column_name"})
 
         Returns:
             pd.Series: Result of the expression evaluation
@@ -528,10 +509,6 @@ class SecureExpressionEvaluator:
         This method is designed to replace direct pandas.eval() usage where
         the formula already contains proper column references.
 
-        Args:
-            formula: Formula with column references (e.g., "column1 + column2")
-            dataframe: DataFrame containing the columns
-
         Returns:
             pd.Series: Result of the formula evaluation
 
@@ -584,11 +561,6 @@ def evaluate_expression_safely(
 ) -> pd.Series:
     """Evaluate mathematical expression safely.
 
-    Args:
-        expression: Mathematical expression to evaluate
-        dataframe: DataFrame with column data
-        column_context: Optional variable to column name mapping
-
     Returns:
         pd.Series: Result of expression evaluation
 
@@ -601,9 +573,6 @@ def evaluate_expression_safely(
 
 def validate_expression_safety(expression: str) -> None:
     """Validate mathematical expression syntax.
-
-    Args:
-        expression: Expression to validate
 
     Raises:
         InvalidParameterError: If expression contains unsafe operations

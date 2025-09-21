@@ -33,15 +33,27 @@ repository management guidance.
 
 ### Code Quality Standards
 
-DataBeak maintains strict code quality standards:
+DataBeak maintains strict code quality standards with automated enforcement:
 
-- **Zero ruff violations** - Clean linting compliance across all categories
-- **100% mypy compliance** - Strong type safety with minimal Any usage
-- **High test coverage** - 1100+ unit tests with good coverage targets
+### Code Quality Metrics (All Automated)
+
+- **Zero ruff violations** - Perfect linting compliance across 46 rules
+- **100% MyPy compliance** - Complete type safety with minimal Any usage
+- **Perfect MCP documentation** - All tools have Field descriptions, zero Args
+  sections
+- **High test coverage** - 960+ unit tests validating all functionality
+- **Clean architecture** - Stateless MCP design, 3,340+ lines of complexity
+  eliminated
+
+### Quality Enforcement Standards
+
 - **Clear API design** - No boolean traps, keyword-only parameters for clarity
 - **Defensive practices** - No silent exception handling, proper validation
 - **No magic numbers** - Use configurable settings with defaults instead of
   hardcoded values
+- **MCP compliance** - Field descriptions provide parameter docs, comprehensive
+  tool documentation
+- **Automated enforcement** - Pre-commit hooks prevent all quality regressions
 
 **Use the `quality-gate-runner` agent** for comprehensive quality pipeline
 execution including linting, formatting, type checking, testing, and coverage
@@ -183,6 +195,13 @@ uv run databeak      # Run the MCP server
 
 # Version management
 uv run sync-versions   # Sync version numbers across files
+
+# Code quality checks
+scripts/check_docstring_args.py              # Check MCP documentation standards (no Args sections)
+scripts/check_docstring_args.py --quiet      # Quick summary only
+scripts/check_mcp_field_descriptions.py      # Check MCP tool Field descriptions
+scripts/check_mcp_field_descriptions.py --quiet  # Quick summary only
+scripts/check_docstring_args.py src/databeak/servers/  # Check specific directory
 
 # Markdown quality
 uv run mdformat docs/              # Auto-format markdown files

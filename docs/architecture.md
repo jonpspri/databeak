@@ -27,8 +27,7 @@ src/databeak/
 │   ├── csv_session.py          # Session management & settings
 │   ├── data_models.py          # Core data types & enums
 │   ├── data_session.py         # Data operations
-│   ├── auto_save.py            # Auto-save functionality
-│   ├── history_manager.py      # Operation history & undo/redo
+│   ├── pandera_schemas.py      # Pandera schema integration for validation
 │   ├── typed_dicts.py          # TypedDict definitions for type safety
 │   └── tool_responses.py       # Pydantic response models
 ├── servers/                  # Specialized MCP servers (server composition)
@@ -37,7 +36,6 @@ src/databeak/
 │   ├── statistics_server.py    # Statistical analysis
 │   ├── discovery_server.py     # Data profiling & discovery
 │   ├── validation_server.py    # Schema validation & quality
-│   ├── history_server.py       # History & auto-save operations
 │   ├── column_server.py        # Column operations
 │   ├── column_text_server.py   # Text manipulation
 │   ├── row_operations_server.py # Row-level operations
@@ -91,13 +89,14 @@ src/databeak/
 
 All configuration uses the `DATABEAK_` prefix:
 
-| Variable                    | Default | Purpose                   |
-| --------------------------- | ------- | ------------------------- |
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
-| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
-| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
-| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size     |
-| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save          |
+| Variable                             | Default | Purpose                                |
+| ------------------------------------ | ------- | -------------------------------------- |
+| `DATABEAK_MAX_FILE_SIZE_MB`          | 1024    | Maximum file size limit                |
+| `DATABEAK_SESSION_TIMEOUT`           | 3600    | Session timeout (seconds)              |
+| `DATABEAK_CHUNK_SIZE`                | 10000   | Processing chunk size                  |
+| `DATABEAK_MEMORY_THRESHOLD_MB`       | 2048    | Memory threshold for health monitoring |
+| `DATABEAK_MAX_VALIDATION_VIOLATIONS` | 1000    | Max validation violations to report    |
+| `DATABEAK_MAX_ANOMALY_SAMPLE_SIZE`   | 10000   | Max sample size for anomaly detection  |
 
 ## MCP Integration
 
@@ -114,7 +113,8 @@ The server implements the Model Context Protocol standard:
 1. **Data Manipulation** - Transform, filter, sort, and modify data
 1. **Data Analysis** - Statistics, correlations, outliers, profiling
 1. **Data Validation** - Schema validation, quality checking, anomaly detection
-1. **Session Management** - Auto-save, history, undo/redo operations
+1. **Session Management** - Stateless data processing with external context
+   management
 1. **System Tools** - Health monitoring and server information
 
 ## Design Principles
@@ -125,6 +125,43 @@ The server implements the Model Context Protocol standard:
 1. **Reliability**: Comprehensive error handling and logging
 1. **Usability**: Simple installation and configuration
 1. **Maintainability**: Modern tooling and clear documentation
+
+## Quality Standards
+
+DataBeak maintains strict code quality standards with automated enforcement:
+
+### Code Quality Metrics
+
+- **Zero ruff violations** - Perfect linting compliance across 46 rules
+- **100% MyPy compliance** - Complete type safety with minimal Any usage
+- **Perfect MCP documentation** - Comprehensive Field descriptions, no Args
+  sections
+- **High test coverage** - 960+ unit tests validating all functionality
+- **Clean architecture** - Stateless MCP design with eliminated complexity
+
+### Quality Enforcement Tools
+
+- **Ruff** - Comprehensive linting and formatting (46 rules enabled)
+- **MyPy** - Static type checking with strict configuration
+- **Pre-commit hooks** - Automated quality gates preventing regressions
+- **Custom MCP checkers** - Specialized tools for MCP documentation standards:
+  - `check_docstring_args.py` - Ensures no Args sections in MCP tool docstrings
+  - `check_mcp_field_descriptions.py` - Validates comprehensive Field
+    descriptions
+
+### Quality Commands
+
+```bash
+# Run all quality checks
+uv run pre-commit run --all-files
+
+# Individual checks
+uv run ruff check src/ tests/           # Linting
+uv run mypy src/                        # Type checking
+uv run pytest tests/unit/               # Unit tests
+scripts/check_docstring_args.py         # MCP Args compliance
+scripts/check_mcp_field_descriptions.py # MCP Field compliance
+```
 
 ## Development Workflow
 

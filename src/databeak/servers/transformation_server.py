@@ -11,7 +11,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management from the main package
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
 from ..models.typed_dicts import FilterConditionDict
 
@@ -53,19 +53,10 @@ def filter_rows(
         Field(description="Logic for combining conditions (and/or)"),
     ] = "and",
 ) -> FilterOperationResult:
-    """Filter rows using flexible conditions with comprehensive null value and text matching
-    support.
+    """Filter rows using flexible conditions: comprehensive null value and text matching support.
 
     Provides powerful filtering capabilities optimized for AI-driven data analysis. Supports
     multiple operators, logical combinations, and comprehensive null value handling.
-
-    Args:
-        ctx: FastMCP context for session access
-        conditions: List of filter conditions with column, operator, and value
-        mode: Logic for combining conditions ("and" or "or")
-
-    Returns:
-        FilterOperationResult with filtering statistics
 
     Examples:
         # Numeric filtering
@@ -82,6 +73,7 @@ def filter_rows(
             {"column": "status", "operator": "==", "value": "active"},
             {"column": "priority", "operator": "==", "value": "high"}
         ], mode="or")
+
     """
     try:
         session_id = ctx.session_id
@@ -177,16 +169,7 @@ def filter_rows(
                     },
                 )
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILTER,
-            {
-                "conditions": serializable_conditions,
-                "mode": mode,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return FilterOperationResult(
             rows_before=rows_before,
@@ -213,13 +196,6 @@ def sort_data(
     Provides flexible sorting capabilities with support for multiple columns
     and sort directions. Handles mixed data types appropriately and maintains
     data integrity throughout the sorting process.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: Column specifications - can be strings, SortColumn objects, or dicts
-
-    Returns:
-        SortDataResult with sorting details and statistics
 
     Examples:
         # Simple single column sort
@@ -275,15 +251,7 @@ def sort_data(
         # Perform sort
         session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
 
-        # Record operation
-        session.record_operation(
-            OperationType.SORT,
-            {
-                "columns": sort_columns,
-                "ascending": ascending,
-                "rows_processed": len(df),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SortDataResult(
             sorted_by=sort_columns,
@@ -313,14 +281,6 @@ def remove_duplicates(
     Provides flexible duplicate removal with options for column subset selection
     and different keep strategies. Handles edge cases and provides detailed
     statistics about the deduplication process.
-
-    Args:
-        ctx: FastMCP context for session access
-        subset: Columns to consider for duplicates (None = all columns)
-        keep: Which duplicates to keep ("first", "last", or "none" to drop all)
-
-    Returns:
-        ColumnOperationResult with duplicate removal statistics
 
     Examples:
         # Remove exact duplicate rows
@@ -363,17 +323,7 @@ def remove_duplicates(
         rows_after = len(session.df)
         rows_removed = rows_before - rows_after
 
-        # Record operation
-        session.record_operation(
-            OperationType.REMOVE_DUPLICATES,
-            {
-                "subset": subset,
-                "keep": keep,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-                "rows_removed": rows_removed,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="remove_duplicates",
@@ -408,22 +358,6 @@ def fill_missing_values(
     imputation methods. Handles different data types appropriately and validates
     strategy compatibility with column types.
 
-    Args:
-        ctx: FastMCP context for session access
-        strategy: Strategy for handling missing values:
-            - "drop": Remove rows with missing values
-            - "fill": Fill with a specific value
-            - "forward": Forward fill (use previous valid value)
-            - "backward": Backward fill (use next valid value)
-            - "mean": Fill with column mean (numeric only)
-            - "median": Fill with column median (numeric only)
-            - "mode": Fill with most common value
-        value: Value to use when strategy is "fill"
-        columns: Columns to process (None = all columns)
-
-    Returns:
-        ColumnOperationResult with operation statistics
-
     Examples:
         # Drop rows with any missing values
         fill_missing_values(ctx, strategy="drop")
@@ -447,7 +381,6 @@ def fill_missing_values(
             raise ToolError(msg)
 
         df = session.df
-        rows_before = len(df)
 
         # Validate and set target columns
         if columns:
@@ -514,18 +447,7 @@ def fill_missing_values(
         missing_after = session.df[target_cols].isna().sum().sum()
         values_filled = missing_before - missing_after
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILL_MISSING,
-            {
-                "strategy": strategy,
-                "value": str(value) if value is not None else None,
-                "columns": target_cols,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-                "values_filled": int(values_filled),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnOperationResult(
             operation="fill_missing_values",

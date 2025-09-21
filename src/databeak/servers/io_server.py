@@ -22,7 +22,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 # Import session management and data models from the main package
-from ..models import DataPreview, ExportFormat, OperationType, SessionInfo, get_session_manager
+from ..models import DataPreview, ExportFormat, SessionInfo, get_session_manager
 from ..models.data_models import CellValue
 from ..models.tool_responses import BaseToolResponse
 from ..services.data_operations import create_data_preview_with_indices
@@ -74,7 +74,6 @@ class SessionInfoResult(BaseToolResponse):
     data_loaded: bool = Field(description="Whether session has data loaded")
     row_count: int | None = Field(None, description="Number of rows if data loaded")
     column_count: int | None = Field(None, description="Number of columns if data loaded")
-    auto_save_enabled: bool = Field(description="Whether auto-save is enabled")
 
 
 class SessionListResult(BaseToolResponse):
@@ -837,11 +836,7 @@ async def export_csv(
 
             raise ToolError(msg) from export_error
 
-        # Record operation in session history
-        session.record_operation(
-            OperationType.EXPORT,
-            {"format": format_enum.value, "file_path": str(file_path), "rows": len(df)},
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         await ctx.report_progress(1.0)
         await ctx.info(f"Exported {len(df)} rows to {file_path}")
@@ -898,7 +893,6 @@ async def get_session_info(
             data_loaded=session.df is not None,
             row_count=info.row_count if session.df is not None else None,
             column_count=info.column_count if session.df is not None else None,
-            auto_save_enabled=session.auto_save_config.enabled,
         )
 
     except Exception as e:

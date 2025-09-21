@@ -23,13 +23,15 @@ maintaining code standards.
 
 ## DataBeak Quality Pipeline
 
-### Quality Standards
+### Quality Standards (All Automated)
 
-- **Test Coverage**: 80% minimum (configured in pyproject.toml)
-- **Linting**: Ruff with 46 rules, 100-character line length
-- **Type Checking**: MyPy strict mode with pandas-stubs integration
-- **Formatting**: Ruff formatter for code consistency
-- **Testing**: Pytest with async/session-based patterns
+- **Zero ruff violations** - Perfect linting compliance across 46 rules
+- **100% MyPy compliance** - Complete type safety with minimal Any usage
+- **Perfect MCP documentation** - All tools have Field descriptions, zero Args
+  sections
+- **High test coverage** - 960+ unit tests, 80% minimum coverage requirement
+- **Clean architecture** - Stateless MCP design, eliminated complexity
+- **Automated enforcement** - Pre-commit hooks prevent quality regressions
 
 ### Quality Commands Sequence
 
@@ -65,10 +67,14 @@ uv run ruff format --check src/ tests/
 # 4. Type checking
 uv run mypy src/
 
-# 5. Testing with coverage
+# 5. MCP documentation compliance
+scripts/check_docstring_args.py         # Ensure no Args sections in MCP tools
+scripts/check_mcp_field_descriptions.py # Ensure comprehensive Field descriptions
+
+# 6. Testing with coverage
 uv run pytest -n auto tests/ --cov=src --cov-report=term-missing
 
-# 6. Coverage validation (80% threshold)
+# 7. Coverage validation (80% threshold)
 uv run pytest -n auto --cov=src --cov-report=term-missing --cov-fail-under=80
 ```
 

@@ -149,23 +149,14 @@ Full support for null values across all operations:
 - Python `None` and pandas `NaN` compatibility
 - Filtering and operations work seamlessly with nulls
 
-### Auto-Save Strategies
+### Stateless Architecture
 
-Configurable auto-save with multiple strategies:
+Clean MCP server design:
 
-- **Overwrite** - Update original file
-- **Backup** - Create timestamped backups
-- **Versioned** - Maintain version history
-- **Custom** - Save to specified location
-
-### History and Undo/Redo
-
-Complete operation tracking:
-
-- Persistent history storage
-- Snapshot-based undo/redo
-- Operation metadata and timestamps
-- Restore to any point in history
+- **Session-based processing** - Data operations without internal state
+- **External persistence** - Context handles data persistence as needed
+- **Resource efficient** - No overhead from history or auto-save tracking
+- **MCP-aligned** - Follows Model Context Protocol server patterns
 
 ______________________________________________________________________
 

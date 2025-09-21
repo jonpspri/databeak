@@ -21,7 +21,6 @@ from databeak.tools.transformations import (  # type: ignore[import-not-found]
 
 async def main() -> None:
     """Demonstrate null value handling and Claude Code compatibility."""
-
     print("CSV Editor - Null Value Support & Claude Code Compatibility Demo")
     print("=" * 65)
 

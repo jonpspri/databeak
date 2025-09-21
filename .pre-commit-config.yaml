@@ -55,7 +55,7 @@ repos:
   # Python linting and formatting with Ruff
   # (replaces Black, isort, bandit, etc.)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.7.4
+    rev: v0.13.1
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']
@@ -117,6 +117,22 @@ repos:
           - --in-place
           - --wrap-summaries=100
           - --wrap-descriptions=100
+
+  # MCP documentation standards enforcement
+  - repo: local
+    hooks:
+      - id: check-docstring-args
+        name: check-docstring-args
+        entry: ./scripts/check_docstring_args.py
+        language: script
+        files: ^src/.*\.py$
+        description: 'Check for Args sections in docstrings (MCP tools should use Field descriptions)'
+      - id: check-mcp-field-descriptions
+        name: check-mcp-field-descriptions
+        entry: ./scripts/check_mcp_field_descriptions.py
+        language: script
+        files: ^src/.*\.py$
+        description: 'Check that all MCP tool parameters have Field descriptions'
 
 ci:
   autofix_prs: true

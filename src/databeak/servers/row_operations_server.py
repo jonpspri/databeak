@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import session management from the main package
 from ..exceptions import ColumnNotFoundError, InvalidParameterError
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -181,16 +181,7 @@ def get_cell_value(
         # Get column data type
         data_type = str(df[column_name].dtype)
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_cell_value",
-                "row_index": row_index,
-                "column": column_name,
-                "value_type": type(value).__name__,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return CellValueResult(
             value=value,  # type: ignore[arg-type]
@@ -261,8 +252,20 @@ def set_cell_value(
         elif hasattr(old_value, "item"):  # numpy scalar
             old_value = old_value.item()  # type: ignore[assignment]
 
-        # Set the new value
-        df.iloc[row_index, df.columns.get_loc(column_name)] = value  # type: ignore[index]
+        # Set the new value with explicit type conversion to avoid dtype compatibility warnings
+        col_idx = df.columns.get_loc(column_name)
+        current_dtype = df[column_name].dtype  # Access dtype through column name instead
+
+        # Convert value to match column dtype if possible
+        try:
+            if pd.api.types.is_numeric_dtype(current_dtype) and isinstance(value, str):
+                converted_value = pd.to_numeric(value, errors="coerce")
+            else:
+                converted_value = value
+        except (ValueError, TypeError):
+            converted_value = value
+
+        df.iloc[row_index, col_idx] = converted_value  # type: ignore[index]
 
         # Get the new value for tracking (after pandas type conversion)
         new_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
@@ -274,17 +277,7 @@ def set_cell_value(
         # Get column data type
         data_type = str(df[column_name].dtype)
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "set_cell_value",
-                "row_index": row_index,
-                "column": column_name,
-                "old_value": old_value,
-                "new_value": new_value,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return SetCellResult(
             coordinates={"row": row_index, "column": column_name},
@@ -352,16 +345,7 @@ def get_row_data(
             elif hasattr(value, "item"):  # numpy scalar
                 row_data[key] = value.item()
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_row_data",
-                "row_index": row_index,
-                "columns_retrieved": len(selected_columns),
-                "filtered": columns is not None,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return RowDataResult(
             row_index=row_index,
@@ -444,17 +428,7 @@ def get_column_data(
         # Convert to list and handle pandas/numpy types
         values = convert_pandas_na_list(column_data.tolist())
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_INSPECTION,
-            {
-                "operation": "get_column_data",
-                "column": column,
-                "values_retrieved": len(values),
-                "start_row": start_row,
-                "end_row": end_row,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ColumnDataResult(
             column=column,
@@ -567,16 +541,7 @@ def insert_row(
             else:
                 data_inserted[key] = value
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "insert_row",
-                "row_index": row_index,
-                "rows_added": 1,
-                "data_type": "dict" if isinstance(data, dict) else "list",
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return InsertRowResult(
             row_index=row_index,
@@ -638,16 +603,7 @@ def delete_row(
         # Update session data
         session.df = df_new
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "delete_row",
-                "row_index": row_index,
-                "rows_removed": 1,
-                "deleted_columns": list(deleted_data.keys()),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return DeleteRowResult(
             row_index=row_index,
@@ -741,16 +697,7 @@ def update_row(
             old_values[column] = old_value
             new_values[column] = updated_value
 
-        # Record operation for history
-        session.record_operation(
-            OperationType.DATA_MODIFICATION,
-            {
-                "operation": "update_row",
-                "row_index": row_index,
-                "columns_updated": len(columns_updated),
-                "columns": columns_updated,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return UpdateRowResult(
             row_index=row_index,

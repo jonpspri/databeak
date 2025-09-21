@@ -12,7 +12,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.csv_session import get_csv_settings
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
@@ -401,11 +401,6 @@ class AnomalyDetectionParams(BaseModel):
 def apply_violation_limits(violations: list, limit: int, operation_name: str) -> tuple[list, bool]:
     """Apply resource limits to violation collections.
 
-    Args:
-        violations: List of violations to limit
-        limit: Maximum number of violations to keep
-        operation_name: Name of operation for logging
-
     Returns:
         Tuple of (limited_violations, was_truncated)
     """
@@ -424,11 +419,6 @@ def sample_large_dataset(
     df: pd.DataFrame, max_sample_size: int, operation_name: str
 ) -> pd.DataFrame:
     """Sample large datasets for memory-efficient operations.
-
-    Args:
-        df: DataFrame to sample
-        max_sample_size: Maximum sample size
-        operation_name: Name of operation for logging
 
     Returns:
         Sampled DataFrame (or original if under limit)
@@ -457,10 +447,6 @@ def validate_schema(
     ],
 ) -> ValidateSchemaResult:
     """Validate data against a schema definition.
-
-    Args:
-        ctx: FastMCP context for session access
-        schema: Schema definition with column validation rules
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
@@ -682,14 +668,7 @@ def validate_schema(
 
         is_valid = len(validation_errors) == 0 and len(validation_summary.missing_columns) == 0
 
-        session.record_operation(
-            OperationType.VALIDATE,
-            {
-                "type": "schema_validation",
-                "is_valid": is_valid,
-                "errors_count": len(validation_errors),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         # Flatten all validation errors with resource limits
         all_errors = []
@@ -729,10 +708,6 @@ def check_data_quality(
     ] = None,
 ) -> DataQualityResult:
     """Check data quality based on predefined or custom rules.
-
-    Args:
-        ctx: FastMCP context for session access
-        rules: List of quality rules to check (None = use default rules)
 
     Returns:
         DataQualityResult with comprehensive quality assessment results
@@ -1071,14 +1046,7 @@ def check_data_quality(
             recommendations=recommendations,
         )
 
-        session.record_operation(
-            OperationType.QUALITY_CHECK,
-            {
-                "rules_count": len(rules),
-                "overall_score": overall_score,
-                "issues_count": len(quality_issues),
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return DataQualityResult(
             quality_results=quality_results,
@@ -1106,12 +1074,6 @@ def find_anomalies(
     ] = None,
 ) -> FindAnomaliesResult:
     """Find anomalies in the data using multiple detection methods.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: List of columns to analyze (None = all columns)
-        sensitivity: Sensitivity threshold for anomaly detection (0-1)
-        methods: Detection methods to use (None = all methods)
 
     Returns:
         FindAnomaliesResult with comprehensive anomaly detection results
@@ -1349,14 +1311,7 @@ def find_anomalies(
             by_method=by_method,
         )
 
-        session.record_operation(
-            OperationType.ANOMALY_DETECTION,
-            {
-                "methods": methods,
-                "sensitivity": sensitivity,
-                "anomalies_found": total_anomalies,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return FindAnomaliesResult(
             anomalies=anomaly_results,

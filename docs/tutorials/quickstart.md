@@ -106,8 +106,7 @@ Made a mistake? No problem:
 
 Set up automatic saving:
 
-> "Configure auto-save to create backups in a backup folder with a maximum of 5
-> backups"
+> "Export the cleaned data to a new CSV file for further analysis"
 
 ### Session Management
 
@@ -179,7 +178,8 @@ worrying about losing changes
 
 ### 5. **Explore History**
 
-Use undo/redo freely to experiment with different approaches
+Use DataBeak's stateless design to experiment with different approaches - export
+intermediate results as needed
 
 ## Next Steps
 

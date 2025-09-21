@@ -23,7 +23,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.csv_session import CSVSession
 
 # Import response models - needed at runtime for FastMCP
@@ -69,21 +69,12 @@ async def get_statistics(
         list[str] | None,
         Field(description="List of specific columns to analyze (None = all numeric columns)"),
     ] = None,
-    include_percentiles: Annotated[
-        bool,
-        Field(description="Whether to include 25th, 50th, 75th percentiles"),
-    ] = True,
 ) -> StatisticsResult:
     """Get comprehensive statistical summary of numerical columns.
 
     Computes descriptive statistics for all or specified numerical columns including
     count, mean, standard deviation, min/max values, and percentiles. Optimized for
     AI workflows with clear statistical insights and data understanding.
-
-    Args:
-        ctx: FastMCP context for session access
-        columns: Optional list of specific columns to analyze (default: all numeric)
-        include_percentiles: Whether to include 25th, 50th, 75th percentiles
 
     Returns:
         Comprehensive statistical analysis with per-column summaries
@@ -102,8 +93,8 @@ async def get_statistics(
         # Analyze specific columns only
         stats = await get_statistics("session_123", columns=["price", "quantity"])
 
-        # Skip percentiles for faster computation
-        stats = await get_statistics("session_123", include_percentiles=False)
+        # Analyze all numeric columns (percentiles always included)
+        stats = await get_statistics("session_123")
 
     AI Workflow Integration:
         1. Essential for data understanding and quality assessment
@@ -114,7 +105,7 @@ async def get_statistics(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -173,14 +164,7 @@ async def get_statistics(
 
             stats_dict[col] = col_stats
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "statistics",
-                "columns": list(stats_dict.keys()),
-                "include_percentiles": include_percentiles,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return StatisticsResult(
             statistics=stats_dict,
@@ -213,10 +197,6 @@ async def get_column_statistics(
     data type information, null value handling, and comprehensive numerical
     statistics when applicable.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Name of the column to analyze
-
     Returns:
         Detailed statistical analysis for the specified column
 
@@ -242,7 +222,7 @@ async def get_column_statistics(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -300,14 +280,7 @@ async def get_column_statistics(
                 additional_stats["most_frequent"] = str(most_frequent)
                 additional_stats["most_frequent_count"] = int(col_data.value_counts().iloc[0])
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "column_statistics",
-                "column": column,
-                "dtype": dtype,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         # Convert statistics dict to StatisticsSummary
         from ..models.statistics_models import StatisticsSummary
@@ -409,12 +382,6 @@ async def get_correlation_matrix(
     correlation methods. Essential for understanding relationships between
     variables and feature selection in analytical workflows.
 
-    Args:
-        ctx: FastMCP context for session access
-        method: Correlation method - pearson (linear), spearman (rank), kendall (rank)
-        columns: Optional list of columns to include (default: all numeric)
-        min_correlation: Minimum correlation threshold to include in results
-
     Returns:
         Correlation matrix with pairwise correlation coefficients
 
@@ -444,7 +411,7 @@ async def get_correlation_matrix(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         # Select numeric columns
         if columns:
@@ -492,15 +459,7 @@ async def get_correlation_matrix(
                     filtered_dict[col1] = filtered_col
             correlation_dict = filtered_dict
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "correlation",
-                "method": method,
-                "columns": list(numeric_df.columns),
-                "min_correlation": min_correlation,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return CorrelationResult(
             method=method,
@@ -549,14 +508,6 @@ async def get_value_counts(
     counts and optionally percentages for each unique value. Essential for
     understanding categorical data and identifying common patterns.
 
-    Args:
-        ctx: FastMCP context for session access
-        column: Name of the column to analyze
-        normalize: If True, return percentages instead of counts
-        sort: Sort results by frequency
-        ascending: Sort in ascending order (default: False for descending)
-        top_n: Maximum number of values to return (default: all)
-
     Returns:
         Frequency distribution with counts/percentages for each unique value
 
@@ -586,7 +537,7 @@ async def get_value_counts(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)  # Only need df, not session
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -621,16 +572,7 @@ async def get_value_counts(
         total_count = int(df[column].count())  # Non-null count
         unique_count = int(df[column].nunique())
 
-        session.record_operation(
-            OperationType.ANALYZE,
-            {
-                "type": "value_counts",
-                "column": column,
-                "normalize": normalize,
-                "top_n": top_n,
-                "unique_values": unique_count,
-            },
-        )
+        # No longer recording operations (simplified MCP architecture)
 
         return ValueCountsResult(
             column=column,
