@@ -14,7 +14,7 @@ from ..exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import OperationType, get_session_manager
+from ..models import get_session_manager
 from ..models.csv_session import CSVSession
 from ..models.tool_responses import BaseToolResponse
 
@@ -198,17 +198,6 @@ async def filter_rows_with_pydantic(
         session.df = filtered_df
         rows_after = len(filtered_df)
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILTER,
-            {
-                "conditions": conditions,
-                "mode": mode,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-            },
-        )
-
         return FilterResult(
             session_id=session_id,
             rows_before=rows_before,
@@ -268,12 +257,6 @@ async def sort_data_with_pydantic(
             drop=True,
         )
 
-        # Record operation
-        session.record_operation(
-            OperationType.SORT,
-            {"columns": sort_columns, "ascending": sort_ascending},
-        )
-
         return SortResult(
             session_id=session_id,
             sorted_by=sort_columns,
@@ -310,17 +293,6 @@ async def remove_duplicates_with_pydantic(
         deduped_df = df.drop_duplicates(subset=subset, keep=keep).reset_index(drop=True)
         session.df = deduped_df
         rows_after = len(deduped_df)
-
-        # Record operation
-        session.record_operation(
-            OperationType.REMOVE_DUPLICATES,
-            {
-                "subset": subset,
-                "keep": keep,
-                "rows_before": rows_before,
-                "rows_after": rows_after,
-            },
-        )
 
         return DuplicateRemovalResult(
             session_id=session_id,
@@ -404,18 +376,6 @@ async def fill_missing_values_with_pydantic(
         # Count nulls after
         nulls_after = df[target_cols].isna().sum().sum() if strategy != "drop" else 0
 
-        # Record operation
-        session.record_operation(
-            OperationType.FILL_MISSING,
-            {
-                "strategy": strategy,
-                "value": str(value) if value is not None else None,
-                "columns": target_cols,
-                "nulls_before": nulls_before,
-                "nulls_after": nulls_after,
-            },
-        )
-
         return FillMissingResult(
             session_id=session_id,
             strategy=strategy,
@@ -466,12 +426,6 @@ async def transform_column_case_with_pydantic(
         # Get sample after
         sample_after = df[column].head(5).tolist()
 
-        # Record operation
-        session.record_operation(
-            OperationType.UPDATE_COLUMN,
-            {"column": column, "transform": transform},
-        )
-
         return StringOperationResult(
             session_id=session_id,
             column=column,
@@ -510,12 +464,6 @@ async def strip_column_with_pydantic(
 
         # Get sample after
         sample_after = df[column].head(5).tolist()
-
-        # Record operation
-        session.record_operation(
-            OperationType.UPDATE_COLUMN,
-            {"column": column, "operation": "strip"},
-        )
 
         return StringOperationResult(
             session_id=session_id,

@@ -110,11 +110,6 @@ class CSVSession:
         """Check if data is loaded."""
         return self._data_session.has_data()
 
-    def record_operation(self, operation_type: Any, operation_details: Any) -> None:
-        """Mock operation recording - functionality removed during cleanup."""
-        # This method is a no-op placeholder to maintain compatibility
-        # with code that still references record_operation calls
-
     @property
     def metadata(self) -> dict[str, Any]:
         """Get session metadata."""

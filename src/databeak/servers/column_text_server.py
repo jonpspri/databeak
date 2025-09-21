@@ -138,17 +138,6 @@ async def replace_in_column(
         changed_mask = original_data.astype(str) != df[column].astype(str)
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "replace_in_column",
-                "column": column,
-                "pattern": pattern,
-                "regex": regex,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation="replace_pattern",
             rows_affected=changes_made,
@@ -259,18 +248,6 @@ async def extract_from_column(
             successful_extractions = (
                 int(extracted.notna().sum()) if hasattr(extracted, "notna") else len(extracted)
             )
-
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "extract_from_column",
-                "column": column,
-                "pattern": pattern,
-                "expand": expand,
-                "successful_extractions": successful_extractions,
-                "columns_created": len(affected_columns),
-            },
-        )
 
         return ColumnOperationResult(
             operation=operation_desc,
@@ -426,18 +403,6 @@ async def split_column(
                 raise ToolError(msg)
             rows_affected = int(session.df[column].notna().sum())
 
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "split_column",
-                "column": column,
-                "delimiter": delimiter,
-                "part_index": part_index,
-                "expand_to_columns": expand_to_columns,
-                "columns_created": len(affected_columns),
-            },
-        )
-
         return ColumnOperationResult(
             operation=operation_desc,
             rows_affected=rows_affected,
@@ -531,16 +496,6 @@ async def transform_column_case(
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "transform_case",
-                "column": column,
-                "transform": transform,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation=f"case_{transform}",
             rows_affected=changes_made,
@@ -623,16 +578,6 @@ async def strip_column(
         ).fillna("")
         changes_made = int(changed_mask.sum())
 
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "strip_column",
-                "column": column,
-                "chars": chars,
-                "changes_made": changes_made,
-            },
-        )
-
         return ColumnOperationResult(
             operation=f"strip_{'whitespace' if chars is None else 'chars'}",
             rows_affected=changes_made,
@@ -711,18 +656,6 @@ async def fill_column_nulls(
         # Verify fills worked
         nulls_after = int(session.df[column].isna().sum())
         filled_count = nulls_before - nulls_after
-
-        session.record_operation(
-            "transform",  # Simplified: no longer using OperationType enum
-            {
-                "operation": "fill_column_nulls",
-                "column": column,
-                "fill_value": str(value),
-                "nulls_filled": filled_count,
-                "nulls_before": nulls_before,
-                "nulls_after": nulls_after,
-            },
-        )
 
         return ColumnOperationResult(
             operation="fill_nulls",

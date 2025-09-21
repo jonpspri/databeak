@@ -339,16 +339,6 @@ async def detect_outliers(
             msg = f"Unknown method: {method}"
             raise ToolError(msg)
 
-        session.record_operation(
-            "analyze",  # Simplified: no longer using OperationType enum
-            {
-                "type": "outlier_detection",
-                "method": method,
-                "threshold": threshold,
-                "columns": list(outliers_by_column.keys()),
-            },
-        )
-
         # Map method names to match Pydantic model expectations
         if method == "zscore":
             pydantic_method = "zscore"
@@ -468,14 +458,6 @@ async def profile_data(
 
         memory_usage_mb = round(df.memory_usage(deep=True).sum() / (1024 * 1024), 2)
 
-        session.record_operation(
-            "profile",  # Simplified: no longer using OperationType enum
-            {
-                "include_correlations": include_correlations,
-                "include_outliers": include_outliers,
-            },
-        )
-
         return ProfileResult(
             profile=profile_dict,
             total_rows=len(df),
@@ -594,15 +576,6 @@ async def group_by_aggregate(
             else:
                 # No numeric columns, just provide count
                 group_stats[group_key] = GroupStatistics(count=len(group_data))
-
-        session.record_operation(
-            "group_by",  # Simplified: no longer using OperationType enum
-            {
-                "group_by": group_by,
-                "aggregations": aggregations,
-                "total_groups": len(group_stats),
-            },
-        )
 
         return GroupAggregateResult(
             groups=group_stats,
