@@ -761,7 +761,7 @@ async def export_csv(
         session_id = ctx.session_id
 
         # Get session and validate data
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate and parse the file path
         try:

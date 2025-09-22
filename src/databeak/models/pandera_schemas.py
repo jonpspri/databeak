@@ -148,17 +148,15 @@ def validate_dataframe_with_pandera(
 
     except pa.errors.SchemaErrors as schema_errors:
         # Convert Pandera errors to DataBeak format
-        databeak_errors = []
-
-        for error in schema_errors.schema_errors:
-            databeak_errors.append(
-                {
-                    "column": error.column if hasattr(error, "column") else None,
-                    "error_type": error.check if hasattr(error, "check") else "schema_error",
-                    "message": str(error),
-                    "failing_cases": getattr(error, "failure_cases", []),
-                }
-            )
+        databeak_errors = [
+            {
+                "column": error.column if hasattr(error, "column") else None,
+                "error_type": error.check if hasattr(error, "check") else "schema_error",
+                "message": str(error),
+                "failing_cases": getattr(error, "failure_cases", []),
+            }
+            for error in schema_errors.schema_errors
+        ]
 
         return df, databeak_errors
 

@@ -1,7 +1,6 @@
 """Comprehensive unit tests for statistics_server module to improve coverage."""
 
 import uuid
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -147,19 +146,6 @@ class TestGetStatistics:
 
         with pytest.raises(ToolError, match="not found"):
             await get_statistics(ctx, columns=["numeric1", "invalid_col"])
-
-    @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
-    )
-    async def test_statistics_session_not_found(self):
-        """Test statistics with invalid session."""
-        with patch("src.databeak.servers.statistics_server.get_session_manager") as manager:
-            manager.return_value.get_session.return_value = None
-
-            ctx = create_mock_context("invalid-session")
-
-            with pytest.raises(ToolError, match="Session"):
-                await get_statistics(ctx)
 
     async def test_statistics_no_data_loaded(self):
         """Test statistics when no data is loaded."""

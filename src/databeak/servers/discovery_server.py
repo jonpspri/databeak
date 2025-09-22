@@ -230,7 +230,7 @@ async def detect_outliers(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Select numeric columns
         if columns:
@@ -336,20 +336,11 @@ async def detect_outliers(
 
 async def profile_data(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-    *,
-    include_correlations: Annotated[
-        bool,
-        Field(description="Include correlation analysis in profile"),
-    ] = True,
-    include_outliers: Annotated[
-        bool,
-        Field(description="Include outlier detection in profile"),
-    ] = True,
 ) -> ProfileResult:
     """Generate comprehensive data profile with statistical insights.
 
     Creates a complete analytical profile of the dataset including column
-    characteristics, data types, null patterns, correlations, and outliers.
+    characteristics, data types, null patterns, and statistical summaries.
     Provides holistic data understanding for analytical workflows.
 
     Returns:
@@ -380,7 +371,7 @@ async def profile_data(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Create ProfileInfo for each column (simplified to match model)
         profile_dict = {}
@@ -484,7 +475,7 @@ async def group_by_aggregate(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate group by columns
         missing_cols = [col for col in group_by if col not in df.columns]

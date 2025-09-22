@@ -622,29 +622,6 @@ class TestInspectDataAround:
 class TestErrorHandling:
     """Test error handling across all functions."""
 
-    @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
-    )
-    async def test_session_not_found(self):
-        """Test all functions with invalid session."""
-        with patch("src.databeak.servers.discovery_server.get_session_manager") as manager:
-            manager.return_value.get_session.return_value = None
-
-            ctx = create_mock_context("invalid-session")
-
-            with pytest.raises(ToolError, match="Invalid session"):
-                await detect_outliers(ctx)
-
-            ctx = create_mock_context("invalid-session")
-
-            with pytest.raises(ToolError, match="Invalid session"):
-                await profile_data(ctx)
-
-            ctx = create_mock_context("invalid-session")
-
-            with pytest.raises(ToolError, match="Invalid session"):
-                await group_by_aggregate(ctx, group_by=["col"], aggregations={"val": ["mean"]})
-
     @pytest.mark.skip(reason="TODO: Update error message expectations")
     async def test_no_data_loaded(self):
         """Test all functions when no data is loaded."""

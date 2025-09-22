@@ -104,7 +104,7 @@ async def replace_in_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -618,7 +618,7 @@ async def fill_column_nulls(
         # Use explicit assignment to avoid downcasting warnings
         import pandas as pd
 
-        with pd.option_context("future.no_silent_downcasting", True):
+        with pd.option_context("future.no_silent_downcasting", True):  # noqa: FBT003
             filled_series = df[column].fillna(value)
             if hasattr(filled_series, "infer_objects"):
                 filled_series = filled_series.infer_objects(copy=False)
