@@ -453,7 +453,7 @@ def validate_schema(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
         settings = get_csv_settings()
         validation_errors: dict[str, list[ValidationError]] = {}
 
@@ -707,7 +707,7 @@ def check_data_quality(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
         settings = get_csv_settings()
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
@@ -1066,7 +1066,7 @@ def find_anomalies(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
         settings = get_csv_settings()
 
         # Apply resource management for large datasets
@@ -1266,7 +1266,7 @@ def find_anomalies(
                 by_method["missing"] = dict(missing_anomalies.items())
 
         # Organize anomalies by column
-        for _method_name, method_anomalies in by_method.items():
+        for method_anomalies in by_method.values():
             for col, col_anomalies in method_anomalies.items():
                 if col not in by_column:
                     by_column[col] = col_anomalies

@@ -42,21 +42,6 @@ class TestGetSessionData:
         assert result_session == session
         pd.testing.assert_frame_equal(result_df, df)
 
-    @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
-    )
-    def test_get_session_data_session_not_found(self):
-        """Test exception when session not found."""
-        with patch(
-            "src.databeak.services.transformation_service.get_session_manager",
-        ) as mock_get_manager:
-            mock_manager = MagicMock()
-            mock_manager.get_session.return_value = None
-            mock_get_manager.return_value = mock_manager
-
-            with pytest.raises(SessionNotFoundError):
-                _get_session_data("invalid-session")
-
     def test_get_session_data_no_data(self):
         """Test exception when session has no data."""
         # Create a real session with no data (df = None)

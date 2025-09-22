@@ -205,7 +205,6 @@ select = [
     "SIM",  # flake8-simplify
     "SLF",  # flake8-self
     "T20",  # flake8-print
-    "TD",   # flake8-todos
     "TID",  # flake8-tidy-imports
     "TRY",  # tryceratops
     "UP",   # pyupgrade
@@ -222,15 +221,9 @@ ignore = [
     "SIM108", # Use ternary operator instead of if-else-block (readability preference)
     "TID252", # Prefer absolute imports (DataBeak uses relative imports by design)
     #  TODO:  Work on bringing these into play
-    "FLY",   # flynt (f-string conversion not always desired)
-    "FURB",  # refurb (too aggressive refactoring suggestions)
-    "NPY",   # NumPy-specific rules (not needed for pandas-focused codebase)
-    "PGH",   # pygrep-hooks (too many false positives)
-    "PERF",  # Perflint (premature optimization warnings)
+    # "PERF",  # Perflint (premature optimization warnings)
     "PL",    # Pylint (too many style conflicts with our patterns)
     "TRY",   # tryceratops (too strict exception handling requirements)
-    "TD002", # TODO author requirements (not needed for internal TODOs)
-    "TD003", # TODO issue link requirements (not all TODOs need issue links)
 ]
 
 [tool.ruff.lint.per-file-ignores]

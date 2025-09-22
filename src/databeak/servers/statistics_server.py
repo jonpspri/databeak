@@ -309,7 +309,7 @@ async def get_column_statistics(
                 else None,
                 freq=additional_stats.get("most_frequent_count")
                 if isinstance(additional_stats.get("most_frequent_count"), int)
-                else None,  # type: ignore
+                else None,
             )
 
         # Map dtype to expected literal type
@@ -434,10 +434,11 @@ async def get_correlation_matrix(
         if min_correlation is not None:
             filtered_dict = {}
             for col1, col_corrs in correlation_dict.items():
-                filtered_col = {}
-                for col2, corr_val in col_corrs.items():
-                    if abs(corr_val) >= abs(min_correlation) or col1 == col2:
-                        filtered_col[col2] = corr_val
+                filtered_col = {
+                    col2: corr_val
+                    for col2, corr_val in col_corrs.items()
+                    if abs(corr_val) >= abs(min_correlation) or col1 == col2
+                }
                 if filtered_col:
                     filtered_dict[col1] = filtered_col
             correlation_dict = filtered_dict

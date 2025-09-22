@@ -273,7 +273,7 @@ async def add_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         if name in df.columns:
             msg = "name"
@@ -411,7 +411,7 @@ async def change_column_type(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
@@ -522,7 +522,7 @@ async def update_column(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())

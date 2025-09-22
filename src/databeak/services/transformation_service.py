@@ -401,7 +401,7 @@ async def transform_column_case_with_pydantic(
 ) -> StringOperationResult:
     """Transform text case in column."""
     try:
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)
 
         if column not in df.columns:
             msg = f"Column '{column}' not found"
@@ -450,7 +450,7 @@ async def strip_column_with_pydantic(
 ) -> StringOperationResult:
     """Strip whitespace from column values."""
     try:
-        session, df = _get_session_data(session_id)
+        _session, df = _get_session_data(session_id)
 
         if column not in df.columns:
             msg = f"Column '{column}' not found"

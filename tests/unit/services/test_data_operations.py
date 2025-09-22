@@ -7,7 +7,6 @@ cases, error handling, and type conversions.
 from __future__ import annotations
 
 import uuid
-from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -17,7 +16,6 @@ from src.databeak.exceptions import (
     ColumnNotFoundError,
     InvalidRowIndexError,
     NoDataLoadedError,
-    SessionNotFoundError,
 )
 from src.databeak.models import get_session_manager
 from src.databeak.services.data_operations import (
@@ -225,19 +223,6 @@ class TestGetDataSummary:
         assert result["null_counts"]["float_col"] == 1
         assert "preview" in result
         assert result["memory_usage_mb"] >= 0  # Memory usage can be 0 for very small dataframes
-
-    @pytest.mark.skip(
-        reason="TODO: get_or_create_session never returns None - need to redesign session not found behavior",
-    )
-    @patch("src.databeak.services.data_operations.get_session_manager")
-    def test_session_not_found(self, mock_manager):
-        """Test SessionNotFoundError when session doesn't exist."""
-        mock_manager.return_value.get_session.return_value = None
-
-        with pytest.raises(SessionNotFoundError) as exc_info:
-            get_data_summary("nonexistent-session")
-
-        assert "nonexistent-session" in str(exc_info.value)
 
     def test_no_data_loaded(self):
         """Test NoDataLoadedError when session has no data."""

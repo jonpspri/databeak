@@ -143,7 +143,7 @@ def get_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -213,7 +213,7 @@ def set_cell_value(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -300,7 +300,7 @@ def get_row_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
@@ -364,7 +364,7 @@ def get_column_data(
     """
     try:
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate column exists
         if column not in df.columns:
@@ -614,7 +614,7 @@ def update_row(
             raise ToolError(msg)
 
         session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+        _session, df = get_session_data(session_id)
 
         # Validate row index
         if row_index < 0 or row_index >= len(df):
