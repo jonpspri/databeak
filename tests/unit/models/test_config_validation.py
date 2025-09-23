@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.metadata
 from pathlib import Path
 
-from src.databeak.models.csv_session import DataBeakSettings
+from src.databeak.core.settings import DataBeakSettings
 
 
 class TestVersionLoading:
@@ -164,7 +164,7 @@ class TestProjectStructureConsistency:
         """Test that key files mentioned in project structure exist."""
         documented_files = [
             "src/databeak/server.py",
-            "src/databeak/models/csv_session.py",
+            "src/databeak/core/session.py",
             "src/databeak/models/data_models.py",
             "src/databeak/models/data_session.py",
             "src/databeak/exceptions.py",

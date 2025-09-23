@@ -7,12 +7,26 @@ with schema-based validation.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, NotRequired, TypedDict
 
 import pandas as pd
 import pandera.pandas as pa
 from pandera.pandas import DataFrameModel, Field
 from pandera.typing import DataFrame, Series
+
+
+class ValidationRule(TypedDict, total=False):
+    """TypedDict for validation rule structure."""
+
+    type: NotRequired[Literal["int", "float", "str", "bool", "datetime"]]
+    nullable: NotRequired[bool]
+    min: NotRequired[int | float]
+    max: NotRequired[int | float]
+    min_length: NotRequired[int]
+    max_length: NotRequired[int]
+    pattern: NotRequired[str]
+    values: NotRequired[list[str]]
+    unique: NotRequired[bool]
 
 
 class DataBeakBaseSchema(DataFrameModel):
@@ -28,7 +42,7 @@ class DataBeakBaseSchema(DataFrameModel):
 
 
 def create_pandera_schema_from_validation_rules(
-    validation_rules: dict[str, dict[str, Any]],
+    validation_rules: dict[str, ValidationRule],
 ) -> type[DataFrameModel]:
     """Create a Pandera SchemaModel from DataBeak validation rules.
 
@@ -42,25 +56,35 @@ def create_pandera_schema_from_validation_rules(
         }
         Schema = create_pandera_schema_from_validation_rules(rules)
         validated_df = Schema.validate(df)
+
     """
     # Build schema attributes dynamically
     schema_attrs = {}
+    unique_columns = []  # Track columns that need uniqueness checks
 
     for col_name, rules in validation_rules.items():
         # Determine pandas dtype
         expected_type = rules.get("type", "str")
-        nullable = rules.get("nullable", True)
 
-        if expected_type == "int":
-            dtype = pd.Int64Dtype() if nullable else int
-        elif expected_type == "float":
-            dtype = pd.Float64Dtype() if nullable else float
-        elif expected_type == "bool":
-            dtype = pd.BooleanDtype() if nullable else bool
-        elif expected_type == "datetime":
-            dtype = "datetime64[ns]"
-        else:  # str or object
-            dtype = pd.StringDtype() if nullable else str
+        nullable_types = {
+            "int": pd.Int64Dtype(),
+            "float": pd.Float64Dtype(),
+            "bool": pd.BooleanDtype(),
+            "datetime": "datetime64[ns]",
+        }
+
+        not_nullable_types = {
+            "int": int,
+            "float": float,
+            "bool": bool,
+            "datetime": "datetime64[ns]",
+        }
+
+        dtype = (
+            nullable_types.get(expected_type, pd.StringDtype())
+            if rules.get("nullable", True)
+            else not_nullable_types.get(expected_type, str)
+        )
 
         # Build Field constraints
         field_constraints = {}
@@ -74,13 +98,13 @@ def create_pandera_schema_from_validation_rules(
 
         # String length constraints
         if expected_type == "str":
+            str_length: dict[str, ValidationRule] = {}
             if "min_length" in rules:
-                field_constraints["str_length"] = {"min_value": rules["min_length"]}
+                str_length["min_value"] = rules["min_length"]
             if "max_length" in rules:
-                if "str_length" in field_constraints:
-                    field_constraints["str_length"]["max_value"] = rules["max_length"]
-                else:
-                    field_constraints["str_length"] = {"max_value": rules["max_length"]}
+                str_length["max_value"] = rules["max_length"]
+            if len(str_length) > 0:
+                field_constraints["str_length"] = str_length
 
         # Pattern matching
         if "pattern" in rules:
@@ -90,27 +114,28 @@ def create_pandera_schema_from_validation_rules(
         if "values" in rules:
             field_constraints["isin"] = rules["values"]
 
-        # Uniqueness (handled at schema level, not field level in Pandera)
-        unique = rules.get("unique", False)
-
         # Create the field with constraints
         # Note: For now, we'll handle nullable through pandas extension dtypes
         # rather than typing.Optional which causes issues with pandas dtype interpretation
+        schema_attrs[col_name] = Series[dtype](Field(**field_constraints))
 
-        if field_constraints:
-            schema_attrs[col_name] = Series[dtype](Field(**field_constraints))
-        else:
-            schema_attrs[col_name] = Series[dtype]()
+        # Track columns that need uniqueness checks
+        if rules.get("unique", False):
+            unique_columns.append(col_name)
 
-        # Handle uniqueness at schema level
-        if unique:
-            # Add uniqueness check as a schema-level check
-            def uniqueness_check(df: pd.DataFrame, col=col_name) -> bool:
-                return df[col].nunique() == len(df[col].dropna())
+    # Add uniqueness checks as methods with proper decorators
+    for col_name in unique_columns:
+        def create_uniqueness_method(column_name: str):
+            def check_method(_cls, df: pd.DataFrame) -> bool:
+                if column_name not in df.columns:
+                    return True  # Skip check if column doesn't exist
+                return df[column_name].nunique() == len(df[column_name].dropna())
 
-            schema_attrs[f"_check_unique_{col_name}"] = pa.Check(
-                uniqueness_check, element_wise=False, name=f"unique_{col_name}"
-            )
+            # Set proper method attributes for Pandera
+            check_method.__name__ = f"check_unique_{column_name}"
+            return pa.dataframe_check(check_method, name=f"unique_{column_name}")
+
+        schema_attrs[f"check_unique_{col_name}"] = create_uniqueness_method(col_name)
 
     # Create schema class with Config
     schema_attrs["Config"] = type(
@@ -127,7 +152,7 @@ def create_pandera_schema_from_validation_rules(
 
 
 def validate_dataframe_with_pandera(
-    df: pd.DataFrame, validation_rules: dict[str, dict[str, Any]]
+    df: pd.DataFrame, validation_rules: dict[str, ValidationRule]
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     """Validate a DataFrame using Pandera with DataBeak validation rules.
 
@@ -136,6 +161,7 @@ def validate_dataframe_with_pandera(
 
     Raises:
         SchemaError: If validation fails with critical errors
+
     """
     try:
         # Create schema from validation rules
@@ -217,6 +243,7 @@ def create_typed_dataframe(
         data = {"age": [25, 30, 35], "name": ["Alice", "Bob", "Charlie"]}
         typed_df = create_typed_dataframe(data, MySchema)
         # typed_df is now type-annotated with MySchema
+
     """
     df = pd.DataFrame(data)
     return schema_class.validate(df)

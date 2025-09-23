@@ -7,7 +7,7 @@ between server modules and session management implementation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
 
 from .data_models import SessionInfo
@@ -15,13 +15,13 @@ from .data_models import SessionInfo
 if TYPE_CHECKING:
     import pandas as pd
 
-    from .csv_session import CSVSession
+    from ..core.session import DatabeakSession
 
 
 class SessionManagerProtocol(Protocol):
     """Protocol defining the session manager interface."""
 
-    def get_or_create_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> DatabeakSession:
         """Get or create a session by ID."""
         ...
 
@@ -45,7 +45,7 @@ class SessionService(ABC):
         """Initialize with injected session manager."""
         self.session_manager = session_manager
 
-    def get_session_and_data(self, session_id: str) -> tuple[CSVSession, pd.DataFrame]:
+    def get_session_and_data(self, session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
         """Get session and validate data is loaded.
 
         Returns:
@@ -53,6 +53,7 @@ class SessionService(ABC):
 
         Raises:
             ValueError: If session not found or no data loaded
+
         """
         session = self.session_manager.get_or_create_session(session_id)
 
@@ -76,6 +77,7 @@ class SessionService(ABC):
 
         Raises:
             ValueError: If any columns are missing
+
         """
         missing_cols = [col for col in columns if col not in df.columns]
         if missing_cols:
@@ -100,6 +102,7 @@ class SessionServiceFactory:
 
         Returns:
             Configured service instance
+
         """
         return service_class(self.session_manager)
 
@@ -107,9 +110,9 @@ class SessionServiceFactory:
 # Convenience functions for backward compatibility with existing code
 def get_default_session_service_factory() -> SessionServiceFactory:
     """Get the default session service factory using the global session manager."""
-    from .csv_session import get_session_manager
+    from ..core.session import _session_manager  # noqa: PLC0415 # Avoids circular import
 
-    return SessionServiceFactory(get_session_manager())
+    return SessionServiceFactory(_session_manager)
 
 
 class MockSessionManager:
@@ -121,24 +124,22 @@ class MockSessionManager:
 
     def __init__(self) -> None:
         """Initialize empty mock session manager."""
-        self.sessions: dict[str, CSVSession] = {}
+        self.sessions: dict[str, DatabeakSession] = {}
         self.next_id = 1
 
-    def get_or_create_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> DatabeakSession:
         """Get or create a session by ID."""
         session = self.sessions.get(session_id)
         if not session:
             # Create new session like the real implementation
-            from .csv_session import CSVSession
+            from ..core.session import DatabeakSession  # noqa: PLC0415 # Avoids circular import
 
-            session = CSVSession(session_id=session_id)
+            session = DatabeakSession(session_id=session_id)
             self.sessions[session_id] = session
         return session
 
     def list_sessions(self) -> list[SessionInfo]:
         """List all active sessions."""
-        from datetime import datetime
-
         results = []
         for session_id, session in self.sessions.items():
             df = session.df if session.has_data() else None

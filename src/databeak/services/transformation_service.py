@@ -8,14 +8,13 @@ from typing import Any, Literal
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
+from ..core.session import DatabeakSession, get_session_manager
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models import get_session_manager
-from ..models.csv_session import CSVSession
 from ..models.tool_responses import BaseToolResponse
 
 logger = logging.getLogger(__name__)
@@ -111,7 +110,7 @@ class StringOperationResult(BaseToolResponse):
 
 
 # Implementation: Session retrieval with validation and error handling
-def _get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
+def _get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
     """Get session and DataFrame with validation."""
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)

@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
-
-from .data_models import ExportFormat, SessionInfo
-from .data_session import DataSession
-from .session_lifecycle import SessionLifecycle
+from ..exceptions import NoDataLoadedError, SessionExpiredError
+from ..models.data_models import ExportFormat, SessionInfo
+from ..models.data_session import DataSession
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -20,51 +18,56 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class DataBeakSettings(BaseSettings):
-    """Configuration settings for session management."""
+class SessionLifecycle:
+    """Manages session TTL and expiration logic."""
 
-    max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
-    session_timeout: int = Field(default=3600, description="Session timeout in seconds")
-    chunk_size: int = Field(
-        default=10000,
-        description="Default chunk size for processing large datasets",
-    )
-    memory_threshold_mb: int = Field(
-        default=2048, description="Memory usage threshold in MB for health monitoring"
-    )
-    memory_warning_threshold: float = Field(
-        default=0.75, description="Memory usage ratio that triggers warning status (0.0-1.0)"
-    )
-    memory_critical_threshold: float = Field(
-        default=0.90, description="Memory usage ratio that triggers critical status (0.0-1.0)"
-    )
-    session_capacity_warning_threshold: float = Field(
-        default=0.90, description="Session capacity ratio that triggers warning (0.0-1.0)"
-    )
-    max_validation_violations: int = Field(
-        default=1000, description="Maximum number of validation violations to report"
-    )
-    max_anomaly_sample_size: int = Field(
-        default=10000, description="Maximum sample size for anomaly detection operations"
-    )
+    def __init__(self, session_id: str, ttl_minutes: int = 60):
+        """Initialize session lifecycle manager."""
+        self.session_id = session_id
+        self.ttl = timedelta(minutes=ttl_minutes)
+        self.created_at = datetime.now(UTC)
+        self.last_accessed = datetime.now(UTC)
 
-    model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
+    def update_access_time(self) -> None:
+        """Update the last accessed time."""
+        self.last_accessed = datetime.now(UTC)
+
+    def is_expired(self) -> bool:
+        """Check if session has expired."""
+        return datetime.now(UTC) - self.last_accessed > self.ttl
+
+    def validate_not_expired(self) -> None:
+        """Raise exception if session is expired."""
+        if self.is_expired():
+            raise SessionExpiredError(self.session_id)
+
+    def get_remaining_ttl(self) -> timedelta:
+        """Get remaining time until expiration."""
+        elapsed = datetime.now(UTC) - self.last_accessed
+        return max(timedelta(0), self.ttl - elapsed)
+
+    def extend_ttl(self, additional_minutes: int) -> None:
+        """Extend the session TTL."""
+        self.ttl += timedelta(minutes=additional_minutes)
+        logger.info(
+            "Extended TTL for session %s by %s minutes", self.session_id, additional_minutes
+        )
+
+    def get_lifecycle_info(self) -> dict[str, Any]:
+        """Get session lifecycle information."""
+        remaining = self.get_remaining_ttl()
+
+        return {
+            "session_id": self.session_id,
+            "created_at": self.created_at,
+            "last_accessed": self.last_accessed,
+            "ttl_minutes": int(self.ttl.total_seconds() / 60),
+            "remaining_minutes": int(remaining.total_seconds() / 60),
+            "is_expired": self.is_expired(),
+        }
 
 
-# Global settings instance
-_settings: DataBeakSettings | None = None
-
-
-# Implementation: Singleton pattern for global settings with environment variable support
-def get_csv_settings() -> DataBeakSettings:
-    """Get global DataBeak settings instance."""
-    global _settings
-    if _settings is None:
-        _settings = DataBeakSettings()
-    return _settings
-
-
-class CSVSession:
+class DatabeakSession:
     """CSV editing session for DataBeak operations."""
 
     def __init__(
@@ -191,18 +194,19 @@ class SessionManager:
     # Implementation: Session manager with capacity limits and TTL management
     def __init__(self, max_sessions: int = 100, ttl_minutes: int = 60):
         """Initialize session manager with limits."""
-        self.sessions: dict[str, CSVSession] = {}
+        self.sessions: dict[str, DatabeakSession] = {}
         self.max_sessions = max_sessions
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def get_session(self, session_id: str) -> CSVSession | None:
+    def get_session(self, session_id: str) -> DatabeakSession | None:
         """Get a session by ID without creating it if it doesn't exist.
 
         Use this for read-only operations to avoid unwanted session creation side effects.
 
         Returns:
             The session if it exists, None otherwise
+
         """
         session = self.sessions.get(session_id)
         if session and not session.is_expired():
@@ -210,7 +214,7 @@ class SessionManager:
             return session
         return None
 
-    def get_or_create_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> DatabeakSession:
         """Get a session by ID, creating it if it doesn't exist."""
         session = self.sessions.get(session_id)
         if not session:
@@ -222,7 +226,7 @@ class SessionManager:
                 oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
                 del self.sessions[oldest.session_id]
 
-            session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
+            session = DatabeakSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
             self.sessions[session.session_id] = session
             logger.info("Created new session: %s", session.session_id)
         else:
@@ -256,35 +260,119 @@ class SessionManager:
             await self.remove_session(session_id)
             self.sessions_to_cleanup.discard(session_id)
 
+def create_session_manager(max_session: int = 100, ttl_minutes: int = 60) -> SessionManager:
+    """Create a new SessionManager instance with specified parameters."""
+    return SessionManager(max_session, ttl_minutes)
 
 # Global session manager instance
 _session_manager: SessionManager | None = None
 
-
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
-    """Get global session manager instance."""
-    global _session_manager
+    """Return the global Session Manager object."""
+    global _session_manager  # noqa: PLW0603
     if _session_manager is None:
         _session_manager = SessionManager()
     return _session_manager
 
+def reset_session_manager() -> None:
+    """Reset the global Session Manager object (for testing)."""
+    global _session_manager  # noqa: PLW0603
+    _session_manager = None
 
-def get_or_create_session(session_id: str) -> CSVSession:
-    """Get or create session with elegant interface.
 
-    Provides dictionary-like access: session = get_or_create_session(session_id)
-    Returns existing session or creates new empty session.
+# =============================================================================
+# SESSION UTILITIES FOR DEFENSIVE PROGRAMMING PATTERNS
+# =============================================================================
+
+
+def get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
+    """Get session and DataFrame with comprehensive validation.
+
+    This function replaces direct session.df access patterns with proper
+    defensive programming, ensuring robust error handling and type safety.
 
     Returns:
-        CSVSession (existing or newly created)
+        Tuple of (session, dataframe) - both guaranteed to be valid
+
+    Raises:
+        SessionNotFoundError: If session doesn't exist
+        NoDataLoadedError: If session has no data loaded
+
+    Example:
+        # Instead of:
+        session = get_session_manager().get_or_create_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data")
+        df = session.df
+        assert df is not None
+
+        # Use:
+        session, df = get_session_data(session_id)
+
     """
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
 
-    if not session:
-        # Create new session with the specified ID
-        session = CSVSession(session_id=session_id)
-        manager.sessions[session_id] = session
+    # get_or_create_session always returns a session, so no need to check if not session
+    if not session.has_data():
+        raise NoDataLoadedError(session_id)
 
-    return session
+    df = session.df
+    if df is None:  # Additional type guard for MyPy
+        raise NoDataLoadedError(session_id)
+
+    return session, df
+
+
+def get_session_only(session_id: str) -> DatabeakSession:
+    """Get session with validation but without requiring data.
+
+    Use this when you need the session but data loading is optional.
+
+    Returns:
+        Valid DatabeakSession instance
+
+    Raises:
+        SessionNotFoundError: If session doesn't exist
+
+    Example:
+        # For operations that may create data or work without data
+        session = get_session_only(session_id)
+        if session.has_data():
+            # Work with existing data
+        else:
+            # Initialize new data
+
+    """
+    manager = get_session_manager()
+    # get_or_create_session always returns a session, so no need to check if not session
+    return manager.get_or_create_session(session_id)
+
+
+def validate_session_has_data(session: DatabeakSession, session_id: str) -> pd.DataFrame:
+    """Validate that session has data and return DataFrame.
+
+    Use this when you already have a session object and need to ensure data exists.
+
+    Returns:
+        Valid DataFrame instance
+
+    Raises:
+        NoDataLoadedError: If session has no data loaded
+
+    Example:
+        session = get_session_only(session_id)
+        # ... some logic ...
+        df = validate_session_has_data(session, session_id)
+
+    """
+    if not session.has_data():
+        raise NoDataLoadedError(session_id)
+
+    df = session.df
+    if df is None:  # Additional type guard for MyPy
+        raise NoDataLoadedError(session_id)
+
+    return df
+

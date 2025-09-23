@@ -2,13 +2,14 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 from urllib.error import URLError
 
 import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
+from src import databeak
 from src.databeak.servers.io_server import (
     MAX_URL_SIZE_MB,
     close_session,
@@ -521,20 +522,18 @@ class TestSessionManagementErrorPaths:
     async def test_get_session_info_exception_handling(self):
         """Test exception handling in get_session_info."""
         with (
-            patch(
-                "src.databeak.servers.io_server.get_session_manager",
-                side_effect=Exception("Session manager error"),
-            ),
+            patch("src.databeak.servers.io_server.get_session_only") as mock_get_session_only,
             pytest.raises(ToolError, match="Failed to get session info"),
         ):
+            mock_get_session_only.side_effect = Exception("Session manager error")
             await get_session_info(create_mock_context())
 
     async def test_list_sessions_returns_empty_on_error(self):
         """Test that list_sessions returns empty result on error."""
-        with patch(
-            "src.databeak.servers.io_server.get_session_manager",
-            side_effect=Exception("Manager error"),
-        ):
+        with patch("src.databeak.servers.io_server.get_session_manager") as mock_get_session_manager:
+            mock_session_manager = Mock()
+            mock_session_manager.list_sessions.side_effect = Exception("Manager error")
+            mock_get_session_manager.return_value = mock_session_manager
             result = await list_sessions(create_mock_context())
             assert result.sessions == []
             assert result.total_sessions == 0
@@ -543,12 +542,12 @@ class TestSessionManagementErrorPaths:
     async def test_close_session_exception_handling(self):
         """Test exception handling in close_session."""
         with (
-            patch(
-                "src.databeak.servers.io_server.get_session_manager",
-                side_effect=Exception("Manager error"),
-            ),
+            patch("src.databeak.servers.io_server.get_session_manager") as mock_get_session_manager,
             pytest.raises(ToolError, match="Failed to close session"),
         ):
+            mock_session_manager = Mock()
+            mock_session_manager.remove_session.side_effect = Exception("Manager error")
+            mock_get_session_manager.return_value = mock_session_manager
             await close_session(create_mock_context())
 
 

@@ -116,9 +116,11 @@ class MCPFieldChecker(ast.NodeVisitor):
 
     def _is_annotated_type(self, annotation: ast.AST) -> bool:
         """Check if annotation is Annotated[...]."""
-        return (isinstance(annotation, ast.Subscript) and
-                isinstance(annotation.value, ast.Name) and
-                annotation.value.id == "Annotated")
+        return (
+            isinstance(annotation, ast.Subscript)
+            and isinstance(annotation.value, ast.Name)
+            and annotation.value.id == "Annotated"
+        )
 
     def _has_field_with_description(self, annotation: ast.AST) -> bool:
         """Check if Annotated type has Field with description."""
@@ -157,6 +159,7 @@ def scan_file(file_path: Path) -> list[FieldDescriptionViolation]:
 
     Returns:
         List of violations found in the file
+
     """
     try:
         with file_path.open("r", encoding="utf-8") as f:
@@ -181,6 +184,7 @@ def scan_directory(src_dir: Path) -> list[FieldDescriptionViolation]:
 
     Returns:
         List of all violations found
+
     """
     all_violations = []
 
@@ -205,6 +209,7 @@ def scan_paths(paths: list[str]) -> list[FieldDescriptionViolation]:
 
     Returns:
         List of all violations found
+
     """
     all_violations = []
     all_files = []
@@ -246,6 +251,7 @@ def format_violations_report(violations: list[FieldDescriptionViolation]) -> str
 
     Returns:
         Formatted report string
+
     """
     if not violations:
         return "✅ All MCP tool parameters have Field descriptions - Documentation standards met!"
@@ -269,11 +275,13 @@ def format_violations_report(violations: list[FieldDescriptionViolation]) -> str
 
     for file_path, file_violations in sorted(by_file.items()):
         report_lines.append(f"📁 {file_path}")
-        for violation in file_violations:
-            report_lines.append(
+        report_lines.extend(
+            [
                 f"   └─ {violation.function_name}() parameter '{violation.parameter_name}' "
                 f"at line {violation.line_number}"
-            )
+                for violation in file_violations
+            ]
+        )
         report_lines.append("")
 
     report_lines.extend(
@@ -304,6 +312,7 @@ def parse_arguments() -> argparse.Namespace:
 
     Returns:
         Parsed arguments namespace
+
     """
     parser = argparse.ArgumentParser(
         description="Check that all MCP tool parameters have Field descriptions",
@@ -336,6 +345,7 @@ def main() -> int:
 
     Returns:
         Exit code: 0 for success, 1 for violations found, 2 for errors
+
     """
     try:
         args = parse_arguments()

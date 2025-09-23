@@ -10,7 +10,8 @@ from pathlib import Path
 
 import pytest
 
-from src.databeak.models import get_session_manager
+from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.io_server import load_csv_from_content
 from tests.test_mock_context import create_mock_context
 

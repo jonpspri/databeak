@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from src.databeak.models.csv_session import CSVSession, DataBeakSettings, get_csv_settings
+from src.databeak.core.settings import DataBeakSettings
 
 
 class TestDataBeakSettings:
@@ -49,32 +49,6 @@ class TestDataBeakSettings:
 
 class TestDataBeakSettingsIntegration:
     """Test DataBeak settings integration with sessions."""
-
-    def test_get_csv_settings_singleton(self) -> None:
-        """Test that get_csv_settings returns singleton instance."""
-        with patch.object(
-            __import__("src.databeak.models.csv_session", fromlist=["_settings"]),
-            "_settings",
-            None,
-        ):
-            settings1 = get_csv_settings()
-            settings2 = get_csv_settings()
-            assert settings1 is settings2
-
-    def test_session_with_environment_variable(self):
-        """Test that CSVSession works with environment variable settings."""
-        with (
-            patch.dict(os.environ, {"DATABEAK_SESSION_TIMEOUT": "7200"}),
-            patch.object(
-                __import__("src.databeak.models.csv_session", fromlist=["_settings"]),
-                "_settings",
-                None,
-            ),
-        ):
-            session = CSVSession()
-            # Session should initialize successfully
-            assert session.session_id is not None
-            assert session.has_data() is False
 
     def test_settings_are_configurable(self):
         """Test that settings can be configured multiple ways."""

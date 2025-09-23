@@ -218,11 +218,10 @@ ignore = [
     "COM812", # Missing trailing comma (handled by ruff format)
     "ISC001", # Implicit string concatenation (often used in docstrings)
     "SIM105", # contextlib.suppress is slower that try-except-pass
-    "SIM108", # Use ternary operator instead of if-else-block (readability preference)
+    "SIM108", # Ternary operator - preference
     "TID252", # Prefer absolute imports (DataBeak uses relative imports by design)
     #  TODO:  Work on bringing these into play
-    # "PERF",  # Perflint (premature optimization warnings)
-    "PL",    # Pylint (too many style conflicts with our patterns)
+    "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # Complexity findings that make the AI cry
     "TRY",   # tryceratops (too strict exception handling requirements)
 ]
 
@@ -230,10 +229,12 @@ ignore = [
 # Allow unused arguments, naive datetime, temp files, binding all interfaces, blocking file ops, and assert in tests
 "tests/*" = ["ARG", "DTZ", "S108", "S104", "ASYNC230", "S101", "SLF001",
     "D",       # Docstring requirements (tests don't need comprehensive documentation)
+    "PLC0415", # Local import
+    "PLR2004", # Magic numbers are a HUGE part of testing
     "RUF043",  # Regex in asserts in tests
     "RUF059",  # Unused unpacked variable
 ]
-"examples/*" = ["T201", "T203"]  # Allow print() in examples
+"examples/*" = ["T201", "T203", "PL"]  # Allow print() in examples
 "scripts/*" = ["T201", "T203"]  # Allow print() in scripts
 
 [tool.ruff.lint.isort]
@@ -246,6 +247,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
+mypy_path = "src"
 python_version = "3.11"
 namespace_packages = true
 explicit_package_bases = true
@@ -318,6 +320,7 @@ ignore_errors = true  # Pandera not available in pre-commit environment
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+pythonpath = ["src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = [

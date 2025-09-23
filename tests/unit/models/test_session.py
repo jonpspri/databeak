@@ -1,4 +1,4 @@
-"""Unit tests for csv_session.py module."""
+"""Unit tests for session.py module."""
 
 import uuid
 from datetime import UTC
@@ -8,12 +8,13 @@ from unittest.mock import AsyncMock, patch
 import pandas as pd
 import pytest
 
-from src.databeak.models.csv_session import (
-    CSVSession,
-    DataBeakSettings,
+from src import databeak
+from src.databeak.core.session import get_session_manager
+from src.databeak.core.session import (
+    DatabeakSession,
     SessionManager,
-    get_session_manager,
 )
+from src.databeak.core.settings import DataBeakSettings
 from src.databeak.models.data_models import ExportFormat
 
 
@@ -30,12 +31,12 @@ class TestDataBeakSettings:
         assert settings.max_anomaly_sample_size == 10000  # Anomaly detection sample size
 
 
-class TestCSVSession:
-    """Tests for CSVSession class functionality."""
+class TestDatabeakSession:
+    """Tests for DatabeakSession class functionality."""
 
     def test_df_property_setter_and_getter(self):
         """Test DataFrame property setter and getter."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
 
         # Test setter
@@ -49,7 +50,7 @@ class TestCSVSession:
 
     def test_df_property_deleter(self):
         """Test DataFrame property deleter (lines 109-113)."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
         session.df = df
 
@@ -62,7 +63,7 @@ class TestCSVSession:
 
     def test_has_data_method(self):
         """Test has_data method (line 117)."""
-        session = CSVSession()
+        session = DatabeakSession()
 
         # Initially no data
         assert not session.has_data()
@@ -79,7 +80,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_csv_format(self, tmp_path):
         """Test _save_callback with CSV format (lines 199-227)."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -95,7 +96,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_tsv_format(self, tmp_path):
         """Test _save_callback with TSV format."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -112,7 +113,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_json_format(self, tmp_path):
         """Test _save_callback with JSON format."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -125,7 +126,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_excel_format(self, tmp_path):
         """Test _save_callback with Excel format."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -138,7 +139,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_parquet_format(self, tmp_path):
         """Test _save_callback with Parquet format."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -151,7 +152,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_unsupported_format(self, tmp_path):
         """Test _save_callback with unsupported format."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -165,7 +166,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_no_data(self, tmp_path):
         """Test _save_callback when no data is loaded."""
-        session = CSVSession()
+        session = DatabeakSession()
         # Don't load any data
 
         file_path = str(tmp_path / "test.csv")
@@ -177,7 +178,7 @@ class TestCSVSession:
     @pytest.mark.asyncio
     async def test_save_callback_exception_handling(self, tmp_path):
         """Test _save_callback exception handling."""
-        session = CSVSession()
+        session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
         session.df = df
 
@@ -345,7 +346,7 @@ class TestSessionManager:
         with (
             patch.object(manager.sessions[session1_id], "is_expired", return_value=True),
             patch.object(manager.sessions[session2_id], "is_expired", return_value=False),
-            patch("src.databeak.models.csv_session.logger") as mock_logger,
+            patch("src.databeak.core.session.logger") as mock_logger,
         ):
             manager._cleanup_expired()
 

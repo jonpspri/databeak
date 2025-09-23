@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Annotated, Literal
 
 import numpy as np
@@ -12,8 +13,8 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
-from ..models.csv_session import get_csv_settings
-from ..utils.session_utils import get_session_data
+from ..core.settings import get_csv_settings
+from ..core.session import get_session_data
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
 
@@ -176,6 +177,7 @@ class MissingAnomaly(BaseModel):
         missing_indices: Row indices where missing values occur (limited to first 100)
         sequential_clusters: Number of consecutive missing value sequences found
         pattern: Distribution pattern of missing values ('clustered' or 'random')
+
     """
 
     missing_count: int = Field(
@@ -260,8 +262,6 @@ class ColumnValidationRules(BaseModel):
         """Validate that pattern is a valid regular expression."""
         if v is None:
             return v
-
-        import re
 
         try:
             re.compile(v)
@@ -403,6 +403,7 @@ def apply_violation_limits(violations: list, limit: int, operation_name: str) ->
 
     Returns:
         Tuple of (limited_violations, was_truncated)
+
     """
     if len(violations) > limit:
         logger.info(
@@ -422,6 +423,7 @@ def sample_large_dataset(
 
     Returns:
         Sampled DataFrame (or original if under limit)
+
     """
     if len(df) > max_sample_size:
         logger.info(
@@ -450,6 +452,7 @@ def validate_schema(
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
+
     """
     try:
         session_id = ctx.session_id
@@ -704,6 +707,7 @@ def check_data_quality(
 
     Returns:
         DataQualityResult with comprehensive quality assessment results
+
     """
     try:
         session_id = ctx.session_id
@@ -753,7 +757,9 @@ def check_data_quality(
                         if not passed:
                             issue = QualityIssue(
                                 type="incomplete_data",
-                                severity="high" if completeness < 0.5 else "medium",
+                                severity="high"
+                                if completeness < settings.data_completeness_threshold
+                                else "medium",
                                 column=col,
                                 message=f"Column '{col}' is only {round(completeness * 100, 2)}% complete",
                                 affected_rows=int(df[col].isna().sum()),
@@ -792,7 +798,9 @@ def check_data_quality(
                 if not passed:
                     issue = QualityIssue(
                         type="duplicate_rows",
-                        severity="high" if duplicate_ratio > 0.1 else "medium",
+                        severity="high"
+                        if duplicate_ratio > settings.outlier_detection_threshold
+                        else "medium",
                         message=f"Found {duplicates.sum()} duplicate rows ({round(duplicate_ratio * 100, 2)}%)",
                         affected_rows=int(duplicates.sum()),
                         metric_value=duplicate_ratio,
@@ -825,7 +833,7 @@ def check_data_quality(
                     expected_unique = rule.expected_unique
 
                     if expected_unique:
-                        passed = unique_ratio >= 0.99
+                        passed = unique_ratio >= settings.uniqueness_threshold
                         score = unique_ratio * 100
                     else:
                         passed = True
@@ -842,7 +850,7 @@ def check_data_quality(
                             message=f"Column '{column}' expected to be unique but has duplicates",
                             affected_rows=duplicate_count,
                             metric_value=unique_ratio,
-                            threshold=0.99,
+                            threshold=settings.uniqueness_threshold,
                         )
                         rule_issues.append(issue)
                         quality_issues.append(issue)
@@ -880,7 +888,7 @@ def check_data_quality(
                         score = 100.0 if not mixed_types else 50.0
 
                         # Create recommendations for numeric strings
-                        if numeric_ratio > 0.9:
+                        if numeric_ratio > settings.high_quality_threshold:
                             recommendations.append(
                                 f"Column '{col}' appears to contain numeric data stored as strings. "
                                 f"Consider converting to numeric type using change_column_type tool",
@@ -953,10 +961,10 @@ def check_data_quality(
 
                 # Date consistency check
                 date_cols = df.select_dtypes(include=["datetime64"]).columns
-                if len(date_cols) >= 2 and not columns:
+                if len(date_cols) >= settings.min_statistical_sample_size and not columns:
                     columns = date_cols.tolist()
 
-                if len(columns) >= 2:
+                if len(columns) >= settings.min_statistical_sample_size:
                     col1, col2 = str(columns[0]), str(columns[1])
                     if (
                         col1 in df.columns
@@ -966,7 +974,7 @@ def check_data_quality(
                     ):
                         inconsistent = (df[col1] > df[col2]).sum()
                         consistency_ratio = 1 - (inconsistent / len(df))
-                        passed = consistency_ratio >= 0.99
+                        passed = consistency_ratio >= settings.uniqueness_threshold
                         score = consistency_ratio * 100
 
                         # Create issue if failed
@@ -978,7 +986,7 @@ def check_data_quality(
                                 message=f"Found {inconsistent} rows where {col1} > {col2}",
                                 affected_rows=int(inconsistent),
                                 metric_value=consistency_ratio,
-                                threshold=0.99,
+                                threshold=settings.uniqueness_threshold,
                             )
                             rule_issues.append(issue)
                             quality_issues.append(issue)
@@ -1000,7 +1008,7 @@ def check_data_quality(
         overall_score = round(total_score / score_count, 2) if score_count > 0 else 100.0
 
         # Add general recommendations
-        if not recommendations and overall_score < 85:
+        if not recommendations and overall_score < settings.character_score_threshold:
             recommendations.append(
                 "Consider running profile_data to get a comprehensive overview of data issues",
             )
@@ -1063,6 +1071,7 @@ def find_anomalies(
 
     Returns:
         FindAnomaliesResult with comprehensive anomaly detection results
+
     """
     try:
         session_id = ctx.session_id
@@ -1168,7 +1177,7 @@ def find_anomalies(
 
                             # Check for format anomalies (e.g., different case, special characters)
                             common_pattern = None
-                            if len(value_counts) > 10:
+                            if len(value_counts) > settings.max_category_display:
                                 # Detect common pattern from frequent values
                                 top_values = value_counts.head(10).index
 
@@ -1176,9 +1185,9 @@ def find_anomalies(
                                 upper_count = sum(1 for v in top_values if str(v).isupper())
                                 lower_count = sum(1 for v in top_values if str(v).islower())
 
-                                if upper_count > 7:
+                                if upper_count > settings.min_length_threshold:
                                     common_pattern = "uppercase"
-                                elif lower_count > 7:
+                                elif lower_count > settings.min_length_threshold:
                                     common_pattern = "lowercase"
 
                             format_anomalies = []
@@ -1223,7 +1232,7 @@ def find_anomalies(
                     null_ratio = null_count / len(df)
 
                     # Check for suspicious missing patterns
-                    if 0 < null_ratio < 0.5:  # Partially missing
+                    if 0 < null_ratio < settings.data_completeness_threshold:  # Partially missing
                         # Check if missing values are clustered
                         null_indices = df.index[null_mask].tolist()
 
@@ -1248,7 +1257,10 @@ def find_anomalies(
                             and len(sequential_missing) > len(null_indices) * 0.3
                         )
 
-                        if is_anomaly or (null_ratio > 0.1 and null_ratio < 0.3):
+                        if is_anomaly or (
+                            null_ratio > settings.outlier_detection_threshold
+                            and null_ratio < settings.correlation_threshold
+                        ):
                             missing_anomaly = MissingAnomaly(
                                 missing_count=int(null_count),
                                 missing_ratio=round(null_ratio, 4),

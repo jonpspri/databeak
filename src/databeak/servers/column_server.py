@@ -23,8 +23,8 @@ from ..exceptions import (
 # Removed: OperationType (no longer tracking operations)
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
-from ..utils.secure_evaluator import _get_secure_evaluator
-from ..utils.session_utils import get_session_data
+from ..utils.secure_evaluator import SecureExpressionEvaluator
+from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -207,6 +207,7 @@ async def rename_columns(
             "LastName": "last_name",
             "EmailAddress": "email"
         })
+
     """
     try:
         # Get session_id from FastMCP context
@@ -269,6 +270,7 @@ async def add_column(
 
         # Add column with complex formula
         add_column(ctx, "full_name", formula="first_name + ' ' + last_name")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -286,7 +288,7 @@ async def add_column(
                     formula = SecureExpression(expression=formula)
 
                 # Use secure evaluator instead of pandas.eval
-                evaluator = _get_secure_evaluator()
+                evaluator = SecureExpressionEvaluator()
                 result = evaluator.evaluate_simple_formula(formula.expression, df)
                 df[name] = result
             except Exception as e:
@@ -345,6 +347,7 @@ async def remove_columns(
 
         # Clean up after analysis
         remove_columns(ctx, ["_temp", "_backup", "old_value"])
+
     """
     try:
         # Get session_id from FastMCP context
@@ -407,6 +410,7 @@ async def change_column_type(
 
         # Convert to boolean
         change_column_type(ctx, "is_active", "bool")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -436,15 +440,14 @@ async def change_column_type(
             if dtype == "datetime":
                 # Special handling for datetime conversion
                 df[column] = pd.to_datetime(df[column], errors=errors)
-            else:
-                # General type conversion
-                if errors == "coerce":
-                    if dtype in ["int", "float"]:
-                        df[column] = pd.to_numeric(df[column], errors="coerce")
-                    else:
-                        df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+            # General type conversion
+            elif errors == "coerce":
+                if dtype in ["int", "float"]:
+                    df[column] = pd.to_numeric(df[column], errors="coerce")
                 else:
                     df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+            else:
+                df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
 
         except (ValueError, TypeError) as e:
             if errors == "raise":
@@ -518,6 +521,7 @@ async def update_column(
             "operation": "fillna",
             "value": 0
         })
+
     """
     try:
         # Get session_id from FastMCP context
@@ -575,7 +579,7 @@ async def update_column(
                         # Create column context mapping for 'x' variable
                         column_context = {"x": column}
                         # Use secure evaluator instead of pandas.eval
-                        evaluator = _get_secure_evaluator()
+                        evaluator = SecureExpressionEvaluator()
                         result = evaluator.evaluate_column_expression(expr, df, column_context)
                         df[column] = result
                     except Exception as e:
@@ -589,192 +593,191 @@ async def update_column(
                 operation_type = "fillna"
                 df[column] = df[column].fillna(operation.value)
 
-        else:
-            # Handle legacy format or dict input
-            if isinstance(operation, dict):
-                if "type" in operation:
-                    # Try to parse as discriminated union
-                    try:
-                        if operation["type"] == "replace":
-                            replace_op = ReplaceOperation(**operation)
-                            operation_type = "replace"
-                            df[column] = df[column].replace(
-                                replace_op.pattern,
-                                replace_op.replacement,
-                            )
-                        elif operation["type"] == "map":
-                            map_op = MapOperation(**operation)
-                            operation_type = "map"
-                            df[column] = df[column].map(map_op.mapping)
-                        elif operation["type"] == "apply":
-                            apply_op = ApplyOperation(**operation)
-                            operation_type = "apply"
-                            expr = apply_op.expression
-
-                            # Handle string operations that pandas.eval can't handle
-                            if (
-                                ".upper()" in expr
-                                or ".lower()" in expr
-                                or ".strip()" in expr
-                                or ".title()" in expr
-                            ):
-                                # String operations
-                                if expr == "x.upper()":
-                                    df[column] = df[column].str.upper()
-                                elif expr == "x.lower()":
-                                    df[column] = df[column].str.lower()
-                                elif expr == "x.strip()":
-                                    df[column] = df[column].str.strip()
-                                elif expr == "x.title()":
-                                    df[column] = df[column].str.title()
-                                else:
-                                    msg = "expression"
-                                    raise InvalidParameterError(
-                                        msg,
-                                        apply_op.expression,
-                                        "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
-                                    )
-                            else:
-                                # Use secure evaluator for mathematical expressions
-                                try:
-                                    # Create column context mapping for 'x' variable
-                                    column_context = {"x": column}
-                                    # Use secure evaluator instead of pandas.eval
-                                    evaluator = _get_secure_evaluator()
-                                    result = evaluator.evaluate_column_expression(
-                                        expr,
-                                        df,
-                                        column_context,
-                                    )
-                                    df[column] = result
-                                except Exception as e:
-                                    msg = "expression"
-                                    raise InvalidParameterError(
-                                        msg,
-                                        apply_op.expression,
-                                        f"Invalid expression. Use 'x' to reference column values. Error: {e}",
-                                    ) from e
-                        elif operation["type"] == "fillna":
-                            fillna_op = FillNaOperation(**operation)
-                            operation_type = "fillna"
-                            df[column] = df[column].fillna(fillna_op.value)
-                        else:
-                            msg = "type"
-                            raise InvalidParameterError(
-                                msg,
-                                operation["type"],
-                                "Supported types: replace, map, apply, fillna",
-                            )
-                    except Exception as e:
-                        msg = "operation"
-                        raise InvalidParameterError(
-                            msg,
-                            str(operation),
-                            f"Invalid operation specification: {e}",
-                        ) from e
-                else:
-                    # Legacy format with "operation" field
-                    update_request = UpdateColumnRequest(**operation)
-                    operation_type = update_request.operation
-
-                    if update_request.operation == "replace":
-                        if update_request.pattern is None or update_request.replacement is None:
-                            msg = "pattern/replacement"
-                            raise InvalidParameterError(
-                                msg,
-                                f"{update_request.pattern}/{update_request.replacement}",
-                                "Both pattern and replacement required for replace operation",
-                            )
+        # Handle legacy format or dict input
+        elif isinstance(operation, dict):
+            if "type" in operation:
+                # Try to parse as discriminated union
+                try:
+                    if operation["type"] == "replace":
+                        replace_op = ReplaceOperation(**operation)
+                        operation_type = "replace"
                         df[column] = df[column].replace(
-                            update_request.pattern,
-                            update_request.replacement,
+                            replace_op.pattern,
+                            replace_op.replacement,
                         )
-                    elif update_request.operation == "map":
-                        if not isinstance(update_request.value, dict):
-                            msg = "value"
-                            raise InvalidParameterError(
-                                msg,
-                                str(update_request.value),
-                                "Dictionary mapping required for map operation",
-                            )
-                        df[column] = df[column].map(update_request.value)
-                    elif update_request.operation == "apply":
-                        if update_request.value is None:
-                            msg = "value"
-                            raise InvalidParameterError(
-                                msg,
-                                str(update_request.value),
-                                "Expression required for apply operation",
-                            )
-                        if isinstance(update_request.value, str):
-                            expr = update_request.value
+                    elif operation["type"] == "map":
+                        map_op = MapOperation(**operation)
+                        operation_type = "map"
+                        df[column] = df[column].map(map_op.mapping)
+                    elif operation["type"] == "apply":
+                        apply_op = ApplyOperation(**operation)
+                        operation_type = "apply"
+                        expr = apply_op.expression
 
-                            # Handle string operations that pandas.eval can't handle
-                            if (
-                                ".upper()" in expr
-                                or ".lower()" in expr
-                                or ".strip()" in expr
-                                or ".title()" in expr
-                            ):
-                                # String operations
-                                if expr == "x.upper()":
-                                    df[column] = df[column].str.upper()
-                                elif expr == "x.lower()":
-                                    df[column] = df[column].str.lower()
-                                elif expr == "x.strip()":
-                                    df[column] = df[column].str.strip()
-                                elif expr == "x.title()":
-                                    df[column] = df[column].str.title()
-                                else:
-                                    msg = "value"
-                                    raise InvalidParameterError(
-                                        msg,
-                                        update_request.value,
-                                        "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
-                                    )
+                        # Handle string operations that pandas.eval can't handle
+                        if (
+                            ".upper()" in expr
+                            or ".lower()" in expr
+                            or ".strip()" in expr
+                            or ".title()" in expr
+                        ):
+                            # String operations
+                            if expr == "x.upper()":
+                                df[column] = df[column].str.upper()
+                            elif expr == "x.lower()":
+                                df[column] = df[column].str.lower()
+                            elif expr == "x.strip()":
+                                df[column] = df[column].str.strip()
+                            elif expr == "x.title()":
+                                df[column] = df[column].str.title()
                             else:
-                                # Use secure evaluator for mathematical expressions
-                                try:
-                                    # Create column context mapping for 'x' variable
-                                    column_context = {"x": column}
-                                    # Use secure evaluator instead of pandas.eval
-                                    evaluator = _get_secure_evaluator()
-                                    result = evaluator.evaluate_column_expression(
-                                        expr,
-                                        df,
-                                        column_context,
-                                    )
-                                    df[column] = result
-                                except Exception as e:
-                                    msg = "value"
-                                    raise InvalidParameterError(
-                                        msg,
-                                        update_request.value,
-                                        f"Invalid expression. Use 'x' to reference column values. Error: {e}",
-                                    ) from e
+                                msg = "expression"
+                                raise InvalidParameterError(
+                                    msg,
+                                    apply_op.expression,
+                                    "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
+                                )
                         else:
-                            df[column] = df[column].apply(update_request.value)
-                    elif update_request.operation == "fillna":
-                        if update_request.value is None:
-                            msg = "value"
-                            raise InvalidParameterError(
-                                msg,
-                                str(update_request.value),
-                                "Fill value required for fillna operation",
-                            )
-                        df[column] = df[column].fillna(update_request.value)
+                            # Use secure evaluator for mathematical expressions
+                            try:
+                                # Create column context mapping for 'x' variable
+                                column_context = {"x": column}
+                                # Use secure evaluator instead of pandas.eval
+                                evaluator = SecureExpressionEvaluator()
+                                result = evaluator.evaluate_column_expression(
+                                    expr,
+                                    df,
+                                    column_context,
+                                )
+                                df[column] = result
+                            except Exception as e:
+                                msg = "expression"
+                                raise InvalidParameterError(
+                                    msg,
+                                    apply_op.expression,
+                                    f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+                                ) from e
+                    elif operation["type"] == "fillna":
+                        fillna_op = FillNaOperation(**operation)
+                        operation_type = "fillna"
+                        df[column] = df[column].fillna(fillna_op.value)
                     else:
-                        msg = "operation"
+                        msg = "type"
                         raise InvalidParameterError(
                             msg,
-                            update_request.operation,
-                            "Supported operations: replace, map, apply, fillna",
+                            operation["type"],
+                            "Supported types: replace, map, apply, fillna",
                         )
+                except Exception as e:
+                    msg = "operation"
+                    raise InvalidParameterError(
+                        msg,
+                        str(operation),
+                        f"Invalid operation specification: {e}",
+                    ) from e
             else:
-                # Handle legacy UpdateColumnRequest object
-                update_request = operation
+                # Legacy format with "operation" field
+                update_request = UpdateColumnRequest(**operation)
                 operation_type = update_request.operation
-                # ... (same logic as above legacy handling)
+
+                if update_request.operation == "replace":
+                    if update_request.pattern is None or update_request.replacement is None:
+                        msg = "pattern/replacement"
+                        raise InvalidParameterError(
+                            msg,
+                            f"{update_request.pattern}/{update_request.replacement}",
+                            "Both pattern and replacement required for replace operation",
+                        )
+                    df[column] = df[column].replace(
+                        update_request.pattern,
+                        update_request.replacement,
+                    )
+                elif update_request.operation == "map":
+                    if not isinstance(update_request.value, dict):
+                        msg = "value"
+                        raise InvalidParameterError(
+                            msg,
+                            str(update_request.value),
+                            "Dictionary mapping required for map operation",
+                        )
+                    df[column] = df[column].map(update_request.value)
+                elif update_request.operation == "apply":
+                    if update_request.value is None:
+                        msg = "value"
+                        raise InvalidParameterError(
+                            msg,
+                            str(update_request.value),
+                            "Expression required for apply operation",
+                        )
+                    if isinstance(update_request.value, str):
+                        expr = update_request.value
+
+                        # Handle string operations that pandas.eval can't handle
+                        if (
+                            ".upper()" in expr
+                            or ".lower()" in expr
+                            or ".strip()" in expr
+                            or ".title()" in expr
+                        ):
+                            # String operations
+                            if expr == "x.upper()":
+                                df[column] = df[column].str.upper()
+                            elif expr == "x.lower()":
+                                df[column] = df[column].str.lower()
+                            elif expr == "x.strip()":
+                                df[column] = df[column].str.strip()
+                            elif expr == "x.title()":
+                                df[column] = df[column].str.title()
+                            else:
+                                msg = "value"
+                                raise InvalidParameterError(
+                                    msg,
+                                    update_request.value,
+                                    "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
+                                )
+                        else:
+                            # Use secure evaluator for mathematical expressions
+                            try:
+                                # Create column context mapping for 'x' variable
+                                column_context = {"x": column}
+                                # Use secure evaluator instead of pandas.eval
+                                evaluator = SecureExpressionEvaluator()
+                                result = evaluator.evaluate_column_expression(
+                                    expr,
+                                    df,
+                                    column_context,
+                                )
+                                df[column] = result
+                            except Exception as e:
+                                msg = "value"
+                                raise InvalidParameterError(
+                                    msg,
+                                    update_request.value,
+                                    f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+                                ) from e
+                    else:
+                        df[column] = df[column].apply(update_request.value)
+                elif update_request.operation == "fillna":
+                    if update_request.value is None:
+                        msg = "value"
+                        raise InvalidParameterError(
+                            msg,
+                            str(update_request.value),
+                            "Fill value required for fillna operation",
+                        )
+                    df[column] = df[column].fillna(update_request.value)
+                else:
+                    msg = "operation"
+                    raise InvalidParameterError(
+                        msg,
+                        update_request.operation,
+                        "Supported operations: replace, map, apply, fillna",
+                    )
+        else:
+            # Handle legacy UpdateColumnRequest object
+            update_request = operation
+            operation_type = update_request.operation
+            # ... (same logic as above legacy handling)
 
         # Operation completed
 

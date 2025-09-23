@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
+import databeak
+
 from ..models.session_service import SessionService
 from ..models.statistics_models import (
     ColumnStatisticsResult,
@@ -220,7 +222,7 @@ class StatisticsService(SessionService):
                 msg = "No numeric columns found"
                 raise ValueError(msg)
 
-            if len(numeric_df.columns) < 2:
+            if len(numeric_df.columns) < 2:  # noqa: PLR2004   # Correlation is a hard constant
                 msg = "Need at least 2 numeric columns for correlation"
                 raise ValueError(msg)
 

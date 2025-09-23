@@ -8,7 +8,8 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.models.csv_session import get_session_manager
+from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.discovery_server import (
     DataSummaryResult,
     FindCellsResult,
@@ -29,11 +30,11 @@ from tests.test_mock_context import create_mock_context
 @pytest.fixture
 def mock_session_with_outliers():
     """Create real session with data containing outliers."""
-    np.random.seed(42)
-    normal_data = np.random.normal(50, 10, 95)  # Normal distribution
+    rng = np.random.Generator(np.random.PCG64(seed=42))
+    normal_data = rng.normal(50, 10, 95)  # Normal distribution
     outliers = [150, 200, -50, -100, 300]  # Clear outliers
     all_data = np.concatenate([normal_data, outliers])
-    np.random.shuffle(all_data)
+    rng.shuffle(all_data)
 
     session_id = str(uuid.uuid4())
     manager = get_session_manager()
@@ -41,9 +42,9 @@ def mock_session_with_outliers():
     df = pd.DataFrame(
         {
             "values": all_data,
-            "values2": np.random.normal(100, 20, 100),
-            "category": np.random.choice(["A", "B", "C"], 100),
-            "subcategory": np.random.choice(["X", "Y", "Z"], 100),
+            "values2": rng.normal(100, 20, 100),
+            "category": rng.choice(["A", "B", "C"], 100),
+            "subcategory": rng.choice(["X", "Y", "Z"], 100),
             "text": [f"item_{i}" for i in range(100)],
             "nulls": [None if i % 10 == 0 else i for i in range(100)],
             "dates": pd.date_range("2024-01-01", periods=100),
@@ -182,7 +183,7 @@ class TestProfileData:
         assert len(result.profile) == 8
 
         # Check column profile structure
-        for _col_name, profile in result.profile.items():
+        for profile in result.profile.values():
             assert hasattr(profile, "column_name")
             assert hasattr(profile, "data_type")
             assert hasattr(profile, "null_count")
@@ -298,7 +299,7 @@ class TestGroupByAggregate:
         assert len(result.groups) == 3  # A, B, C
 
         # result.groups is a dict of GroupStatistics keyed by group names
-        for _group_key, stats in result.groups.items():
+        for stats in result.groups.values():
             assert hasattr(stats, "mean")
             assert hasattr(stats, "sum")
             assert hasattr(stats, "count")
@@ -543,7 +544,8 @@ class TestGetDataSummary:
         large_session_id = str(uuid.uuid4())
         manager = get_session_manager()
         large_session = manager.get_or_create_session(large_session_id)
-        large_df = pd.DataFrame(np.random.randn(10000, 100))
+        rng = np.random.Generator(np.random.PCG64(seed=42))
+        large_df = pd.DataFrame(rng.standard_normal((10000, 100)))
         large_session.df = large_df
 
         ctx = create_mock_context(large_session_id)
@@ -625,7 +627,7 @@ class TestErrorHandling:
     @pytest.mark.skip(reason="TODO: Update error message expectations")
     async def test_no_data_loaded(self):
         """Test all functions when no data is loaded."""
-        with patch("src.databeak.servers.discovery_server.get_session_manager") as manager:
+        with patch.object(databeak, "session_manager") as manager:
             session = Mock()
             session.has_data.return_value = False
             manager.return_value.get_session.return_value = session

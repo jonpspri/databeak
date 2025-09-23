@@ -1,4 +1,4 @@
-"""Core data session functionality separated from CSVSession."""
+"""Core data session functionality separated from DatabeakSession."""
 
 from __future__ import annotations
 

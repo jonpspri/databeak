@@ -9,7 +9,8 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import src.databeak.servers.column_server  # noqa: F401
-from src.databeak.models.csv_session import get_session_manager
+from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.column_server import (
     add_column,
     change_column_type,

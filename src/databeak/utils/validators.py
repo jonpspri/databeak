@@ -5,11 +5,14 @@ from __future__ import annotations
 import ipaddress
 import re
 import socket
+import warnings
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 import pandas as pd
+
+import databeak
 
 from ..models.typed_dicts import CellValue, DataValidationIssues
 
@@ -174,9 +177,10 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
                 issues["warnings"].append(f"Column '{col}' has mixed types: {list(unique_types)}")
 
     # Check for high cardinality in string columns
+    settings = databeak.settings
     for col in df.select_dtypes(include=["object"]).columns:
         unique_ratio = df[col].nunique() / len(df)
-        if unique_ratio > 0.9:
+        if unique_ratio > settings.high_quality_threshold:
             issues["info"][f"{col}_high_cardinality"] = True
 
     # Check for potential datetime columns
@@ -186,8 +190,6 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
             continue
         try:
             # Suppress format inference warning for datetime detection
-            import warnings
-
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 pd.to_datetime(sample, errors="raise")
@@ -252,8 +254,8 @@ def sanitize_filename(filename: str) -> str:
     # Limit length
     path_obj = Path(filename)
     name, ext = path_obj.stem, path_obj.suffix
-    if len(name) > 100:
-        name = name[:100]
+    if len(name) > databeak.settings.percentage_multiplier:
+        name = name[:databeak.settings.percentage_multiplier]
 
     return name + ext
 
@@ -261,8 +263,6 @@ def sanitize_filename(filename: str) -> str:
 # Implementation: Pandas NA to None conversion for Pydantic compatibility
 def convert_pandas_na_to_none(value: Any) -> CellValue:  # Any input: pandas can contain any type
     """Convert pandas NA values to Python None for serialization."""
-    import pandas as pd
-
     # Handle pandas NA values (from nullable dtypes)
     if pd.isna(value):
         return None

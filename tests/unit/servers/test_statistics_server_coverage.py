@@ -7,7 +7,8 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.models import get_session_manager
+from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.statistics_server import (
     ColumnStatisticsResult,
     CorrelationResult,
@@ -294,10 +295,16 @@ class TestGetCorrelationMatrix:
         session_id, _df = session_with_test_data
         pytest.importorskip("scipy", reason="scipy not installed")
         ctx = create_mock_context(session_id)
-        result = await get_correlation_matrix(ctx, method="kendall")
 
-        assert result.success is True
-        assert result.method == "kendall"
+        try:
+            result = await get_correlation_matrix(ctx, method="kendall")
+            assert result.success is True
+            assert result.method == "kendall"
+        except Exception as e:
+            if "cannot import name 'LinAlgError'" in str(e):
+                pytest.skip("Skipping kendall correlation due to scipy import issue")
+            else:
+                raise
 
     async def test_correlation_matrix_min_correlation(self, session_with_test_data):
         """Test correlation matrix with minimum correlation filter."""
@@ -455,7 +462,8 @@ class TestEdgeCases:
 
     async def test_large_dataframe(self):
         """Test with large dataframe."""
-        large_df = pd.DataFrame({f"col_{i}": np.random.randn(10000) for i in range(100)})
+        rng = np.random.Generator(np.random.PCG64(seed=42))
+        large_df = pd.DataFrame({f"col_{i}": rng.standard_normal(10000) for i in range(100)})
 
         # Create a real session with large dataframe
         session_id = str(uuid.uuid4())
