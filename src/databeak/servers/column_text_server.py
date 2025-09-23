@@ -16,7 +16,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
 # Removed: OperationType (no longer tracking operations)
-from ..core.session import DatabeakSession, _session_manager
+from ..core.session import DatabeakSession, get_session_data, get_session_manager
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
@@ -24,7 +24,6 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models.tool_responses import ColumnOperationResult
-from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,10 @@ CellValue = str | int | float | bool | None
 # =============================================================================
 
 
-# Use elegant session access pattern
-def _get_session_data(session_id: str) -> DatabeakSession:
-    return _session_manager.get_or_create_session(session_id)
+# Use defensive session access pattern with validation
+def _get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
+    """Get session and DataFrame with comprehensive validation."""
+    return get_session_data(session_id)
 
 
 # =============================================================================

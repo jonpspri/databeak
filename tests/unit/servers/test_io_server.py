@@ -10,7 +10,6 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src import databeak
 from src.databeak.servers.io_server import (
     MAX_FILE_SIZE_MB,
     MAX_MEMORY_USAGE_MB,
