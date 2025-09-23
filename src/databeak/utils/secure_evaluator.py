@@ -543,6 +543,28 @@ class SecureExpressionEvaluator:
         """
         return ["+", "-", "*", "/", "//", "%", "**", "<<", ">>", "|", "^", "&", "~"]
 
+def create_secure_expression_evaluator() -> SecureExpressionEvaluator:
+    """Create a new SecureExpressionEvaluator."""
+    return SecureExpressionEvaluator()
+
+_secure_expression_evaluator: SecureExpressionEvaluator | None = None
+
+def get_secure_expression_evaluator() -> SecureExpressionEvaluator:
+    """Return a singleton SecureExpressionEvaluator object."""
+    global _secure_expression_evaluator # noqa: PLW0603
+    if _secure_expression_evaluator is None:
+        _secure_expression_evaluator = create_secure_expression_evaluator()
+    return _secure_expression_evaluator
+
+def reset_secure_expression_evaluator() -> None:
+    """Set the global SecureExpressionEvaluator to None (for testing)."""
+    global _secure_expression_evaluator # noqa: PLW0603
+    _secure_expression_evaluator = None
+
+####
+# TODO:  Should these functions be in some sort of service provided by the
+#        Session?
+####
 
 def evaluate_expression_safely(
     expression: str,
@@ -558,7 +580,7 @@ def evaluate_expression_safely(
         InvalidParameterError: If expression is unsafe or evaluation fails
 
     """
-    return SecureExpressionEvaluator().evaluate_column_expression(
+    return get_secure_expression_evaluator().evaluate_column_expression(
         expression, dataframe, column_context
     )
 
@@ -570,4 +592,4 @@ def validate_expression_safety(expression: str) -> None:
         InvalidParameterError: If expression contains unsafe operations
 
     """
-    SecureExpressionEvaluator().validate_expression_syntax(expression)
+    get_secure_expression_evaluator().validate_expression_syntax(expression)
