@@ -60,6 +60,7 @@ def create_pandera_schema_from_validation_rules(
     """
     # Build schema attributes dynamically
     schema_attrs = {}
+    unique_columns = []  # Track columns that need uniqueness checks
 
     for col_name, rules in validation_rules.items():
         # Determine pandas dtype
@@ -67,9 +68,9 @@ def create_pandera_schema_from_validation_rules(
 
         nullable_types = {
             "int": pd.Int64Dtype(),
-            "float": pd.Float64Dtype,
+            "float": pd.Float64Dtype(),
             "bool": pd.BooleanDtype(),
-            "datatime": "datetime64[ns]",
+            "datetime": "datetime64[ns]",
         }
 
         not_nullable_types = {
@@ -116,19 +117,25 @@ def create_pandera_schema_from_validation_rules(
         # Create the field with constraints
         # Note: For now, we'll handle nullable through pandas extension dtypes
         # rather than typing.Optional which causes issues with pandas dtype interpretation
-
         schema_attrs[col_name] = Series[dtype](Field(**field_constraints))
 
-        # Handle uniqueness at schema level
-        # Uniqueness (handled at schema level, not field level in Pandera)
+        # Track columns that need uniqueness checks
         if rules.get("unique", False):
-            # Add uniqueness check as a schema-level check
-            def uniqueness_check(df: pd.DataFrame, col=col_name) -> bool:
-                return df[col].nunique() == len(df[col].dropna())
+            unique_columns.append(col_name)
 
-            schema_attrs[f"_check_unique_{col_name}"] = pa.Check(
-                uniqueness_check, element_wise=False, name=f"unique_{col_name}"
-            )
+    # Add uniqueness checks as methods with proper decorators
+    for col_name in unique_columns:
+        def create_uniqueness_method(column_name: str):
+            def check_method(_cls, df: pd.DataFrame) -> bool:
+                if column_name not in df.columns:
+                    return True  # Skip check if column doesn't exist
+                return df[column_name].nunique() == len(df[column_name].dropna())
+
+            # Set proper method attributes for Pandera
+            check_method.__name__ = f"check_unique_{column_name}"
+            return pa.dataframe_check(check_method, name=f"unique_{column_name}")
+
+        schema_attrs[f"check_unique_{col_name}"] = create_uniqueness_method(col_name)
 
     # Create schema class with Config
     schema_attrs["Config"] = type(

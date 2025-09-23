@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..exceptions import NoDataLoadedError
 from ..core.session import _session_manager
+from ..exceptions import NoDataLoadedError
 
 if TYPE_CHECKING:
     import pandas as pd

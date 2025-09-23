@@ -77,6 +77,8 @@ class DataBeakSettings(BaseSettings):
 
 _settings = DataBeakSettings()
 
+
 def get_csv_settings() -> DataBeakSettings:
-    """Get global DataBeak settings instance."""
-    return DataBeakSettings()
+    """Get the global DataBeak settings instance."""
+    return _settings
+
