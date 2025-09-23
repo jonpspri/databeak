@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.databeak.models import get_session_manager
+from src import databeak
 from src.databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
 
 
@@ -49,7 +49,7 @@ class TestSessionManager:
 
     async def test_get_or_create_session(self) -> None:
         """Test session creation."""
-        manager = get_session_manager()
+        manager = databeak.session_manager
         test_session_id = "test_session_123"
         session = manager.get_or_create_session(test_session_id)
 
@@ -62,7 +62,7 @@ class TestSessionManager:
 
     async def test_session_cleanup(self) -> None:
         """Test session removal."""
-        manager = get_session_manager()
+        manager = databeak.session_manager
         test_session_id = "test_cleanup_456"
         session = manager.get_or_create_session(test_session_id)
         session_id = session.session_id

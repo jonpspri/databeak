@@ -9,7 +9,7 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import src.databeak.servers.column_server  # noqa: F401
-from src.databeak.models.csv_session import get_session_manager
+from src import databeak
 from src.databeak.servers.column_server import (
     add_column,
     change_column_type,
@@ -32,7 +32,7 @@ async def ctx_fixture():
 4,Alice,Brown,28,alice@example.com,52000,true,2023-03-01"""
 
     ctx = create_mock_context()
-    _session = get_session_manager().get_or_create_session(ctx.session_id)
+    _session = databeak.session_manager.get_or_create_session(ctx.session_id)
     _result = await load_csv_from_content(ctx, csv_content)
     return cast(Context, ctx)
 

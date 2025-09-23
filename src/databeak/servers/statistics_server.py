@@ -16,6 +16,8 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from ..core.settings import get_csv_settings
+
 # Import session management and data models from the main package
 from ..exceptions import (
     ColumnNotFoundError,
@@ -84,6 +86,7 @@ async def get_statistics(
         2. Identifies data distribution and potential issues
         3. Guides feature engineering and analysis decisions
         4. Provides context for outlier detection thresholds
+
     """
     try:
         # Get session_id from FastMCP context
@@ -121,7 +124,9 @@ async def get_statistics(
             col_data = numeric_df[col].dropna()
 
             # Create StatisticsSummary directly
-            from ..models.statistics_models import StatisticsSummary
+            from ..models.statistics_models import (  # noqa: PLC0415 # Avoids circular import
+                StatisticsSummary,
+            )
 
             # Calculate statistics, using 0.0 for undefined values
             col_stats = StatisticsSummary.model_validate(
@@ -201,6 +206,7 @@ async def get_column_statistics(
         2. Data quality assessment for individual features
         3. Understanding column characteristics for modeling
         4. Validation of data transformations
+
     """
     try:
         # Get session_id from FastMCP context
@@ -217,7 +223,7 @@ async def get_column_statistics(
         unique_count = int(col_data.nunique())
 
         # Initialize statistics dict using ColumnStatistics structure
-        from ..models.typed_dicts import ColumnStatistics
+        from ..models.typed_dicts import ColumnStatistics  # noqa: PLC0415 # Avoids circular import
 
         statistics: ColumnStatistics = {
             "count": count,
@@ -266,7 +272,9 @@ async def get_column_statistics(
         # No longer recording operations (simplified MCP architecture)
 
         # Convert statistics dict to StatisticsSummary
-        from ..models.statistics_models import StatisticsSummary
+        from ..models.statistics_models import (  # noqa: PLC0415 # Avoids circular import
+            StatisticsSummary,
+        )
 
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
             # Numeric columns - calculate percentiles for Pydantic model
@@ -307,9 +315,7 @@ async def get_column_statistics(
                 top=str(additional_stats.get("most_frequent"))
                 if additional_stats.get("most_frequent")
                 else None,
-                freq=additional_stats.get("most_frequent_count")
-                if isinstance(additional_stats.get("most_frequent_count"), int)
-                else None,
+                freq=int(freq_value) if (freq_value := additional_stats.get("most_frequent_count")) and isinstance(freq_value, int) else None,
             )
 
         # Map dtype to expected literal type
@@ -390,6 +396,7 @@ async def get_correlation_matrix(
         2. Multicollinearity detection before modeling
         3. Understanding variable relationships
         4. Data validation and quality assessment
+
     """
     try:
         # Get session_id from FastMCP context
@@ -409,7 +416,8 @@ async def get_correlation_matrix(
             msg = "No numeric columns found for correlation analysis"
             raise ToolError(msg)
 
-        if len(numeric_df.columns) < 2:
+        settings = get_csv_settings()
+        if len(numeric_df.columns) < settings.min_statistical_sample_size:
             msg = "Correlation analysis requires at least two numeric columns"
             raise ToolError(msg)
 
@@ -517,6 +525,7 @@ async def get_value_counts(
         2. Data quality assessment (identifying rare values)
         3. Understanding distribution for sampling strategies
         4. Feature engineering insights for categorical variables
+
     """
     try:
         # Get session_id from FastMCP context

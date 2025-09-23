@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp.exceptions import ToolError
 
+from src import databeak
 from src.databeak.servers.system_server import get_server_info, health_check
 from tests.test_mock_context import create_mock_context
 
@@ -15,13 +16,11 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_healthy_status(self):
         """Test health check returns healthy status under normal conditions."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+        with patch("src.databeak.servers.system_server._session_manager") as mock_session_manager:
             # Mock session manager with normal load
-            mock_session_manager = Mock()
             mock_session_manager.sessions = {}  # Empty sessions dict
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             result = await health_check(create_mock_context())
 
@@ -35,14 +34,12 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_degraded_status(self):
         """Test health check returns degraded status when near session limit."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
+        with patch("src.databeak.servers.system_server._session_manager") as mock_session_manager:
             # Mock session manager with high load (90%+ capacity)
-            mock_session_manager = Mock()
             # Create 91 sessions (91% of 100)
             mock_session_manager.sessions = {f"session_{i}": Mock() for i in range(91)}
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             result = await health_check(create_mock_context())
 
@@ -58,12 +55,10 @@ class TestHealthCheck:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
-            mock_session_manager = Mock()
+        with patch("src.databeak.servers.system_server._session_manager") as mock_session_manager:
             mock_session_manager.sessions = {"session1": Mock(), "session2": Mock()}
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 30
-            mock_manager.return_value = mock_session_manager
 
             result = await health_check(mock_ctx)
 
@@ -79,8 +74,8 @@ class TestHealthCheck:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
-            mock_manager.side_effect = Exception("Session manager unavailable")
+        with patch("src.databeak.servers.system_server._session_manager") as mock_session_manager:
+            mock_session_manager.side_effect = Exception("Session manager unavailable")
 
             result = await health_check(mock_ctx)
 
@@ -97,13 +92,13 @@ class TestHealthCheck:
     async def test_health_check_critical_failure(self):
         """Test health check handles critical failures that prevent fallback response."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server._session_manager") as mock_session_manager,
             patch(
                 "src.databeak.servers.system_server.__version__",
                 side_effect=Exception("Version error"),
             ),
         ):
-            mock_manager.side_effect = Exception("Critical failure")
+            mock_session_manager.side_effect = Exception("Critical failure")
 
             result = await health_check(create_mock_context())
 
@@ -115,12 +110,10 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_response_structure(self):
         """Test health check response has correct Pydantic model structure."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_manager:
-            mock_session_manager = Mock()
+        with patch("src.databeak.servers.system_server._session_manager") as mock_session_manager:
             mock_session_manager.sessions = {}
             mock_session_manager.max_sessions = 50
             mock_session_manager.ttl_minutes = 120
-            mock_manager.return_value = mock_session_manager
 
             result = await health_check(create_mock_context())
 
@@ -152,15 +145,13 @@ class TestHealthCheck:
     async def test_health_check_memory_monitoring_normal(self):
         """Test health check with normal memory usage."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server._session_manager") as mock_session_manager,
             patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             # Mock normal conditions
-            mock_session_manager = Mock()
             mock_session_manager.sessions = {}
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             mock_memory.return_value = 500.0  # 500MB usage
 
@@ -180,14 +171,12 @@ class TestHealthCheck:
     async def test_health_check_memory_warning(self):
         """Test health check with high memory usage (warning level)."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server._session_manager") as mock_session_manager,
             patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
-            mock_session_manager = Mock()
             mock_session_manager.sessions = {}
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             mock_memory.return_value = 1600.0  # 1.6GB usage (75% of 2GB threshold)
 
@@ -207,14 +196,12 @@ class TestHealthCheck:
     async def test_health_check_memory_critical(self):
         """Test health check with critical memory usage."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server._session_manager") as mock_session_manager,
             patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
-            mock_session_manager = Mock()
             mock_session_manager.sessions = {}
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             mock_memory.return_value = 1900.0  # 1.9GB usage (92% of 2GB threshold)
 
@@ -234,15 +221,13 @@ class TestHealthCheck:
     async def test_health_check_multiple_issues(self):
         """Test health check with multiple concurrent issues."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_manager,
+            patch("src.databeak.servers.system_server._session_manager") as mock_session_manager,
             patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             # High session load + critical memory
-            mock_session_manager = Mock()
             mock_session_manager.sessions = {f"session_{i}": Mock() for i in range(95)}  # 95% load
             mock_session_manager.max_sessions = 100
             mock_session_manager.ttl_minutes = 60
-            mock_manager.return_value = mock_session_manager
 
             mock_memory.return_value = 1950.0  # Critical memory (95% of 2GB)
 
@@ -508,7 +493,7 @@ class TestServerInfo:
 
             # Verify capabilities is a dict of lists
             assert isinstance(result_dict["capabilities"], dict)
-            for _category, caps in result_dict["capabilities"].items():
+            for caps in result_dict["capabilities"].values():
                 assert isinstance(caps, list)
                 assert all(isinstance(cap, str) for cap in caps)
 

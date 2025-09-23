@@ -21,8 +21,11 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..core.session import _session_manager
+from ..core.settings import get_csv_settings
+
 # Import session management and data models from the main package
-from ..models import DataPreview, ExportFormat, SessionInfo, get_session_manager
+from ..models import DataPreview, ExportFormat, SessionInfo
 from ..models.data_models import CellValue
 from ..models.tool_responses import BaseToolResponse
 from ..services.data_operations import create_data_preview_with_indices
@@ -170,8 +173,9 @@ def detect_file_encoding(file_path: str) -> str:
 
         # Use chardet for automatic detection
         detection = chardet.detect(raw_data)
+        settings = get_csv_settings()
 
-        if detection and detection["confidence"] > 0.7:
+        if detection and detection["confidence"] > settings.encoding_confidence_threshold:
             detected_encoding = detection["encoding"]
             if detected_encoding:
                 logger.debug(
@@ -290,7 +294,7 @@ async def load_csv(
         await ctx.info(f"File size: {file_size_mb:.2f} MB")
 
         # Get or create session
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         session = session_manager.get_or_create_session(session_id)
 
         await ctx.report_progress(0.3)
@@ -603,7 +607,7 @@ async def load_csv_from_url(
         await ctx.report_progress(0.8)
 
         # Get or create session
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         session = session_manager.get_or_create_session(session_id)
 
         if df is None:
@@ -705,7 +709,7 @@ async def load_csv_from_content(
             raise ToolError(msg)
 
         # Get or create session
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         session = session_manager.get_or_create_session(session_id)
         session.load_data(df, None)
 
@@ -902,7 +906,7 @@ async def list_sessions(
     management and system monitoring.
     """
     try:
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         sessions = session_manager.list_sessions()
 
         await ctx.info(f"Found {len(sessions)} active sessions")
@@ -947,7 +951,7 @@ async def close_session(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
 
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         removed = await session_manager.remove_session(session_id)
 
         if not removed:

@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
-
-from .data_models import ExportFormat, SessionInfo
-from .data_session import DataSession
-from .session_lifecycle import SessionLifecycle
+from ..exceptions import SessionExpiredError
+from ..models.data_models import ExportFormat, SessionInfo
+from ..models.data_session import DataSession
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -20,51 +18,56 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class DataBeakSettings(BaseSettings):
-    """Configuration settings for session management."""
+class SessionLifecycle:
+    """Manages session TTL and expiration logic."""
 
-    max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
-    session_timeout: int = Field(default=3600, description="Session timeout in seconds")
-    chunk_size: int = Field(
-        default=10000,
-        description="Default chunk size for processing large datasets",
-    )
-    memory_threshold_mb: int = Field(
-        default=2048, description="Memory usage threshold in MB for health monitoring"
-    )
-    memory_warning_threshold: float = Field(
-        default=0.75, description="Memory usage ratio that triggers warning status (0.0-1.0)"
-    )
-    memory_critical_threshold: float = Field(
-        default=0.90, description="Memory usage ratio that triggers critical status (0.0-1.0)"
-    )
-    session_capacity_warning_threshold: float = Field(
-        default=0.90, description="Session capacity ratio that triggers warning (0.0-1.0)"
-    )
-    max_validation_violations: int = Field(
-        default=1000, description="Maximum number of validation violations to report"
-    )
-    max_anomaly_sample_size: int = Field(
-        default=10000, description="Maximum sample size for anomaly detection operations"
-    )
+    def __init__(self, session_id: str, ttl_minutes: int = 60):
+        """Initialize session lifecycle manager."""
+        self.session_id = session_id
+        self.ttl = timedelta(minutes=ttl_minutes)
+        self.created_at = datetime.now(UTC)
+        self.last_accessed = datetime.now(UTC)
 
-    model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
+    def update_access_time(self) -> None:
+        """Update the last accessed time."""
+        self.last_accessed = datetime.now(UTC)
+
+    def is_expired(self) -> bool:
+        """Check if session has expired."""
+        return datetime.now(UTC) - self.last_accessed > self.ttl
+
+    def validate_not_expired(self) -> None:
+        """Raise exception if session is expired."""
+        if self.is_expired():
+            raise SessionExpiredError(self.session_id)
+
+    def get_remaining_ttl(self) -> timedelta:
+        """Get remaining time until expiration."""
+        elapsed = datetime.now(UTC) - self.last_accessed
+        return max(timedelta(0), self.ttl - elapsed)
+
+    def extend_ttl(self, additional_minutes: int) -> None:
+        """Extend the session TTL."""
+        self.ttl += timedelta(minutes=additional_minutes)
+        logger.info(
+            "Extended TTL for session %s by %s minutes", self.session_id, additional_minutes
+        )
+
+    def get_lifecycle_info(self) -> dict[str, Any]:
+        """Get session lifecycle information."""
+        remaining = self.get_remaining_ttl()
+
+        return {
+            "session_id": self.session_id,
+            "created_at": self.created_at,
+            "last_accessed": self.last_accessed,
+            "ttl_minutes": int(self.ttl.total_seconds() / 60),
+            "remaining_minutes": int(remaining.total_seconds() / 60),
+            "is_expired": self.is_expired(),
+        }
 
 
-# Global settings instance
-_settings: DataBeakSettings | None = None
-
-
-# Implementation: Singleton pattern for global settings with environment variable support
-def get_csv_settings() -> DataBeakSettings:
-    """Get global DataBeak settings instance."""
-    global _settings
-    if _settings is None:
-        _settings = DataBeakSettings()
-    return _settings
-
-
-class CSVSession:
+class DatabeakSession:
     """CSV editing session for DataBeak operations."""
 
     def __init__(
@@ -191,18 +194,19 @@ class SessionManager:
     # Implementation: Session manager with capacity limits and TTL management
     def __init__(self, max_sessions: int = 100, ttl_minutes: int = 60):
         """Initialize session manager with limits."""
-        self.sessions: dict[str, CSVSession] = {}
+        self.sessions: dict[str, DatabeakSession] = {}
         self.max_sessions = max_sessions
         self.ttl_minutes = ttl_minutes
         self.sessions_to_cleanup: set = set()
 
-    def get_session(self, session_id: str) -> CSVSession | None:
+    def get_session(self, session_id: str) -> DatabeakSession | None:
         """Get a session by ID without creating it if it doesn't exist.
 
         Use this for read-only operations to avoid unwanted session creation side effects.
 
         Returns:
             The session if it exists, None otherwise
+
         """
         session = self.sessions.get(session_id)
         if session and not session.is_expired():
@@ -210,7 +214,7 @@ class SessionManager:
             return session
         return None
 
-    def get_or_create_session(self, session_id: str) -> CSVSession:
+    def get_or_create_session(self, session_id: str) -> DatabeakSession:
         """Get a session by ID, creating it if it doesn't exist."""
         session = self.sessions.get(session_id)
         if not session:
@@ -222,7 +226,7 @@ class SessionManager:
                 oldest = min(self.sessions.values(), key=lambda s: s.lifecycle.last_accessed)
                 del self.sessions[oldest.session_id]
 
-            session = CSVSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
+            session = DatabeakSession(session_id=session_id, ttl_minutes=self.ttl_minutes)
             self.sessions[session.session_id] = session
             logger.info("Created new session: %s", session.session_id)
         else:
@@ -258,33 +262,31 @@ class SessionManager:
 
 
 # Global session manager instance
-_session_manager: SessionManager | None = None
+_session_manager = SessionManager()
 
 
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
-    """Get global session manager instance."""
-    global _session_manager
-    if _session_manager is None:
-        _session_manager = SessionManager()
+    """Return the global Session Manager object."""
     return _session_manager
 
 
-def get_or_create_session(session_id: str) -> CSVSession:
+def get_or_create_session(session_id: str) -> DatabeakSession:
     """Get or create session with elegant interface.
 
     Provides dictionary-like access: session = get_or_create_session(session_id)
     Returns existing session or creates new empty session.
 
     Returns:
-        CSVSession (existing or newly created)
+        DatabeakSession (existing or newly created)
+
     """
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
 
     if not session:
         # Create new session with the specified ID
-        session = CSVSession(session_id=session_id)
+        session = DatabeakSession(session_id=session_id)
         manager.sessions[session_id] = session
 
     return session

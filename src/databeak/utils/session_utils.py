@@ -9,15 +9,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..exceptions import NoDataLoadedError
-from ..models import get_session_manager
+from ..core.session import _session_manager
 
 if TYPE_CHECKING:
     import pandas as pd
 
-    from ..models.csv_session import CSVSession
+    from ..core.session import DatabeakSession
 
 
-def get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
+def get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
     """Get session and DataFrame with comprehensive validation.
 
     This function replaces direct session.df access patterns with proper
@@ -32,7 +32,7 @@ def get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
 
     Example:
         # Instead of:
-        session = get_session_manager().get_or_create_session(session_id)
+        session = databeak.session_manager.get_or_create_session(session_id)
         if not session.has_data():
             raise ToolError("No data")
         df = session.df
@@ -40,8 +40,9 @@ def get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
 
         # Use:
         session, df = get_session_data(session_id)
+
     """
-    manager = get_session_manager()
+    manager = _session_manager
     session = manager.get_or_create_session(session_id)
 
     # get_or_create_session always returns a session, so no need to check if not session
@@ -55,13 +56,13 @@ def get_session_data(session_id: str) -> tuple[CSVSession, pd.DataFrame]:
     return session, df
 
 
-def get_session_only(session_id: str) -> CSVSession:
+def get_session_only(session_id: str) -> DatabeakSession:
     """Get session with validation but without requiring data.
 
     Use this when you need the session but data loading is optional.
 
     Returns:
-        Valid CSVSession instance
+        Valid DatabeakSession instance
 
     Raises:
         SessionNotFoundError: If session doesn't exist
@@ -73,13 +74,14 @@ def get_session_only(session_id: str) -> CSVSession:
             # Work with existing data
         else:
             # Initialize new data
+
     """
-    manager = get_session_manager()
+    manager = _session_manager
     # get_or_create_session always returns a session, so no need to check if not session
     return manager.get_or_create_session(session_id)
 
 
-def validate_session_has_data(session: CSVSession, session_id: str) -> pd.DataFrame:
+def validate_session_has_data(session: DatabeakSession, session_id: str) -> pd.DataFrame:
     """Validate that session has data and return DataFrame.
 
     Use this when you already have a session object and need to ensure data exists.
@@ -94,6 +96,7 @@ def validate_session_has_data(session: CSVSession, session_id: str) -> pd.DataFr
         session = get_session_only(session_id)
         # ... some logic ...
         df = validate_session_has_data(session, session_id)
+
     """
     if not session.has_data():
         raise NoDataLoadedError(session_id)
@@ -103,3 +106,5 @@ def validate_session_has_data(session: CSVSession, session_id: str) -> pd.DataFr
         raise NoDataLoadedError(session_id)
 
     return df
+
+

@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
+from src import databeak
 from src.databeak.servers.io_server import (
     MAX_URL_SIZE_MB,
     close_session,
@@ -521,8 +522,8 @@ class TestSessionManagementErrorPaths:
     async def test_get_session_info_exception_handling(self):
         """Test exception handling in get_session_info."""
         with (
-            patch(
-                "src.databeak.servers.io_server.get_session_manager",
+            patch.object(
+                databeak, "session_manager",
                 side_effect=Exception("Session manager error"),
             ),
             pytest.raises(ToolError, match="Failed to get session info"),
@@ -531,10 +532,8 @@ class TestSessionManagementErrorPaths:
 
     async def test_list_sessions_returns_empty_on_error(self):
         """Test that list_sessions returns empty result on error."""
-        with patch(
-            "src.databeak.servers.io_server.get_session_manager",
-            side_effect=Exception("Manager error"),
-        ):
+        with patch("src.databeak.servers.io_server._session_manager") as mock_session_manager:
+            mock_session_manager.list_sessions.side_effect = Exception("Manager error")
             result = await list_sessions(create_mock_context())
             assert result.sessions == []
             assert result.total_sessions == 0
@@ -543,8 +542,8 @@ class TestSessionManagementErrorPaths:
     async def test_close_session_exception_handling(self):
         """Test exception handling in close_session."""
         with (
-            patch(
-                "src.databeak.servers.io_server.get_session_manager",
+            patch.object(
+                databeak, "session_manager",
                 side_effect=Exception("Manager error"),
             ),
             pytest.raises(ToolError, match="Failed to close session"),

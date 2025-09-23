@@ -102,9 +102,9 @@ def filter_rows(
 
             col_data = df[column]
 
-            if operator == "=" or operator == "==":
+            if operator in {"=", "=="}:
                 condition_mask = col_data == value
-            elif operator == "!=" or operator == "not_equals":
+            elif operator in {"!=", "not_equals"}:
                 condition_mask = col_data != value
             elif operator == ">":
                 condition_mask = col_data > value
@@ -205,6 +205,7 @@ def sort_data(
             SortColumn(column="name", ascending=True),
             SortColumn(column="age", ascending=False)
         ])
+
     """
     try:
         session_id = ctx.session_id
@@ -280,6 +281,7 @@ def remove_duplicates(
 
         # Remove all duplicates (keep none)
         remove_duplicates(ctx, subset=["email"], keep="none")
+
     """
     try:
         session_id = ctx.session_id
@@ -349,6 +351,7 @@ def fill_missing_values(
 
         # Fill with column mean for numeric columns
         fill_missing_values(ctx, strategy="mean", columns=["age", "salary"])
+
     """
     try:
         session_id = ctx.session_id

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
+from ..core.settings import get_csv_settings
 from ..models.session_service import SessionService
 from ..models.statistics_models import (
     ColumnStatisticsResult,
@@ -220,7 +221,8 @@ class StatisticsService(SessionService):
                 msg = "No numeric columns found"
                 raise ValueError(msg)
 
-            if len(numeric_df.columns) < 2:
+            settings = get_csv_settings()
+            if len(numeric_df.columns) < settings.min_statistical_sample_size:
                 msg = "Need at least 2 numeric columns for correlation"
                 raise ValueError(msg)
 

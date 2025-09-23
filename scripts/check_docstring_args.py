@@ -118,6 +118,7 @@ def scan_file(file_path: Path) -> list[ArgsViolation]:
 
     Returns:
         List of violations found in the file
+
     """
     try:
         with file_path.open("r", encoding="utf-8") as f:
@@ -145,6 +146,7 @@ def scan_directory(src_dir: Path) -> list[ArgsViolation]:
 
     Returns:
         List of all violations found
+
     """
     all_violations = []
 
@@ -172,6 +174,7 @@ def scan_paths(paths: list[str]) -> list[ArgsViolation]:
 
     Returns:
         List of all violations found
+
     """
     all_violations = []
     all_files = []
@@ -216,6 +219,7 @@ def format_violations_report(violations: list[ArgsViolation]) -> str:
 
     Returns:
         Formatted report string
+
     """
     if not violations:
         return "✅ No Args sections found in docstrings - MCP documentation standards met!"
@@ -239,11 +243,13 @@ def format_violations_report(violations: list[ArgsViolation]) -> str:
 
     for file_path, file_violations in sorted(by_file.items()):
         report_lines.append(f"📁 {file_path}")
-        for violation in file_violations:
-            report_lines.append(
+        report_lines.extend(
+            [
                 f"   └─ {violation.function_name}() at line {violation.line_number} "
                 f"(Args section at line {violation.args_line_number})"
-            )
+                for violation in file_violations
+            ]
+        )
         report_lines.append("")
 
     report_lines.extend(
@@ -271,6 +277,7 @@ def parse_arguments() -> argparse.Namespace:
 
     Returns:
         Parsed arguments namespace
+
     """
     parser = argparse.ArgumentParser(
         description="Check for Args sections in docstrings that violate MCP documentation standards",
@@ -303,6 +310,7 @@ def main() -> int:
 
     Returns:
         Exit code: 0 for success, 1 for violations found, 2 for errors
+
     """
     try:
         args = parse_arguments()

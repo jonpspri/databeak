@@ -209,7 +209,7 @@ from pathlib import Path
 
 def run_command(cmd: str, *, check: bool = True) -> subprocess.CompletedProcess[str]:
     """Run a command and return the result."""
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)  # noqa: S602
+    result = subprocess.run(cmd, check=False, shell=True, capture_output=True, text=True)  # noqa: S602
     if check and result.returncode != 0:
         sys.exit(1)
     return result

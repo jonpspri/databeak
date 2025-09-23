@@ -245,9 +245,15 @@ def set_cell_value(
         current_dtype = df[column_name].dtype  # Access dtype through column name instead
 
         # Convert value to match column dtype if possible
+        converted_value: CellValue
         try:
             if pd.api.types.is_numeric_dtype(current_dtype) and isinstance(value, str):
-                converted_value = pd.to_numeric(value, errors="coerce")
+                numeric_result = pd.to_numeric(value, errors="coerce")
+                # Convert pandas numeric to Python type for CellValue compatibility
+                if pd.isna(numeric_result):
+                    converted_value = None
+                else:
+                    converted_value = float(numeric_result) if isinstance(numeric_result, (int, float)) else numeric_result.item()
             else:
                 converted_value = value
         except (ValueError, TypeError):

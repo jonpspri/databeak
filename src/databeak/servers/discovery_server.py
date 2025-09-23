@@ -226,6 +226,7 @@ async def detect_outliers(
         2. Anomaly detection for fraud/error identification
         3. Data preprocessing for machine learning
         4. Understanding data distribution characteristics
+
     """
     try:
         # Get session_id from FastMCP context
@@ -367,6 +368,7 @@ async def profile_data(
         2. Automated data quality reporting
         3. Feature engineering guidance
         4. Data preprocessing strategy development
+
     """
     try:
         # Get session_id from FastMCP context
@@ -390,9 +392,7 @@ async def profile_data(
                 # Handle various data types for most_frequent
                 if most_frequent is None or pd.isna(most_frequent):
                     most_frequent = None
-                elif isinstance(most_frequent, str | int | float | bool):
-                    most_frequent = most_frequent
-                else:
+                elif not isinstance(most_frequent, str | int | float | bool):
                     most_frequent = str(most_frequent)
 
             profile_info = ProfileInfo(
@@ -471,6 +471,7 @@ async def group_by_aggregate(
         2. Feature engineering for categorical interactions
         3. Data summarization for reporting and insights
         4. Understanding group-based patterns and trends
+
     """
     try:
         # Get session_id from FastMCP context
@@ -577,6 +578,7 @@ async def find_cells_with_value(
         2. Pattern identification and data validation
         3. Reference data location and verification
         4. Data cleaning and preprocessing guidance
+
     """
     try:
         # Get session_id from FastMCP context
@@ -603,13 +605,12 @@ async def find_cells_with_value(
                     mask = df[col].isna()
                 else:
                     mask = df[col] == value
+            # Substring matching (for strings)
+            elif isinstance(value, str):
+                mask = df[col].astype(str).str.contains(str(value), na=False, case=False)
             else:
-                # Substring matching (for strings)
-                if isinstance(value, str):
-                    mask = df[col].astype(str).str.contains(str(value), na=False, case=False)
-                else:
-                    # For non-strings, fall back to exact match
-                    mask = df[col] == value
+                # For non-strings, fall back to exact match
+                mask = df[col] == value
 
             # Get matching row indices
             matching_rows = df.index[mask].tolist()
@@ -703,6 +704,7 @@ async def get_data_summary(
         2. Planning analytical approaches based on data structure
         3. Resource planning for large dataset processing
         4. Data quality initial assessment
+
     """
     try:
         # Get session_id from FastMCP context
@@ -847,6 +849,7 @@ async def inspect_data_around(
         2. Pattern recognition in local data areas
         3. Understanding data relationships and context
         4. Validation of data transformations and corrections
+
     """
     try:
         # Get session_id from FastMCP context

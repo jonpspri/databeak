@@ -18,8 +18,8 @@ from pydantic import Field
 
 # Import version and session management from main package
 from .._version import __version__
-from ..models import get_session_manager
-from ..models.csv_session import DataBeakSettings, get_csv_settings
+from ..core.session import _session_manager
+from ..core.settings import DataBeakSettings, get_csv_settings
 from ..models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ def get_memory_usage() -> float:
 
     Raises:
         None - errors are logged and 0.0 is returned for resilience
+
     """
     try:
         process = psutil.Process(os.getpid())
@@ -56,6 +57,7 @@ def get_memory_status(
 
     Returns:
         Status string: 'normal', 'warning', or 'critical'
+
     """
     if settings is None:
         settings = get_csv_settings()
@@ -90,7 +92,7 @@ async def health_check(
     try:
         await ctx.info("Performing DataBeak health check with memory monitoring")
 
-        session_manager = get_session_manager()
+        session_manager = _session_manager
         settings = get_csv_settings()
         active_sessions = len(session_manager.sessions)
 

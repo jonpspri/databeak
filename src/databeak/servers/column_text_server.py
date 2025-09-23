@@ -15,15 +15,14 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
+# Removed: OperationType (no longer tracking operations)
+from ..core.session import DatabeakSession, _session_manager
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
-
-# Removed: OperationType (no longer tracking operations)
-from ..models.csv_session import CSVSession
 from ..models.tool_responses import ColumnOperationResult
 from ..utils.session_utils import get_session_data
 
@@ -38,10 +37,8 @@ CellValue = str | int | float | bool | None
 
 
 # Use elegant session access pattern
-def _get_session_data(session_id: str) -> CSVSession:
-    from ..models import get_session_manager
-
-    return get_session_manager().get_or_create_session(session_id)
+def _get_session_data(session_id: str) -> DatabeakSession:
+    return _session_manager.get_or_create_session(session_id)
 
 
 # =============================================================================
@@ -100,6 +97,7 @@ async def replace_in_column(
 
         # Replace multiple spaces with single space
         replace_in_column(ctx, "description", r"\s+", " ")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -181,6 +179,7 @@ async def extract_from_column(
 
         # Extract year from date string
         extract_from_column(ctx, "date", r"\d{4}")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -296,6 +295,7 @@ async def split_column(
         # Expand with custom column names
         split_column(ctx, "name", " ", expand_to_columns=True,
                     new_columns=["first_name", "last_name"])
+
     """
     try:
         # Get session_id from FastMCP context
@@ -434,6 +434,7 @@ async def transform_column_case(
 
         # Capitalize sentences
         transform_column_case(ctx, "description", "capitalize")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -522,6 +523,7 @@ async def strip_column(
 
         # Remove quotes
         strip_column(ctx, "quoted_text", "'\"")
+
     """
     try:
         # Get session_id from FastMCP context
@@ -591,6 +593,7 @@ async def fill_column_nulls(
 
         # Fill missing scores with -1
         fill_column_nulls(ctx, "score", -1)
+
     """
     try:
         # Get session_id from FastMCP context
@@ -616,8 +619,6 @@ async def fill_column_nulls(
             msg = "Session data not available"
             raise ToolError(msg)
         # Use explicit assignment to avoid downcasting warnings
-        import pandas as pd
-
         with pd.option_context("future.no_silent_downcasting", True):  # noqa: FBT003
             filled_series = df[column].fillna(value)
             if hasattr(filled_series, "infer_objects"):

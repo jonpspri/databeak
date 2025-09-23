@@ -2,10 +2,17 @@
 
 from __future__ import annotations
 
+import warnings
+
 import pandas as pd
 
-from ..exceptions import InvalidRowIndexError, NoDataLoadedError, SessionNotFoundError
-from ..models import get_session_manager
+from ..core.session import _session_manager
+from ..exceptions import (
+    ColumnNotFoundError,
+    InvalidRowIndexError,
+    NoDataLoadedError,
+    SessionNotFoundError,
+)
 from ..models.typed_dicts import CellValue, DataPreviewResult, InternalDataSummary
 
 
@@ -49,7 +56,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> Dat
 # Implementation: Comprehensive data analysis including shape, types, memory usage, nulls
 def get_data_summary(session_id: str) -> InternalDataSummary:
     """Get comprehensive data summary for session."""
-    session_manager = get_session_manager()
+    session_manager = _session_manager
     session = session_manager.get_or_create_session(session_id)
 
     if not session:
@@ -80,8 +87,6 @@ def validate_row_index(df: pd.DataFrame, row_index: int) -> None:
 # Implementation: Column existence check with error handling
 def validate_column_exists(df: pd.DataFrame, column: str) -> None:
     """Validate column exists in DataFrame."""
-    from ..exceptions import ColumnNotFoundError
-
     if column not in df.columns:
         raise ColumnNotFoundError(column, df.columns.tolist())
 
@@ -98,8 +103,6 @@ def safe_type_conversion(series: pd.Series, target_type: str) -> pd.Series:
             return series.astype(str)
         if target_type == "datetime":
             # Suppress format inference warning for flexible datetime parsing
-            import warnings
-
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 return pd.to_datetime(series, errors="coerce")

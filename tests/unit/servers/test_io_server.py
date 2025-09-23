@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
+from src import databeak
 from src.databeak.servers.io_server import (
     MAX_FILE_SIZE_MB,
     MAX_MEMORY_USAGE_MB,
@@ -342,7 +343,7 @@ class TestTempFileCleanup:
             temp_path = tmp.name
 
         try:
-            with patch("src.databeak.servers.io_server.get_session_manager") as mock_manager:
+            with patch.object(databeak, "session_manager") as mock_manager:
                 mock_manager.side_effect = Exception("Mock session error")
 
                 with pytest.raises(ToolError, match="Failed to export data"):
