@@ -2,7 +2,6 @@
 
 import pytest
 
-from src import databeak
 from src.databeak.core.session import get_session_manager
 from src.databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
 

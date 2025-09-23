@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-import databeak
-
 from ..models.session_service import SessionService
 from ..models.statistics_models import (
     ColumnStatisticsResult,
@@ -94,10 +92,10 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error("Validation error in get_statistics: %s", e)
+            logger.exception("Validation error in get_statistics: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error("Error getting statistics: %s", e)
+            logger.exception("Error getting statistics: %s", e)
             msg = f"Error getting statistics: {e}"
             raise ToolError(msg) from e
 
@@ -192,10 +190,10 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error("Validation error in get_column_statistics: %s", e)
+            logger.exception("Validation error in get_column_statistics: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error("Column statistics failed: %s", e)
+            logger.exception("Column statistics failed: %s", e)
             msg = f"Failed to analyze column '{column}': {e}"
             raise ToolError(msg) from e
 
@@ -257,10 +255,10 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error("Validation error in get_correlation_matrix: %s", e)
+            logger.exception("Validation error in get_correlation_matrix: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error("Correlation analysis failed: %s", e)
+            logger.exception("Correlation analysis failed: %s", e)
             msg = f"Failed to compute correlation matrix: {e}"
             raise ToolError(msg) from e
 
@@ -327,9 +325,9 @@ class StatisticsService(SessionService):
             )
 
         except ValueError as e:
-            logger.error("Validation error in get_value_counts: %s", e)
+            logger.exception("Validation error in get_value_counts: %s", e)
             raise ToolError(str(e)) from e
         except Exception as e:
-            logger.error("Value counts analysis failed: %s", e)
+            logger.exception("Value counts analysis failed: %s", e)
             msg = f"Failed to analyze value counts for column '{column}': {e}"
             raise ToolError(msg) from e

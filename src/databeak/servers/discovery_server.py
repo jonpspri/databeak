@@ -16,6 +16,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
+from ..core.session import get_session_data
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
@@ -33,7 +34,6 @@ from ..models.tool_responses import (
     MissingDataInfo,
 )
 from ..models.typed_dicts import DataPreviewResult
-from ..core.session import get_session_data
 
 # Import data operations function directly to avoid dependency issues
 try:
@@ -330,7 +330,7 @@ async def detect_outliers(
         )
 
     except Exception as e:
-        logger.error("Error detecting outliers: %s", str(e))
+        logger.exception("Error detecting outliers: %s", str(e))
         msg = f"Error detecting outliers: {e}"
         raise ToolError(msg) from e
 
@@ -421,7 +421,7 @@ async def profile_data(
         )
 
     except Exception as e:
-        logger.error("Error profiling data: %s", str(e))
+        logger.exception("Error profiling data: %s", str(e))
         msg = f"Error profiling data: {e}"
         raise ToolError(msg) from e
 
@@ -531,7 +531,7 @@ async def group_by_aggregate(
         )
 
     except Exception as e:
-        logger.error("Error in group by aggregate: %s", str(e))
+        logger.exception("Error in group by aggregate: %s", str(e))
         msg = f"Error in group by aggregate: {e}"
         raise ToolError(msg) from e
 
@@ -655,11 +655,11 @@ async def find_cells_with_value(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error finding cells with value: %s", str(e))
+        logger.exception("Error finding cells with value: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error finding cells with value: %s", str(e))
+        logger.exception("Error finding cells with value: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 
@@ -802,11 +802,11 @@ async def get_data_summary(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error getting data summary: %s", str(e))
+        logger.exception("Error getting data summary: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error getting data summary: %s", str(e))
+        logger.exception("Error getting data summary: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 
@@ -925,11 +925,11 @@ async def inspect_data_around(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error inspecting data around cell: %s", str(e))
+        logger.exception("Error inspecting data around cell: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error inspecting data around cell: %s", str(e))
+        logger.exception("Error inspecting data around cell: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 

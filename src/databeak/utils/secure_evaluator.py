@@ -387,6 +387,10 @@ class SecureExpressionEvaluator:
         if isinstance(node, ast.Call):
             self._validate_function_call(node)
 
+        # Validate attribute access (for string methods like x.upper())
+        if isinstance(node, ast.Attribute):
+            self._validate_attribute_access(node)
+
         # Recursively validate child nodes
         for child in ast.iter_child_nodes(node):
             self._validate_ast_nodes(child)
@@ -402,15 +406,20 @@ class SecureExpressionEvaluator:
         if isinstance(node.func, ast.Name):
             func_name = node.func.id
         elif isinstance(node.func, ast.Attribute):
-            # Handle np.function calls
-            if isinstance(node.func.value, ast.Name) and node.func.value.id == "np":
-                func_name = f"np.{node.func.attr}"
+            # Handle np.function calls and string method calls
+            if isinstance(node.func.value, ast.Name):
+                if node.func.value.id == "np":
+                    func_name = f"np.{node.func.attr}"
+                else:
+                    # This is a string method call like x.upper()
+                    # Don't validate here - it will be handled in evaluate_string_expression
+                    return
             else:
                 msg = "expression"
                 raise InvalidParameterError(
                     msg,
                     str(node.func),
-                    "Only np.* attribute access is allowed",
+                    "Only np.* and variable string method attribute access is allowed",
                 )
         else:
             msg = "expression"
@@ -432,6 +441,36 @@ class SecureExpressionEvaluator:
                 f"Function '{func_name}' is not allowed. "
                 f"Allowed functions: {', '.join(sorted(all_safe_functions))}",
             )
+
+    def _validate_attribute_access(self, node: ast.Attribute) -> None:
+        """Validate that attribute access is safe.
+
+        Raises:
+            InvalidParameterError: If the attribute access is unsafe
+
+        """
+        # Allow np.* attribute access (already handled in function call validation)
+        if isinstance(node.value, ast.Name) and node.value.id == "np":
+            return
+
+        # Allow variable.method() patterns for string operations
+        if isinstance(node.value, ast.Name):
+            # This is for patterns like x.upper(), x.lower(), etc.
+            # The actual validation happens in _evaluate_string_method
+            safe_string_methods = {
+                "upper", "lower", "strip", "title", "capitalize", "swapcase", "len",
+                "replace", "contains", "startswith", "endswith"
+            }
+            if node.attr in safe_string_methods:
+                return
+
+        # Block all other attribute access
+        msg = "expression"
+        raise InvalidParameterError(
+            msg,
+            f"{node.value}.{node.attr}" if hasattr(node.value, "id") else str(node),
+            "Only np.* and safe string method attribute access is allowed",
+        )
 
     def evaluate_column_expression(
         self,
@@ -543,6 +582,195 @@ class SecureExpressionEvaluator:
         """
         return ["+", "-", "*", "/", "//", "%", "**", "<<", ">>", "|", "^", "&", "~"]
 
+    def evaluate_string_expression(
+        self,
+        expression: str,
+        dataframe: pd.DataFrame,
+        column_context: dict[str, str] | None = None,
+    ) -> pd.Series:
+        """Safely evaluate string expressions with pandas string methods.
+
+        Handles both string operations (x.upper(), x.lower(), etc.) and mathematical expressions.
+
+        Returns:
+            pd.Series: Result of the expression evaluation
+
+        Raises:
+            InvalidParameterError: If the expression is unsafe or evaluation fails
+
+        """
+        # First validate the expression syntax only once
+        self.validate_expression_syntax(expression)
+
+        # Handle column context mapping
+        if column_context and len(column_context) == 1:
+            var_name, column_name = next(iter(column_context.items()))
+            if column_name not in dataframe.columns:
+                msg = "column"
+                raise InvalidParameterError(
+                    msg,
+                    column_name,
+                    f"Column '{column_name}' not found in DataFrame",
+                )
+
+            # Check for string method calls first
+            if f"{var_name}." in expression:
+                try:
+                    return self._evaluate_string_method(expression, dataframe[column_name], var_name)
+                except InvalidParameterError:
+                    # If string method fails, fall through to mathematical evaluation
+                    pass
+
+        # Fall back to regular mathematical expression evaluation
+        # Skip validation since we already validated above
+        return self._evaluate_mathematical_expression(expression, dataframe, column_context)
+
+    def _evaluate_mathematical_expression(
+        self,
+        expression: str,
+        dataframe: pd.DataFrame,
+        column_context: dict[str, str] | None = None,
+    ) -> pd.Series:
+        """Evaluate mathematical expression without re-validation.
+
+        This is used internally by evaluate_string_expression to avoid double-validation.
+        """
+        # Build context with column data
+        context = {}
+
+        # Handle column context mapping (e.g., x -> actual column name)
+        if column_context:
+            for var_name, column_name in column_context.items():
+                if column_name not in dataframe.columns:
+                    msg = "column"
+                    raise InvalidParameterError(
+                        msg,
+                        column_name,
+                        f"Column '{column_name}' not found in DataFrame",
+                    )
+                context[var_name] = dataframe[column_name]
+
+        # Add all column names as direct references
+        for col in dataframe.columns:
+            # Use backticks for column names with spaces/special chars
+            safe_col_name = col.replace("`", "")  # Remove existing backticks
+            context[safe_col_name] = dataframe[col]
+            context[f"`{safe_col_name}`"] = dataframe[col]
+
+        # Add constants and safe functions to context
+        context.update(self._evaluator.names)
+
+        try:
+            # Use simpleeval for safe execution
+            self._evaluator.names.update(context)
+            result = self._evaluator.eval(expression)
+
+            # Ensure result is a pandas Series
+            if not isinstance(result, pd.Series):
+                # Convert scalar or array results to Series
+                if hasattr(result, "__len__") and len(result) == len(dataframe):
+                    result = pd.Series(result, index=dataframe.index)
+                else:
+                    # Scalar result - broadcast to all rows
+                    result = pd.Series([result] * len(dataframe), index=dataframe.index)
+
+            return result  # type: ignore[no-any-return]
+
+        except NameNotDefined as e:
+            msg = "expression"
+            raise InvalidParameterError(
+                msg,
+                expression,
+                f"Undefined variable in expression: {e}. "
+                f"Available columns: {list(dataframe.columns)}",
+            ) from e
+        except Exception as e:
+            msg = "expression"
+            raise InvalidParameterError(
+                msg,
+                expression,
+                f"Expression evaluation failed: {e}",
+            ) from e
+
+    def _evaluate_string_method(self, expression: str, series: pd.Series, var_name: str) -> pd.Series:
+        """Evaluate string method expressions safely.
+
+        Args:
+            expression: The expression containing string methods (e.g., "x.upper()")
+            series: The pandas Series to operate on
+            var_name: The variable name used in the expression (e.g., "x")
+
+        Returns:
+            pd.Series: Result of the string operation
+
+        Raises:
+            InvalidParameterError: If the string operation is not supported
+
+        """
+        # Convert to string Series for string operations
+        str_series = series.astype(str)
+
+        # Define safe string operations
+        safe_string_ops = {
+            f"{var_name}.upper()": lambda s: s.str.upper(),
+            f"{var_name}.lower()": lambda s: s.str.lower(),
+            f"{var_name}.strip()": lambda s: s.str.strip(),
+            f"{var_name}.title()": lambda s: s.str.title(),
+            f"{var_name}.capitalize()": lambda s: s.str.capitalize(),
+            f"{var_name}.swapcase()": lambda s: s.str.swapcase(),
+            f"{var_name}.len()": lambda s: s.str.len(),
+        }
+
+        # Check for exact match first
+        if expression in safe_string_ops:
+            return safe_string_ops[expression](str_series)  # type: ignore[no-any-return]
+
+        # Check for method calls with arguments
+
+        # Handle strip with custom characters: x.strip("chars")
+        strip_match = re.match(rf"{re.escape(var_name)}\.strip\(['\"]([^'\"]*)['\"]?\)", expression)
+        if strip_match:
+            chars = strip_match.group(1)
+            return str_series.str.strip(chars)
+
+        # Handle replace operations: x.replace("old", "new")
+        replace_match = re.match(rf"{re.escape(var_name)}\.replace\(['\"]([^'\"]*)['\"], *['\"]([^'\"]*)['\"]?\)", expression)
+        if replace_match:
+            old_val, new_val = replace_match.groups()
+            return str_series.str.replace(old_val, new_val, regex=False)
+
+        # Handle contains operations: x.contains("pattern")
+        contains_match = re.match(rf"{re.escape(var_name)}\.contains\(['\"]([^'\"]*)['\"]?\)", expression)
+        if contains_match:
+            pattern = contains_match.group(1)
+            return str_series.str.contains(pattern, na=False)
+
+        # Handle startswith/endswith: x.startswith("prefix"), x.endswith("suffix")
+        startswith_match = re.match(rf"{re.escape(var_name)}\.startswith\(['\"]([^'\"]*)['\"]?\)", expression)
+        if startswith_match:
+            prefix = startswith_match.group(1)
+            return str_series.str.startswith(prefix, na=False)
+
+        endswith_match = re.match(rf"{re.escape(var_name)}\.endswith\(['\"]([^'\"]*)['\"]?\)", expression)
+        if endswith_match:
+            suffix = endswith_match.group(1)
+            return str_series.str.endswith(suffix, na=False)
+
+        # If no string operation matched, raise error
+        msg = "expression"
+        supported_ops = ", ".join([
+            f"{var_name}.upper()", f"{var_name}.lower()", f"{var_name}.strip()",
+            f"{var_name}.title()", f"{var_name}.capitalize()", f"{var_name}.len()",
+            f"{var_name}.strip('chars')", f"{var_name}.replace('old', 'new')",
+            f"{var_name}.contains('pattern')", f"{var_name}.startswith('prefix')",
+            f"{var_name}.endswith('suffix')"
+        ])
+        raise InvalidParameterError(
+            msg,
+            expression,
+            f"Unsupported string operation. Supported operations: {supported_ops}",
+        )
+
 def create_secure_expression_evaluator() -> SecureExpressionEvaluator:
     """Create a new SecureExpressionEvaluator."""
     return SecureExpressionEvaluator()
@@ -581,6 +809,27 @@ def evaluate_expression_safely(
 
     """
     return get_secure_expression_evaluator().evaluate_column_expression(
+        expression, dataframe, column_context
+    )
+
+
+def evaluate_string_expression_safely(
+    expression: str,
+    dataframe: pd.DataFrame,
+    column_context: dict[str, str] | None = None,
+) -> pd.Series:
+    """Evaluate string or mathematical expression safely.
+
+    Handles both string operations (x.upper(), x.lower(), etc.) and mathematical expressions.
+
+    Returns:
+        pd.Series: Result of expression evaluation
+
+    Raises:
+        InvalidParameterError: If expression is unsafe or evaluation fails
+
+    """
+    return get_secure_expression_evaluator().evaluate_string_expression(
         expression, dataframe, column_context
     )
 

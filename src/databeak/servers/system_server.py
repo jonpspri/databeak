@@ -269,7 +269,7 @@ async def get_server_info(
         return server_info
 
     except Exception as e:
-        logger.error("Failed to get server information: %s", str(e))
+        logger.exception("Failed to get server information: %s", str(e))
         await ctx.error(f"Failed to get server information: {e}")
         msg = f"Failed to get server information: {e}"
 

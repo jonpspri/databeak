@@ -8,11 +8,10 @@ from unittest.mock import AsyncMock, patch
 import pandas as pd
 import pytest
 
-from src import databeak
-from src.databeak.core.session import get_session_manager
 from src.databeak.core.session import (
     DatabeakSession,
     SessionManager,
+    get_session_manager,
 )
 from src.databeak.core.settings import DataBeakSettings
 from src.databeak.models.data_models import ExportFormat

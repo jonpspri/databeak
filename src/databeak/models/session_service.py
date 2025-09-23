@@ -110,9 +110,9 @@ class SessionServiceFactory:
 # Convenience functions for backward compatibility with existing code
 def get_default_session_service_factory() -> SessionServiceFactory:
     """Get the default session service factory using the global session manager."""
-    from ..core.session import _session_manager  # noqa: PLC0415 # Avoids circular import
+    from ..core.session import get_session_manager  # noqa: PLC0415 # Avoids circular import
 
-    return SessionServiceFactory(_session_manager)
+    return SessionServiceFactory(get_session_manager())
 
 
 class MockSessionManager:

@@ -13,6 +13,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..core.session import get_session_data
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
@@ -23,8 +24,7 @@ from ..exceptions import (
 # Removed: OperationType (no longer tracking operations)
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
-from ..utils.secure_evaluator import SecureExpressionEvaluator
-from ..core.session import get_session_data
+from ..utils.secure_evaluator import SecureExpressionEvaluator, evaluate_string_expression_safely
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +134,39 @@ class RenameColumnsResult(BaseToolResponse):
 # =============================================================================
 
 
-# Use elegant session access pattern
+def _apply_expression_to_column(
+    expression: str,
+    column: str,
+    dataframe: pd.DataFrame,
+    error_context: str = "expression",
+) -> pd.Series:
+    """Apply a string or mathematical expression to a column safely.
+
+    Args:
+        expression: The expression to evaluate (e.g., "x.upper()", "x + 10")
+        column: The column name to use as 'x' in the expression
+        dataframe: The DataFrame containing the column
+        error_context: Context for error messages (e.g., "expression", "value")
+
+    Returns:
+        pd.Series: Result of the expression evaluation
+
+    Raises:
+        InvalidParameterError: If the expression is invalid or evaluation fails
+
+    """
+    try:
+        # Create column context mapping for 'x' variable
+        column_context = {"x": column}
+        # Use unified expression evaluator that handles both string and math operations
+        return evaluate_string_expression_safely(expression, dataframe, column_context)
+    except Exception as e:
+        msg = error_context
+        raise InvalidParameterError(
+            msg,
+            expression,
+            f"Invalid expression. Use 'x' to reference column values. Error: {e}",
+        ) from e
 
 # =============================================================================
 # TOOL DEFINITIONS (Direct implementations)
@@ -229,10 +261,10 @@ async def rename_columns(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Rename columns failed with %s: %s", type(e).__name__, e.message)
+        logger.exception("Rename columns failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error renaming columns: %s", str(e))
+        logger.exception("Unexpected error renaming columns: %s", str(e))
         msg = f"Failed to rename columns: {e}"
         raise ToolError(msg) from e
 
@@ -316,10 +348,10 @@ async def add_column(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, InvalidParameterError) as e:
-        logger.error("Add column failed with %s: %s", type(e).__name__, e.message)
+        logger.exception("Add column failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error adding column: %s", str(e))
+        logger.exception("Unexpected error adding column: %s", str(e))
         msg = f"Failed to add column: {e}"
         raise ToolError(msg) from e
 
@@ -369,10 +401,10 @@ async def remove_columns(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Remove columns failed with %s: %s", type(e).__name__, e.message)
+        logger.exception("Remove columns failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error removing columns: %s", str(e))
+        logger.exception("Unexpected error removing columns: %s", str(e))
         msg = f"Failed to remove columns: {e}"
         raise ToolError(msg) from e
 
@@ -475,10 +507,10 @@ async def change_column_type(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Change column type failed with %s: %s", type(e).__name__, e.message)
+        logger.exception("Change column type failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error changing column type: %s", str(e))
+        logger.exception("Unexpected error changing column type: %s", str(e))
         msg = f"Failed to change column type: {e}"
         raise ToolError(msg) from e
 
@@ -550,45 +582,9 @@ async def update_column(
                 operation_type = "apply"
                 expr = operation.expression
 
-                # Handle string operations that pandas.eval can't handle
-                if (
-                    ".upper()" in expr
-                    or ".lower()" in expr
-                    or ".strip()" in expr
-                    or ".title()" in expr
-                ):
-                    # String operations
-                    if expr == "x.upper()":
-                        df[column] = df[column].str.upper()
-                    elif expr == "x.lower()":
-                        df[column] = df[column].str.lower()
-                    elif expr == "x.strip()":
-                        df[column] = df[column].str.strip()
-                    elif expr == "x.title()":
-                        df[column] = df[column].str.title()
-                    else:
-                        msg = "expression"
-                        raise InvalidParameterError(
-                            msg,
-                            operation.expression,
-                            "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
-                        )
-                else:
-                    # Use secure evaluator for mathematical expressions
-                    try:
-                        # Create column context mapping for 'x' variable
-                        column_context = {"x": column}
-                        # Use secure evaluator instead of pandas.eval
-                        evaluator = SecureExpressionEvaluator()
-                        result = evaluator.evaluate_column_expression(expr, df, column_context)
-                        df[column] = result
-                    except Exception as e:
-                        msg = "expression"
-                        raise InvalidParameterError(
-                            msg,
-                            operation.expression,
-                            f"Invalid expression. Use 'x' to reference column values. Error: {e}",
-                        ) from e
+                # Use unified secure evaluator for both string and mathematical expressions
+                result = _apply_expression_to_column(expr, column, df, "expression")
+                df[column] = result
             elif isinstance(operation, FillNaOperation):
                 operation_type = "fillna"
                 df[column] = df[column].fillna(operation.value)
@@ -614,49 +610,9 @@ async def update_column(
                         operation_type = "apply"
                         expr = apply_op.expression
 
-                        # Handle string operations that pandas.eval can't handle
-                        if (
-                            ".upper()" in expr
-                            or ".lower()" in expr
-                            or ".strip()" in expr
-                            or ".title()" in expr
-                        ):
-                            # String operations
-                            if expr == "x.upper()":
-                                df[column] = df[column].str.upper()
-                            elif expr == "x.lower()":
-                                df[column] = df[column].str.lower()
-                            elif expr == "x.strip()":
-                                df[column] = df[column].str.strip()
-                            elif expr == "x.title()":
-                                df[column] = df[column].str.title()
-                            else:
-                                msg = "expression"
-                                raise InvalidParameterError(
-                                    msg,
-                                    apply_op.expression,
-                                    "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
-                                )
-                        else:
-                            # Use secure evaluator for mathematical expressions
-                            try:
-                                # Create column context mapping for 'x' variable
-                                column_context = {"x": column}
-                                # Use secure evaluator instead of pandas.eval
-                                evaluator = SecureExpressionEvaluator()
-                                result = evaluator.evaluate_column_expression(
-                                    expr,
-                                    df,
-                                    column_context,
-                                )
-                                df[column] = result
-                            except Exception as e:
-                                msg = "expression"
-                                raise InvalidParameterError(
-                                    msg,
-                                    apply_op.expression,
-                                    f"Invalid expression. Use 'x' to reference column values. Error: {e}",
-                                ) from e
+                        # Use unified secure evaluator for both string and mathematical expressions
+                        result = _apply_expression_to_column(expr, column, df, "expression")
+                        df[column] = result
                     elif operation["type"] == "fillna":
                         fillna_op = FillNaOperation(**operation)
                         operation_type = "fillna"
@@ -712,49 +668,9 @@ async def update_column(
                     if isinstance(update_request.value, str):
                         expr = update_request.value
 
-                        # Handle string operations that pandas.eval can't handle
-                        if (
-                            ".upper()" in expr
-                            or ".lower()" in expr
-                            or ".strip()" in expr
-                            or ".title()" in expr
-                        ):
-                            # String operations
-                            if expr == "x.upper()":
-                                df[column] = df[column].str.upper()
-                            elif expr == "x.lower()":
-                                df[column] = df[column].str.lower()
-                            elif expr == "x.strip()":
-                                df[column] = df[column].str.strip()
-                            elif expr == "x.title()":
-                                df[column] = df[column].str.title()
-                            else:
-                                msg = "value"
-                                raise InvalidParameterError(
-                                    msg,
-                                    update_request.value,
-                                    "For string operations, use exact expressions: 'x.upper()', 'x.lower()', 'x.strip()', 'x.title()'",
-                                )
-                        else:
-                            # Use secure evaluator for mathematical expressions
-                            try:
-                                # Create column context mapping for 'x' variable
-                                column_context = {"x": column}
-                                # Use secure evaluator instead of pandas.eval
-                                evaluator = SecureExpressionEvaluator()
-                                result = evaluator.evaluate_column_expression(
-                                    expr,
-                                    df,
-                                    column_context,
-                                )
-                                df[column] = result
-                            except Exception as e:
-                                msg = "value"
-                                raise InvalidParameterError(
-                                    msg,
-                                    update_request.value,
-                                    f"Invalid expression. Use 'x' to reference column values. Error: {e}",
-                                ) from e
+                        # Use unified secure evaluator for both string and mathematical expressions
+                        result = _apply_expression_to_column(expr, column, df, "value")
+                        df[column] = result
                     else:
                         df[column] = df[column].apply(update_request.value)
                 elif update_request.operation == "fillna":
@@ -795,10 +711,10 @@ async def update_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Update column failed with %s: %s", type(e).__name__, e.message)
+        logger.exception("Update column failed with %s: %s", type(e).__name__, e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error updating column: %s", str(e))
+        logger.exception("Unexpected error updating column: %s", str(e))
         msg = f"Failed to update column: {e}"
         raise ToolError(msg) from e
 

@@ -170,8 +170,6 @@ def validate_dataframe_with_pandera(
         # Validate the DataFrame
         validated_df = schema_class.validate(df)
 
-        return validated_df, []
-
     except pa.errors.SchemaErrors as schema_errors:
         # Convert Pandera errors to DataBeak format
         databeak_errors = [
@@ -198,6 +196,8 @@ def validate_dataframe_with_pandera(
         ]
 
         return df, databeak_errors
+    else:
+        return validated_df, []
 
 
 # Example schemas for common DataBeak use cases

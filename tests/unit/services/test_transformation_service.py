@@ -7,7 +7,6 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src import databeak
 from src.databeak.core.session import get_session_manager
 from src.databeak.exceptions import NoDataLoadedError, SessionNotFoundError
 from src.databeak.services.transformation_service import (

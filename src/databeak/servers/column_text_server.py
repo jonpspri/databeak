@@ -16,7 +16,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
 # Removed: OperationType (no longer tracking operations)
-from ..core.session import DatabeakSession, get_session_data, get_session_manager
+from ..core.session import DatabeakSession, get_session_data
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
@@ -144,10 +144,10 @@ async def replace_in_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Replace in column failed: %s", e.message)
+        logger.exception("Replace in column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error replacing in column: %s", str(e))
+        logger.exception("Error replacing in column: %s", str(e))
         msg = f"Error replacing in column: {e}"
         raise ToolError(msg) from e
 
@@ -251,10 +251,10 @@ async def extract_from_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Extract from column failed: %s", e.message)
+        logger.exception("Extract from column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error extracting from column: %s", str(e))
+        logger.exception("Error extracting from column: %s", str(e))
         msg = f"Error extracting from column: {e}"
         raise ToolError(msg) from e
 
@@ -401,10 +401,10 @@ async def split_column(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Split column failed: %s", e.message)
+        logger.exception("Split column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error splitting column: %s", str(e))
+        logger.exception("Error splitting column: %s", str(e))
         msg = f"Error splitting column: {e}"
         raise ToolError(msg) from e
 
@@ -490,10 +490,10 @@ async def transform_column_case(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Transform column case failed: %s", e.message)
+        logger.exception("Transform column case failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error transforming column case: %s", str(e))
+        logger.exception("Error transforming column case: %s", str(e))
         msg = f"Error transforming column case: {e}"
         raise ToolError(msg) from e
 
@@ -563,10 +563,10 @@ async def strip_column(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Strip column failed: %s", e.message)
+        logger.exception("Strip column failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error stripping column: %s", str(e))
+        logger.exception("Error stripping column: %s", str(e))
         msg = f"Error stripping column: {e}"
         raise ToolError(msg) from e
 
@@ -636,10 +636,10 @@ async def fill_column_nulls(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Fill column nulls failed: %s", e.message)
+        logger.exception("Fill column nulls failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error filling column nulls: %s", str(e))
+        logger.exception("Error filling column nulls: %s", str(e))
         msg = f"Error filling column nulls: {e}"
         raise ToolError(msg) from e
 

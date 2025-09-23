@@ -21,6 +21,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..core.session import get_session_data, get_session_manager, get_session_only
 from ..core.settings import get_csv_settings
 
 # Import session management and data models from the main package
@@ -28,7 +29,6 @@ from ..models import DataPreview, ExportFormat, SessionInfo
 from ..models.data_models import CellValue
 from ..models.tool_responses import BaseToolResponse
 from ..services.data_operations import create_data_preview_with_indices
-from ..core.session import get_session_data, get_session_only, get_session_manager
 from ..utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
@@ -438,25 +438,25 @@ async def load_csv(
         )
 
     except OSError as e:
-        logger.error("File I/O error while loading CSV: %s", e)
+        logger.exception("File I/O error while loading CSV: %s", e)
         await ctx.error(f"File access error: {e}")
         msg = f"File access error: {e}"
 
         raise ToolError(msg) from e
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
-        logger.error("CSV parsing error: %s", e)
+        logger.exception("CSV parsing error: %s", e)
         await ctx.error(f"CSV format error: {e}")
         msg = f"CSV format error: {e}"
 
         raise ToolError(msg) from e
     except MemoryError as e:
-        logger.error("Insufficient memory to load CSV: %s", e)
+        logger.exception("Insufficient memory to load CSV: %s", e)
         await ctx.error("File too large - insufficient memory")
         msg = "File too large - insufficient memory"
         raise ToolError(msg) from e
     except Exception as e:
         # Fallback for unexpected errors - more specific logging
-        logger.error("Unexpected error while loading CSV: %s: %s", type(e).__name__, e)
+        logger.exception("Unexpected error while loading CSV: %s: %s", type(e).__name__, e)
         await ctx.error(f"Unexpected error: {e}")
         msg = f"Failed to load CSV: {e}"
 
@@ -549,7 +549,7 @@ async def load_csv_from_url(
                 raise ToolError(msg)
 
         except (TimeoutError, URLError, HTTPError) as e:
-            logger.error("Network error downloading URL: %s", e)
+            logger.exception("Network error downloading URL: %s", e)
             await ctx.error(f"Network error: {e}")
             msg = f"Network error: {e}"
 
@@ -635,24 +635,24 @@ async def load_csv_from_url(
         )
 
     except (pd.errors.EmptyDataError, pd.errors.ParserError) as e:
-        logger.error("CSV parsing error from URL: %s", e)
+        logger.exception("CSV parsing error from URL: %s", e)
         await ctx.error(f"CSV format error from URL: {e}")
         msg = f"CSV format error from URL: {e}"
 
         raise ToolError(msg) from e
     except OSError as e:
-        logger.error("Network/file error while loading from URL: %s", e)
+        logger.exception("Network/file error while loading from URL: %s", e)
         await ctx.error(f"Network error: {e}")
         msg = f"Network error: {e}"
 
         raise ToolError(msg) from e
     except MemoryError as e:
-        logger.error("Insufficient memory to load CSV from URL: %s", e)
+        logger.exception("Insufficient memory to load CSV from URL: %s", e)
         await ctx.error("Downloaded file too large - insufficient memory")
         msg = "Downloaded file too large - insufficient memory"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Unexpected error while loading CSV from URL: %s: %s", type(e).__name__, e)
+        logger.exception("Unexpected error while loading CSV from URL: %s: %s", type(e).__name__, e)
         await ctx.error(f"Unexpected error: {e}")
         msg = f"Failed to load CSV from URL: {e}"
 
@@ -731,7 +731,7 @@ async def load_csv_from_content(
         )
 
     except Exception as e:
-        logger.error("Failed to parse CSV content: %s", e)
+        logger.exception("Failed to parse CSV content: %s", e)
         await ctx.error(f"Failed to parse CSV content: {e}")
         msg = f"Failed to parse CSV content: {e}"
 
@@ -849,7 +849,7 @@ async def export_csv(
         )
 
     except Exception as e:
-        logger.error("Failed to export data: %s", e)
+        logger.exception("Failed to export data: %s", e)
         await ctx.error(f"Failed to export data: {e}")
         msg = f"Failed to export data: {e}"
 

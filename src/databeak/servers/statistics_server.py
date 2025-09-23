@@ -16,6 +16,7 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from ..core.session import get_session_data
 from ..core.settings import get_csv_settings
 
 # Import session management and data models from the main package
@@ -33,7 +34,6 @@ from ..models.statistics_models import (
     StatisticsResult,
     ValueCountsResult,
 )
-from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -167,10 +167,10 @@ async def get_statistics(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Statistics calculation failed: %s", e.message)
+        logger.exception("Statistics calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error calculating statistics: %s", str(e))
+        logger.exception("Error calculating statistics: %s", str(e))
         msg = f"Error calculating statistics: {e}"
         raise ToolError(msg) from e
 
@@ -465,13 +465,13 @@ async def get_correlation_matrix(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Correlation calculation failed: %s", e.message)
+        logger.exception("Correlation calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         # Re-raise ToolErrors as-is to preserve the exact error message
         raise
     except Exception as e:
-        logger.error("Error calculating correlation matrix: %s", str(e))
+        logger.exception("Error calculating correlation matrix: %s", str(e))
         msg = f"Error calculating correlation matrix: {e}"
         raise ToolError(msg) from e
 
@@ -576,10 +576,10 @@ async def get_value_counts(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Value counts calculation failed: %s", e.message)
+        logger.exception("Value counts calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error calculating value counts: %s", str(e))
+        logger.exception("Error calculating value counts: %s", str(e))
         msg = f"Error calculating value counts: {e}"
         raise ToolError(msg) from e
 

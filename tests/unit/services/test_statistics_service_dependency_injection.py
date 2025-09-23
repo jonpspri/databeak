@@ -10,7 +10,6 @@ from typing import cast
 import pandas as pd
 import pytest
 
-from src import databeak
 from src.databeak.core.session import get_session_manager
 from src.databeak.models.session_service import MockSessionManager, SessionServiceFactory
 from src.databeak.services.statistics_service import StatisticsService

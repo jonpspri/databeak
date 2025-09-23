@@ -222,7 +222,7 @@ ignore = [
     "TID252", # Prefer absolute imports (DataBeak uses relative imports by design)
     #  TODO:  Work on bringing these into play
     "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # Complexity findings that make the AI cry
-    "TRY",   # tryceratops (too strict exception handling requirements)
+    "TRY300", "TRY301", "TRY401",   # tryceratops statement in else (nah), inner raise, logging redundancy
 ]
 
 [tool.ruff.lint.per-file-ignores]

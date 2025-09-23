@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src import databeak
 from src.databeak.servers.system_server import get_server_info, health_check
 from tests.test_mock_context import create_mock_context
 

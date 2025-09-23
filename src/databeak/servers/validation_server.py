@@ -12,9 +12,10 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
+from ..core.session import get_session_data
+
 # Import session management from the main package
 from ..core.settings import get_csv_settings
-from ..core.session import get_session_data
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
 
@@ -691,7 +692,7 @@ def validate_schema(
         )
 
     except Exception as e:
-        logger.error("Error validating schema: %s", str(e))
+        logger.exception("Error validating schema: %s", str(e))
         msg = f"Error validating schema: {e!s}"
         raise ToolError(msg) from e
 
@@ -1047,7 +1048,7 @@ def check_data_quality(
         )
 
     except Exception as e:
-        logger.error("Error checking data quality: %s", str(e))
+        logger.exception("Error checking data quality: %s", str(e))
         msg = f"Error checking data quality: {e!s}"
         raise ToolError(msg) from e
 
@@ -1312,7 +1313,7 @@ def find_anomalies(
         )
 
     except Exception as e:
-        logger.error("Error finding anomalies: %s", str(e))
+        logger.exception("Error finding anomalies: %s", str(e))
         msg = f"Error finding anomalies: {e!s}"
         raise ToolError(msg) from e
 
