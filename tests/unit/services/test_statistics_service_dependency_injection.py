@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.models.session_service import MockSessionManager, SessionServiceFactory
 from src.databeak.services.statistics_service import StatisticsService
 
@@ -200,7 +201,7 @@ class TestStatisticsServiceDependencyInjection:
         # Note: This test would require actual session setup in a real integration test
         # For now, we just verify the function exists and can be imported
         assert callable(get_statistics)
-        assert callable(databeak.session_manager.get_or_create_session)
+        assert callable(get_session_manager().get_or_create_session)
 
 
 class TestMockSessionManagerBehavior:

@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.exceptions import (
     ColumnNotFoundError,
     InvalidRowIndexError,
@@ -201,7 +202,7 @@ class TestGetDataSummary:
 
         # Create a real session and load data
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = df
 
@@ -228,7 +229,7 @@ class TestGetDataSummary:
         """Test NoDataLoadedError when session has no data."""
         # Create a real session with no data
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = None
 
@@ -244,7 +245,7 @@ class TestGetDataSummary:
 
         # Create a real session and load data
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = df
 
@@ -262,7 +263,7 @@ class TestGetDataSummary:
 
         # Create a real session and load data
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = df
 

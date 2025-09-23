@@ -12,7 +12,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from ..core.settings import get_csv_settings
+import databeak
+
 from ..models.typed_dicts import CellValue, DataValidationIssues
 
 
@@ -176,7 +177,7 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
                 issues["warnings"].append(f"Column '{col}' has mixed types: {list(unique_types)}")
 
     # Check for high cardinality in string columns
-    settings = get_csv_settings()
+    settings = databeak.settings
     for col in df.select_dtypes(include=["object"]).columns:
         unique_ratio = df[col].nunique() / len(df)
         if unique_ratio > settings.high_quality_threshold:
@@ -253,8 +254,8 @@ def sanitize_filename(filename: str) -> str:
     # Limit length
     path_obj = Path(filename)
     name, ext = path_obj.stem, path_obj.suffix
-    if len(name) > get_csv_settings().percentage_multiplier:
-        name = name[:100]
+    if len(name) > databeak.settings.percentage_multiplier:
+        name = name[:databeak.settings.percentage_multiplier]
 
     return name + ext
 

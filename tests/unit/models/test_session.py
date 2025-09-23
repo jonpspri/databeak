@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.core.session import (
     DatabeakSession,
     SessionManager,
@@ -194,10 +195,10 @@ class TestSessionManager:
 
     def test_get_session_manager(self):
         """Test getting session manager instance."""
-        manager = databeak.session_manager
+        manager = get_session_manager()
         assert manager is not None
         # Singleton pattern
-        manager2 = databeak.session_manager
+        manager2 = get_session_manager()
         assert manager is manager2
 
     def test_session_manager_init(self):

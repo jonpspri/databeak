@@ -24,7 +24,7 @@ from ..exceptions import (
     SessionNotFoundError,
 )
 from ..models.tool_responses import ColumnOperationResult
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 

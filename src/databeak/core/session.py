@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from ..exceptions import SessionExpiredError
+from ..exceptions import NoDataLoadedError, SessionExpiredError
 from ..models.data_models import ExportFormat, SessionInfo
 from ..models.data_session import DataSession
 
@@ -260,33 +260,119 @@ class SessionManager:
             await self.remove_session(session_id)
             self.sessions_to_cleanup.discard(session_id)
 
+def create_session_manager(max_session: int = 100, ttl_minutes: int = 60) -> SessionManager:
+    """Create a new SessionManager instance with specified parameters."""
+    return SessionManager(max_session, ttl_minutes)
 
 # Global session manager instance
-_session_manager = SessionManager()
-
+_session_manager: SessionManager | None = None
 
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
     """Return the global Session Manager object."""
+    global _session_manager  # noqa: PLW0603
+    if _session_manager is None:
+        _session_manager = SessionManager()
     return _session_manager
 
+def reset_session_manager() -> None:
+    """Reset the global Session Manager object (for testing)."""
+    global _session_manager  # noqa: PLW0603
+    _session_manager = None
 
-def get_or_create_session(session_id: str) -> DatabeakSession:
-    """Get or create session with elegant interface.
 
-    Provides dictionary-like access: session = get_or_create_session(session_id)
-    Returns existing session or creates new empty session.
+# =============================================================================
+# SESSION UTILITIES FOR DEFENSIVE PROGRAMMING PATTERNS
+# =============================================================================
+
+
+def get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
+    """Get session and DataFrame with comprehensive validation.
+
+    This function replaces direct session.df access patterns with proper
+    defensive programming, ensuring robust error handling and type safety.
 
     Returns:
-        DatabeakSession (existing or newly created)
+        Tuple of (session, dataframe) - both guaranteed to be valid
+
+    Raises:
+        SessionNotFoundError: If session doesn't exist
+        NoDataLoadedError: If session has no data loaded
+
+    Example:
+        # Instead of:
+        session = get_session_manager().get_or_create_session(session_id)
+        if not session.has_data():
+            raise ToolError("No data")
+        df = session.df
+        assert df is not None
+
+        # Use:
+        session, df = get_session_data(session_id)
 
     """
     manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
 
-    if not session:
-        # Create new session with the specified ID
-        session = DatabeakSession(session_id=session_id)
-        manager.sessions[session_id] = session
+    # get_or_create_session always returns a session, so no need to check if not session
+    if not session.has_data():
+        raise NoDataLoadedError(session_id)
 
-    return session
+    df = session.df
+    if df is None:  # Additional type guard for MyPy
+        raise NoDataLoadedError(session_id)
+
+    return session, df
+
+
+def get_session_only(session_id: str) -> DatabeakSession:
+    """Get session with validation but without requiring data.
+
+    Use this when you need the session but data loading is optional.
+
+    Returns:
+        Valid DatabeakSession instance
+
+    Raises:
+        SessionNotFoundError: If session doesn't exist
+
+    Example:
+        # For operations that may create data or work without data
+        session = get_session_only(session_id)
+        if session.has_data():
+            # Work with existing data
+        else:
+            # Initialize new data
+
+    """
+    manager = get_session_manager()
+    # get_or_create_session always returns a session, so no need to check if not session
+    return manager.get_or_create_session(session_id)
+
+
+def validate_session_has_data(session: DatabeakSession, session_id: str) -> pd.DataFrame:
+    """Validate that session has data and return DataFrame.
+
+    Use this when you already have a session object and need to ensure data exists.
+
+    Returns:
+        Valid DataFrame instance
+
+    Raises:
+        NoDataLoadedError: If session has no data loaded
+
+    Example:
+        session = get_session_only(session_id)
+        # ... some logic ...
+        df = validate_session_has_data(session, session_id)
+
+    """
+    if not session.has_data():
+        raise NoDataLoadedError(session_id)
+
+    df = session.df
+    if df is None:  # Additional type guard for MyPy
+        raise NoDataLoadedError(session_id)
+
+    return df
+

@@ -14,7 +14,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 # Import session management from the main package
 from ..core.settings import get_csv_settings
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 # from ..models.pandera_schemas import validate_dataframe_with_pandera
 

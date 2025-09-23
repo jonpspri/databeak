@@ -8,6 +8,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.statistics_server import (
     ColumnStatisticsResult,
     CorrelationResult,
@@ -41,7 +42,7 @@ def session_with_test_data():
 
     # Create a real session and load data
     session_id = str(uuid.uuid4())
-    manager = databeak.session_manager
+    manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
     session.df = df
 
@@ -55,7 +56,7 @@ def session_with_empty_data():
 
     # Create a real session and load empty data
     session_id = str(uuid.uuid4())
-    manager = databeak.session_manager
+    manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
     session.df = df
 
@@ -151,7 +152,7 @@ class TestGetStatistics:
         """Test statistics when no data is loaded."""
         # Create a real session but don't load any data
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         manager.get_or_create_session(session_id)
         # Don't call session.load_data() - leave df as None
 
@@ -319,7 +320,7 @@ class TestGetCorrelationMatrix:
         """Test correlation matrix with no numeric columns."""
         # Create a session with only text columns
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = pd.DataFrame({"text1": ["a", "b", "c"], "text2": ["x", "y", "z"]})
 
@@ -466,7 +467,7 @@ class TestEdgeCases:
 
         # Create a real session with large dataframe
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = large_df
 
@@ -482,7 +483,7 @@ class TestEdgeCases:
 
         # Create a real session with single row dataframe
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = single_row_df
 
@@ -501,7 +502,7 @@ class TestEdgeCases:
 
         # Create a real session with constant values dataframe
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = same_values_df
 
@@ -526,7 +527,7 @@ class TestEdgeCases:
 
         # Create a real session with extreme values dataframe
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = extreme_df
 
@@ -548,7 +549,7 @@ class TestEdgeCases:
 
         # Create a real session with special column names dataframe
         session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id)
         session.df = special_df
 

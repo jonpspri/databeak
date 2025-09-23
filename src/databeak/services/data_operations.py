@@ -6,7 +6,7 @@ import warnings
 
 import pandas as pd
 
-from ..core.session import _session_manager
+from ..core.session import get_session_manager
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidRowIndexError,
@@ -56,7 +56,7 @@ def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 5) -> Dat
 # Implementation: Comprehensive data analysis including shape, types, memory usage, nulls
 def get_data_summary(session_id: str) -> InternalDataSummary:
     """Get comprehensive data summary for session."""
-    session_manager = _session_manager
+    session_manager = get_session_manager()
     session = session_manager.get_or_create_session(session_id)
 
     if not session:

@@ -343,8 +343,8 @@ class TestTempFileCleanup:
             temp_path = tmp.name
 
         try:
-            with patch.object(databeak, "session_manager") as mock_manager:
-                mock_manager.side_effect = Exception("Mock session error")
+            with patch("src.databeak.servers.io_server.get_session_data") as mock_get_session_data:
+                mock_get_session_data.side_effect = Exception("Mock session error")
 
                 with pytest.raises(ToolError, match="Failed to export data"):
                     await export_csv(create_mock_context(), file_path=temp_path)

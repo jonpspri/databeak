@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 # Import session management from the main package
 from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
 from ..models.typed_dicts import FilterConditionDict
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 

@@ -33,7 +33,7 @@ from ..models.statistics_models import (
     StatisticsResult,
     ValueCountsResult,
 )
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 

@@ -9,6 +9,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.discovery_server import (
     DataSummaryResult,
     FindCellsResult,
@@ -36,7 +37,7 @@ def mock_session_with_outliers():
     rng.shuffle(all_data)
 
     session_id = str(uuid.uuid4())
-    manager = databeak.session_manager
+    manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
     df = pd.DataFrame(
         {
@@ -131,7 +132,7 @@ class TestDetectOutliers:
         """Test when no outliers are found."""
         # Create session with data that has no outliers
         uniform_session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         uniform_session = manager.get_or_create_session(uniform_session_id)
         uniform_df = pd.DataFrame(
             {
@@ -267,7 +268,7 @@ class TestProfileData:
     async def test_profile_empty_dataframe(self, session_id_with_outliers):
         """Test profiling empty dataframe."""
         empty_session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         empty_session = manager.get_or_create_session(empty_session_id)
         empty_session.df = pd.DataFrame()
 
@@ -411,7 +412,7 @@ class TestFindCellsWithValue:
     async def test_find_numeric_value(self, session_id_with_outliers):
         """Test finding numeric value."""
         # Find a specific numeric value
-        manager = databeak.session_manager
+        manager = get_session_manager()
         session = manager.get_or_create_session(session_id_with_outliers)
         df = session.df
         assert df is not None
@@ -528,7 +529,7 @@ class TestGetDataSummary:
     async def test_data_summary_empty_dataframe(self, session_id_with_outliers):
         """Test data summary for empty dataframe."""
         empty_session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         empty_session = manager.get_or_create_session(empty_session_id)
         empty_session.df = pd.DataFrame()
 
@@ -541,7 +542,7 @@ class TestGetDataSummary:
     async def test_data_summary_large_dataframe(self, session_id_with_outliers):
         """Test data summary for large dataframe."""
         large_session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         large_session = manager.get_or_create_session(large_session_id)
         rng = np.random.Generator(np.random.PCG64(seed=42))
         large_df = pd.DataFrame(rng.standard_normal((10000, 100)))
@@ -645,7 +646,7 @@ class TestErrorHandling:
         """Test various edge cases."""
         # Single row dataframe
         single_row_session_id = str(uuid.uuid4())
-        manager = databeak.session_manager
+        manager = get_session_manager()
         single_row_session = manager.get_or_create_session(single_row_session_id)
         single_row_df = pd.DataFrame({"col": [1]})
         single_row_session.df = single_row_df

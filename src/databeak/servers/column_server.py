@@ -24,7 +24,7 @@ from ..exceptions import (
 from ..models.expression_models import SecureExpression
 from ..models.tool_responses import BaseToolResponse, ColumnOperationResult
 from ..utils.secure_evaluator import SecureExpressionEvaluator
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 

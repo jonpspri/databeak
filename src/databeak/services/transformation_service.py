@@ -8,7 +8,7 @@ from typing import Any, Literal
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-from ..core.session import DatabeakSession, _session_manager
+from ..core.session import DatabeakSession, get_session_manager
 from ..exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
@@ -112,7 +112,7 @@ class StringOperationResult(BaseToolResponse):
 # Implementation: Session retrieval with validation and error handling
 def _get_session_data(session_id: str) -> tuple[DatabeakSession, pd.DataFrame]:
     """Get session and DataFrame with validation."""
-    manager = _session_manager
+    manager = get_session_manager()
     session = manager.get_or_create_session(session_id)
 
     if not session:

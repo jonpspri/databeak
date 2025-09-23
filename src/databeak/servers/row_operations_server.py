@@ -22,7 +22,7 @@ from ..models.tool_responses import (
     UpdateRowResult,
 )
 from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 from ..utils.validators import convert_pandas_na_list
 
 if TYPE_CHECKING:

@@ -11,6 +11,7 @@ from pathlib import Path
 import pytest
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.io_server import load_csv_from_content
 from tests.test_mock_context import create_mock_context
 
@@ -90,7 +91,7 @@ def isolated_context(isolated_session_id):
 @pytest.fixture
 async def isolated_session_with_cleanup(isolated_session_id, temp_work_dir):
     """Create isolated session with automatic cleanup to prevent test interference."""
-    manager = databeak.session_manager
+    manager = get_session_manager()
     session = manager.get_or_create_session(isolated_session_id)
     yield session
     # Cleanup: Remove session after test completes

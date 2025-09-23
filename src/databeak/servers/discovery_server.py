@@ -33,7 +33,7 @@ from ..models.tool_responses import (
     MissingDataInfo,
 )
 from ..models.typed_dicts import DataPreviewResult
-from ..utils.session_utils import get_session_data
+from ..core.session import get_session_data
 
 # Import data operations function directly to avoid dependency issues
 try:

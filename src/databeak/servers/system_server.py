@@ -18,7 +18,7 @@ from pydantic import Field
 
 # Import version and session management from main package
 from .._version import __version__
-from ..core.session import _session_manager
+from ..core.session import get_session_manager
 from ..core.settings import DataBeakSettings, get_csv_settings
 from ..models.tool_responses import HealthResult, ServerInfoResult
 
@@ -92,7 +92,7 @@ async def health_check(
     try:
         await ctx.info("Performing DataBeak health check with memory monitoring")
 
-        session_manager = _session_manager
+        session_manager = get_session_manager()
         settings = get_csv_settings()
         active_sessions = len(session_manager.sessions)
 

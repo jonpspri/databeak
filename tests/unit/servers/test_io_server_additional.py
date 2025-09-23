@@ -7,6 +7,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from src import databeak
+from src.databeak.core.session import get_session_manager
 from src.databeak.servers.io_server import (
     export_csv,
     get_session_info,
@@ -22,7 +23,7 @@ class TestSessionManagement:
     async def test_list_sessions_empty(self):
         """Test listing sessions when none exist."""
         # Clear any existing sessions first
-        session_manager = databeak.session_manager
+        session_manager = get_session_manager()
         session_manager.sessions.clear()
 
         result = await list_sessions(create_mock_context())
@@ -198,7 +199,7 @@ class TestExportFunctionality:
 
     async def test_export_no_data_loaded(self):
         """Test exporting when no data is loaded."""
-        session_manager = databeak.session_manager
+        session_manager = get_session_manager()
         session_id = "empty_session_test"
         session_manager.get_or_create_session(session_id)
 
