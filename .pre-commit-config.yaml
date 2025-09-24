@@ -127,13 +127,16 @@ repos:
         entry: ./scripts/check_docstring_args.py
         language: script
         files: ^src/.*\.py$
-        description: 'Check for Args sections in docstrings (MCP tools use Field descriptions)'
+        description: >-
+          Check for Args sections in docstrings
+          (MCP tools use Field descriptions)
       - id: check-mcp-field-descriptions
         name: check-mcp-field-descriptions
         entry: ./scripts/check_mcp_field_descriptions.py
         language: script
         files: ^src/.*\.py$
-        description: 'Check that all MCP tool parameters have Field descriptions'
+        description: >-
+          Check that all MCP tool parameters have Field descriptions
 
 ci:
   autofix_prs: true
