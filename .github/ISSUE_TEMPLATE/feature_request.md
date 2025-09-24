@@ -26,9 +26,7 @@ any alternative solutions or features you've considered.
 ```python
 # Example usage
 databeak.new_feature(
-    input_file="data.csv",
-    operation="your_feature",
-    parameters={"param1": "value1"}
+    input_file="data.csv", operation="your_feature", parameters={"param1": "value1"}
 )
 ```
 

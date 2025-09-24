@@ -10,10 +10,13 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
-# Import session management from the main package
-from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
-from ..models.typed_dicts import FilterConditionDict
-from ..core.session import get_session_data
+from databeak.core.session import get_session_data
+from databeak.models.tool_responses import (
+    ColumnOperationResult,
+    FilterOperationResult,
+    SortDataResult,
+)
+from databeak.models.typed_dicts import FilterConditionDict
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +175,7 @@ def filter_rows(
         )
 
     except Exception as e:
-        logger.error("Error filtering rows: %s", str(e))
+        logger.exception("Error filtering rows: %s", str(e))
         msg = f"Error filtering rows: {e!s}"
         raise ToolError(msg) from e
 
@@ -247,7 +250,7 @@ def sort_data(
         )
 
     except Exception as e:
-        logger.error("Error sorting data: %s", str(e))
+        logger.exception("Error sorting data: %s", str(e))
         msg = f"Error sorting data: {e!s}"
         raise ToolError(msg) from e
 
@@ -314,7 +317,7 @@ def remove_duplicates(
         )
 
     except Exception as e:
-        logger.error("Error removing duplicates: %s", str(e))
+        logger.exception("Error removing duplicates: %s", str(e))
         msg = f"Error removing duplicates: {e!s}"
         raise ToolError(msg) from e
 
@@ -432,7 +435,7 @@ def fill_missing_values(
         )
 
     except Exception as e:
-        logger.error("Error filling missing values: %s", str(e))
+        logger.exception("Error filling missing values: %s", str(e))
         msg = f"Error filling missing values: {e!s}"
         raise ToolError(msg) from e
 

@@ -1,6 +1,6 @@
 """Comprehensive coverage tests for data_prompts module."""
 
-from src.databeak.prompts.data_prompts import (
+from databeak.prompts.data_prompts import (
     analyze_csv_prompt,
     data_cleaning_prompt,
     suggest_transformations_prompt,

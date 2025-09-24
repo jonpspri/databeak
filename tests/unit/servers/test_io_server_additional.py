@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src import databeak
-from src.databeak.core.session import get_session_manager
-from src.databeak.servers.io_server import (
+from databeak.core.session import get_session_manager
+from databeak.servers.io_server import (
     export_csv,
     get_session_info,
     list_sessions,

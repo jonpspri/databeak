@@ -64,21 +64,24 @@ logger = logging.getLogger(__name__)
 # PYDANTIC MODELS (Domain-specific, self-contained)
 # ============================================================================
 
+
 class DomainResult(BaseModel):
     """Response model for domain operations."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     session_id: str
     success: bool = True
     data: dict[str, Any] = Field(default_factory=dict)
 
+
 class DomainRule(BaseModel):
     """Base class for domain rules."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     type: str
+
 
 class SpecificRule(DomainRule):
     """Specific rule implementation."""
@@ -94,15 +97,17 @@ class SpecificRule(DomainRule):
             raise ValueError("Threshold must be between 0.0 and 1.0")
         return v
 
+
 # Discriminated union for automatic type conversion
 DomainRuleType = Annotated[
     SpecificRule,  # Add more rule types here
-    Field(discriminator="type")
+    Field(discriminator="type"),
 ]
 
 # ============================================================================
 # DOMAIN LOGIC (Synchronous for computational operations)
 # ============================================================================
+
 
 def process_domain_operation(
     session_id: str,
@@ -147,17 +152,15 @@ def process_domain_operation(
                 "operation": "domain_operation",
                 "rules_count": len(rules),
                 "results_count": len(results),
-            }
+            },
         )
 
-        return DomainResult(
-            session_id=session_id,
-            data={"results": results, "total": len(results)}
-        )
+        return DomainResult(session_id=session_id, data={"results": results, "total": len(results)})
 
     except Exception as e:
         logger.error(f"Error in domain operation: {e!s}")
         raise ToolError(f"Error processing domain operation: {e!s}") from e
+
 
 # ============================================================================
 # FASTMCP SERVER SETUP
@@ -193,23 +196,24 @@ mcp.mount(domain_server)
 ```python
 # Base class with discriminator
 class BaseRule(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
     type: str
+
 
 # Specific implementations
 class TypeARule(BaseRule):
     type: Literal["type_a"] = "type_a"
     param1: str
 
+
 class TypeBRule(BaseRule):
     type: Literal["type_b"] = "type_b"
     param2: int = Field(ge=0)
 
+
 # Discriminated union for automatic conversion
-RuleType = Annotated[
-    TypeARule | TypeBRule,
-    Field(discriminator="type")
-]
+RuleType = Annotated[TypeARule | TypeBRule, Field(discriminator="type")]
+
 
 # Usage in function
 def process_rules(rules: list[RuleType]) -> Results:
@@ -224,12 +228,10 @@ def process_rules(rules: list[RuleType]) -> Results:
 class DomainModel(BaseModel):
     """Model with comprehensive validation."""
 
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")
 
     # Use Literal for known values (compile-time safety)
-    status: Literal["active", "inactive", "pending"] = Field(
-        description="Processing status"
-    )
+    status: Literal["active", "inactive", "pending"] = Field(description="Processing status")
 
     # Use field validation for complex rules
     pattern: str | None = Field(None, description="Regex pattern")
@@ -242,6 +244,7 @@ class DomainModel(BaseModel):
             return v
 
         import re
+
         try:
             re.compile(v)
             return v
@@ -342,6 +345,7 @@ class IntegrationTestCase(unittest.IsolatedAsyncioTestCase):
                 await close_session(self.session_id)
             except Exception:
                 pass
+
 
 class TestDomainIntegration(IntegrationTestCase):
     """Integration tests for domain operations."""

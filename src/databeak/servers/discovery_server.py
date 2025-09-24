@@ -16,7 +16,8 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
-from ..exceptions import (
+from databeak.core.session import get_session_data
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
@@ -24,52 +25,17 @@ from ..exceptions import (
 )
 
 # Import session management and data models from the main package
-from ..models import DataPreview
-from ..models.tool_responses import (
+from databeak.models import DataPreview
+from databeak.models.tool_responses import (
     BaseToolResponse,
     CellLocation,
     CsvCellValue,
     DataTypeInfo,
     MissingDataInfo,
 )
-from ..models.typed_dicts import DataPreviewResult
-from ..core.session import get_session_data
 
 # Import data operations function directly to avoid dependency issues
-try:
-    from ..services.data_operations import create_data_preview_with_indices
-except ImportError:
-    # Fallback implementation for create_data_preview_with_indices
-    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> DataPreviewResult:
-        """Fallback implementation for data preview creation."""
-        records = []
-        preview_rows = min(num_rows, len(df))
-
-        for i in range(preview_rows):
-            row_dict = df.iloc[i].to_dict()
-            # Convert keys to strings and handle pandas/numpy types
-            row: dict[str, Any] = {}
-            for key, value in row_dict.items():
-                str_key = str(key)
-                if pd.isna(value):
-                    row[str_key] = None
-                elif isinstance(value, pd.Timestamp):
-                    row[str_key] = str(value)
-                elif hasattr(value, "item"):
-                    row[str_key] = value.item()
-                else:
-                    row[str_key] = value
-            row["__row_index__"] = str(i)
-            records.append(row)
-
-        return {
-            "records": records,
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": list(df.columns.astype(str)),
-            "preview_rows": preview_rows,
-        }
-
+from databeak.services.data_operations import create_data_preview_with_indices
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +296,7 @@ async def detect_outliers(
         )
 
     except Exception as e:
-        logger.error("Error detecting outliers: %s", str(e))
+        logger.exception("Error detecting outliers: %s", str(e))
         msg = f"Error detecting outliers: {e}"
         raise ToolError(msg) from e
 
@@ -421,7 +387,7 @@ async def profile_data(
         )
 
     except Exception as e:
-        logger.error("Error profiling data: %s", str(e))
+        logger.exception("Error profiling data: %s", str(e))
         msg = f"Error profiling data: {e}"
         raise ToolError(msg) from e
 
@@ -531,7 +497,7 @@ async def group_by_aggregate(
         )
 
     except Exception as e:
-        logger.error("Error in group by aggregate: %s", str(e))
+        logger.exception("Error in group by aggregate: %s", str(e))
         msg = f"Error in group by aggregate: {e}"
         raise ToolError(msg) from e
 
@@ -655,11 +621,11 @@ async def find_cells_with_value(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error finding cells with value: %s", str(e))
+        logger.exception("Error finding cells with value: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error finding cells with value: %s", str(e))
+        logger.exception("Error finding cells with value: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 
@@ -802,11 +768,11 @@ async def get_data_summary(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error getting data summary: %s", str(e))
+        logger.exception("Error getting data summary: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error getting data summary: %s", str(e))
+        logger.exception("Error getting data summary: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 
@@ -925,11 +891,11 @@ async def inspect_data_around(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Error inspecting data around cell: %s", str(e))
+        logger.exception("Error inspecting data around cell: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
     except Exception as e:
-        logger.error("Error inspecting data around cell: %s", str(e))
+        logger.exception("Error inspecting data around cell: %s", str(e))
         msg = f"Error: {e}"
         raise ToolError(msg) from e
 

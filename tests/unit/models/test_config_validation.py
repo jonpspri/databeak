@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.metadata
 from pathlib import Path
 
-from src.databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DataBeakSettings
 
 
 class TestVersionLoading:
@@ -21,7 +21,7 @@ class TestVersionLoading:
 
     def test_version_module_import(self):
         """Test that version module imports and provides version."""
-        from src.databeak._version import VERSION, __version__
+        from databeak._version import VERSION, __version__
 
         assert __version__ is not None
         assert VERSION is not None
@@ -30,7 +30,7 @@ class TestVersionLoading:
 
     def test_version_fallback_mechanism(self):
         """Test that version fallback mechanism is in place."""
-        from src.databeak._version import __version__
+        from databeak._version import __version__
 
         # Version should be either from metadata or fallback
         assert __version__ is not None

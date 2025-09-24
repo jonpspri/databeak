@@ -91,12 +91,12 @@ def test_statistics_calculation():
     service = StatisticsService(mock_manager)
 
     # Add test data
-    test_data = pd.DataFrame({'values': [1, 2, 3, 4, 5]})
+    test_data = pd.DataFrame({"values": [1, 2, 3, 4, 5]})
     mock_manager.add_test_data("test", test_data)
 
     # Test business logic directly
     result = await service.get_statistics("test")
-    assert result.statistics['values'].mean == 3.0
+    assert result.statistics["values"].mean == 3.0
 ```
 
 ### ✅ Isolation

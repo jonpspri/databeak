@@ -16,10 +16,11 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from ..core.settings import get_csv_settings
+from databeak.core.session import get_session_data
+from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
-from ..exceptions import (
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
@@ -27,13 +28,12 @@ from ..exceptions import (
 )
 
 # Import response models - needed at runtime for FastMCP
-from ..models.statistics_models import (
+from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,
     ValueCountsResult,
 )
-from ..core.session import get_session_data
 
 logger = logging.getLogger(__name__)
 
@@ -167,10 +167,10 @@ async def get_statistics(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Statistics calculation failed: %s", e.message)
+        logger.exception("Statistics calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error calculating statistics: %s", str(e))
+        logger.exception("Error calculating statistics: %s", str(e))
         msg = f"Error calculating statistics: {e}"
         raise ToolError(msg) from e
 
@@ -315,7 +315,10 @@ async def get_column_statistics(
                 top=str(additional_stats.get("most_frequent"))
                 if additional_stats.get("most_frequent")
                 else None,
-                freq=int(freq_value) if (freq_value := additional_stats.get("most_frequent_count")) and isinstance(freq_value, int) else None,
+                freq=int(freq_value)
+                if (freq_value := additional_stats.get("most_frequent_count"))
+                and isinstance(freq_value, int)
+                else None,
             )
 
         # Map dtype to expected literal type
@@ -416,7 +419,7 @@ async def get_correlation_matrix(
             msg = "No numeric columns found for correlation analysis"
             raise ToolError(msg)
 
-        settings = get_csv_settings()
+        settings = get_settings()
         if len(numeric_df.columns) < settings.min_statistical_sample_size:
             msg = "Correlation analysis requires at least two numeric columns"
             raise ToolError(msg)
@@ -465,13 +468,13 @@ async def get_correlation_matrix(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Correlation calculation failed: %s", e.message)
+        logger.exception("Correlation calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except ToolError:
         # Re-raise ToolErrors as-is to preserve the exact error message
         raise
     except Exception as e:
-        logger.error("Error calculating correlation matrix: %s", str(e))
+        logger.exception("Error calculating correlation matrix: %s", str(e))
         msg = f"Error calculating correlation matrix: {e}"
         raise ToolError(msg) from e
 
@@ -576,10 +579,10 @@ async def get_value_counts(
         )
 
     except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.error("Value counts calculation failed: %s", e.message)
+        logger.exception("Value counts calculation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Error calculating value counts: %s", str(e))
+        logger.exception("Error calculating value counts: %s", str(e))
         msg = f"Error calculating value counts: {e}"
         raise ToolError(msg) from e
 

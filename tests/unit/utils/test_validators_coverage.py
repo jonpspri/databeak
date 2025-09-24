@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 
-from src.databeak.utils.validators import (
+from databeak.utils.validators import (
     convert_pandas_na_list,
     convert_pandas_na_to_none,
     sanitize_filename,

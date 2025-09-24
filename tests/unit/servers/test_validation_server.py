@@ -3,8 +3,8 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.servers.validation_server import (
+from databeak.servers.io_server import load_csv_from_content
+from databeak.servers.validation_server import (
     CompletenessRule,
     ConsistencyRule,
     DataTypesRule,
@@ -80,10 +80,10 @@ class TestSchemaValidation:
     async def test_validate_schema_success(self, clean_test_session):
         """Test successful schema validation."""
         schema_dict = {
-            "id": {"type": "int", "nullable": False, "min": 1},
-            "name": {"type": "str", "nullable": False, "min_length": 2},
-            "age": {"type": "int", "min": 18, "max": 65},
-            "email": {"type": "str", "pattern": r"^[^@]+@[^@]+\.[^@]+$"},
+            "id": {"nullable": False, "greater_than_or_equal_to": 1},
+            "name": {"nullable": False, "str_length": {"min": 2}},
+            "age": {"greater_than_or_equal_to": 18, "less_than_or_equal_to": 65},
+            "email": {"str_matches": r"^[^@]+@[^@]+\.[^@]+$"},
         }
         schema = ValidationSchema(schema_dict)
 
@@ -93,10 +93,10 @@ class TestSchemaValidation:
         assert len(result.errors) == 0
 
     async def test_validate_schema_type_mismatch(self, validation_test_session):
-        """Test schema validation with type mismatches."""
+        """Test schema validation with value constraints that will fail."""
         schema = {
-            "age": {"type": "str"},  # Age is int in data
-            "salary": {"type": "bool"},  # Salary is float in data
+            "age": {"equal_to": "invalid"},  # Age is int, this expects string
+            "salary": {"equal_to": True},  # Salary is float, this expects bool
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -119,8 +119,8 @@ class TestSchemaValidation:
     async def test_validate_schema_min_max_violations(self, validation_test_session):
         """Test schema validation with min/max violations."""
         schema = {
-            "age": {"type": "int", "min": 0, "max": 120},
-            "salary": {"type": "int", "min": 30000},
+            "age": {"greater_than_or_equal_to": 0, "less_than_or_equal_to": 120},
+            "salary": {"greater_than_or_equal_to": 30000},
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -131,8 +131,8 @@ class TestSchemaValidation:
     async def test_validate_schema_pattern_violations(self, validation_test_session):
         """Test schema validation with pattern violations."""
         schema = {
-            "email": {"pattern": r"^[^@]+@[^@]+\.com$"},  # Only .com emails
-            "status": {"pattern": r"^(active|inactive)$"},  # Specific values only
+            "email": {"str_matches": r"^[^@]+@[^@]+\.com$"},  # Only .com emails
+            "status": {"str_matches": r"^(active|inactive)$"},  # Specific values only
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -142,7 +142,7 @@ class TestSchemaValidation:
     async def test_validate_schema_allowed_values(self, validation_test_session):
         """Test schema validation with allowed values."""
         schema = {
-            "status": {"values": ["active", "inactive"]},  # Excludes "pending", "retired"
+            "status": {"isin": ["active", "inactive"]},  # Excludes "pending", "retired"
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -164,8 +164,8 @@ class TestSchemaValidation:
     async def test_validate_schema_string_length(self, validation_test_session):
         """Test schema validation with string length rules."""
         schema = {
-            "name": {"min_length": 5, "max_length": 20},
-            "email": {"min_length": 8},
+            "name": {"str_length": {"min": 5, "max": 20}},
+            "email": {"str_length": {"min": 8}},
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -176,8 +176,8 @@ class TestSchemaValidation:
     async def test_validate_schema_missing_columns(self, clean_test_session):
         """Test schema validation with missing columns."""
         schema = {
-            "id": {"type": "int"},
-            "nonexistent": {"type": "str"},
+            "id": {"greater_than_or_equal_to": 1},
+            "nonexistent": {"str_length": {"min": 1}},
         }
 
         ctx = create_mock_context(clean_test_session)
@@ -191,7 +191,7 @@ class TestSchemaValidation:
         from pydantic import ValidationError as PydanticValidationError
 
         schema = {
-            "email": {"pattern": "[invalid regex"},  # Invalid regex
+            "email": {"str_matches": "[invalid regex"},  # Invalid regex
         }
 
         # Should fail when creating ValidationSchema due to invalid regex
@@ -202,7 +202,7 @@ class TestSchemaValidation:
         """Test schema validation with invalid session."""
         from fastmcp.exceptions import ToolError
 
-        schema = {"id": {"type": "int"}}
+        schema = {"id": {"greater_than_or_equal_to": 1}}
 
         ctx = create_mock_context("invalid-session")
 
@@ -432,13 +432,13 @@ class TestValidationEdgeCases:
             await load_csv_from_content(ctx, "id,name\n")  # Header only
 
     async def test_schema_validation_all_types(self, validation_test_session):
-        """Test schema validation with all supported data types."""
+        """Test schema validation with various constraint types."""
         schema = {
-            "id": {"type": "int"},
-            "name": {"type": "str"},
-            "age": {"type": "int"},
-            "salary": {"type": "float"},
-            # Note: bool and datetime types would need appropriate test data
+            "id": {"greater_than_or_equal_to": 1},
+            "name": {"str_length": {"min": 1}},
+            "age": {"greater_than_or_equal_to": 0},
+            "salary": {"greater_than_or_equal_to": 0},
+            # Note: Pandera handles type validation automatically
         }
 
         ctx = create_mock_context(validation_test_session)
@@ -512,7 +512,7 @@ class TestValidationIntegration:
     async def test_validation_after_transformations(self, validation_test_session):
         """Test validation after data transformations."""
         # First apply some transformations
-        from src.databeak.servers.transformation_server import fill_missing_values
+        from databeak.servers.transformation_server import fill_missing_values
 
         # Fill missing values
         ctx_transform = create_mock_context(validation_test_session)
@@ -537,14 +537,14 @@ class TestValidationIntegration:
     async def test_validation_with_operations_history(self, clean_test_session):
         """Test that validation operations work with session management."""
         # Perform validation
-        schema = {"id": {"type": "int"}}
+        schema = {"id": {"greater_than_or_equal_to": 1}}
         ctx = create_mock_context(clean_test_session)
         result = validate_schema(ctx, ValidationSchema(schema))
         # Should complete validation
         assert hasattr(result, "valid")
 
         # Check if session info can be retrieved (verifies session still exists)
-        from src.databeak.servers.io_server import get_session_info
+        from databeak.servers.io_server import get_session_info
 
         ctx_info = create_mock_context(clean_test_session)
         info_result = await get_session_info(ctx_info)

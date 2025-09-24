@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.services.statistics_service import StatisticsService
+from databeak.services.statistics_service import StatisticsService
 
 
 class TestStatisticsService:

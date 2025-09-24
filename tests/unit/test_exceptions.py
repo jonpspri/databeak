@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.databeak.exceptions import (
+from databeak.exceptions import (
     ColumnNotFoundError,
     DatabeakError,
     OperationError,

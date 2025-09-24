@@ -196,7 +196,8 @@ access risks:
 
 ```python
 # ✅ Correct: Use centralized session_utils helpers
-from ..utils.session_utils import get_session_data
+from databeak.utils.session_utils import get_session_data
+
 
 def my_mcp_tool(ctx: Context) -> Result:
     session_id = ctx.session_id

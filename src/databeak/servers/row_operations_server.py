@@ -10,9 +10,11 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from databeak.core.session import get_session_data
+
 # Import session management from the main package
-from ..exceptions import ColumnNotFoundError, InvalidParameterError
-from ..models.tool_responses import (
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError
+from databeak.models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
     DeleteRowResult,
@@ -21,9 +23,11 @@ from ..models.tool_responses import (
     SetCellResult,
     UpdateRowResult,
 )
-from ..utils.pydantic_validators import parse_json_string_to_dict, parse_json_string_to_dict_or_list
-from ..core.session import get_session_data
-from ..utils.validators import convert_pandas_na_list
+from databeak.utils.pydantic_validators import (
+    parse_json_string_to_dict,
+    parse_json_string_to_dict_or_list,
+)
+from databeak.utils.validators import convert_pandas_na_list
 
 if TYPE_CHECKING:
     pass
@@ -186,7 +190,7 @@ def get_cell_value(
     except (ColumnNotFoundError, ToolError):
         raise
     except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.error("Error getting cell value: %s", str(e))
+        logger.exception("Error getting cell value: %s", str(e))
         msg = f"Error getting cell value: {e!s}"
         raise ToolError(msg) from e
 
@@ -253,7 +257,11 @@ def set_cell_value(
                 if pd.isna(numeric_result):
                     converted_value = None
                 else:
-                    converted_value = float(numeric_result) if isinstance(numeric_result, (int, float)) else numeric_result.item()
+                    converted_value = (
+                        float(numeric_result)
+                        if isinstance(numeric_result, (int, float))
+                        else numeric_result.item()
+                    )
             else:
                 converted_value = value
         except (ValueError, TypeError):
@@ -283,7 +291,7 @@ def set_cell_value(
     except (ColumnNotFoundError, ToolError):
         raise
     except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.error("Error setting cell value: %s", str(e))
+        logger.exception("Error setting cell value: %s", str(e))
         msg = f"Error setting cell value: {e!s}"
         raise ToolError(msg) from e
 
@@ -344,7 +352,7 @@ def get_row_data(
     except (ColumnNotFoundError, ToolError):
         raise
     except Exception as e:
-        logger.error("Error getting row data: %s", str(e))
+        logger.exception("Error getting row data: %s", str(e))
         msg = f"Error getting row data: {e!s}"
         raise ToolError(msg) from e
 
@@ -423,7 +431,7 @@ def get_column_data(
     except (ColumnNotFoundError, InvalidParameterError, ToolError):
         raise
     except Exception as e:
-        logger.error("Error getting column data: %s", str(e))
+        logger.exception("Error getting column data: %s", str(e))
         msg = f"Error getting column data: {e!s}"
         raise ToolError(msg) from e
 
@@ -530,7 +538,7 @@ def insert_row(
     except ToolError:
         raise
     except Exception as e:
-        logger.error("Error inserting row: %s", str(e))
+        logger.exception("Error inserting row: %s", str(e))
         msg = f"Error inserting row: {e!s}"
         raise ToolError(msg) from e
 
@@ -585,7 +593,7 @@ def delete_row(
     except ToolError:
         raise
     except Exception as e:
-        logger.error("Error deleting row: %s", str(e))
+        logger.exception("Error deleting row: %s", str(e))
         msg = f"Error deleting row: {e!s}"
         raise ToolError(msg) from e
 
@@ -674,7 +682,7 @@ def update_row(
     except (ColumnNotFoundError, ToolError):
         raise
     except Exception as e:
-        logger.error("Error updating row: %s", str(e))
+        logger.exception("Error updating row: %s", str(e))
         msg = f"Error updating row: {e!s}"
         raise ToolError(msg) from e
 

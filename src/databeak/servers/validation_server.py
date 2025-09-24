@@ -8,15 +8,16 @@ from typing import Annotated, Literal
 
 import numpy as np
 import pandas as pd
+
+# Pandera import for validation - required dependency
+import pandera.pandas as pa
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
+from pandera.pandas import Check, Column, DataFrameSchema
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
-# Import session management from the main package
-from ..core.settings import get_csv_settings
-from ..core.session import get_session_data
-
-# from ..models.pandera_schemas import validate_dataframe_with_pandera
+from databeak.core.session import get_session_data
+from databeak.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,44 +27,19 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationError(BaseModel):
-    """Individual validation error details."""
+    """Individual validation error details for Pandera-based validation."""
 
     model_config = ConfigDict(extra="forbid")
 
     error: str = Field(description="Type of validation error encountered")
     message: str = Field(description="Human-readable error message")
-    actual_type: str | None = Field(
+    check_name: str | None = Field(
         default=None,
-        description="Actual data type found (for type mismatch errors)",
+        description="Name of the Pandera check that failed",
     )
-    null_count: int | None = Field(default=None, description="Number of null/missing values found")
-    null_indices: list[int] | None = Field(
+    failure_case: str | None = Field(
         default=None,
-        description="Row indices where null values occur (limited to 100)",
-    )
-    violation_count: int | None = Field(
-        default=None,
-        description="Number of values violating the rule",
-    )
-    min_found: float | None = Field(
-        default=None,
-        description="Minimum value found (for min/max violations)",
-    )
-    max_found: float | None = Field(
-        default=None,
-        description="Maximum value found (for min/max violations)",
-    )
-    sample_violations: list[str] | None = Field(
-        default=None,
-        description="Sample of values that violated the rule",
-    )
-    invalid_values: list[str] | None = Field(
-        default=None,
-        description="List of invalid values found",
-    )
-    duplicate_count: int | None = Field(
-        default=None,
-        description="Number of duplicate values found",
+        description="Specific failure case details from Pandera",
     )
 
 
@@ -241,25 +217,106 @@ class FindAnomaliesResult(BaseModel):
 
 
 class ColumnValidationRules(BaseModel):
-    """Validation rules for a single column."""
+    """Column validation rules based on Pandera Field and Check validation capabilities.
 
-    type: Literal["int", "float", "str", "bool", "datetime"] | None = Field(
-        None,
-        description="Expected data type: int, float, str, bool, datetime",
+    This class implements comprehensive column validation using rules compatible with
+    Pandera's validation system. It leverages Pandera's robust validation framework
+    for maximum data quality assurance.
+
+    For complete documentation on validation behaviors and options, see:
+    - Pandera Field API: https://pandera.readthedocs.io/en/stable/reference/generated/pandera.api.pandas.model_components.Field.html
+    - Pandera Check API: https://pandera.readthedocs.io/en/stable/reference/generated/pandera.api.checks.Check.html
+    - Pandas validation guide: https://pandas.pydata.org/docs/user_guide/basics.html#validation
+
+    The validation rules are organized by category to match Pandera's Check API for
+    maximum compatibility and comprehensive data validation coverage.
+    """
+
+    # Core Field Properties (Pandera Field parameters)
+    nullable: bool = Field(
+        default=True, description="Allow null/NaN values in the column (Pandera nullable parameter)"
     )
-    nullable: bool = Field(default=True, description="Whether null values are allowed")
-    min: int | float | None = Field(default=None, description="Minimum value for numeric columns")
-    max: int | float | None = Field(default=None, description="Maximum value for numeric columns")
-    pattern: str | None = Field(default=None, description="Regex pattern for string validation")
-    values: list[str] | None = Field(default=None, description="List of allowed values")
-    unique: bool = Field(default=False, description="Whether values must be unique")
-    min_length: int | None = Field(default=None, description="Minimum string length")
-    max_length: int | None = Field(default=None, description="Maximum string length")
+    unique: bool = Field(
+        default=False, description="Ensure all column values are unique (Pandera unique parameter)"
+    )
+    coerce: bool = Field(
+        default=False, description="Attempt automatic type conversion (Pandera coerce parameter)"
+    )
 
-    @field_validator("pattern")
+    # Equality Checks (Pandera Check.equal_to/not_equal_to)
+    equal_to: int | float | str | bool | None = Field(
+        default=None, description="All values must equal this exact value (Pandera Check.equal_to)"
+    )
+    not_equal_to: int | float | str | bool | None = Field(
+        default=None, description="No values may equal this value (Pandera Check.not_equal_to)"
+    )
+
+    # Numeric Range Checks (Pandera Check comparison methods)
+    greater_than: int | float | None = Field(
+        default=None,
+        description="All numeric values must be strictly greater than this (Pandera Check.greater_than)",
+    )
+    greater_than_or_equal_to: int | float | None = Field(
+        default=None,
+        description="All numeric values must be >= this value (Pandera Check.greater_than_or_equal_to)",
+    )
+    less_than: int | float | None = Field(
+        default=None,
+        description="All numeric values must be strictly less than this (Pandera Check.less_than)",
+    )
+    less_than_or_equal_to: int | float | None = Field(
+        default=None,
+        description="All numeric values must be <= this value (Pandera Check.less_than_or_equal_to)",
+    )
+    in_range: dict[str, int | float] | None = Field(
+        default=None,
+        description="Numeric range constraints as {'min': num, 'max': num} (Pandera Check.in_range)",
+    )
+
+    # Set Membership Checks (Pandera Check.isin/notin)
+    isin: list[str | int | float | bool] | None = Field(
+        default=None,
+        description="Values must be in this list of allowed values (Pandera Check.isin)",
+    )
+    notin: list[str | int | float | bool] | None = Field(
+        default=None,
+        description="Values must not be in this list of forbidden values (Pandera Check.notin)",
+    )
+
+    # String-specific Validation (Pandera Check string methods)
+    str_contains: str | None = Field(
+        default=None, description="Strings must contain this substring (Pandera Check.str_contains)"
+    )
+    str_endswith: str | None = Field(
+        default=None, description="Strings must end with this suffix (Pandera Check.str_endswith)"
+    )
+    str_startswith: str | None = Field(
+        default=None,
+        description="Strings must start with this prefix (Pandera Check.str_startswith)",
+    )
+    str_matches: str | None = Field(
+        default=None,
+        description="Strings must match this regex pattern (Pandera Check.str_matches)",
+    )
+    str_length: dict[str, int] | None = Field(
+        default=None,
+        description="String length constraints as {'min': int, 'max': int} (Pandera Check.str_length)",
+    )
+
+    # Validation Control Parameters (Pandera behavior controls)
+    ignore_na: bool = Field(
+        default=True,
+        description="Ignore null values during validation checks (Pandera ignore_na parameter)",
+    )
+    raise_warning: bool = Field(
+        default=False,
+        description="Raise warning instead of exception on validation failure (Pandera raise_warning parameter)",
+    )
+
+    @field_validator("str_matches")
     @classmethod
-    def validate_pattern(cls, v: str | None) -> str | None:
-        """Validate that pattern is a valid regular expression."""
+    def validate_regex_pattern(cls, v: str | None) -> str | None:
+        """Validate that str_matches pattern is a valid regular expression."""
         if v is None:
             return v
 
@@ -267,8 +324,32 @@ class ColumnValidationRules(BaseModel):
             re.compile(v)
             return v
         except re.error as e:
-            msg = f"Invalid regular expression: {e}"
+            msg = f"Invalid regular expression for str_matches: {e}"
             raise ValueError(msg) from e
+
+    @field_validator("str_length", "in_range")
+    @classmethod
+    def validate_range_dict(cls, v: dict[str, int | float] | None) -> dict[str, int | float] | None:
+        """Validate range constraint dictionaries for str_length and in_range."""
+        if v is None:
+            return v
+
+        if not isinstance(v, dict):
+            msg = "Range constraint must be a dictionary with 'min' and/or 'max' keys"
+            raise TypeError(msg)
+
+        allowed_keys = {"min", "max"}
+        invalid_keys = set(v.keys()) - allowed_keys
+        if invalid_keys:
+            msg = f"Range constraint contains invalid keys: {invalid_keys}. Allowed: {allowed_keys}"
+            raise ValueError(msg)
+
+        # Validate min/max relationship
+        if "min" in v and "max" in v and v["min"] > v["max"]:
+            msg = f"Range constraint min ({v['min']}) cannot be greater than max ({v['max']})"
+            raise ValueError(msg)
+
+        return v
 
 
 class QualityRule(BaseModel):
@@ -448,7 +529,15 @@ def validate_schema(
         Field(description="Schema definition with column validation rules"),
     ],
 ) -> ValidateSchemaResult:
-    """Validate data against a schema definition.
+    """Validate data against a schema definition using Pandera validation framework.
+
+    This function leverages Pandera's comprehensive validation capabilities to provide
+    robust data validation. The schema is dynamically converted to Pandera format
+    and applied to the DataFrame for maximum validation coverage and reliability.
+
+    For more information on Pandera validation capabilities, see:
+    - Pandera Documentation: https://pandera.readthedocs.io/
+    - Check API: https://pandera.readthedocs.io/en/stable/reference/generated/pandera.api.checks.Check.html
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
@@ -457,7 +546,7 @@ def validate_schema(
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
         validation_errors: dict[str, list[ValidationError]] = {}
 
         parsed_schema = schema.root
@@ -488,10 +577,12 @@ def validate_schema(
         validation_summary.missing_columns = list(schema_columns - df_columns)
         validation_summary.extra_columns = list(df_columns - schema_columns)
 
-        # Validate each column in schema
+        # Build Pandera schema dynamically from our validation rules
+        pandera_columns = {}
+
         for col_name, rules_model in parsed_schema.items():
-            rules = rules_model.model_dump(exclude_none=True)
             if col_name not in df.columns:
+                # Handle missing columns separately
                 validation_errors[col_name] = [
                     ValidationError(
                         error="column_missing",
@@ -501,166 +592,101 @@ def validate_schema(
                 validation_summary.invalid_columns += 1
                 continue
 
-            col_errors: list[ValidationError] = []
-            col_data = df[col_name]
+            # Convert ColumnValidationRules to Pandera checks
+            checks = []
+            rules = rules_model.model_dump(exclude_none=True)
+            ignore_na = rules.get("ignore_na", True)
 
-            # Type validation
-            expected_type = rules.get("type")
-            if expected_type:
-                type_valid = False
-                if expected_type == "int":
-                    type_valid = pd.api.types.is_integer_dtype(col_data)
-                elif expected_type == "float":
-                    type_valid = pd.api.types.is_float_dtype(col_data)
-                elif expected_type == "str":
-                    type_valid = pd.api.types.is_string_dtype(col_data) or col_data.dtype == object
-                elif expected_type == "bool":
-                    type_valid = pd.api.types.is_bool_dtype(col_data)
-                elif expected_type == "datetime":
-                    type_valid = pd.api.types.is_datetime64_any_dtype(col_data)
-
-                if not type_valid:
-                    col_errors.append(
-                        ValidationError(
-                            error="type_mismatch",
-                            message=f"Expected type '{expected_type}', got '{col_data.dtype}'",
-                            actual_type=str(col_data.dtype),
-                        ),
+            # Build Pandera checks from validation rules
+            if rules.get("equal_to") is not None:
+                checks.append(Check.equal_to(rules["equal_to"], ignore_na=ignore_na))
+            if rules.get("not_equal_to") is not None:
+                checks.append(Check.not_equal_to(rules["not_equal_to"], ignore_na=ignore_na))
+            if rules.get("greater_than") is not None:
+                checks.append(Check.greater_than(rules["greater_than"], ignore_na=ignore_na))
+            if rules.get("greater_than_or_equal_to") is not None:
+                checks.append(
+                    Check.greater_than_or_equal_to(
+                        rules["greater_than_or_equal_to"], ignore_na=ignore_na
                     )
+                )
+            if rules.get("less_than") is not None:
+                checks.append(Check.less_than(rules["less_than"], ignore_na=ignore_na))
+            if rules.get("less_than_or_equal_to") is not None:
+                checks.append(
+                    Check.less_than_or_equal_to(rules["less_than_or_equal_to"], ignore_na=ignore_na)
+                )
+            if rules.get("in_range") is not None:
+                range_dict = rules["in_range"]
+                checks.append(
+                    Check.in_range(range_dict["min"], range_dict["max"], ignore_na=ignore_na)
+                )
+            if rules.get("isin") is not None:
+                checks.append(Check.isin(rules["isin"], ignore_na=ignore_na))
+            if rules.get("notin") is not None:
+                checks.append(Check.notin(rules["notin"], ignore_na=ignore_na))
+            if rules.get("str_contains") is not None:
+                checks.append(Check.str_contains(rules["str_contains"], ignore_na=ignore_na))
+            if rules.get("str_endswith") is not None:
+                checks.append(Check.str_endswith(rules["str_endswith"], ignore_na=ignore_na))
+            if rules.get("str_startswith") is not None:
+                checks.append(Check.str_startswith(rules["str_startswith"], ignore_na=ignore_na))
+            if rules.get("str_matches") is not None:
+                checks.append(Check.str_matches(rules["str_matches"], ignore_na=ignore_na))
+            if rules.get("str_length") is not None:
+                length_dict = rules["str_length"]
+                min_len = length_dict.get("min")
+                max_len = length_dict.get("max")
+                checks.append(Check.str_length(min_len, max_len, ignore_na=ignore_na))
 
-            # Nullable validation
-            if not rules.get("nullable", True):
-                null_count = col_data.isna().sum()
-                if null_count > 0:
-                    col_errors.append(
-                        ValidationError(
-                            error="null_values",
-                            message=f"Column contains {null_count} null values",
-                            null_count=int(null_count),
-                            null_indices=df[col_data.isna()].index.tolist()[:100],
-                        ),
+            # Create Pandera Column with checks
+            pandera_columns[col_name] = Column(
+                nullable=rules.get("nullable", True),
+                unique=rules.get("unique", False),
+                coerce=rules.get("coerce", False),
+                checks=checks,
+                name=col_name,
+            )
+
+        # Create and apply Pandera DataFrameSchema
+        pandera_schema = DataFrameSchema(
+            columns=pandera_columns,
+            strict=False,  # Allow extra columns not in schema
+            name="DataBeak_Validation_Schema",
+        )
+
+        # Validate using Pandera
+        try:
+            pandera_schema.validate(df, lazy=True)
+            # If validation succeeds, update summary
+            validation_summary.valid_columns = len(pandera_columns)
+            validation_summary.invalid_columns = len(validation_errors)  # Only missing columns
+
+        except pa.errors.SchemaErrors as schema_errors:
+            # Process Pandera validation errors
+            for error_data in schema_errors.failure_cases.to_dict("records"):
+                col_name = str(error_data.get("column", "unknown"))
+                check_name = str(error_data.get("check", "unknown"))
+                failure_case = error_data.get("failure_case", "unknown")
+
+                if col_name not in validation_errors:
+                    validation_errors[col_name] = []
+
+                validation_errors[col_name].append(
+                    ValidationError(
+                        error=f"pandera_{check_name}",
+                        message=f"Pandera validation failed: {check_name} - {failure_case}",
+                        check_name=check_name,
+                        failure_case=str(failure_case),
                     )
+                )
 
-            # Min/Max validation for numeric columns
-            if pd.api.types.is_numeric_dtype(col_data):
-                if "min" in rules:
-                    min_val = rules["min"]
-                    violations = col_data[col_data < min_val]
-                    if len(violations) > 0:
-                        col_errors.append(
-                            ValidationError(
-                                error="min_violation",
-                                message=f"{len(violations)} values below minimum {min_val}",
-                                violation_count=len(violations),
-                                min_found=float(violations.min()),
-                            ),
-                        )
-
-                if "max" in rules:
-                    max_val = rules["max"]
-                    violations = col_data[col_data > max_val]
-                    if len(violations) > 0:
-                        col_errors.append(
-                            ValidationError(
-                                error="max_violation",
-                                message=f"{len(violations)} values above maximum {max_val}",
-                                violation_count=len(violations),
-                                max_found=float(violations.max()),
-                            ),
-                        )
-
-            # Pattern validation for string columns
-            if "pattern" in rules and (
-                col_data.dtype == object or pd.api.types.is_string_dtype(col_data)
-            ):
-                pattern = rules["pattern"]
-                try:
-                    non_null = col_data.dropna()
-                    if len(non_null) > 0:
-                        matches = non_null.astype(str).str.match(pattern)
-                        violations = non_null[~matches]
-                        if len(violations) > 0:
-                            col_errors.append(
-                                ValidationError(
-                                    error="pattern_violation",
-                                    message=f"{len(violations)} values don't match pattern '{pattern}'",
-                                    violation_count=len(violations),
-                                    sample_violations=[
-                                        str(v) for v in violations.head(10).tolist()
-                                    ],
-                                ),
-                            )
-                except Exception as e:
-                    col_errors.append(
-                        ValidationError(
-                            error="pattern_error",
-                            message=f"Invalid regex pattern: {e!s}",
-                        ),
-                    )
-
-            # Allowed values validation
-            if "values" in rules:
-                values = rules["values"]
-                # Schema validation already ensures values is a list
-                allowed = set(values)
-                actual = set(col_data.dropna().unique())
-                invalid = actual - allowed
-                if invalid:
-                    col_errors.append(
-                        ValidationError(
-                            error="invalid_values",
-                            message=f"Found {len(invalid)} invalid values",
-                            invalid_values=[str(v) for v in list(invalid)[:50]],
-                        ),
-                    )
-
-            # Uniqueness validation
-            if rules.get("unique", False):
-                duplicates = col_data.duplicated()
-                if duplicates.any():
-                    col_errors.append(
-                        ValidationError(
-                            error="duplicate_values",
-                            message=f"Column contains {duplicates.sum()} duplicate values",
-                            duplicate_count=int(duplicates.sum()),
-                        ),
-                    )
-
-            # Length validation for strings
-            if col_data.dtype == object or pd.api.types.is_string_dtype(col_data):
-                if "min_length" in rules:
-                    min_len = rules["min_length"]
-                    # Schema validation already ensures min_len is numeric
-                    str_data = col_data.dropna().astype(str)
-                    short = str_data[str_data.str.len() < int(min_len)]
-                    if len(short) > 0:
-                        col_errors.append(
-                            ValidationError(
-                                error="min_length_violation",
-                                message=f"{len(short)} values shorter than {min_len} characters",
-                                violation_count=len(short),
-                            ),
-                        )
-
-                if "max_length" in rules:
-                    max_len = rules["max_length"]
-                    # Schema validation already ensures max_len is numeric
-                    str_data = col_data.dropna().astype(str)
-                    long = str_data[str_data.str.len() > int(max_len)]
-                    if len(long) > 0:
-                        col_errors.append(
-                            ValidationError(
-                                error="max_length_violation",
-                                message=f"{len(long)} values longer than {max_len} characters",
-                                violation_count=len(long),
-                            ),
-                        )
-
-            if col_errors:
-                validation_errors[col_name] = col_errors
-                validation_summary.invalid_columns += 1
-            else:
-                validation_summary.valid_columns += 1
+            validation_summary.invalid_columns = len(validation_errors)
+            validation_summary.valid_columns = (
+                len(parsed_schema)
+                - validation_summary.invalid_columns
+                - len(validation_summary.missing_columns)
+            )
 
         is_valid = len(validation_errors) == 0 and len(validation_summary.missing_columns) == 0
 
@@ -691,7 +717,7 @@ def validate_schema(
         )
 
     except Exception as e:
-        logger.error("Error validating schema: %s", str(e))
+        logger.exception("Error validating schema: %s", str(e))
         msg = f"Error validating schema: {e!s}"
         raise ToolError(msg) from e
 
@@ -712,7 +738,7 @@ def check_data_quality(
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
         recommendations: list[str] = []
@@ -1047,7 +1073,7 @@ def check_data_quality(
         )
 
     except Exception as e:
-        logger.error("Error checking data quality: %s", str(e))
+        logger.exception("Error checking data quality: %s", str(e))
         msg = f"Error checking data quality: {e!s}"
         raise ToolError(msg) from e
 
@@ -1076,7 +1102,7 @@ def find_anomalies(
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
 
         # Apply resource management for large datasets
         logger.info("Finding anomalies in %d rows, %d columns", len(df), len(df.columns))
@@ -1312,19 +1338,14 @@ def find_anomalies(
         )
 
     except Exception as e:
-        logger.error("Error finding anomalies: %s", str(e))
+        logger.exception("Error finding anomalies: %s", str(e))
         msg = f"Error finding anomalies: {e!s}"
         raise ToolError(msg) from e
-
-
-# TODO: Complete Pandera integration - https://github.com/jonpspri/databeak/issues/100
-# Complex FastMCP/Pydantic compatibility issues need resolution
 
 
 # ============================================================================
 # FASTMCP SERVER SETUP
 # ============================================================================
-
 
 # Create validation server
 validation_server = FastMCP(
@@ -1332,9 +1353,7 @@ validation_server = FastMCP(
     instructions="Data validation server for DataBeak",
 )
 
-
-# Register the logic functions directly as MCP tools (no wrapper functions needed)
+# Register the validation functions as MCP tools
 validation_server.tool(name="validate_schema")(validate_schema)
-# validation_server.tool(name="validate_with_pandera_schema")(validate_with_pandera_schema)
 validation_server.tool(name="check_data_quality")(check_data_quality)
 validation_server.tool(name="find_anomalies")(find_anomalies)

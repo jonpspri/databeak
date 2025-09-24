@@ -27,6 +27,7 @@ async def filter_rows(
     # Implementation here
     pass
 
+
 # Register at the end of file
 server = FastMCP("Server Name")
 server.tool(name="filter_rows")(filter_rows)
@@ -148,6 +149,7 @@ Is the model used by multiple servers?
 # In server file
 class ColumnOperationResult(BaseModel):
     """Result of a column operation (local to this server)."""
+
     session_id: str
     operation: str
     rows_affected: int
@@ -160,6 +162,7 @@ class ColumnOperationResult(BaseModel):
 # In models/tool_responses.py (shared across servers)
 class LoadResult(BaseModel):
     """Result of loading data (used by multiple servers)."""
+
     session_id: str
     success: bool
     rows_affected: int
@@ -188,6 +191,7 @@ Is the exception used by multiple servers?
 # In server file
 class FilterExpressionError(Exception):
     """Error in filter expression syntax (specific to this server)."""
+
     pass
 ```
 
@@ -248,13 +252,11 @@ async def test_session() -> str:
     result = await load_csv_from_content(csv_content)
     return result.session_id
 
+
 @pytest.mark.asyncio
 async def test_filter_rows_basic(test_session):
     """Test basic filtering functionality."""
-    result = await filter_rows(
-        test_session,
-        [{"column": "age", "operator": ">", "value": 25}]
-    )
+    result = await filter_rows(test_session, [{"column": "age", "operator": ">", "value": 25}])
     assert result.rows_after == 1
     assert result.rows_filtered == 1
 ```

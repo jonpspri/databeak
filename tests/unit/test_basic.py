@@ -2,9 +2,8 @@
 
 import pytest
 
-from src import databeak
-from src.databeak.core.session import get_session_manager
-from src.databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
+from databeak.core.session import get_session_manager
+from databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
 
 
 class TestValidators:
@@ -85,7 +84,7 @@ class TestDataOperations:
     @pytest.mark.asyncio
     async def test_load_csv_from_content(self, isolated_context, temp_work_dir) -> None:
         """Test loading CSV from string content with isolated session."""
-        from src.databeak.servers.io_server import load_csv_from_content
+        from databeak.servers.io_server import load_csv_from_content
 
         csv_content = """a,b,c
 1,2,3
@@ -104,7 +103,7 @@ class TestDataOperations:
     @pytest.mark.asyncio
     async def test_filter_rows(self, csv_session_with_data) -> None:
         """Test filtering rows with isolated session."""
-        from src.databeak.servers.transformation_server import filter_rows
+        from databeak.servers.transformation_server import filter_rows
 
         # Get the isolated context and load result from fixture
         isolated_context, _load_result = csv_session_with_data
@@ -126,8 +125,8 @@ class TestDataOperations:
     async def test_filter_rows_category(self, isolated_context, csv_session_with_data) -> None:
         # Test a different filter condition - Electronics category on fresh data
         # Need to reload data first since previous filter modified the session
-        from src.databeak.servers.io_server import load_csv_from_content
-        from src.databeak.servers.transformation_server import filter_rows
+        from databeak.servers.io_server import load_csv_from_content
+        from databeak.servers.transformation_server import filter_rows
 
         csv_content = """product,price,quantity,category
 Laptop,999.99,10,Electronics

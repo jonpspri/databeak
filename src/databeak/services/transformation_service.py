@@ -211,10 +211,10 @@ async def filter_rows_with_pydantic(
         ColumnNotFoundError,
         InvalidParameterError,
     ) as e:
-        logger.error("Filter operation failed: %s", e.message)
+        logger.exception("Filter operation failed: %s", e.message)
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Unexpected error in filter_rows: %s", e)
+        logger.exception("Unexpected error in filter_rows: %s", e)
         msg = f"Filter operation failed: {e!s}"
         raise ToolError(msg) from e
 
@@ -266,7 +266,7 @@ async def sort_data_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Sort operation failed: %s", e)
+        logger.exception("Sort operation failed: %s", e)
         msg = f"Sort operation failed: {e!s}"
         raise ToolError(msg) from e
 
@@ -305,7 +305,7 @@ async def remove_duplicates_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Remove duplicates failed: %s", e)
+        logger.exception("Remove duplicates failed: %s", e)
         msg = f"Failed to remove duplicates: {e!s}"
         raise ToolError(msg) from e
 
@@ -387,7 +387,7 @@ async def fill_missing_values_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Fill missing values failed: %s", e)
+        logger.exception("Fill missing values failed: %s", e)
         msg = f"Failed to fill missing values: {e!s}"
         raise ToolError(msg) from e
 
@@ -437,7 +437,7 @@ async def transform_column_case_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Transform column case failed: %s", e)
+        logger.exception("Transform column case failed: %s", e)
         msg = f"Failed to transform column case: {e!s}"
         raise ToolError(msg) from e
 
@@ -476,6 +476,6 @@ async def strip_column_with_pydantic(
     except (SessionNotFoundError, NoDataLoadedError) as e:
         raise ToolError(e.message) from e
     except Exception as e:
-        logger.error("Strip column failed: %s", e)
+        logger.exception("Strip column failed: %s", e)
         msg = f"Failed to strip column: {e!s}"
         raise ToolError(msg) from e

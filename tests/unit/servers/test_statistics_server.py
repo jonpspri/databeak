@@ -3,8 +3,8 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.servers.statistics_server import (
+from databeak.servers.io_server import load_csv_from_content
+from databeak.servers.statistics_server import (
     get_column_statistics,
     get_correlation_matrix,
     get_statistics,

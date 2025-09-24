@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     close_session,
     export_csv,
     get_encoding_fallbacks,
@@ -136,7 +136,7 @@ class TestLoadCsvSizeConstraints:
         try:
             # Mock the MAX_ROWS constant to make test faster
             with (
-                patch("src.databeak.servers.io_server.MAX_ROWS", 5),
+                patch("databeak.servers.io_server.MAX_ROWS", 5),
                 pytest.raises(ToolError, match="rows exceeds limit"),
             ):
                 await load_csv(create_mock_context(), file_path=temp_path)
@@ -157,7 +157,7 @@ class TestLoadCsvSizeConstraints:
         try:
             # Mock the MAX_MEMORY_USAGE_MB to trigger the check
             with (
-                patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
+                patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                 pytest.raises(ToolError, match="exceeds memory limit"),
             ):
                 await load_csv(create_mock_context(), file_path=temp_path)

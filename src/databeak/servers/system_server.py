@@ -17,10 +17,10 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 # Import version and session management from main package
-from .._version import __version__
-from ..core.session import get_session_manager
-from ..core.settings import DataBeakSettings, get_csv_settings
-from ..models.tool_responses import HealthResult, ServerInfoResult
+from databeak._version import __version__
+from databeak.core.session import get_session_manager
+from databeak.core.settings import DataBeakSettings, get_settings
+from databeak.models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ def get_memory_status(
 
     """
     if settings is None:
-        settings = get_csv_settings()
+        settings = get_settings()
 
     usage_ratio = current_mb / threshold_mb if threshold_mb > 0 else 0
 
@@ -93,7 +93,7 @@ async def health_check(
         await ctx.info("Performing DataBeak health check with memory monitoring")
 
         session_manager = get_session_manager()
-        settings = get_csv_settings()
+        settings = get_settings()
         active_sessions = len(session_manager.sessions)
 
         # Get memory information
@@ -199,7 +199,7 @@ async def get_server_info(
         await ctx.info("Retrieving DataBeak server information")
 
         # Get current configuration settings
-        settings = get_csv_settings()
+        settings = get_settings()
 
         server_info = ServerInfoResult(
             name="DataBeak",
@@ -269,7 +269,7 @@ async def get_server_info(
         return server_info
 
     except Exception as e:
-        logger.error("Failed to get server information: %s", str(e))
+        logger.exception("Failed to get server information: %s", str(e))
         await ctx.error(f"Failed to get server information: {e}")
         msg = f"Failed to get server information: {e}"
 

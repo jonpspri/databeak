@@ -12,9 +12,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-import databeak
-
-from ..models.typed_dicts import CellValue, DataValidationIssues
+from databeak.core.settings import get_settings
+from databeak.models.typed_dicts import CellValue, DataValidationIssues
 
 
 # Implementation: File path security validation with existence checking and extension filtering
@@ -177,7 +176,7 @@ def validate_dataframe(df: pd.DataFrame) -> DataValidationIssues:
                 issues["warnings"].append(f"Column '{col}' has mixed types: {list(unique_types)}")
 
     # Check for high cardinality in string columns
-    settings = databeak.settings
+    settings = get_settings()
     for col in df.select_dtypes(include=["object"]).columns:
         unique_ratio = df[col].nunique() / len(df)
         if unique_ratio > settings.high_quality_threshold:
@@ -252,10 +251,11 @@ def sanitize_filename(filename: str) -> str:
         filename = filename.replace(char, "_")
 
     # Limit length
+    settings = get_settings()
     path_obj = Path(filename)
     name, ext = path_obj.stem, path_obj.suffix
-    if len(name) > databeak.settings.percentage_multiplier:
-        name = name[:databeak.settings.percentage_multiplier]
+    if len(name) > settings.percentage_multiplier:
+        name = name[: settings.percentage_multiplier]
 
     return name + ext
 

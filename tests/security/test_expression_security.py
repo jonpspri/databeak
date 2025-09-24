@@ -15,9 +15,9 @@ import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from src.databeak.exceptions import InvalidParameterError
-from src.databeak.models.expression_models import SecureExpression
-from src.databeak.utils.secure_evaluator import (
+from databeak.exceptions import InvalidParameterError
+from databeak.models.expression_models import SecureExpression
+from databeak.utils.secure_evaluator import (
     SecureExpressionEvaluator,
     validate_expression_safety,
 )

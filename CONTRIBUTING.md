@@ -199,9 +199,7 @@ We use modern Python tooling for code quality:
 
    ```python
    async def process_data(
-       session_id: str,
-       options: Dict[str, Any],
-       ctx: Optional[Context] = None
+       session_id: str, options: Dict[str, Any], ctx: Optional[Context] = None
    ) -> Dict[str, Any]:
        """Process data with given options."""
        ...
@@ -296,6 +294,7 @@ tests/
    ```python
    import uuid
 
+
    @pytest.fixture
    async def session_with_data():
        """Create a session with sample data."""
@@ -314,8 +313,7 @@ tests/
    @pytest.mark.asyncio
    async def test_filter_rows(session_with_data):
        result = await filter_rows(
-           session_id=session_with_data,
-           conditions=[{"column": "age", "operator": ">", "value": 18}]
+           session_id=session_with_data, conditions=[{"column": "age", "operator": ">", "value": 18}]
        )
        assert result["success"]
        assert result["rows_after"] < result["rows_before"]
@@ -324,11 +322,14 @@ tests/
 1. **Use parametrize for multiple cases**:
 
    ```python
-   @pytest.mark.parametrize("dtype,expected", [
-       ("int", True),
-       ("float", True),
-       ("str", False),
-   ])
+   @pytest.mark.parametrize(
+       "dtype,expected",
+       [
+           ("int", True),
+           ("float", True),
+           ("str", False),
+       ],
+   )
    def test_is_numeric(dtype, expected):
        assert is_numeric_dtype(dtype) == expected
    ```
@@ -351,6 +352,7 @@ All public functions, classes, and modules must have docstrings:
 This module provides functionality for X, Y, and Z.
 """
 
+
 class DataProcessor:
     """Process CSV data with various transformations.
 
@@ -359,11 +361,7 @@ class DataProcessor:
         df: Pandas DataFrame containing the data
     """
 
-    def transform(
-        self,
-        operation: str,
-        **kwargs: Any
-    ) -> pd.DataFrame:
+    def transform(self, operation: str, **kwargs: Any) -> pd.DataFrame:
         """Apply transformation to data.
 
         Args:

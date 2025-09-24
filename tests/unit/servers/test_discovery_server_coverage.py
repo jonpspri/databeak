@@ -8,9 +8,8 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src import databeak
-from src.databeak.core.session import get_session_manager
-from src.databeak.servers.discovery_server import (
+from databeak.core.session import get_session_manager
+from databeak.servers.discovery_server import (
     DataSummaryResult,
     FindCellsResult,
     GroupAggregateResult,
@@ -24,6 +23,7 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
     profile_data,
 )
+from src import databeak
 from tests.test_mock_context import create_mock_context
 
 

@@ -100,7 +100,7 @@ class TestGetStatistics:
         session_id = "test-123"
 
         # Act
-        with patch('get_session_manager') as mock_manager:
+        with patch("get_session_manager") as mock_manager:
             mock_manager.return_value.get_session.return_value = mock_session
             result = get_statistics(session_id)
 
@@ -238,16 +238,18 @@ async def sample_session():
 Test multiple scenarios with one test:
 
 ```python
-@pytest.mark.parametrize("operator,value,expected_count", [
-    (">", 1.00, 2),   # Apple and Orange
-    ("<=", 1.00, 1),  # Banana
-    ("==", 1.50, 1),  # Apple
-])
+@pytest.mark.parametrize(
+    "operator,value,expected_count",
+    [
+        (">", 1.00, 2),  # Apple and Orange
+        ("<=", 1.00, 1),  # Banana
+        ("==", 1.50, 1),  # Apple
+    ],
+)
 async def test_filter_by_price(sample_session, operator, value, expected_count):
     """Test filtering with different operators."""
     result = await filter_rows(
-        sample_session,
-        [{"column": "price", "operator": operator, "value": value}]
+        sample_session, [{"column": "price", "operator": operator, "value": value}]
     )
     assert result.rows_after_filter == expected_count
 ```
@@ -257,7 +259,7 @@ async def test_filter_by_price(sample_session, operator, value, expected_count):
 Mock external dependencies in unit tests:
 
 ```python
-@patch('src.databeak.utils.validators.requests.get')
+@patch("src.databeak.utils.validators.requests.get")
 def test_url_validation(mock_get):
     """Test URL validation with mocked HTTP request."""
     mock_get.return_value.status_code = 200
@@ -275,10 +277,7 @@ Test async functions properly:
 @pytest.mark.asyncio
 async def test_concurrent_operations():
     """Test concurrent async operations."""
-    tasks = [
-        load_csv_from_content(f"col\n{i}")
-        for i in range(5)
-    ]
+    tasks = [load_csv_from_content(f"col\n{i}") for i in range(5)]
     results = await asyncio.gather(*tasks)
 
     assert len(results) == 5
@@ -302,17 +301,15 @@ def create_test_dataframe(rows=10, columns=None):
     if columns is None:
         columns = ["col1", "col2", "col3"]
 
-    data = {
-        col: np.random.randn(rows)
-        for col in columns
-    }
+    data = {col: np.random.randn(rows) for col in columns}
     return pd.DataFrame(data)
+
 
 def create_csv_content(rows=5):
     """Generate CSV content for testing."""
     lines = ["name,value"]
     for i in range(rows):
-        lines.append(f"Item{i},{i*10}")
+        lines.append(f"Item{i},{i * 10}")
     return "\n".join(lines)
 ```
 
@@ -350,6 +347,7 @@ def test_invalid_input_raises_error():
     """Test that invalid input raises appropriate error."""
     with pytest.raises(ValueError, match="Invalid column name"):
         process_column(None)
+
 
 @pytest.mark.asyncio
 async def test_timeout_handling():
@@ -460,7 +458,9 @@ def test_complex_logic():
     data = create_complex_data()
 
     # Set breakpoint for debugging
-    import pdb; pdb.set_trace()
+    import pdb
+
+    pdb.set_trace()
 
     result = process_data(data)
     assert result.success
@@ -486,15 +486,20 @@ def test_filter_greater_than():
     result = filter_data(">", 5)
     assert result.count == 3
 
+
 def test_filter_less_than():
     result = filter_data("<", 5)
     assert result.count == 2
 
+
 # After: Parametrized test
-@pytest.mark.parametrize("operator,value,expected", [
-    (">", 5, 3),
-    ("<", 5, 2),
-])
+@pytest.mark.parametrize(
+    "operator,value,expected",
+    [
+        (">", 5, 3),
+        ("<", 5, 2),
+    ],
+)
 def test_filter_operations(operator, value, expected):
     result = filter_data(operator, value)
     assert result.count == expected
