@@ -109,7 +109,7 @@ uv run -m pytest                      # All tests
 
 # Run quality checks
 uv run ruff check
-uv run mypy
+uv run --directory src mypy .
 ```
 
 ### Testing Structure

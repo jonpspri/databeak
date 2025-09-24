@@ -219,8 +219,8 @@ ignore = [
     "ISC001", # Implicit string concatenation (often used in docstrings)
     "SIM105", # contextlib.suppress is slower that try-except-pass
     "SIM108", # Ternary operator - preference
-    "TID252", # Prefer absolute imports (DataBeak uses relative imports by design)
     #  TODO:  Work on bringing these into play
+    "PLC0415", # Local import (often used to avoid circular imports)
     "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # Complexity findings that make the AI cry
     "TRY300", "TRY301", "TRY401",   # tryceratops statement in else (nah), inner raise, logging redundancy
 ]
@@ -248,6 +248,7 @@ skip-magic-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.11"
+mypy_path = "src"
 namespace_packages = true
 explicit_package_bases = true
 warn_return_any = true

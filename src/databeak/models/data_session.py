@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 
-from ..exceptions import NoDataLoadedError
+from databeak.exceptions import NoDataLoadedError
 
 if TYPE_CHECKING:
     pass

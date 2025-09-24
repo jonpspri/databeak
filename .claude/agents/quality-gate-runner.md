@@ -65,7 +65,7 @@ uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 
 # 4. Type checking
-uv run mypy src/
+uv run --directory src mypy .
 
 # 5. MCP documentation compliance
 scripts/check_docstring_args.py         # Ensure no Args sections in MCP tools
@@ -149,7 +149,8 @@ mypy.....................................................................Failed
 
 **Use individual tools when:**
 
-- Debugging specific issues (e.g., `uv run mypy src/databeak/analytics.py`)
+- Debugging specific issues (e.g.,
+  `uv run --directory src mypy databeak/analytics.py`)
 - Testing fixes for specific tool failures
 - Need detailed output format (e.g., JSON for parsing)
 
@@ -267,7 +268,7 @@ uv run ruff check src/ tests/ --output-format=json
 uv run ruff format --check src/ tests/
 
 # Type checking (collect all MyPy errors)
-uv run mypy src/ --error-format=json
+uv run --directory src mypy . --error-format=json
 
 # Testing with coverage
 uv run pytest -n auto tests/ --cov=src --cov-report=json --cov-report=term-missing
@@ -355,7 +356,7 @@ uv run ruff check --fix --select I src/ tests/
 # For coverage gaps - suggest specific test scenarios
 
 # After fixes, re-run specific checks
-uv run mypy src/databeak/tools/analytics.py  # Target specific file
+uv run --directory src mypy databeak/tools/analytics.py  # Target specific file
 uv run pytest tests/test_io_operations.py -v  # Target specific test (single test, no parallel)
 ```
 

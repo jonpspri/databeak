@@ -168,7 +168,7 @@ uv run rg ".*: dict\[str, Any\]" src/databeak/ --type py -A 2 -B 1
 
 ```bash
 # Check current type issues
-uv run mypy src/databeak/ | grep -i "any"
+uv run --directory src mypy databeak/ | grep -i "any"
 ```
 
 ### Step 3: Create Central Type Definitions
@@ -345,7 +345,7 @@ class DataBeakErrorInfo(TypedDict):
 
 ```bash
 # Check type improvements don't break existing code
-uv run mypy src/databeak/ --strict
+uv run --directory src mypy databeak/ --strict
 
 # Ensure no new Any usage introduced
 uv run rg "Any" src/databeak/ --type py | wc -l
@@ -354,7 +354,7 @@ uv run rg "Any" src/databeak/ --type py | wc -l
 uv run pytest -n auto tests/ -v
 
 # Full quality check
-uv run ruff check src/ tests/ && uv run ruff format --check src/ tests/ && uv run mypy src/ && uv run pytest -n auto
+uv run ruff check src/ tests/ && uv run ruff format --check src/ tests/ && uv run --directory src mypy . && uv run pytest -n auto
 ```
 
 ### Analysis Commands
@@ -365,7 +365,7 @@ uv run rg ": Any" src/databeak/ --count-matches
 uv run rg "dict\[str, Any\]" src/databeak/ --count-matches
 
 # Check for new type issues
-uv run mypy src/databeak/ | grep -c "error:"
+uv run --directory src mypy databeak/ | grep -c "error:"
 ```
 
 ## Success Criteria

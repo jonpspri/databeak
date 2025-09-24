@@ -124,7 +124,7 @@ async def get_statistics(
             col_data = numeric_df[col].dropna()
 
             # Create StatisticsSummary directly
-            from ..models.statistics_models import (  # noqa: PLC0415 # Avoids circular import
+            from databeak.models.statistics_models import (  # Avoids circular import
                 StatisticsSummary,
             )
 
@@ -223,7 +223,7 @@ async def get_column_statistics(
         unique_count = int(col_data.nunique())
 
         # Initialize statistics dict using ColumnStatistics structure
-        from ..models.typed_dicts import ColumnStatistics  # noqa: PLC0415 # Avoids circular import
+        from databeak.models.typed_dicts import ColumnStatistics  # Avoids circular import
 
         statistics: ColumnStatistics = {
             "count": count,
@@ -272,7 +272,7 @@ async def get_column_statistics(
         # No longer recording operations (simplified MCP architecture)
 
         # Convert statistics dict to StatisticsSummary
-        from ..models.statistics_models import (  # noqa: PLC0415 # Avoids circular import
+        from databeak.models.statistics_models import (  # Avoids circular import
             StatisticsSummary,
         )
 

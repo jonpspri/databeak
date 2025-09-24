@@ -16,14 +16,14 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
 # Removed: OperationType (no longer tracking operations)
-from ..core.session import DatabeakSession, get_session_data
-from ..exceptions import (
+from databeak.core.session import DatabeakSession, get_session_data
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models.tool_responses import ColumnOperationResult
+from databeak.models.tool_responses import ColumnOperationResult
 
 logger = logging.getLogger(__name__)
 

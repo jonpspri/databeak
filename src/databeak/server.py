@@ -101,7 +101,7 @@ Consider:
 
 def main() -> None:
     """Start the DataBeak server."""
-    import argparse  # noqa: PLC0415 # Only used in main function
+    import argparse  # Only used in main function
 
     parser = argparse.ArgumentParser(description="DataBeak")
     parser.add_argument(

@@ -49,7 +49,7 @@ uv run pre-commit run --all-files
 # Individual quality checks
 uv run ruff check src/ tests/           # Linting
 uv run ruff format --check src/ tests/  # Format verification
-uv run mypy src/                        # Type checking
+uv run --directory src mypy .                        # Type checking
 uv run pytest tests/unit/ --cov=src     # Testing with coverage
 scripts/check_docstring_args.py         # MCP Args compliance
 scripts/check_mcp_field_descriptions.py # MCP Field compliance
@@ -205,7 +205,7 @@ uv run pre-commit run --all-files
 scripts/check_docstring_args.py --quiet
 scripts/check_mcp_field_descriptions.py --quiet
 uv run ruff check src/ --quiet
-uv run mypy src/ --quiet
+uv run --directory src mypy . --quiet
 
 # 4. Run full test suite
 uv run pytest tests/unit/ -q

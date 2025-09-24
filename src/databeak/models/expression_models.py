@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from ..utils.secure_evaluator import validate_expression_safety
+from databeak.utils.secure_evaluator import validate_expression_safety
 
 
 class SecureExpression(BaseModel):

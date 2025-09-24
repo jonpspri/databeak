@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3] - 2025-01-24
+
+### Fixed
+
+- **Circular Import Resolution**: Resolved critical circular import between
+  `session.py` and `session_service.py` using lazy imports and TYPE_CHECKING
+  blocks
+- **Import Architecture**: Converted all relative imports to absolute imports,
+  eliminating 15 TID252 ruff violations
+- **MyPy Configuration**: Added `mypy_path="src"` to enable type checking from
+  project root and pre-commit compatibility
+- **Documentation Consistency**: Updated all documentation to use standardized
+  `uv run --directory src mypy .` command syntax
+
+### Changed
+
+- **Agent Documentation**: Streamlined test-coverage-analyzer agent description
+  to focus on prescriptive guidance rather than current state information
+- **Quality Pipeline**: Pre-commit hooks now pass completely with proper MyPy
+  integration
+
 ## [0.0.2] - 2025-01-19
 
 ### Added

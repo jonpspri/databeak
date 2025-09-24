@@ -9,9 +9,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from ..exceptions import NoDataLoadedError, SessionExpiredError
-from ..models.data_models import ExportFormat, SessionInfo
-from ..models.data_session import DataSession
+from databeak.exceptions import NoDataLoadedError, SessionExpiredError
+from databeak.models.data_models import ExportFormat, SessionInfo
+from databeak.models.data_session import DataSession
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -270,6 +270,7 @@ def create_session_manager(max_session: int = 100, ttl_minutes: int = 60) -> Ses
 # Global session manager instance
 _session_manager: SessionManager | None = None
 _lock = threading.Lock()
+
 
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
