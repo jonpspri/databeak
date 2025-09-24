@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from src.databeak.utils.pydantic_validators import (
+from databeak.utils.pydantic_validators import (
     parse_json_string_to_dict,
     parse_json_string_to_dict_or_list,
     parse_json_string_to_list,
@@ -36,7 +36,7 @@ class TestParseJsonStringToDict:
     def test_json_string_not_dict(self):
         """Test error when JSON string parses to non-dict."""
         json_list = '["item1", "item2"]'
-        with pytest.raises(ValueError, match="JSON string must parse to dict"):
+        with pytest.raises(TypeError, match="JSON string must parse to dict"):
             parse_json_string_to_dict(json_list)
 
     def test_complex_dict_json(self):
@@ -89,13 +89,13 @@ class TestParseJsonStringToDictOrList:
     def test_json_string_invalid_type(self):
         """Test error when JSON string parses to unsupported type."""
         json_string = '"just a string"'
-        with pytest.raises(ValueError, match="JSON string must parse to dict or list"):
+        with pytest.raises(TypeError, match="JSON string must parse to dict or list"):
             parse_json_string_to_dict_or_list(json_string)
 
     def test_json_number_invalid(self):
         """Test error when JSON string parses to number."""
         json_string = "42"
-        with pytest.raises(ValueError, match="JSON string must parse to dict or list"):
+        with pytest.raises(TypeError, match="JSON string must parse to dict or list"):
             parse_json_string_to_dict_or_list(json_string)
 
 
@@ -124,7 +124,7 @@ class TestParseJsonStringToList:
     def test_json_string_not_list(self):
         """Test error when JSON string parses to non-list."""
         json_dict = '{"name": "John"}'
-        with pytest.raises(ValueError, match="JSON string must parse to list"):
+        with pytest.raises(TypeError, match="JSON string must parse to list"):
             parse_json_string_to_list(json_dict)
 
     def test_nested_list_json(self):

@@ -7,7 +7,7 @@ import logging
 import uuid
 from unittest.mock import MagicMock, patch
 
-from src.databeak.utils.logging_config import (
+from databeak.utils.logging_config import (
     CorrelationFilter,
     StructuredFormatter,
     clear_correlation_id,
@@ -440,14 +440,14 @@ class TestBackwardCompatibility:
 
     def test_setup_logging_calls_setup_structured_logging(self):
         """Test setup_logging calls setup_structured_logging for backward compatibility."""
-        with patch("src.databeak.utils.logging_config.setup_structured_logging") as mock_setup:
+        with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging("WARNING")
 
             mock_setup.assert_called_once_with("WARNING")
 
     def test_setup_logging_default_level(self):
         """Test setup_logging with default level."""
-        with patch("src.databeak.utils.logging_config.setup_structured_logging") as mock_setup:
+        with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging()
 
             mock_setup.assert_called_once_with("INFO")

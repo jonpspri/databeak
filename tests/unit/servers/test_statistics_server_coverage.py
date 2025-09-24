@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.core.session import get_session_manager
-from src.databeak.servers.statistics_server import (
+from databeak.core.session import get_session_manager
+from databeak.servers.statistics_server import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,

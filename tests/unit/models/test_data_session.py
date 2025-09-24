@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from src.databeak.models.data_session import DataSession
+from databeak.models.data_session import DataSession
 
 
 class TestDataSession:

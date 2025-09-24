@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     detect_file_encoding,
     load_csv,
     load_csv_from_url,
@@ -110,7 +110,7 @@ class TestLoadCsvEncodingFallbacks:
 class TestLoadCsvFromUrlFallbacks:
     """Test URL loading with encoding fallbacks."""
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_encoding_fallback_success(self, mock_read_csv, mock_urlopen):
         """Test URL loading with successful encoding fallback."""
@@ -153,7 +153,7 @@ class TestLoadCsvFromUrlFallbacks:
     async def test_load_url_row_limit_fallback(self):
         """Test URL loading with row limit during fallback."""
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_all_encodings_fail(self, mock_read_csv, mock_urlopen):
         """Test URL loading when all encodings fail."""
@@ -172,7 +172,7 @@ class TestLoadCsvFromUrlFallbacks:
                 encoding="utf-8",
             )
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_other_exception_during_fallback(self, mock_read_csv, mock_urlopen):
         """Test URL loading with non-encoding exception during fallback."""

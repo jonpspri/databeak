@@ -60,21 +60,21 @@ load_csv_from_content("name,age,city\nJohn,30,NYC\nJane,25,LA")
 
 ```python
 # Inspect data structure and content
-get_data_summary(session_id)              # Comprehensive overview
-get_row_data(session_id, 0)               # Inspect specific row
-get_cell_value(session_id, 0, "name")     # Read individual cell
+get_data_summary(session_id)  # Comprehensive overview
+get_row_data(session_id, 0)  # Inspect specific row
+get_cell_value(session_id, 0, "name")  # Read individual cell
 
 # Transform data with precise operations
 filter_rows(session_id, [{"column": "age", "operator": ">", "value": 25}])
-sort_data(session_id, ["name"])           # Sort by column
+sort_data(session_id, ["name"])  # Sort by column
 insert_row(session_id, -1, {"name": "Alice", "email": null})  # Add with nulls
 ```
 
 ### Step 3: Analyze and Export
 
 ```python
-get_statistics(session_id, ["age"])       # Statistical analysis
-export_csv(session_id, "results.csv")    # Save processed data
+get_statistics(session_id, ["age"])  # Statistical analysis
+export_csv(session_id, "results.csv")  # Save processed data
 ```
 
 ## Enhanced Resource Endpoints

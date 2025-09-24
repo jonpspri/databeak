@@ -122,6 +122,7 @@ Work with multiple datasets:
 ```python
 # Natural language commands:
 "Load the messy customer data"
+
 "Remove duplicate rows"
 "Fill missing email addresses with 'no-email@domain.com'"
 "Standardize the phone number format"
@@ -134,6 +135,7 @@ Work with multiple datasets:
 ```python
 # Business intelligence workflow:
 "Load quarterly sales data"
+
 "Filter for completed transactions only"
 "Group by product category and month"
 "Calculate total revenue and average order value"
@@ -147,6 +149,7 @@ Work with multiple datasets:
 ```python
 # Quality assurance workflow:
 "Load the new data batch"
+
 "Validate against the expected schema"
 "Check data quality score"
 "Find any statistical anomalies"

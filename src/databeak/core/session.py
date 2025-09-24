@@ -260,12 +260,15 @@ class SessionManager:
             await self.remove_session(session_id)
             self.sessions_to_cleanup.discard(session_id)
 
+
 def create_session_manager(max_session: int = 100, ttl_minutes: int = 60) -> SessionManager:
     """Create a new SessionManager instance with specified parameters."""
     return SessionManager(max_session, ttl_minutes)
 
+
 # Global session manager instance
 _session_manager: SessionManager | None = None
+
 
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
@@ -274,6 +277,7 @@ def get_session_manager() -> SessionManager:
     if _session_manager is None:
         _session_manager = SessionManager()
     return _session_manager
+
 
 def reset_session_manager() -> None:
     """Reset the global Session Manager object (for testing)."""
@@ -375,4 +379,3 @@ def validate_session_has_data(session: DatabeakSession, session_id: str) -> pd.D
         raise NoDataLoadedError(session_id)
 
     return df
-

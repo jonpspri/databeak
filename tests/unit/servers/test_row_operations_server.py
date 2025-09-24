@@ -10,10 +10,10 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
-import src.databeak.servers.row_operations_server  # noqa: F401
-from src.databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
-from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.servers.row_operations_server import (
+import databeak.servers.row_operations_server  # noqa: F401
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
+from databeak.servers.io_server import load_csv_from_content
+from databeak.servers.row_operations_server import (
     delete_row,
     get_cell_value,
     get_column_data,
@@ -110,7 +110,7 @@ class TestGetCellValue:
 
     async def test_get_cell_value_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -200,7 +200,7 @@ class TestSetCellValue:
 
     async def test_set_cell_value_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -279,7 +279,7 @@ class TestGetRowData:
 
     async def test_get_row_data_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -383,7 +383,7 @@ class TestGetColumnData:
 
     async def test_get_column_data_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -528,7 +528,7 @@ class TestInsertRow:
 
     async def test_insert_row_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -616,7 +616,7 @@ class TestDeleteRow:
 
     async def test_delete_row_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
@@ -744,7 +744,7 @@ class TestUpdateRow:
 
     async def test_update_row_invalid_session(self):
         """Test error handling for invalid session."""
-        from src.databeak.exceptions import SessionNotFoundError
+        from databeak.exceptions import SessionNotFoundError
 
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):

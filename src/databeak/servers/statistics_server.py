@@ -17,7 +17,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from ..core.session import get_session_data
-from ..core.settings import get_csv_settings
+from ..core.settings import get_settings
 
 # Import session management and data models from the main package
 from ..exceptions import (
@@ -315,7 +315,10 @@ async def get_column_statistics(
                 top=str(additional_stats.get("most_frequent"))
                 if additional_stats.get("most_frequent")
                 else None,
-                freq=int(freq_value) if (freq_value := additional_stats.get("most_frequent_count")) and isinstance(freq_value, int) else None,
+                freq=int(freq_value)
+                if (freq_value := additional_stats.get("most_frequent_count"))
+                and isinstance(freq_value, int)
+                else None,
             )
 
         # Map dtype to expected literal type
@@ -416,7 +419,7 @@ async def get_correlation_matrix(
             msg = "No numeric columns found for correlation analysis"
             raise ToolError(msg)
 
-        settings = get_csv_settings()
+        settings = get_settings()
         if len(numeric_df.columns) < settings.min_statistical_sample_size:
             msg = "Correlation analysis requires at least two numeric columns"
             raise ToolError(msg)

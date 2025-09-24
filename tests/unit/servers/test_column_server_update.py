@@ -3,14 +3,14 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.column_server import (
+from databeak.servers.column_server import (
     ApplyOperation,
     FillNaOperation,
     MapOperation,
     ReplaceOperation,
     update_column,
 )
-from src.databeak.servers.io_server import load_csv_from_content
+from databeak.servers.io_server import load_csv_from_content
 from tests.test_mock_context import create_mock_context
 
 

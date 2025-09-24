@@ -172,7 +172,8 @@ Use `unittest.mock` for isolation in unit tests:
 ```python
 from unittest.mock import patch, MagicMock
 
-@patch('src.databeak.models.csv_session.get_session_manager')
+
+@patch("src.databeak.models.csv_session.get_session_manager")
 def test_with_mock(mock_manager):
     mock_session = MagicMock()
     mock_manager.return_value.get_session.return_value = mock_session
@@ -293,6 +294,7 @@ async def test_async():
 ```python
 # Always clean up sessions in fixtures
 import uuid
+
 
 @pytest.fixture
 async def session():

@@ -10,9 +10,9 @@ from typing import cast
 import pandas as pd
 import pytest
 
-from src.databeak.core.session import get_session_manager
-from src.databeak.models.session_service import MockSessionManager, SessionServiceFactory
-from src.databeak.services.statistics_service import StatisticsService
+from databeak.core.session import get_session_manager
+from databeak.models.session_service import MockSessionManager, SessionServiceFactory
+from databeak.services.statistics_service import StatisticsService
 
 
 @pytest.fixture
@@ -194,7 +194,7 @@ class TestStatisticsServiceDependencyInjection:
     @pytest.mark.asyncio
     async def test_backward_compatibility_with_server_functions(self) -> None:
         """Test that server functions still work with the new architecture."""
-        from src.databeak.servers.statistics_server import get_statistics
+        from databeak.servers.statistics_server import get_statistics
 
         # This should work with the global session manager
         # Note: This test would require actual session setup in a real integration test

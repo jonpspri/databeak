@@ -109,7 +109,7 @@ class TestStatisticsServer:
     @pytest.fixture
     def mock_session(self):
         """Create mock session."""
-        with patch('get_session_manager') as mock:
+        with patch("get_session_manager") as mock:
             session = MagicMock()
             session.data_session.df = pd.DataFrame(test_data)
             mock.return_value.get_session.return_value = session
@@ -175,13 +175,14 @@ Create tests in the appropriate tier:
 # tests/unit/servers/test_statistics_server.py
 async def test_handles_empty_dataframe(self):
     """Test statistics with empty DataFrame."""
-    with patch('get_session_manager') as mock:
+    with patch("get_session_manager") as mock:
         session = MagicMock()
         session.data_session.df = pd.DataFrame()
         mock.return_value.get_session.return_value = session
 
         with pytest.raises(ToolError, match="No data"):
             await get_statistics("session-id")
+
 
 # Integration test for workflow
 # tests/integration/test_analytics_workflow.py
@@ -236,6 +237,7 @@ async def test_statistics_to_export_workflow(self):
        # Wait for timeout
        # Verify cleanup
 
+
    async def test_concurrent_sessions(self):
        """Test concurrent session operations."""
        # Create multiple sessions
@@ -250,6 +252,7 @@ async def test_statistics_to_export_workflow(self):
        """Test handling of invalid data types."""
        # Test type conversion failures
        # Test validation error messages
+
 
    async def test_malformed_input(self):
        """Test malformed input handling."""

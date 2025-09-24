@@ -53,6 +53,7 @@ return {"success": False, "error": str(e)}
 ```python
 from typing import TypedDict, Literal
 
+
 class OperationSuccess(TypedDict):
     success: Literal[True]
     data: dict[str, CellValue] | list[dict[str, CellValue]]
@@ -60,10 +61,12 @@ class OperationSuccess(TypedDict):
     rows_affected: int | None
     message: str
 
+
 class OperationError(TypedDict):
     success: Literal[False]
     error: str | dict[str, str]
     session_id: str | None
+
 
 OperationResult = OperationSuccess | OperationError
 ```
@@ -98,6 +101,7 @@ class NumericColumnStats(TypedDict):
     skewness: float
     kurtosis: float
 
+
 class StatisticsResult(TypedDict):
     success: Literal[True]
     statistics: dict[str, NumericColumnStats]
@@ -114,11 +118,10 @@ class AutoSaveConfigDict(TypedDict):
     backup_directory: str
     format: Literal["csv", "tsv", "json", "excel", "parquet"]
 
+
 class FilterCondition(TypedDict):
     column: str
-    operator: Literal[
-        "==", "!=", ">", "<", ">=", "<=", "contains", "startswith", "endswith"
-    ]
+    operator: Literal["==", "!=", ">", "<", ">=", "<=", "contains", "startswith", "endswith"]
     value: CellValue
 ```
 
@@ -187,10 +190,12 @@ CellValue = str | int | float | bool | None
 RowData = dict[str, CellValue]
 DataFrame = pd.DataFrame
 
+
 # Base operation result types
 class BaseOperationResult(TypedDict):
     success: bool
     session_id: str | None
+
 
 class SuccessfulOperationResult(BaseOperationResult):
     success: Literal[True]
@@ -198,11 +203,14 @@ class SuccessfulOperationResult(BaseOperationResult):
     rows_affected: int | None
     columns_affected: list[str] | None
 
+
 class FailedOperationResult(BaseOperationResult):
     success: Literal[False]
     error: str | dict[str, str]
 
+
 OperationResult = SuccessfulOperationResult | FailedOperationResult
+
 
 # Session types
 class SessionMetadata(TypedDict):
@@ -211,6 +219,7 @@ class SessionMetadata(TypedDict):
     operations_count: int
     auto_save_enabled: bool
     file_path: str | None
+
 
 # Configuration types
 class DataBeakSettings(TypedDict):
@@ -303,10 +312,12 @@ class ToolSuccessResponse(TypedDict):
     metadata: dict[str, int | str]  # Not Any
     session_id: str
 
+
 class ToolErrorResponse(TypedDict):
     success: Literal[False]
     error: dict[str, str]  # Structured error info
     session_id: str | None
+
 
 ToolResponse = ToolSuccessResponse | ToolErrorResponse
 ```
@@ -322,7 +333,7 @@ class DataBeakErrorInfo(TypedDict):
         "NoDataLoadedError",
         "ColumnNotFoundError",
         "InvalidParameterError",
-        "DataProcessingError"
+        "DataProcessingError",
     ]
     message: str
     details: dict[str, str] | None

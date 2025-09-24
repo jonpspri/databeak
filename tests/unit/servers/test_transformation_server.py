@@ -8,10 +8,10 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
-import src.databeak.servers.transformation_server  # noqa: F401
-from src.databeak.models.data_models import FilterCondition
-from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.servers.transformation_server import (
+import databeak.servers.transformation_server  # noqa: F401
+from databeak.models.data_models import FilterCondition
+from databeak.servers.io_server import load_csv_from_content
+from databeak.servers.transformation_server import (
     SortColumn,
     fill_missing_values,
     filter_rows,
@@ -138,7 +138,7 @@ class TestTransformationServerDuplicates:
     async def test_remove_duplicates_all_columns(self, transformation_session):
         """Test removing exact duplicates."""
         # First add a duplicate row
-        from src.databeak.servers.row_operations_server import insert_row
+        from databeak.servers.row_operations_server import insert_row
 
         ctx_insert = create_mock_context(transformation_session)
         insert_row(

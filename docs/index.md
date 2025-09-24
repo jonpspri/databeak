@@ -63,6 +63,7 @@ Your AI assistant can now do this:
 ```python
 # Natural language becomes powerful data operations
 "Load the sales data and remove duplicates"
+
 "Filter for Q4 2024 transactions over $10,000"
 "Calculate correlation between price and quantity"
 "Fill missing values with the median"

@@ -12,13 +12,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.databeak.core.session import get_session_manager
-from src.databeak.exceptions import (
+from databeak.core.session import get_session_manager
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidRowIndexError,
     NoDataLoadedError,
 )
-from src.databeak.services.data_operations import (
+from databeak.services.data_operations import (
     create_data_preview_with_indices,
     get_data_summary,
     safe_type_conversion,

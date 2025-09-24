@@ -89,7 +89,6 @@ uv run pre-commit run --all-files
 # Fix specific hook types
 uv run pre-commit run ruff --all-files
 uv run pre-commit run ruff-format --all-files
-uv run pre-commit run docformatter --all-files
 ```
 
 #### Individual Tool Auto-fixes
@@ -116,7 +115,6 @@ The project uses a comprehensive pre-commit setup with these tools:
 - **Ruff**: Linting and formatting (replaces Black, isort, autoflake, pyupgrade)
 - **MyPy**: Type checking with pandas-stubs
 - **Bandit**: Security scanning
-- **docformatter**: Docstring formatting
 - **markdownlint**: Documentation quality
 - **License insertion**: Automatic Apache license headers
 
@@ -184,6 +182,7 @@ from fastmcp import Context  # TC003 error
 
 # Fix: Move to TYPE_CHECKING block
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from fastmcp import Context
 ```
@@ -213,8 +212,9 @@ assert "DataBeak" in result["message"]
 
 ```python
 # Add coverage-focused test files
-tests/test_analytics_coverage.py
-tests/test_validation_coverage.py
+tests / test_analytics_coverage.py
+tests / test_validation_coverage.py
+
 
 # Test error handling paths
 async def test_handles_empty_dataframe(self, empty_session):
@@ -233,6 +233,7 @@ async def test_session_with_data():
     value1,value2,value3"""
     result = await load_csv_from_content(csv_content)
     return result["session_id"]
+
 
 # Error handling test pattern
 async def test_invalid_session_handling(self):

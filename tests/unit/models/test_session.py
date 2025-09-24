@@ -8,13 +8,13 @@ from unittest.mock import AsyncMock, patch
 import pandas as pd
 import pytest
 
-from src.databeak.core.session import (
+from databeak.core.session import (
     DatabeakSession,
     SessionManager,
     get_session_manager,
 )
-from src.databeak.core.settings import DataBeakSettings
-from src.databeak.models.data_models import ExportFormat
+from databeak.core.settings import DataBeakSettings
+from databeak.models.data_models import ExportFormat
 
 
 class TestDataBeakSettings:
@@ -345,7 +345,7 @@ class TestSessionManager:
         with (
             patch.object(manager.sessions[session1_id], "is_expired", return_value=True),
             patch.object(manager.sessions[session2_id], "is_expired", return_value=False),
-            patch("src.databeak.core.session.logger") as mock_logger,
+            patch("databeak.core.session.logger") as mock_logger,
         ):
             manager._cleanup_expired()
 

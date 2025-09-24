@@ -3,7 +3,7 @@ sidebar_position: 6
 title: Quality Standards
 ---
 
-# Quality Standards
+## Overview
 
 DataBeak maintains strict code quality standards with comprehensive automated
 enforcement. This document outlines our quality metrics, tools, and processes.

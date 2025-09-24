@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     MAX_FILE_SIZE_MB,
     MAX_MEMORY_USAGE_MB,
     MAX_ROWS,
@@ -342,7 +342,7 @@ class TestTempFileCleanup:
             temp_path = tmp.name
 
         try:
-            with patch("src.databeak.servers.io_server.get_session_data") as mock_get_session_data:
+            with patch("databeak.servers.io_server.get_session_data") as mock_get_session_data:
                 mock_get_session_data.side_effect = Exception("Mock session error")
 
                 with pytest.raises(ToolError, match="Failed to export data"):
@@ -396,7 +396,7 @@ class TestURLValidationSecurity:
     async def test_url_timeout_handling(self):
         """Test URL download timeout handling."""
         # Mock urlopen to raise timeout
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = TimeoutError("Connection timed out")
 
             with pytest.raises(ToolError, match="Network error"):
@@ -408,7 +408,7 @@ class TestURLValidationSecurity:
         mock_response = AsyncMock()
         mock_response.headers = {"Content-Type": "text/html"}
 
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_urlopen.return_value.__enter__.return_value = mock_response
             # Should proceed with warning for unexpected content-type
             # The test validates the warning is logged
@@ -422,7 +422,7 @@ class TestURLValidationSecurity:
             "Content-Length": str((MAX_URL_SIZE_MB + 10) * 1024 * 1024),  # Exceed limit
         }
 
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_urlopen.return_value.__enter__.return_value = mock_response
 
             with pytest.raises(ToolError, match="Download too large.*exceeds limit"):
@@ -430,7 +430,7 @@ class TestURLValidationSecurity:
 
     async def test_url_http_error_handling(self):
         """Test HTTP error handling (404, 403, etc.)."""
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_urlopen.side_effect = HTTPError(
                 url="https://example.com/notfound.csv",
                 code=404,
@@ -583,7 +583,7 @@ class TestEncodingAndFallback:
 
         try:
             # Mock chardet to return high confidence detection
-            with patch("src.databeak.servers.io_server.chardet.detect") as mock_detect:
+            with patch("databeak.servers.io_server.chardet.detect") as mock_detect:
                 mock_detect.return_value = {"encoding": "ISO-8859-1", "confidence": 0.85}
 
                 # Should use detected encoding instead of falling back
@@ -610,7 +610,7 @@ class TestEncodingAndFallback:
             success_df = pd.DataFrame({"name": ["John"], "age": [30]})
 
             # Mock encoding detection to fail so fallbacks are used
-            with patch("src.databeak.servers.io_server.detect_file_encoding", return_value="utf-8"):
+            with patch("databeak.servers.io_server.detect_file_encoding", return_value="utf-8"):
                 call_count = [0]
 
                 def mock_read_side_effect(*args, **kwargs):
@@ -694,7 +694,7 @@ class TestMemoryAndPerformance:
 
         try:
             # Mock encoding detection to fail so fallbacks are used
-            with patch("src.databeak.servers.io_server.detect_file_encoding", return_value="utf-8"):
+            with patch("databeak.servers.io_server.detect_file_encoding", return_value="utf-8"):
                 call_count = [0]
 
                 def mock_read_side_effect(*args, **kwargs):
@@ -709,7 +709,7 @@ class TestMemoryAndPerformance:
 
                 # Mock to make memory check fail
                 with (
-                    patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
+                    patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                     pytest.raises(ToolError, match="exceeds memory limit"),
                 ):
                     await load_csv(create_mock_context(), temp_path, encoding="utf-8")

@@ -6,7 +6,7 @@ import pytest
 from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.discovery_server import (
+from databeak.servers.discovery_server import (
     detect_outliers,
     find_cells_with_value,
     get_data_summary,
@@ -14,7 +14,7 @@ from src.databeak.servers.discovery_server import (
     inspect_data_around,
     profile_data,
 )
-from src.databeak.servers.io_server import load_csv_from_content
+from databeak.servers.io_server import load_csv_from_content
 from tests.test_mock_context import create_mock_context
 
 

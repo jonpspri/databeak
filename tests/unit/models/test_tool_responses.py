@@ -13,18 +13,18 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from src.databeak.models import DataPreview
-from src.databeak.models.data_models import SessionInfo
+from databeak.models import DataPreview
+from databeak.models.data_models import SessionInfo
 
 # Import statistics models from dedicated module
-from src.databeak.models.statistics_models import (
+from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,
     StatisticsSummary,
     ValueCountsResult,
 )
-from src.databeak.models.tool_responses import (
+from databeak.models.tool_responses import (
     # Core tool responses
     CellLocation,
     CellValueResult,
@@ -42,7 +42,7 @@ from src.databeak.models.tool_responses import (
 )
 
 # Import discovery server models
-from src.databeak.servers.discovery_server import (
+from databeak.servers.discovery_server import (
     GroupStatistics,
     OutlierInfo,
     OutliersResult,
@@ -50,17 +50,17 @@ from src.databeak.servers.discovery_server import (
 )
 
 # Import IO server models that moved to modular architecture
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     CloseSessionResult,
     ExportResult,
     LoadResult,
     SessionInfoResult,
     SessionListResult,
 )
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     DataPreview as IODataPreview,  # Import io_server's DataPreview for LoadResult
 )
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     SessionInfo as IOSessionInfo,  # Import io_server's SessionInfo for SessionListResult
 )
 

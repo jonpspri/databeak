@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.system_server import get_server_info, health_check
+from databeak.servers.system_server import get_server_info, health_check
 from tests.test_mock_context import create_mock_context
 
 
@@ -15,7 +15,9 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_healthy_status(self):
         """Test health check returns healthy status under normal conditions."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager:
+        with patch(
+            "databeak.servers.system_server.get_session_manager"
+        ) as mock_get_session_manager:
             # Mock session manager with normal load
             mock_session_manager = Mock()
             mock_session_manager.sessions = {}  # Empty sessions dict
@@ -35,7 +37,9 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_degraded_status(self):
         """Test health check returns degraded status when near session limit."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager:
+        with patch(
+            "databeak.servers.system_server.get_session_manager"
+        ) as mock_get_session_manager:
             # Mock session manager with high load (90%+ capacity)
             mock_session_manager = Mock()
             # Create 91 sessions (91% of 100)
@@ -58,7 +62,9 @@ class TestHealthCheck:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager:
+        with patch(
+            "databeak.servers.system_server.get_session_manager"
+        ) as mock_get_session_manager:
             mock_session_manager = Mock()
             mock_session_manager.sessions = {"session1": Mock(), "session2": Mock()}
             mock_session_manager.max_sessions = 100
@@ -79,7 +85,7 @@ class TestHealthCheck:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_session_manager:
+        with patch("databeak.servers.system_server.get_session_manager") as mock_session_manager:
             mock_session_manager.side_effect = Exception("Session manager unavailable")
 
             result = await health_check(mock_ctx)
@@ -97,9 +103,9 @@ class TestHealthCheck:
     async def test_health_check_critical_failure(self):
         """Test health check handles critical failures that prevent fallback response."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_session_manager,
+            patch("databeak.servers.system_server.get_session_manager") as mock_session_manager,
             patch(
-                "src.databeak.servers.system_server.__version__",
+                "databeak.servers.system_server.__version__",
                 side_effect=Exception("Version error"),
             ),
         ):
@@ -115,7 +121,9 @@ class TestHealthCheck:
     @pytest.mark.asyncio
     async def test_health_check_response_structure(self):
         """Test health check response has correct Pydantic model structure."""
-        with patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager:
+        with patch(
+            "databeak.servers.system_server.get_session_manager"
+        ) as mock_get_session_manager:
             mock_session_manager = Mock()
             mock_session_manager.sessions = {}
             mock_session_manager.max_sessions = 50
@@ -152,8 +160,8 @@ class TestHealthCheck:
     async def test_health_check_memory_monitoring_normal(self):
         """Test health check with normal memory usage."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
-            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
+            patch("databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             # Mock normal conditions
             mock_session_manager = Mock()
@@ -180,8 +188,8 @@ class TestHealthCheck:
     async def test_health_check_memory_warning(self):
         """Test health check with high memory usage (warning level)."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
-            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
+            patch("databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             mock_session_manager = Mock()
             mock_session_manager.sessions = {}
@@ -207,8 +215,8 @@ class TestHealthCheck:
     async def test_health_check_memory_critical(self):
         """Test health check with critical memory usage."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
-            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
+            patch("databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             mock_session_manager = Mock()
             mock_session_manager.sessions = {}
@@ -234,8 +242,8 @@ class TestHealthCheck:
     async def test_health_check_multiple_issues(self):
         """Test health check with multiple concurrent issues."""
         with (
-            patch("src.databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
-            patch("src.databeak.servers.system_server.get_memory_usage") as mock_memory,
+            patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
+            patch("databeak.servers.system_server.get_memory_usage") as mock_memory,
         ):
             # High session load + critical memory
             mock_session_manager = Mock()
@@ -264,7 +272,7 @@ class TestMemoryMonitoringUtils:
 
     def test_get_memory_status_normal(self):
         """Test memory status calculation for normal usage."""
-        from src.databeak.servers.system_server import get_memory_status
+        from databeak.servers.system_server import get_memory_status
 
         # 50% usage - should be normal
         status = get_memory_status(1024.0, 2048.0)
@@ -272,7 +280,7 @@ class TestMemoryMonitoringUtils:
 
     def test_get_memory_status_warning(self):
         """Test memory status calculation for warning level."""
-        from src.databeak.servers.system_server import get_memory_status
+        from databeak.servers.system_server import get_memory_status
 
         # 80% usage - should be warning
         status = get_memory_status(1638.4, 2048.0)
@@ -280,7 +288,7 @@ class TestMemoryMonitoringUtils:
 
     def test_get_memory_status_critical(self):
         """Test memory status calculation for critical level."""
-        from src.databeak.servers.system_server import get_memory_status
+        from databeak.servers.system_server import get_memory_status
 
         # 95% usage - should be critical
         status = get_memory_status(1945.6, 2048.0)
@@ -288,7 +296,7 @@ class TestMemoryMonitoringUtils:
 
     def test_get_memory_status_zero_threshold(self):
         """Test memory status with zero threshold (edge case)."""
-        from src.databeak.servers.system_server import get_memory_status
+        from databeak.servers.system_server import get_memory_status
 
         status = get_memory_status(100.0, 0.0)
         assert status == "normal"  # Should default to normal
@@ -300,7 +308,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_basic_structure(self):
         """Test server info returns proper structure with all required fields."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 500
             mock_config.session_timeout = 3600  # 1 hour in seconds
@@ -322,7 +330,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_capabilities_structure(self):
         """Test server info includes all expected capability categories."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 100
             mock_config.session_timeout = 1800
@@ -348,7 +356,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_data_io_capabilities(self):
         """Test server info includes expected data I/O capabilities."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 200
             mock_config.session_timeout = 7200
@@ -371,7 +379,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_supported_formats(self):
         """Test server info includes expected supported formats."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 300
             mock_config.session_timeout = 1200
@@ -403,7 +411,7 @@ class TestServerInfo:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 150
             mock_config.session_timeout = 2400
@@ -423,7 +431,7 @@ class TestServerInfo:
 
         mock_ctx = AsyncMock()
 
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_settings.side_effect = Exception("Settings unavailable")
 
             with pytest.raises(ToolError, match="Failed to get server information"):
@@ -435,7 +443,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_null_handling_capabilities(self):
         """Test server info includes comprehensive null handling capabilities."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 400
             mock_config.session_timeout = 5400
@@ -458,7 +466,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_data_manipulation_capabilities(self):
         """Test server info includes expected data manipulation capabilities."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 250
             mock_config.session_timeout = 3000
@@ -486,7 +494,7 @@ class TestServerInfo:
     @pytest.mark.asyncio
     async def test_get_server_info_response_model_validation(self):
         """Test server info response validates as proper Pydantic model."""
-        with patch("src.databeak.servers.system_server.get_csv_settings") as mock_settings:
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 600
             mock_config.session_timeout = 7200
@@ -518,7 +526,7 @@ class TestSystemServerIntegration:
 
     def test_system_server_exists(self):
         """Test that system server is properly exported."""
-        from src.databeak.servers.system_server import system_server
+        from databeak.servers.system_server import system_server
 
         assert system_server is not None
         assert system_server.name == "DataBeak-System"
@@ -526,7 +534,7 @@ class TestSystemServerIntegration:
 
     def test_system_server_has_correct_tools(self):
         """Test that system server has registered the expected tools."""
-        from src.databeak.servers.system_server import system_server
+        from databeak.servers.system_server import system_server
 
         # The server should have tools registered, but FastMCP doesn't expose them easily
         # We can at least verify the server is properly configured
@@ -544,7 +552,7 @@ class TestSystemServerIntegration:
 
     def test_system_server_follows_naming_pattern(self):
         """Test that system server follows DataBeak naming conventions."""
-        from src.databeak.servers.system_server import system_server
+        from databeak.servers.system_server import system_server
 
         # Should follow DataBeak-<Service> naming pattern
         assert system_server.name.startswith("DataBeak-")

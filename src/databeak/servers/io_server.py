@@ -22,7 +22,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..core.session import get_session_data, get_session_manager, get_session_only
-from ..core.settings import get_csv_settings
+from ..core.settings import get_settings
 
 # Import session management and data models from the main package
 from ..models import DataPreview, ExportFormat, SessionInfo
@@ -172,7 +172,7 @@ def detect_file_encoding(file_path: str) -> str:
 
         # Use chardet for automatic detection
         detection = chardet.detect(raw_data)
-        settings = get_csv_settings()
+        settings = get_settings()
 
         if detection and detection["confidence"] > settings.encoding_confidence_threshold:
             detected_encoding = detection["encoding"]

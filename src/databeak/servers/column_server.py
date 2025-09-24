@@ -168,6 +168,7 @@ def _apply_expression_to_column(
             f"Invalid expression. Use 'x' to reference column values. Error: {e}",
         ) from e
 
+
 # =============================================================================
 # TOOL DEFINITIONS (Direct implementations)
 # =============================================================================

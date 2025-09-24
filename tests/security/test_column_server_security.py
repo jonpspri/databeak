@@ -9,9 +9,9 @@ Issue: #46 - Verify pandas.eval() vulnerability is fixed
 
 import pytest
 
-from src.databeak.exceptions import InvalidParameterError
-from src.databeak.models.expression_models import SecureExpression
-from src.databeak.utils.secure_evaluator import validate_expression_safety
+from databeak.exceptions import InvalidParameterError
+from databeak.models.expression_models import SecureExpression
+from databeak.utils.secure_evaluator import validate_expression_safety
 
 
 class TestColumnServerSecurity:

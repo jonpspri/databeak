@@ -254,7 +254,11 @@ def set_cell_value(
                 if pd.isna(numeric_result):
                     converted_value = None
                 else:
-                    converted_value = float(numeric_result) if isinstance(numeric_result, (int, float)) else numeric_result.item()
+                    converted_value = (
+                        float(numeric_result)
+                        if isinstance(numeric_result, (int, float))
+                        else numeric_result.item()
+                    )
             else:
                 converted_value = value
         except (ValueError, TypeError):

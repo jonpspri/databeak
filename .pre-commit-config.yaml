@@ -63,7 +63,7 @@ repos:
 
   # Type checking with MyPy
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.13.0
+    rev: v1.18.2
     hooks:
       - id: mypy
         additional_dependencies:
@@ -78,9 +78,9 @@ repos:
           - simpleeval>=1.0.3
           - fastmcp>=0.1.0
           - pandera>=0.22.0
-        args: ['--config-file', 'pyproject.toml']
-        # args: ['--config-file', 'pyproject.toml', 'src/', 'tests/']
-        # pass_filenames: false
+          - .
+        args: ['--config-file', 'pyproject.toml', 'src/']
+        pass_filenames: false
 
   # YAML linting with yamllint
   - repo: https://github.com/adrienverge/yamllint
@@ -98,6 +98,7 @@ repos:
         additional_dependencies:
           - mdformat-gfm
           - mdformat-frontmatter
+          - mdformat-ruff
         args: [--wrap=80]
         # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
@@ -108,16 +109,6 @@ repos:
         args: ["--config", ".pymarkdownlnt", "scan"]
         # exclude: ^(CODE_OF_CONDUCT\.md|CONTRIBUTING\.md|docs/blog/).*
 
-
-  # Docstring formatting
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.7
-    hooks:
-      - id: docformatter
-        args:
-          - --in-place
-          - --wrap-summaries=100
-          - --wrap-descriptions=100
 
   # MCP documentation standards enforcement
   - repo: local

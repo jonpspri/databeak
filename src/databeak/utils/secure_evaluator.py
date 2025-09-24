@@ -458,8 +458,17 @@ class SecureExpressionEvaluator:
             # This is for patterns like x.upper(), x.lower(), etc.
             # The actual validation happens in _evaluate_string_method
             safe_string_methods = {
-                "upper", "lower", "strip", "title", "capitalize", "swapcase", "len",
-                "replace", "contains", "startswith", "endswith"
+                "upper",
+                "lower",
+                "strip",
+                "title",
+                "capitalize",
+                "swapcase",
+                "len",
+                "replace",
+                "contains",
+                "startswith",
+                "endswith",
             }
             if node.attr in safe_string_methods:
                 return
@@ -616,7 +625,9 @@ class SecureExpressionEvaluator:
             # Check for string method calls first
             if f"{var_name}." in expression:
                 try:
-                    return self._evaluate_string_method(expression, dataframe[column_name], var_name)
+                    return self._evaluate_string_method(
+                        expression, dataframe[column_name], var_name
+                    )
                 except InvalidParameterError:
                     # If string method fails, fall through to mathematical evaluation
                     pass
@@ -692,7 +703,9 @@ class SecureExpressionEvaluator:
                 f"Expression evaluation failed: {e}",
             ) from e
 
-    def _evaluate_string_method(self, expression: str, series: pd.Series, var_name: str) -> pd.Series:
+    def _evaluate_string_method(
+        self, expression: str, series: pd.Series, var_name: str
+    ) -> pd.Series:
         """Evaluate string method expressions safely.
 
         Args:
@@ -734,65 +747,88 @@ class SecureExpressionEvaluator:
             return str_series.str.strip(chars)
 
         # Handle replace operations: x.replace("old", "new")
-        replace_match = re.match(rf"{re.escape(var_name)}\.replace\(['\"]([^'\"]*)['\"], *['\"]([^'\"]*)['\"]?\)", expression)
+        replace_match = re.match(
+            rf"{re.escape(var_name)}\.replace\(['\"]([^'\"]*)['\"], *['\"]([^'\"]*)['\"]?\)",
+            expression,
+        )
         if replace_match:
             old_val, new_val = replace_match.groups()
             return str_series.str.replace(old_val, new_val, regex=False)
 
         # Handle contains operations: x.contains("pattern")
-        contains_match = re.match(rf"{re.escape(var_name)}\.contains\(['\"]([^'\"]*)['\"]?\)", expression)
+        contains_match = re.match(
+            rf"{re.escape(var_name)}\.contains\(['\"]([^'\"]*)['\"]?\)", expression
+        )
         if contains_match:
             pattern = contains_match.group(1)
             return str_series.str.contains(pattern, na=False)
 
         # Handle startswith/endswith: x.startswith("prefix"), x.endswith("suffix")
-        startswith_match = re.match(rf"{re.escape(var_name)}\.startswith\(['\"]([^'\"]*)['\"]?\)", expression)
+        startswith_match = re.match(
+            rf"{re.escape(var_name)}\.startswith\(['\"]([^'\"]*)['\"]?\)", expression
+        )
         if startswith_match:
             prefix = startswith_match.group(1)
             return str_series.str.startswith(prefix, na=False)
 
-        endswith_match = re.match(rf"{re.escape(var_name)}\.endswith\(['\"]([^'\"]*)['\"]?\)", expression)
+        endswith_match = re.match(
+            rf"{re.escape(var_name)}\.endswith\(['\"]([^'\"]*)['\"]?\)", expression
+        )
         if endswith_match:
             suffix = endswith_match.group(1)
             return str_series.str.endswith(suffix, na=False)
 
         # If no string operation matched, raise error
         msg = "expression"
-        supported_ops = ", ".join([
-            f"{var_name}.upper()", f"{var_name}.lower()", f"{var_name}.strip()",
-            f"{var_name}.title()", f"{var_name}.capitalize()", f"{var_name}.len()",
-            f"{var_name}.strip('chars')", f"{var_name}.replace('old', 'new')",
-            f"{var_name}.contains('pattern')", f"{var_name}.startswith('prefix')",
-            f"{var_name}.endswith('suffix')"
-        ])
+        supported_ops = ", ".join(
+            [
+                f"{var_name}.upper()",
+                f"{var_name}.lower()",
+                f"{var_name}.strip()",
+                f"{var_name}.title()",
+                f"{var_name}.capitalize()",
+                f"{var_name}.len()",
+                f"{var_name}.strip('chars')",
+                f"{var_name}.replace('old', 'new')",
+                f"{var_name}.contains('pattern')",
+                f"{var_name}.startswith('prefix')",
+                f"{var_name}.endswith('suffix')",
+            ]
+        )
         raise InvalidParameterError(
             msg,
             expression,
             f"Unsupported string operation. Supported operations: {supported_ops}",
         )
 
+
 def create_secure_expression_evaluator() -> SecureExpressionEvaluator:
     """Create a new SecureExpressionEvaluator."""
     return SecureExpressionEvaluator()
 
+
 _secure_expression_evaluator: SecureExpressionEvaluator | None = None
+
 
 def get_secure_expression_evaluator() -> SecureExpressionEvaluator:
     """Return a singleton SecureExpressionEvaluator object."""
-    global _secure_expression_evaluator # noqa: PLW0603
+    global _secure_expression_evaluator  # noqa: PLW0603
     if _secure_expression_evaluator is None:
         _secure_expression_evaluator = create_secure_expression_evaluator()
     return _secure_expression_evaluator
 
+
 def reset_secure_expression_evaluator() -> None:
     """Set the global SecureExpressionEvaluator to None (for testing)."""
-    global _secure_expression_evaluator # noqa: PLW0603
+    global _secure_expression_evaluator  # noqa: PLW0603
     _secure_expression_evaluator = None
+
 
 ####
 # TODO:  Should these functions be in some sort of service provided by the
 #        Session?
 ####
+
 
 def evaluate_expression_safely(
     expression: str,

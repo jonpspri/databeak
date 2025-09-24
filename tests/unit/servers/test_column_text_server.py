@@ -7,8 +7,8 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
-import src.databeak.servers.column_text_server  # noqa: F401
-from src.databeak.servers.column_text_server import (
+import databeak.servers.column_text_server  # noqa: F401
+from databeak.servers.column_text_server import (
     extract_from_column,
     fill_column_nulls,
     replace_in_column,
@@ -16,7 +16,7 @@ from src.databeak.servers.column_text_server import (
     strip_column,
     transform_column_case,
 )
-from src.databeak.servers.io_server import load_csv_from_content
+from databeak.servers.io_server import load_csv_from_content
 from tests.test_mock_context import create_mock_context
 
 
@@ -277,7 +277,7 @@ class TestColumnTextServerFillNulls:
     async def test_fill_nulls_with_number(self, text_session):
         """Test filling null values with number."""
         # First add a numeric column with nulls
-        from src.databeak.servers.column_server import add_column
+        from databeak.servers.column_server import add_column
 
         ctx = create_mock_context(text_session)
         await add_column(ctx, "rating", value=[5, None, 4, None])
@@ -288,7 +288,7 @@ class TestColumnTextServerFillNulls:
 
     async def test_fill_nulls_with_boolean(self, text_session):
         """Test filling null values with boolean."""
-        from src.databeak.servers.column_server import add_column
+        from databeak.servers.column_server import add_column
 
         ctx = create_mock_context(text_session)
         await add_column(ctx, "verified", value=[True, None, False, None])

@@ -3,8 +3,8 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import load_csv_from_content
-from src.databeak.servers.validation_server import (
+from databeak.servers.io_server import load_csv_from_content
+from databeak.servers.validation_server import (
     CompletenessRule,
     ConsistencyRule,
     DataTypesRule,
@@ -512,7 +512,7 @@ class TestValidationIntegration:
     async def test_validation_after_transformations(self, validation_test_session):
         """Test validation after data transformations."""
         # First apply some transformations
-        from src.databeak.servers.transformation_server import fill_missing_values
+        from databeak.servers.transformation_server import fill_missing_values
 
         # Fill missing values
         ctx_transform = create_mock_context(validation_test_session)
@@ -544,7 +544,7 @@ class TestValidationIntegration:
         assert hasattr(result, "valid")
 
         # Check if session info can be retrieved (verifies session still exists)
-        from src.databeak.servers.io_server import get_session_info
+        from databeak.servers.io_server import get_session_info
 
         ctx_info = create_mock_context(clean_test_session)
         info_result = await get_session_info(ctx_info)

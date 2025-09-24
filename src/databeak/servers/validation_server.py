@@ -19,7 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 from ..core.session import get_session_data
 
 # Import session management from the main package
-from ..core.settings import get_csv_settings
+from ..core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +155,7 @@ class MissingAnomaly(BaseModel):
         missing_indices: Row indices where missing values occur (limited to first 100)
         sequential_clusters: Number of consecutive missing value sequences found
         pattern: Distribution pattern of missing values ('clustered' or 'random')
+
     """
 
     missing_count: int = Field(
@@ -485,6 +486,7 @@ def apply_violation_limits(violations: list, limit: int, operation_name: str) ->
 
     Returns:
         Tuple of (limited_violations, was_truncated)
+
     """
     if len(violations) > limit:
         logger.info(
@@ -504,6 +506,7 @@ def sample_large_dataset(
 
     Returns:
         Sampled DataFrame (or original if under limit)
+
     """
     if len(df) > max_sample_size:
         logger.info(
@@ -540,11 +543,12 @@ def validate_schema(
 
     Returns:
         ValidateSchemaResult with validation status and detailed error information
+
     """
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
         validation_errors: dict[str, list[ValidationError]] = {}
 
         parsed_schema = schema.root
@@ -731,11 +735,12 @@ def check_data_quality(
 
     Returns:
         DataQualityResult with comprehensive quality assessment results
+
     """
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
         rule_results: list[QualityRuleResult] = []
         quality_issues: list[QualityIssue] = []
         recommendations: list[str] = []
@@ -1094,11 +1099,12 @@ def find_anomalies(
 
     Returns:
         FindAnomaliesResult with comprehensive anomaly detection results
+
     """
     try:
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)
-        settings = get_csv_settings()
+        settings = get_settings()
 
         # Apply resource management for large datasets
         logger.info("Finding anomalies in %d rows, %d columns", len(df), len(df.columns))

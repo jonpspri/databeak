@@ -7,9 +7,9 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.core.session import get_session_manager
-from src.databeak.exceptions import NoDataLoadedError, SessionNotFoundError
-from src.databeak.services.transformation_service import (
+from databeak.core.session import get_session_manager
+from databeak.exceptions import NoDataLoadedError, SessionNotFoundError
+from databeak.services.transformation_service import (
     DuplicateRemovalResult,
     FillMissingResult,
     FilterResult,
@@ -166,7 +166,7 @@ class TestFilterRows:
             await filter_rows_with_pydantic(session_id, conditions)
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_filter_rows_is_null(self, mock_get_session):
         """Test filtering with is_null condition."""
         session = MagicMock()
@@ -184,7 +184,7 @@ class TestFilterRows:
         """Test handling of SessionNotFoundError."""
         with (
             patch(
-                "src.databeak.services.transformation_service._get_session_data",
+                "databeak.services.transformation_service._get_session_data",
                 side_effect=SessionNotFoundError("test-session"),
             ),
             pytest.raises(ToolError),
@@ -206,7 +206,7 @@ class TestSortData:
         return session, df
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_sort_single_column(self, mock_get_session, mock_session_with_data):
         """Test sorting by single column."""
         session, original_df = mock_session_with_data
@@ -221,7 +221,7 @@ class TestSortData:
         assert result.rows_affected == 3
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_sort_multiple_columns(self, mock_get_session, mock_session_with_data):
         """Test sorting by multiple columns."""
         session, original_df = mock_session_with_data
@@ -235,7 +235,7 @@ class TestSortData:
         assert result.ascending == [False, True]
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_sort_with_dict_format(self, mock_get_session, mock_session_with_data):
         """Test sorting with dictionary format columns."""
         session, original_df = mock_session_with_data
@@ -248,7 +248,7 @@ class TestSortData:
         assert result.ascending == [False, True]
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_sort_missing_column(self, mock_get_session, mock_session_with_data):
         """Test sorting with non-existent column."""
         session, original_df = mock_session_with_data
@@ -276,7 +276,7 @@ class TestRemoveDuplicates:
         return session, df
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_all_columns(
         self,
         mock_get_session,
@@ -297,7 +297,7 @@ class TestRemoveDuplicates:
         assert result.keep_strategy == "first"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_subset(self, mock_get_session, mock_session_with_duplicates):
         """Test removing duplicates based on subset of columns."""
         session, original_df = mock_session_with_duplicates
@@ -309,7 +309,7 @@ class TestRemoveDuplicates:
         assert result.subset_columns == ["name"]
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_keep_last(
         self,
         mock_get_session,
@@ -324,7 +324,7 @@ class TestRemoveDuplicates:
         assert result.keep_strategy == "last"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_subset_not_found(
         self,
         mock_get_session,
@@ -356,7 +356,7 @@ class TestFillMissingValues:
         return session, df
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_drop_strategy(self, mock_get_session, mock_session_with_nulls):
         """Test filling missing values with drop strategy."""
         session, original_df = mock_session_with_nulls
@@ -371,7 +371,7 @@ class TestFillMissingValues:
         assert result.nulls_after == 0
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_fill_strategy(self, mock_get_session, mock_session_with_nulls):
         """Test filling missing values with fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -388,7 +388,7 @@ class TestFillMissingValues:
         assert result.nulls_after < result.nulls_before
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_mean_strategy(self, mock_get_session, mock_session_with_nulls):
         """Test filling missing values with mean strategy."""
         session, original_df = mock_session_with_nulls
@@ -404,7 +404,7 @@ class TestFillMissingValues:
         assert result.columns_affected == ["age"]
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_forward_strategy(self, mock_get_session, mock_session_with_nulls):
         """Test filling missing values with forward fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -415,7 +415,7 @@ class TestFillMissingValues:
         assert result.strategy == "forward"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_no_value_for_fill(self, mock_get_session, mock_session_with_nulls):
         """Test error when no value provided for fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -425,7 +425,7 @@ class TestFillMissingValues:
             await fill_missing_values_with_pydantic("test-session", strategy="fill")
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_invalid_strategy(self, mock_get_session, mock_session_with_nulls):
         """Test error with invalid strategy."""
         session, original_df = mock_session_with_nulls
@@ -435,7 +435,7 @@ class TestFillMissingValues:
             await fill_missing_values_with_pydantic("test-session", strategy="invalid")
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_columns_not_found(self, mock_get_session, mock_session_with_nulls):
         """Test error when specified columns not found."""
         session, original_df = mock_session_with_nulls
@@ -462,7 +462,7 @@ class TestTransformColumnCase:
         return session, df
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_upper(self, mock_get_session, mock_session_with_text):
         """Test transforming column to uppercase."""
         session, original_df = mock_session_with_text
@@ -479,7 +479,7 @@ class TestTransformColumnCase:
         assert result.sample_after is not None
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_lower(self, mock_get_session, mock_session_with_text):
         """Test transforming column to lowercase."""
         session, original_df = mock_session_with_text
@@ -490,7 +490,7 @@ class TestTransformColumnCase:
         assert result.operation == "case_lower"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_title(self, mock_get_session, mock_session_with_text):
         """Test transforming column to title case."""
         session, original_df = mock_session_with_text
@@ -501,7 +501,7 @@ class TestTransformColumnCase:
         assert result.operation == "case_title"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_capitalize(self, mock_get_session, mock_session_with_text):
         """Test transforming column to capitalize."""
         session, original_df = mock_session_with_text
@@ -512,7 +512,7 @@ class TestTransformColumnCase:
         assert result.operation == "case_capitalize"
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_not_found(self, mock_get_session, mock_session_with_text):
         """Test error when column not found."""
         session, original_df = mock_session_with_text
@@ -522,7 +522,7 @@ class TestTransformColumnCase:
             await transform_column_case_with_pydantic("test-session", "nonexistent", "upper")
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_invalid_transform(
         self,
         mock_get_session,
@@ -550,7 +550,7 @@ class TestStripColumn:
         return session, df
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_strip_column(self, mock_get_session, mock_session_with_whitespace):
         """Test stripping whitespace from column."""
         session, original_df = mock_session_with_whitespace
@@ -567,7 +567,7 @@ class TestStripColumn:
         assert result.sample_after is not None
 
     @pytest.mark.asyncio
-    @patch("src.databeak.services.transformation_service._get_session_data")
+    @patch("databeak.services.transformation_service._get_session_data")
     async def test_strip_column_not_found(self, mock_get_session, mock_session_with_whitespace):
         """Test error when column not found."""
         session, original_df = mock_session_with_whitespace

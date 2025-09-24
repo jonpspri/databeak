@@ -2,8 +2,8 @@
 
 import pytest
 
-from src.databeak.exceptions import InvalidParameterError
-from src.databeak.utils.secure_evaluator import (
+from databeak.exceptions import InvalidParameterError
+from databeak.utils.secure_evaluator import (
     SecureExpressionEvaluator,
     validate_expression_safety,
 )

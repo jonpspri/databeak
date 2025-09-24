@@ -5,7 +5,7 @@ from datetime import datetime
 import pytest
 from pydantic import ValidationError
 
-from src.databeak.models.data_models import (
+from databeak.models.data_models import (
     ColumnSchema,
     ComparisonOperator,
     DataPreview,

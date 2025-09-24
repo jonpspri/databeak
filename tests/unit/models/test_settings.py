@@ -3,7 +3,7 @@
 import os
 from unittest.mock import patch
 
-from src.databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DataBeakSettings
 
 
 class TestDataBeakSettings:

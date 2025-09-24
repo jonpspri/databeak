@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 from fastmcp.exceptions import ToolError
 
-from src.databeak.servers.io_server import (
+from databeak.servers.io_server import (
     MAX_URL_SIZE_MB,
     close_session,
     detect_file_encoding,
@@ -133,7 +133,7 @@ class TestLoadCsvEncodingFallbackPaths:
             temp_path = f.name
 
         try:
-            with patch("src.databeak.servers.io_server.detect_file_encoding") as mock_detect:
+            with patch("databeak.servers.io_server.detect_file_encoding") as mock_detect:
                 # Mock detection to raise an error
                 mock_detect.side_effect = Exception("Detection failed")
 
@@ -168,7 +168,7 @@ class TestLoadCsvEncodingFallbackPaths:
             with (
                 patch("pandas.read_csv") as mock_read_csv,
                 patch(
-                    "src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB",
+                    "databeak.servers.io_server.MAX_MEMORY_USAGE_MB",
                     0.001,
                 ),  # Very low limit
             ):
@@ -201,7 +201,7 @@ class TestLoadCsvEncodingFallbackPaths:
 
             with (
                 patch("pandas.read_csv") as mock_read_csv,
-                patch("src.databeak.servers.io_server.MAX_ROWS", 5),  # Very low limit
+                patch("databeak.servers.io_server.MAX_ROWS", 5),  # Very low limit
             ):
                 # First call fails with encoding error, second returns large df
                 mock_read_csv.side_effect = [
@@ -278,7 +278,7 @@ class TestLoadCsvErrorPaths:
 class TestLoadCsvFromUrlEncodingFallbacks:
     """Test URL loading encoding fallback paths."""
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_memory_check_in_fallback(self, mock_read_csv, mock_urlopen):
         """Test memory check during URL encoding fallback."""
@@ -297,7 +297,7 @@ class TestLoadCsvFromUrlEncodingFallbacks:
         ]
 
         with (
-            patch("src.databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
+            patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
             pytest.raises(ToolError),
         ):
             await load_csv_from_url(
@@ -306,7 +306,7 @@ class TestLoadCsvFromUrlEncodingFallbacks:
                 encoding="utf-8",
             )
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_row_check_in_fallback(self, mock_read_csv, mock_urlopen):
         """Test row limit check during URL encoding fallback."""
@@ -324,7 +324,7 @@ class TestLoadCsvFromUrlEncodingFallbacks:
             large_df,
         ]
 
-        with patch("src.databeak.servers.io_server.MAX_ROWS", 5), pytest.raises(ToolError):
+        with patch("databeak.servers.io_server.MAX_ROWS", 5), pytest.raises(ToolError):
             await load_csv_from_url(
                 create_mock_context(),
                 url="http://example.com/data.csv",
@@ -340,7 +340,7 @@ class TestLoadCsvFromUrlErrorPaths:
         """Test timeout error handling."""
         with (
             patch(
-                "src.databeak.servers.io_server.urlopen",
+                "databeak.servers.io_server.urlopen",
                 side_effect=TimeoutError("Request timeout"),
             ),
             pytest.raises(ToolError, match="Network error"),
@@ -351,14 +351,14 @@ class TestLoadCsvFromUrlErrorPaths:
         """Test URLError handling."""
         with (
             patch(
-                "src.databeak.servers.io_server.urlopen",
+                "databeak.servers.io_server.urlopen",
                 side_effect=URLError("Connection failed"),
             ),
             pytest.raises(ToolError, match="Network error"),
         ):
             await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_content_size_exceeded(self, mock_urlopen):
         """Test content size limit exceeded."""
         mock_response = MagicMock()
@@ -371,7 +371,7 @@ class TestLoadCsvFromUrlErrorPaths:
         with pytest.raises(ToolError, match="Download too large.*exceeds limit"):
             await load_csv_from_url(create_mock_context(), url="http://example.com/large_file.csv")
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_content_type_warning(self, mock_urlopen):
         """Test content type warning path."""
         mock_response = MagicMock()
@@ -388,7 +388,7 @@ class TestLoadCsvFromUrlErrorPaths:
 
     async def test_load_url_pandas_empty_data_error(self):
         """Test pandas EmptyDataError in URL loading."""
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.headers = {"Content-Type": "text/csv"}
             mock_urlopen.return_value.__enter__.return_value = mock_response
@@ -401,7 +401,7 @@ class TestLoadCsvFromUrlErrorPaths:
 
     async def test_load_url_pandas_parser_error(self):
         """Test pandas ParserError in URL loading."""
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.headers = {"Content-Type": "text/csv"}
             mock_urlopen.return_value.__enter__.return_value = mock_response
@@ -414,7 +414,7 @@ class TestLoadCsvFromUrlErrorPaths:
 
     async def test_load_url_memory_error(self):
         """Test MemoryError in URL loading."""
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.headers = {"Content-Type": "text/csv"}
             mock_urlopen.return_value.__enter__.return_value = mock_response
@@ -427,7 +427,7 @@ class TestLoadCsvFromUrlErrorPaths:
 
     async def test_load_url_os_error(self):
         """Test OSError in URL loading."""
-        with patch("src.databeak.servers.io_server.urlopen") as mock_urlopen:
+        with patch("databeak.servers.io_server.urlopen") as mock_urlopen:
             mock_response = MagicMock()
             mock_response.headers = {"Content-Type": "text/csv"}
             mock_urlopen.return_value.__enter__.return_value = mock_response
@@ -520,16 +520,14 @@ class TestSessionManagementErrorPaths:
 
     async def test_get_session_info_exception_handling(self):
         """Test exception handling in get_session_info."""
-        with (
-            patch("src.databeak.servers.io_server.get_session_only") as mock_get_session_only,
-            pytest.raises(ToolError, match="Failed to get session info"),
-        ):
+        with patch("databeak.servers.io_server.get_session_only") as mock_get_session_only:
             mock_get_session_only.side_effect = Exception("Session manager error")
-            await get_session_info(create_mock_context())
+            with pytest.raises(ToolError, match="Failed to get session info"):
+                await get_session_info(create_mock_context())
 
     async def test_list_sessions_returns_empty_on_error(self):
         """Test that list_sessions returns empty result on error."""
-        with patch("src.databeak.servers.io_server.get_session_manager") as mock_get_session_manager:
+        with patch("databeak.servers.io_server.get_session_manager") as mock_get_session_manager:
             mock_session_manager = Mock()
             mock_session_manager.list_sessions.side_effect = Exception("Manager error")
             mock_get_session_manager.return_value = mock_session_manager
@@ -540,14 +538,12 @@ class TestSessionManagementErrorPaths:
 
     async def test_close_session_exception_handling(self):
         """Test exception handling in close_session."""
-        with (
-            patch("src.databeak.servers.io_server.get_session_manager") as mock_get_session_manager,
-            pytest.raises(ToolError, match="Failed to close session"),
-        ):
+        with patch("databeak.servers.io_server.get_session_manager") as mock_get_session_manager:
             mock_session_manager = Mock()
             mock_session_manager.remove_session.side_effect = Exception("Manager error")
             mock_get_session_manager.return_value = mock_session_manager
-            await close_session(create_mock_context())
+            with pytest.raises(ToolError, match="Failed to close session"):
+                await close_session(create_mock_context())
 
 
 @pytest.mark.asyncio
@@ -585,7 +581,7 @@ class TestSpecificCoveragePaths:
         finally:
             Path(temp_path).unlink()
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
     async def test_load_url_other_exception_in_fallback(self, mock_read_csv, mock_urlopen):
         """Test non-UnicodeDecodeError exception during URL encoding fallback."""
@@ -628,7 +624,7 @@ class TestSpecificCoveragePaths:
         finally:
             Path(temp_path).unlink()
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_df_none_after_fallback(self, mock_urlopen):
         """Test when df remains None after URL encoding fallback."""
         mock_response = MagicMock()
@@ -644,7 +640,7 @@ class TestSpecificCoveragePaths:
         ):
             await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")
 
-    @patch("src.databeak.servers.io_server.urlopen")
+    @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_df_none_check(self, mock_urlopen):
         """Test URL loading df None check after successful response."""
         mock_response = MagicMock()
