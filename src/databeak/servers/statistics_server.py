@@ -16,11 +16,11 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from ..core.session import get_session_data
-from ..core.settings import get_settings
+from databeak.core.session import get_session_data
+from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
-from ..exceptions import (
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
@@ -28,7 +28,7 @@ from ..exceptions import (
 )
 
 # Import response models - needed at runtime for FastMCP
-from ..models.statistics_models import (
+from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,

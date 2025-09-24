@@ -12,8 +12,8 @@ from urllib.parse import urlparse
 
 import pandas as pd
 
-from ..core.settings import get_settings
-from ..models.typed_dicts import CellValue, DataValidationIssues
+from databeak.core.settings import get_settings
+from databeak.models.typed_dicts import CellValue, DataValidationIssues
 
 
 # Implementation: File path security validation with existence checking and extension filtering

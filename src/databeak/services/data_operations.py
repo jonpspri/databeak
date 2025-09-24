@@ -6,14 +6,14 @@ import warnings
 
 import pandas as pd
 
-from ..core.session import get_session_manager
-from ..exceptions import (
+from databeak.core.session import get_session_manager
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidRowIndexError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models.typed_dicts import CellValue, DataPreviewResult, InternalDataSummary
+from databeak.models.typed_dicts import CellValue, DataPreviewResult, InternalDataSummary
 
 
 # Implementation: Convert DataFrame to structured preview with row indices and type handling

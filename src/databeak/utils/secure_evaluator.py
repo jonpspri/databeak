@@ -20,6 +20,7 @@ import ast
 import math
 import operator
 import re
+import threading
 from typing import Any, ClassVar
 
 import numpy as np
@@ -808,13 +809,16 @@ def create_secure_expression_evaluator() -> SecureExpressionEvaluator:
 
 
 _secure_expression_evaluator: SecureExpressionEvaluator | None = None
+_lock = threading.Lock()
 
 
 def get_secure_expression_evaluator() -> SecureExpressionEvaluator:
     """Return a singleton SecureExpressionEvaluator object."""
     global _secure_expression_evaluator  # noqa: PLW0603
     if _secure_expression_evaluator is None:
-        _secure_expression_evaluator = create_secure_expression_evaluator()
+        with _lock:
+            if not _secure_expression_evaluator:
+                _secure_expression_evaluator = create_secure_expression_evaluator()
     return _secure_expression_evaluator
 
 

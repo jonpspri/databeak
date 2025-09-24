@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import threading
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -268,14 +269,16 @@ def create_session_manager(max_session: int = 100, ttl_minutes: int = 60) -> Ses
 
 # Global session manager instance
 _session_manager: SessionManager | None = None
-
+_lock = threading.Lock()
 
 # Implementation: Singleton pattern for global session manager
 def get_session_manager() -> SessionManager:
     """Return the global Session Manager object."""
     global _session_manager  # noqa: PLW0603
     if _session_manager is None:
-        _session_manager = SessionManager()
+        with _lock:
+            if not _session_manager:
+                _session_manager = SessionManager()
     return _session_manager
 
 

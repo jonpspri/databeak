@@ -10,11 +10,13 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..core.session import get_session_data
-
-# Import session management from the main package
-from ..models.tool_responses import ColumnOperationResult, FilterOperationResult, SortDataResult
-from ..models.typed_dicts import FilterConditionDict
+from databeak.core.session import get_session_data
+from databeak.models.tool_responses import (
+    ColumnOperationResult,
+    FilterOperationResult,
+    SortDataResult,
+)
+from databeak.models.typed_dicts import FilterConditionDict
 
 logger = logging.getLogger(__name__)
 

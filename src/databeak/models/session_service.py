@@ -15,7 +15,7 @@ from .data_models import SessionInfo
 if TYPE_CHECKING:
     import pandas as pd
 
-    from ..core.session import DatabeakSession
+from databeak.core.session import DatabeakSession, get_session_manager
 
 
 class SessionManagerProtocol(Protocol):
@@ -110,8 +110,6 @@ class SessionServiceFactory:
 # Convenience functions for backward compatibility with existing code
 def get_default_session_service_factory() -> SessionServiceFactory:
     """Get the default session service factory using the global session manager."""
-    from ..core.session import get_session_manager  # noqa: PLC0415 # Avoids circular import
-
     return SessionServiceFactory(get_session_manager())
 
 
@@ -132,8 +130,6 @@ class MockSessionManager:
         session = self.sessions.get(session_id)
         if not session:
             # Create new session like the real implementation
-            from ..core.session import DatabeakSession  # noqa: PLC0415 # Avoids circular import
-
             session = DatabeakSession(session_id=session_id)
             self.sessions[session_id] = session
         return session

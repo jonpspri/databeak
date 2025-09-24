@@ -16,10 +16,8 @@ from fastmcp.exceptions import ToolError
 from pandera.pandas import Check, Column, DataFrameSchema
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
-from ..core.session import get_session_data
-
-# Import session management from the main package
-from ..core.settings import get_settings
+from databeak.core.session import get_session_data
+from databeak.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import threading
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
@@ -77,6 +79,7 @@ class DataBeakSettings(BaseSettings):
 
 
 _settings: DataBeakSettings | None = None
+_lock = threading.Lock()
 
 
 def create_settings() -> DataBeakSettings:
@@ -88,7 +91,9 @@ def get_settings() -> DataBeakSettings:
     """Create or get the global DataBeak settings instance."""
     global _settings  # noqa: PLW0603
     if _settings is None:
-        _settings = create_settings()
+        with _lock:
+            if not _settings:
+                _settings = create_settings()
     return _settings
 
 

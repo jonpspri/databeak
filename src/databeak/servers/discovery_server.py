@@ -16,8 +16,8 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Field
 
-from ..core.session import get_session_data
-from ..exceptions import (
+from databeak.core.session import get_session_data
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
@@ -25,51 +25,17 @@ from ..exceptions import (
 )
 
 # Import session management and data models from the main package
-from ..models import DataPreview
-from ..models.tool_responses import (
+from databeak.models import DataPreview
+from databeak.models.tool_responses import (
     BaseToolResponse,
     CellLocation,
     CsvCellValue,
     DataTypeInfo,
     MissingDataInfo,
 )
-from ..models.typed_dicts import DataPreviewResult
 
 # Import data operations function directly to avoid dependency issues
-try:
-    from ..services.data_operations import create_data_preview_with_indices
-except ImportError:
-    # Fallback implementation for create_data_preview_with_indices
-    def create_data_preview_with_indices(df: pd.DataFrame, num_rows: int = 10) -> DataPreviewResult:
-        """Fallback implementation for data preview creation."""
-        records = []
-        preview_rows = min(num_rows, len(df))
-
-        for i in range(preview_rows):
-            row_dict = df.iloc[i].to_dict()
-            # Convert keys to strings and handle pandas/numpy types
-            row: dict[str, Any] = {}
-            for key, value in row_dict.items():
-                str_key = str(key)
-                if pd.isna(value):
-                    row[str_key] = None
-                elif isinstance(value, pd.Timestamp):
-                    row[str_key] = str(value)
-                elif hasattr(value, "item"):
-                    row[str_key] = value.item()
-                else:
-                    row[str_key] = value
-            row["__row_index__"] = str(i)
-            records.append(row)
-
-        return {
-            "records": records,
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": list(df.columns.astype(str)),
-            "preview_rows": preview_rows,
-        }
-
+from databeak.services.data_operations import create_data_preview_with_indices
 
 logger = logging.getLogger(__name__)
 

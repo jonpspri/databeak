@@ -17,10 +17,10 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 # Import version and session management from main package
-from .._version import __version__
-from ..core.session import get_session_manager
-from ..core.settings import DataBeakSettings, get_settings
-from ..models.tool_responses import HealthResult, ServerInfoResult
+from databeak._version import __version__
+from databeak.core.session import get_session_manager
+from databeak.core.settings import DataBeakSettings, get_settings
+from databeak.models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
 

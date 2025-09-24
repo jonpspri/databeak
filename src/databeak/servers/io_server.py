@@ -21,15 +21,15 @@ from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..core.session import get_session_data, get_session_manager, get_session_only
-from ..core.settings import get_settings
+from databeak.core.session import get_session_data, get_session_manager, get_session_only
+from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
-from ..models import DataPreview, ExportFormat, SessionInfo
-from ..models.data_models import CellValue
-from ..models.tool_responses import BaseToolResponse
-from ..services.data_operations import create_data_preview_with_indices
-from ..utils.validators import validate_file_path, validate_url
+from databeak.models import DataPreview, ExportFormat, SessionInfo
+from databeak.models.data_models import CellValue
+from databeak.models.tool_responses import BaseToolResponse
+from databeak.services.data_operations import create_data_preview_with_indices
+from databeak.utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
 
