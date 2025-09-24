@@ -817,7 +817,7 @@ def get_secure_expression_evaluator() -> SecureExpressionEvaluator:
     global _secure_expression_evaluator  # noqa: PLW0603
     if _secure_expression_evaluator is None:
         with _lock:
-            if not _secure_expression_evaluator:
+            if _secure_expression_evaluator is None:
                 _secure_expression_evaluator = create_secure_expression_evaluator()
     return _secure_expression_evaluator
 

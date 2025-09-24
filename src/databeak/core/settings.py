@@ -92,7 +92,7 @@ def get_settings() -> DataBeakSettings:
     global _settings  # noqa: PLW0603
     if _settings is None:
         with _lock:
-            if not _settings:
+            if _settings is None:
                 _settings = create_settings()
     return _settings
 

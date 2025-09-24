@@ -277,7 +277,7 @@ def get_session_manager() -> SessionManager:
     global _session_manager  # noqa: PLW0603
     if _session_manager is None:
         with _lock:
-            if not _session_manager:
+            if _session_manager is None:
                 _session_manager = SessionManager()
     return _session_manager
 

@@ -23,8 +23,8 @@ from databeak.exceptions import (
 from databeak.models.expression_models import SecureExpression
 from databeak.models.tool_responses import BaseToolResponse, ColumnOperationResult
 from databeak.utils.secure_evaluator import (
-    SecureExpressionEvaluator,
     evaluate_string_expression_safely,
+    get_secure_expression_evaluator,
 )
 
 logger = logging.getLogger(__name__)
@@ -322,7 +322,7 @@ async def add_column(
                     formula = SecureExpression(expression=formula)
 
                 # Use secure evaluator instead of pandas.eval
-                evaluator = SecureExpressionEvaluator()
+                evaluator = get_secure_expression_evaluator()
                 result = evaluator.evaluate_simple_formula(formula.expression, df)
                 df[name] = result
             except Exception as e:
