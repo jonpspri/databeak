@@ -825,7 +825,8 @@ def get_secure_expression_evaluator() -> SecureExpressionEvaluator:
 def reset_secure_expression_evaluator() -> None:
     """Set the global SecureExpressionEvaluator to None (for testing)."""
     global _secure_expression_evaluator  # noqa: PLW0603
-    _secure_expression_evaluator = None
+    with _lock:
+        _secure_expression_evaluator = None
 
 
 ####

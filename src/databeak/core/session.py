@@ -285,7 +285,8 @@ def get_session_manager() -> SessionManager:
 def reset_session_manager() -> None:
     """Reset the global Session Manager object (for testing)."""
     global _session_manager  # noqa: PLW0603
-    _session_manager = None
+    with _lock:
+        _session_manager = None
 
 
 # =============================================================================

@@ -100,4 +100,5 @@ def get_settings() -> DataBeakSettings:
 def reset_settings() -> None:
     """Reset the global DataBeak settings instance."""
     global _settings  # noqa: PLW0603
-    _settings = None
+    with _lock:
+        _settings = None
