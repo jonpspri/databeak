@@ -157,7 +157,7 @@ uv run pre-commit run --all-files
 
 # Individual checks
 uv run ruff check src/ tests/           # Linting
-uv run mypy src/                        # Type checking
+uv run --directory src mypy .                        # Type checking
 uv run pytest tests/unit/               # Unit tests
 scripts/check_docstring_args.py         # MCP Args compliance
 scripts/check_mcp_field_descriptions.py # MCP Field compliance
@@ -171,7 +171,7 @@ scripts/check_mcp_field_descriptions.py # MCP Field compliance
 uv sync              # Install dependencies
 uv run databeak      # Run server
 uv run -m pytest    # Run tests
-uv run ruff check && uv run ruff format --check && uv run mypy src/ && uv run -m pytest
+uv run ruff check && uv run ruff format --check && uv run --directory src mypy . && uv run -m pytest
 ```
 
 ### Version Management

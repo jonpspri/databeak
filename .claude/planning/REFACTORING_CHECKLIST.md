@@ -317,7 +317,8 @@ async def filter_rows(...) -> FilterOperationResult:
 
 - [ ] All tests pass:
   `uv run -m pytest tests/unit/servers/test_{server_name}.py`
-- [ ] Type checking passes: `uv run mypy src/databeak/servers/{server_name}.py`
+- [ ] Type checking passes:
+  `uv run --directory src mypy databeak/servers/{server_name}.py`
 - [ ] Linting passes: `uv run ruff check src/databeak/servers/{server_name}.py`
 - [ ] Server starts successfully: `uv run databeak`
 - [ ] Tools are discoverable via MCP

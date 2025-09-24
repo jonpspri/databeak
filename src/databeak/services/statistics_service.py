@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-from ..models.session_service import SessionService
-from ..models.statistics_models import (
+from databeak.models.session_service import SessionService
+from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,

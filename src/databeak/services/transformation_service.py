@@ -8,14 +8,14 @@ from typing import Any, Literal
 import pandas as pd
 from fastmcp.exceptions import ToolError
 
-from ..core.session import DatabeakSession, get_session_manager
-from ..exceptions import (
+from databeak.core.session import DatabeakSession, get_session_manager
+from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
     NoDataLoadedError,
     SessionNotFoundError,
 )
-from ..models.tool_responses import BaseToolResponse
+from databeak.models.tool_responses import BaseToolResponse
 
 logger = logging.getLogger(__name__)
 

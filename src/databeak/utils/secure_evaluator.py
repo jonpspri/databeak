@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 from simpleeval import NameNotDefined, SimpleEval
 
-from ..exceptions import InvalidParameterError
+from databeak.exceptions import InvalidParameterError
 
 
 class SecureExpressionEvaluator:
