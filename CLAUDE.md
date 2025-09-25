@@ -242,17 +242,24 @@ df = session.df  # Potential null access risk
 ```bash
 # Setup and development
 uv sync                 # Install all dependencies
-uv run databeak      # Run the MCP server
+uv run databeak         # Run the MCP server (stdio mode)
+
+# HTTP streaming server
+uv run databeak --transport http --host 0.0.0.0 --port 8000  # HTTP mode
+docker-compose up -d    # Docker deployment
+docker build -t databeak:latest .  # Build Docker image
 
 # Version management
 uv run sync-versions   # Sync version numbers across files
 
 # Code quality checks
+uv run pre-commit run --all-files             # Run all quality checks
 scripts/check_docstring_args.py              # Check MCP documentation standards (no Args sections)
 scripts/check_docstring_args.py --quiet      # Quick summary only
 scripts/check_mcp_field_descriptions.py      # Check MCP tool Field descriptions
 scripts/check_mcp_field_descriptions.py --quiet  # Quick summary only
 scripts/check_docstring_args.py src/databeak/servers/  # Check specific directory
+hadolint Dockerfile    # Docker linting (via pre-commit hook)
 
 # Markdown quality
 uv run mdformat docs/              # Auto-format markdown files

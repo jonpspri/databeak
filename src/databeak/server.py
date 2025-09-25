@@ -139,11 +139,13 @@ def main() -> None:
         },
     )
 
-    # Run the server
+    run_args: dict[str, str] = {"transport": args.transport}
     if args.transport == "stdio":
-        mcp.run()
-    else:
-        mcp.run(transport=args.transport, host=args.host, port=args.port)
+        run_args["host"] = args.host
+        run_args["port"] = args.port
+
+    # Run the server
+    mcp.run(**run_args)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
