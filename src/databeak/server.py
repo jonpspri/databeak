@@ -110,7 +110,7 @@ def main() -> None:
         default="stdio",
         help="Transport method",
     )
-    parser.add_argument("--host", default="0.0.0.0", help="Host for HTTP/SSE transport")  # nosec B104  # noqa: S104
+    parser.add_argument("--host", default="127.0.0.1", help="Host for HTTP/SSE transport")  # nosec B104
     parser.add_argument("--port", type=int, default=8000, help="Port for HTTP/SSE transport")
     parser.add_argument(
         "--log-level",
@@ -139,8 +139,8 @@ def main() -> None:
         },
     )
 
-    run_args: dict[str, str] = {"transport": args.transport}
-    if args.transport == "stdio":
+    run_args: dict[str, str | int] = {"transport": args.transport}
+    if args.transport != "stdio":
         run_args["host"] = args.host
         run_args["port"] = args.port
 
