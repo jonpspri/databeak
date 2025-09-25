@@ -1,0 +1,14 @@
+---
+# Hadolint configuration for DataBeak Dockerfile linting
+# See: https://github.com/hadolint/hadolint
+
+# Ignore specific rules that are not applicable or too strict
+ignored:
+  - DL3008  # Pin versions in apt get install (handled by Docker layer caching)
+  - DL3015  # Avoid additional packages by specifying --no-install-recommends
+
+# Trusted registries for base images
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - quay.io

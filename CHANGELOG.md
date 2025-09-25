@@ -8,6 +8,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Docker HTTP Streaming Server**: Complete containerized deployment solution
+  with multi-stage builds, security best practices, and health checks
+- **HTTP Transport Support**: FastMCP-powered HTTP streaming server with FastAPI
+  integration for health endpoints and production deployment
+- **Docker Compose Configuration**: Production and development service profiles
+  with health monitoring, restart policies, and volume management
+- **hadolint Pre-commit Integration**: Docker linting with customizable rules
+  and CI/CD integration for Dockerfile quality enforcement
+- **Comprehensive Deployment Documentation**: Production-ready deployment guide
+  with scaling, security, and troubleshooting guidance
+
+### Changed
+
+- **Server Architecture**: Enhanced server.py with HTTP transport support and
+  health endpoint integration using FastAPI
+- **Dependencies**: Added fastapi and uvicorn for HTTP streaming capabilities
+- **Pre-commit Configuration**: Integrated hadolint for automated Dockerfile
+  linting with appropriate rule configuration
+
 ## [0.0.3] - 2025-01-24
 
 ### Fixed

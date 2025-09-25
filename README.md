@@ -48,6 +48,21 @@ DataBeak works with Continue, Cline, Windsurf, and Zed. See the
 [installation guide](https://jonpspri.github.io/databeak/installation) for
 specific configuration examples.
 
+### Docker Deployment
+
+For production deployments or HTTP-based AI clients:
+
+```bash
+# Quick start with Docker Compose
+docker-compose up -d
+
+# Access server at http://localhost:8000/mcp
+# Health check at http://localhost:8000/health
+```
+
+See the [Docker deployment guide](docs/docker-deployment.md) for production
+configuration, scaling, and security considerations.
+
 ### Quick Test
 
 Once configured, ask your AI assistant:
