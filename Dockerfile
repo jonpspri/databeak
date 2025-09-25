@@ -3,6 +3,7 @@ FROM python:3.11-slim as builder
 
 # Install system dependencies required for building packages
 RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
     gcc \
     g++ \
     python3-dev \
@@ -27,6 +28,7 @@ FROM python:3.11-slim
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
