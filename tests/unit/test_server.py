@@ -9,7 +9,7 @@ class TestLoadInstructions:
     """Tests for _load_instructions function."""
 
     @patch("databeak.server.Path")
-    def test_load_instructions_success(self, mock_path_constructor):
+    def test_load_instructions_success(self, mock_path_constructor: MagicMock) -> None:
         """Test successful loading of instructions."""
         from databeak.server import _load_instructions
 
@@ -32,7 +32,9 @@ class TestLoadInstructions:
 
     @patch("databeak.server.Path")
     @patch("databeak.server.logger")
-    def test_load_instructions_file_not_found(self, mock_logger, mock_path_constructor):
+    def test_load_instructions_file_not_found(
+        self, mock_logger: MagicMock, mock_path_constructor: MagicMock
+    ) -> None:
         """Test instructions loading when file not found."""
         from databeak.server import _load_instructions
 
@@ -55,7 +57,9 @@ class TestLoadInstructions:
     @patch("databeak.server.Path")
     @patch("databeak.server.logger")
     @pytest.mark.skip(reason="Logger testing - logging patterns may have changed")
-    def test_load_instructions_other_error(self, mock_logger, mock_path_constructor):
+    def test_load_instructions_other_error(
+        self, mock_logger: MagicMock, mock_path_constructor: MagicMock
+    ) -> None:
         """Test instructions loading with other error."""
         from databeak.server import _load_instructions
 
@@ -86,12 +90,12 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_stdio_transport(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+    ) -> None:
         """Test main function with stdio transport - covers lines 225-262."""
         from databeak.server import main
 
@@ -121,7 +125,7 @@ class TestMainFunction:
         assert "Starting DataBeak" in log_call[0][0]
 
         # Verify stdio transport execution (lines 261-262)
-        mock_mcp.run.assert_called_once_with()
+        mock_mcp.run.assert_called_once_with(transport="stdio")
 
     @patch("argparse.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
@@ -130,12 +134,12 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_http_transport(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+    ) -> None:
         """Test main function with HTTP transport - covers lines 263-264."""
         from databeak.server import main
 
@@ -163,12 +167,12 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_sse_transport(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+    ) -> None:
         """Test main function with SSE transport - covers lines 263-264."""
         from databeak.server import main
 
@@ -202,14 +206,14 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_transport_variations(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-        transport,
-        expected_run_args,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+        transport: str,
+        expected_run_args: dict,
+    ) -> None:
         """Test main function with various transport configurations - covers transport branching logic."""
         from databeak.server import main
 
@@ -231,12 +235,12 @@ class TestMainFunction:
 
         # Verify correct mcp.run() call based on transport
         if transport == "stdio":
-            mock_mcp.run.assert_called_once_with()
+            mock_mcp.run.assert_called_once_with(transport="stdio")
         else:
             mock_mcp.run.assert_called_once_with(**expected_run_args)
 
     @patch("argparse.ArgumentParser")
-    def test_main_argument_parser_configuration(self, mock_parser):
+    def test_main_argument_parser_configuration(self, mock_parser: MagicMock) -> None:
         """Test that argument parser is configured correctly - covers lines 227-241."""
         from databeak.server import main
 
@@ -283,13 +287,13 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_logging_levels(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-        log_level,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+        log_level: str,
+    ) -> None:
         """Test that all supported logging levels work correctly."""
         from databeak.server import main
 
@@ -316,12 +320,12 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_correlation_id_logging(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+    ) -> None:
         """Test that server sets correlation ID and includes it in logs."""
         from databeak.server import main
 
@@ -352,12 +356,12 @@ class TestMainFunction:
     @patch("databeak.server.mcp")
     def test_main_conditional_logging_params(
         self,
-        mock_mcp,
-        mock_logger,
-        mock_set_id,
-        mock_setup_logging,
-        mock_parser,
-    ):
+        mock_mcp: MagicMock,
+        mock_logger: MagicMock,
+        mock_set_id: MagicMock,
+        mock_setup_logging: MagicMock,
+        mock_parser: MagicMock,
+    ) -> None:
         """Test conditional logging parameters for different transports."""
         from databeak.server import main
 
@@ -389,7 +393,7 @@ class TestMainFunction:
 class TestServerInitialization:
     """Tests for server initialization and configuration."""
 
-    def test_mcp_server_instance(self):
+    def test_mcp_server_instance(self) -> None:
         """Test that MCP server is properly initialized."""
         from databeak.server import mcp
 
@@ -397,7 +401,7 @@ class TestServerInitialization:
         assert hasattr(mcp, "mount")
         assert hasattr(mcp, "run")
 
-    def test_server_imports(self):
+    def test_server_imports(self) -> None:
         """Test that all server imports are available."""
         from databeak import server
 
@@ -406,7 +410,7 @@ class TestServerInitialization:
         assert hasattr(server, "main")
         assert hasattr(server, "mcp")
 
-    def test_server_mounting_imports(self):
+    def test_server_mounting_imports(self) -> None:
         """Test that all server modules are imported for mounting."""
         from databeak import server
 
@@ -426,7 +430,7 @@ class TestServerInitialization:
         for module in server_modules:
             assert hasattr(server, module), f"Server module {module} not imported"
 
-    def test_instructions_loaded_during_init(self):
+    def test_instructions_loaded_during_init(self) -> None:
         """Test that instructions are loaded during server initialization."""
         # Check that _load_instructions function exists and works
         from databeak.server import _load_instructions
@@ -439,4 +443,4 @@ class TestServerInitialization:
         assert len(result) > 0
 
 
-# Note: TestResourceAndPromptLogic class removed as resources were extracted to dedicated module in #86
+# Note: TestResourceAndPromaptLogic class removed as resources were extracted to dedicated module in #86

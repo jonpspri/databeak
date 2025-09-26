@@ -43,7 +43,7 @@ and this project adheres to
 - **MyPy Configuration**: Added `mypy_path="src"` to enable type checking from
   project root and pre-commit compatibility
 - **Documentation Consistency**: Updated all documentation to use standardized
-  `uv run --directory src mypy .` command syntax
+  `uv run mypy src/databeak/` command syntax
 
 ### Changed
 

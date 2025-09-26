@@ -124,7 +124,7 @@ uv run -m pytest                      # All tests
 
 # Run quality checks
 uv run ruff check
-uv run --directory src mypy .
+uv run mypy src/databeak/
 ```
 
 ### Testing Structure

@@ -25,7 +25,7 @@ from databeak.core.session import get_session_data, get_session_manager, get_ses
 from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
-from databeak.models import DataPreview, ExportFormat, SessionInfo
+from databeak.models import DataPreview, ExportFormat
 from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
@@ -77,21 +77,6 @@ class SessionInfoResult(BaseToolResponse):
     data_loaded: bool = Field(description="Whether session has data loaded")
     row_count: int | None = Field(None, description="Number of rows if data loaded")
     column_count: int | None = Field(None, description="Number of columns if data loaded")
-
-
-class SessionListResult(BaseToolResponse):
-    """Response model for listing all sessions."""
-
-    sessions: list[SessionInfo] = Field(description="List of all sessions")
-    total_sessions: int = Field(description="Total number of sessions")
-    active_sessions: int = Field(description="Number of sessions with loaded data")
-
-
-class CloseSessionResult(BaseToolResponse):
-    """Response model for session closure operations."""
-
-    message: str = Field(description="Operation status message")
-    data_preserved: bool = Field(description="Whether data was preserved after closure")
 
 
 # ============================================================================
@@ -893,85 +878,6 @@ async def get_session_info(
         raise ToolError(msg) from e
 
 
-# Implementation: retrieves all sessions from session manager with statistics
-# Counts active sessions (those with loaded data) vs total sessions
-# Returns empty list on error for consistency, essential for system monitoring
-async def list_sessions(
-    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-) -> SessionListResult:
-    """List all active sessions with details and statistics.
-
-    Returns overview of all sessions including data status and timestamps. Essential for session
-    management and system monitoring.
-    """
-    try:
-        session_manager = get_session_manager()
-        sessions = session_manager.list_sessions()
-
-        await ctx.info(f"Found {len(sessions)} active sessions")
-
-        # Convert session info to SessionInfo objects for tool response
-        session_infos = []
-        active_count = 0
-
-        for s in sessions:
-            # s is already a SessionInfo from data_models, so we can use it directly
-            session_infos.append(s)
-
-            # Count active sessions (those with data loaded)
-            if s.row_count > 0:
-                active_count += 1
-
-        return SessionListResult(
-            sessions=session_infos,
-            total_sessions=len(sessions),
-            active_sessions=active_count,
-        )
-
-    except Exception as e:
-        await ctx.error(f"Failed to list sessions: {e}")
-        # Return empty list on error for consistency
-        return SessionListResult(sessions=[], total_sessions=0, active_sessions=0)
-
-
-# Implementation: removes session from manager with proper resource cleanup
-# Memory deallocation for DataFrames, history cleanup, state finalization
-# Data is not preserved - use export_csv before closing to save data
-# Essential for preventing memory leaks in long-running processes
-async def close_session(
-    ctx: Annotated[Context, Field(description="FastMCP context for session access")],
-) -> CloseSessionResult:
-    """Close and clean up session with proper resource management.
-
-    Safely closes session and releases memory.
-    Data is not preserved - export before closing if needed.
-    """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-
-        session_manager = get_session_manager()
-        removed = await session_manager.remove_session(session_id)
-
-        if not removed:
-            msg = f"Session not found: {session_id}"
-
-            raise ToolError(msg)
-
-        await ctx.info(f"Closed session {session_id}")
-
-        return CloseSessionResult(
-            message=f"Session {session_id} closed successfully",
-            data_preserved=False,  # Sessions are removed, so data is not preserved
-        )
-
-    except Exception as e:
-        await ctx.error(f"Failed to close session: {e}")
-        msg = f"Failed to close session: {e}"
-
-        raise ToolError(msg) from e
-
-
 # ============================================================================
 # FASTMCP SERVER SETUP
 # ============================================================================
@@ -990,5 +896,3 @@ io_server.tool(name="load_csv_from_url")(load_csv_from_url)
 io_server.tool(name="load_csv_from_content")(load_csv_from_content)
 io_server.tool(name="export_csv")(export_csv)
 io_server.tool(name="get_session_info")(get_session_info)
-io_server.tool(name="list_sessions")(list_sessions)
-io_server.tool(name="close_session")(close_session)

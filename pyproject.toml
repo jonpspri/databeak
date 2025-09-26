@@ -90,6 +90,7 @@ dev = [
     "types-pytz>=2024.2",
     "ipython>=8.29.0",
     "rich>=13.9.0",
+    "mcp>=1.0.1",
 ]
 docs = [
     "mkdocs>=1.6.0",
@@ -250,9 +251,9 @@ skip-magic-trailing-comma = false
 
 [tool.mypy]
 python_version = "3.11"
-mypy_path = "src"
-namespace_packages = true
-explicit_package_bases = true
+mypy_path = "./src"
+namespace_packages = false
+explicit_package_bases = false
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -321,8 +322,8 @@ ignore_errors = true  # Pandera not available in pre-commit environment
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-testpaths = ["tests"]
-pythonpath = ["src"]
+testpaths = ["./tests"]
+pythonpath = ["./src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 addopts = [

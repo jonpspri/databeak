@@ -1,0 +1,7 @@
+date,product,quantity,price,customer_id
+2024-01-15,Widget A,10,25.99,C001
+2024-01-16,Widget B,5,35.50,C002
+2024-01-17,Widget A,3,25.99,C003
+2024-01-18,Widget C,12,15.75,C001
+2024-01-19,Widget B,8,35.50,C004
+2024-01-20,Widget A,6,25.99,C002
