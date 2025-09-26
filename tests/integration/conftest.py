@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import os
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any, Literal
+
+from abc import ABC, abstractmethod
 
 from mcp import ClientSession, types
 from mcp.client.stdio import StdioServerParameters, stdio_client
-
-if TYPE_CHECKING:
-    pass
 
 
 def get_fixture_path(fixture_name: str) -> str:
@@ -29,29 +29,30 @@ def get_fixture_path(fixture_name: str) -> str:
     fixture_path = fixtures_dir / fixture_name
     return os.path.realpath(fixture_path)
 
-
-class DatabeakServerFixture:
+class DatabeakServerFixture(ABC):
     """Context manager for running a DataBeak server subprocess with stdio transport."""
 
-    def __init__(self) -> None:
-        """Initialize the server fixture."""
+    @abstractmethod
+    async def _initialize_stream(self):
+        ...
 
     async def __aenter__(self) -> DatabeakServerFixture:
         """Start the DataBeak server subprocess with stdio transport."""
-        self.stdio_client = stdio_client(
-            StdioServerParameters(command="uv", args=["run", "databeak"])
-        )
-        mcp_read, mcp_write = await self.stdio_client.__aenter__()
+        mcp_read, mcp_write = await self._initialize_stream()
 
         self.client_session = ClientSession(mcp_read, mcp_write)
         await self.client_session.__aenter__()
         await self.client_session.initialize()
         return self
 
+    @abstractmethod
+    async def _finalize_stream(self):
+        ...
+
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         """Clean up the client and stop the server."""
         await self.client_session.__aexit__(None, None, None)
-        await self.stdio_client.__aexit__(None, None, None)
+        await self._finalize_stream()
         return False
 
     async def call_tool(self, tool_name: str, args: dict[str, Any]) -> types.CallToolResult:
@@ -90,3 +91,23 @@ class DatabeakServerFixture:
 
         result = await self.client_session.list_tools()
         return result.tools
+
+class DatabeakStdioServerFixture(DatabeakServerFixture):
+    async def _initialize_stream(self):
+        self._stdio_client = stdio_client(
+            StdioServerParameters(command="uv", args=["run", "databeak"])
+        )
+        return await self._stdio_client.__aenter__()
+
+    async def _finalize_stream(self):
+        await self._stdio_client.__aexit__(None, None, None)
+
+def get_server_fixture(transport: Literal["stdio", "http"] = "stdio"):
+
+    if transport == "stdio":
+        return DatabeakStdioServerFixture()
+    # if transport == "http":
+    #     return DatabeakHttpServerFixture()
+    msg = "Invalid transport %s"
+    raise ValueError(msg, transport)
+

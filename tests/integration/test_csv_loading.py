@@ -5,7 +5,7 @@ import os
 import pytest
 from mcp import types
 
-from tests.integration.conftest import DatabeakServerFixture, get_fixture_path
+from tests.integration.conftest import get_server_fixture, get_fixture_path
 
 
 class TestCsvLoading:
@@ -14,7 +14,7 @@ class TestCsvLoading:
     @pytest.mark.asyncio
     async def test_load_sample_data(self):
         """Test loading a sample CSV file."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             # Get the real path to the fixture
             csv_path = get_fixture_path("sample_data.csv")
 
@@ -30,7 +30,7 @@ class TestCsvLoading:
     @pytest.mark.asyncio
     async def test_load_sales_data_and_get_info(self):
         """Test loading sales data and getting session info."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             # Load sales data
             csv_path = get_fixture_path("sales_data.csv")
             load_result = await server.call_tool("load_csv", {"file_path": csv_path})
@@ -42,7 +42,7 @@ class TestCsvLoading:
     @pytest.mark.asyncio
     async def test_load_missing_values_csv(self):
         """Test loading CSV with missing values."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             csv_path = get_fixture_path("missing_values.csv")
 
             result = await server.call_tool("load_csv", {"file_path": csv_path})

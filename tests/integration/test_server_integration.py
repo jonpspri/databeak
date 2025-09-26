@@ -3,7 +3,7 @@
 import pytest
 from mcp import types
 
-from tests.integration.conftest import DatabeakServerFixture
+from tests.integration.conftest import get_server_fixture
 
 
 class TestServerIntegration:
@@ -12,7 +12,7 @@ class TestServerIntegration:
     @pytest.mark.asyncio
     async def test_server_starts_and_lists_tools(self):
         """Test that server starts and can list tools."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             tools = await server.list_tools()
             assert isinstance(tools, list)
             assert len(tools) > 0
@@ -29,7 +29,7 @@ class TestServerIntegration:
     @pytest.mark.asyncio
     async def test_get_session_info_tool(self):
         """Test the get_session_info tool."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             # This should fail since no data is loaded, but should return a valid result
             result = await server.call_tool("get_session_info", {})
 
@@ -39,7 +39,7 @@ class TestServerIntegration:
     @pytest.mark.asyncio
     async def test_context_manager_usage(self):
         """Test using the context manager directly."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             # Test that we can call multiple tools
             tools = await server.list_tools()
             info_result = await server.call_tool("get_session_info", {})
@@ -50,7 +50,7 @@ class TestServerIntegration:
     @pytest.mark.asyncio
     async def test_multiple_tool_calls_in_same_session(self):
         """Test making multiple tool calls within the same test function."""
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             # Call 1: List tools
             tools = await server.list_tools()
             assert len(tools) > 0
@@ -69,7 +69,7 @@ class TestServerIntegration:
         server_ref = None
 
         # Use server in context
-        async with DatabeakServerFixture() as server:
+        async with get_server_fixture() as server:
             server_ref = server
             tools = await server.list_tools()
             assert len(tools) > 0
