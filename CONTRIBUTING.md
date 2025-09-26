@@ -93,7 +93,7 @@ and handles everything pip does plus more.
 uv run databeak --help
 uv run pytest -n auto
 uv run ruff check
-uv run --directory src mypy .
+uv run mypy src/databeak/
 ```
 
 ## Development Workflow
@@ -130,7 +130,7 @@ Follow these guidelines:
 # All commands use uv for speed and consistency
 uv run ruff format # Format code with Ruff
 uv run ruff check  # Lint with Ruff
-uv run --directory src mypy .        # Type check with MyPy
+uv run mypy src/databeak/        # Type check with MyPy
 ```
 
 ### 4. Test Your Changes

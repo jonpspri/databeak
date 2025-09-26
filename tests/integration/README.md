@@ -109,17 +109,21 @@ The integration tests can work with these MCP tools:
 - **`load_csv`**: Load CSV files from filesystem paths
 - **`load_csv_from_url`**: Load CSV files from HTTP URLs
 - **`load_csv_from_content`**: Load CSV data from string content
-- **`export_csv`**: Export session data to various formats (CSV, JSON, Excel, etc.)
-- **`get_session_info`**: Get information about the current session (data loaded, row/column counts, etc.)
+- **`export_csv`**: Export session data to various formats (CSV, JSON, Excel,
+  etc.)
+- **`get_session_info`**: Get information about the current session (data
+  loaded, row/column counts, etc.)
 
-Note: Session lifecycle management (creation, listing, closing) is handled by the MCP server infrastructure, not by individual tools.
+Note: Session lifecycle management (creation, listing, closing) is handled by
+the MCP server infrastructure, not by individual tools.
 
 ## Test Organization
 
 Integration tests should focus on:
 
 - **End-to-end workflows**: Complete user scenarios (load → process → export)
-- **Tool integration**: How CSV loading, processing, and export tools work together
+- **Tool integration**: How CSV loading, processing, and export tools work
+  together
 - **Data persistence**: Session state management across tool calls
 - **Error handling**: Server behavior with invalid files, network issues, etc.
 - **Performance**: Response times and resource usage for large datasets

@@ -51,3 +51,23 @@ result = await server.call_tool("load_csv", {"file_path": csv_path})
 
 This ensures that DataBeak receives the full absolute path, avoiding any
 confusion about relative paths during testing.
+
+### Security Features
+
+The `get_fixture_path()` function includes security validations to prevent
+directory traversal attacks:
+
+- **Path separator validation**: Rejects fixture names containing `/`, `\`, or
+  other path separators
+- **Relative path protection**: Blocks `..`, `.`, and other relative path
+  components
+- **Directory containment**: Ensures resolved paths stay within the
+  `tests/fixtures/` directory
+- **Input sanitization**: Rejects empty strings and whitespace-only names
+
+**Examples of rejected inputs:**
+
+- `../../../etc/passwd` (directory traversal)
+- `subdir/file.csv` (path separators)
+- `.hidden` (relative path component)
+- `""` (empty string)

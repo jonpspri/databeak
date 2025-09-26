@@ -79,8 +79,6 @@ class SessionInfoResult(BaseToolResponse):
     column_count: int | None = Field(None, description="Number of columns if data loaded")
 
 
-
-
 # ============================================================================
 # PYDANTIC MODELS FOR VALIDATION
 # ============================================================================
@@ -878,8 +876,6 @@ async def get_session_info(
         msg = f"Failed to get session info: {e}"
 
         raise ToolError(msg) from e
-
-
 
 
 # ============================================================================

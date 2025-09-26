@@ -1,7 +1,20 @@
 """Mock Context for testing FastMCP Context state management."""
 
 import uuid
-from typing import Any
+from typing import Any, Protocol
+
+
+class ContextProtocol(Protocol):
+    """Protocol defining the Context interface needed for type compatibility."""
+
+    @property
+    def session_id(self) -> str: ...
+
+    async def info(self, message: str) -> None: ...
+    async def debug(self, message: str) -> None: ...
+    async def error(self, message: str) -> None: ...
+    async def warning(self, message: str) -> None: ...
+    async def report_progress(self, progress: float) -> None: ...
 
 
 class MockContext:
@@ -25,11 +38,8 @@ class MockContext:
     async def error(self, message: str) -> None:
         """Mock error logging method."""
 
-    async def warn(self, message: str) -> None:
-        """Mock warning logging method."""
-
     async def warning(self, message: str) -> None:
-        """Mock warning logging method (alias for warn)."""
+        """Mock warning logging method."""
 
     async def report_progress(self, progress: float) -> None:
         """Mock progress reporting method."""

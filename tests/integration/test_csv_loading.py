@@ -1,11 +1,11 @@
 """Integration tests for CSV loading functionality."""
 
-import os
+from pathlib import Path
 
 import pytest
 from mcp import types
 
-from tests.integration.conftest import get_server_fixture, get_fixture_path
+from tests.integration.conftest import get_fixture_path, get_server_fixture
 
 
 class TestCsvLoading:
@@ -57,7 +57,7 @@ class TestCsvLoading:
         csv_path = get_fixture_path("sample_data.csv")
 
         # Should be an absolute path
-        assert os.path.isabs(csv_path)
+        assert Path(csv_path).is_absolute()
 
         # Should end with the fixture name
         assert csv_path.endswith("sample_data.csv")

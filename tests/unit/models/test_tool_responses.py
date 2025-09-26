@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import json
 import tempfile
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -48,20 +50,15 @@ from databeak.servers.discovery_server import (
     OutliersResult,
     ProfileInfo,
 )
-
-# Import IO server models that moved to modular architecture
-from databeak.servers.io_server import (
-    CloseSessionResult,
-    ExportResult,
-    LoadResult,
-    SessionInfoResult,
-    SessionListResult,
-)
 from databeak.servers.io_server import (
     DataPreview as IODataPreview,  # Import io_server's DataPreview for LoadResult
 )
+
+# Import IO server models that moved to modular architecture
 from databeak.servers.io_server import (
-    SessionInfo as IOSessionInfo,  # Import io_server's SessionInfo for SessionListResult
+    ExportResult,
+    LoadResult,
+    SessionInfoResult,
 )
 
 # =============================================================================
@@ -102,28 +99,30 @@ class TestSessionInfo:
             ),
         ],
     )
-    def test_session_info_variations(self, session_data, expected_attrs):
+    def test_session_info_variations(
+        self, session_data: dict[str, Any], expected_attrs: dict[str, Any]
+    ) -> None:
         """Test SessionInfo creation with different configurations."""
-        session = SessionInfo(**session_data)
+        session = SessionInfo(**session_data)  # type: ignore[arg-type]
         for attr, expected_value in expected_attrs.items():
             assert getattr(session, attr) == expected_value
 
-    def test_missing_required_field(self):
+    def test_missing_required_field(self) -> None:
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             SessionInfo(  # type: ignore [call-arg]
                 session_id="test-123",
-                created_at="2023-01-01T10:00:00Z",
+                created_at=datetime.fromisoformat("2023-01-01T10:00:00+00:00"),
                 # Missing required fields
             )
         assert "Field required" in str(exc_info.value)
 
-    def test_serialization_roundtrip(self):
+    def test_serialization_roundtrip(self) -> None:
         """Test serialization and deserialization."""
         original = SessionInfo(
             session_id="test-123",
-            created_at="2023-01-01T10:00:00Z",
-            last_accessed="2023-01-01T10:30:00Z",
+            created_at=datetime.fromisoformat("2023-01-01T10:00:00+00:00"),
+            last_accessed=datetime.fromisoformat("2023-01-01T10:30:00+00:00"),
             row_count=100,
             column_count=5,
             columns=["id", "name"],
@@ -137,7 +136,7 @@ class TestSessionInfo:
 class TestOutlierInfo:
     """Test OutlierInfo model."""
 
-    def test_valid_creation_with_all_fields(self):
+    def test_valid_creation_with_all_fields(self) -> None:
         """Test valid OutlierInfo creation with all fields."""
         outlier = OutlierInfo(
             row_index=42,
@@ -150,22 +149,22 @@ class TestOutlierInfo:
         assert outlier.z_score == 3.2
         assert outlier.iqr_score == 2.1
 
-    def test_optional_score_fields(self):
+    def test_optional_score_fields(self) -> None:
         """Test OutlierInfo with optional score fields as None."""
         outlier = OutlierInfo(row_index=42, value=99.9)
         assert outlier.z_score is None
         assert outlier.iqr_score is None
 
-    def test_invalid_types(self):
+    def test_invalid_types(self) -> None:
         """Test invalid data types raise ValidationError."""
         with pytest.raises(ValidationError):
-            OutlierInfo(row_index="not_an_int", value=99.9)
+            OutlierInfo(row_index="not_an_int", value=99.9)  # type: ignore[arg-type]
 
 
 class TestStatisticsSummary:
     """Test StatisticsSummary model with field aliases."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid StatisticsSummary creation."""
         stats = StatisticsSummary(
             count=100,
@@ -180,7 +179,7 @@ class TestStatisticsSummary:
         assert stats.count == 100
         assert stats.percentile_25 == 35.0
 
-    def test_field_aliases(self):
+    def test_field_aliases(self) -> None:
         """Test field aliases work correctly."""
         # Using aliases in dict
         data = {
@@ -193,12 +192,12 @@ class TestStatisticsSummary:
             "75%": 65.0,  # alias
             "max": 90.0,
         }
-        stats = StatisticsSummary(**data)
+        stats = StatisticsSummary(**data)  # type: ignore[arg-type]
         assert stats.percentile_25 == 35.0
         assert stats.percentile_50 == 50.0
         assert stats.percentile_75 == 65.0
 
-    def test_serialization_with_aliases(self):
+    def test_serialization_with_aliases(self) -> None:
         """Test serialization includes both field names and aliases."""
         stats = StatisticsSummary(
             count=100,
@@ -220,22 +219,22 @@ class TestStatisticsSummary:
 class TestDataTypeInfo:
     """Test DataTypeInfo model with Literal types."""
 
-    def test_valid_types(self):
+    def test_valid_types(self) -> None:
         """Test valid data types."""
         for dtype in ["int64", "float64", "object", "bool", "datetime64", "category"]:
             info = DataTypeInfo(
-                type=dtype,
+                type=dtype,  # type: ignore[arg-type]
                 nullable=True,
                 unique_count=10,
                 null_count=2,
             )
             assert info.type == dtype
 
-    def test_invalid_type(self):
+    def test_invalid_type(self) -> None:
         """Test invalid data type raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             DataTypeInfo(
-                type="invalid_type",
+                type="invalid_type",  # type: ignore[arg-type]
                 nullable=True,
                 unique_count=10,
                 null_count=2,
@@ -246,7 +245,7 @@ class TestDataTypeInfo:
 class TestMissingDataInfo:
     """Test MissingDataInfo model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid MissingDataInfo creation."""
         missing_info = MissingDataInfo(
             total_missing=25,
@@ -260,7 +259,7 @@ class TestMissingDataInfo:
 class TestDataPreview:
     """Test DataPreview model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid DataPreview creation."""
         preview = DataPreview(
             rows=[
@@ -274,7 +273,7 @@ class TestDataPreview:
         assert len(preview.rows) == 2
         assert preview.truncated is False
 
-    def test_mixed_data_types(self):
+    def test_mixed_data_types(self) -> None:
         """Test DataPreview with mixed data types in rows."""
         preview = DataPreview(
             rows=[
@@ -291,7 +290,7 @@ class TestDataPreview:
 class TestGroupStatistics:
     """Test GroupStatistics model with optional fields."""
 
-    def test_all_fields_present(self):
+    def test_all_fields_present(self) -> None:
         """Test GroupStatistics with all fields."""
         stats = GroupStatistics(
             count=10,
@@ -304,7 +303,7 @@ class TestGroupStatistics:
         assert stats.count == 10
         assert stats.mean == 50.0
 
-    def test_only_required_fields(self):
+    def test_only_required_fields(self) -> None:
         """Test GroupStatistics with only count (required)."""
         stats = GroupStatistics(count=10)
         assert stats.count == 10
@@ -315,31 +314,31 @@ class TestGroupStatistics:
 class TestCellLocation:
     """Test CellLocation model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid CellLocation creation."""
         cell = CellLocation(row=5, column="name", value="John Doe")
         assert cell.row == 5
         assert cell.column == "name"
         assert cell.value == "John Doe"
 
-    def test_csv_cell_value_types(self):
+    def test_csv_cell_value_types(self) -> None:
         """Test CellLocation accepts standard CSV value types."""
         for value in [42, 3.14, "text", True, None]:
-            cell = CellLocation(row=0, column="test", value=value)
+            cell = CellLocation(row=0, column="test", value=value)  # type: ignore[arg-type]
             assert cell.value == value
 
-    def test_invalid_complex_types(self):
+    def test_invalid_complex_types(self) -> None:
         """Test CellLocation rejects complex types that aren't valid CSV cell values."""
         with pytest.raises(ValidationError):
-            CellLocation(row=0, column="test", value=[1, 2, 3])
+            CellLocation(row=0, column="test", value=[1, 2, 3])  # type: ignore[arg-type]
         with pytest.raises(ValidationError):
-            CellLocation(row=0, column="test", value={"key": "value"})
+            CellLocation(row=0, column="test", value={"key": "value"})  # type: ignore[arg-type]
 
 
 class TestProfileInfo:
     """Test ProfileInfo model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid ProfileInfo creation."""
         profile = ProfileInfo(
             column_name="age",
@@ -354,7 +353,7 @@ class TestProfileInfo:
         assert profile.column_name == "age"
         assert profile.most_frequent == 25
 
-    def test_optional_fields(self):
+    def test_optional_fields(self) -> None:
         """Test ProfileInfo with optional fields as None."""
         profile = ProfileInfo(
             column_name="age",
@@ -376,7 +375,7 @@ class TestProfileInfo:
 class TestHealthResult:
     """Test HealthResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid HealthResult creation."""
         health = HealthResult(
             status="healthy",
@@ -394,7 +393,7 @@ class TestHealthResult:
         assert health.status == "healthy"
         assert health.active_sessions == 3
 
-    def test_missing_required_field(self):
+    def test_missing_required_field(self) -> None:
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError):
             HealthResult(status="healthy")  # type: ignore [call-arg]
@@ -403,7 +402,7 @@ class TestHealthResult:
 class TestServerInfoResult:
     """Test ServerInfoResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid ServerInfoResult creation."""
         server_info = ServerInfoResult(
             name="DataBeak",
@@ -426,7 +425,7 @@ class TestServerInfoResult:
 class TestLoadResult:
     """Test LoadResult model - one of the critical models."""
 
-    def test_valid_creation_minimal(self):
+    def test_valid_creation_minimal(self) -> None:
         """Test valid LoadResult creation with minimal required fields."""
         result = LoadResult(
             rows_affected=100,
@@ -438,7 +437,7 @@ class TestLoadResult:
         assert result.data is None  # Optional field
         assert result.memory_usage_mb is None  # Optional field
 
-    def test_valid_creation_with_optional_fields(self):
+    def test_valid_creation_with_optional_fields(self) -> None:
         """Test valid LoadResult creation with all fields."""
         preview = IODataPreview(
             rows=[{"id": 1, "name": "John"}],
@@ -454,21 +453,21 @@ class TestLoadResult:
         assert result.data is not None
         assert result.memory_usage_mb == 1.5
 
-    def test_missing_required_fields(self):
+    def test_missing_required_fields(self) -> None:
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             LoadResult()  # type: ignore [call-arg]  # Missing rows_affected, columns_affected
         assert "Field required" in str(exc_info.value)
 
-    def test_invalid_field_types(self):
+    def test_invalid_field_types(self) -> None:
         """Test invalid field types raise ValidationError."""
         with pytest.raises(ValidationError):
             LoadResult(
-                rows_affected="not_an_int",  # Should be int
+                rows_affected="not_an_int",  # type: ignore[arg-type]  # Should be int
                 columns_affected=["col1"],
             )
 
-    def test_serialization_roundtrip(self):
+    def test_serialization_roundtrip(self) -> None:
         """Test serialization and deserialization preserves data."""
         original = LoadResult(
             rows_affected=75,
@@ -486,14 +485,14 @@ class TestLoadResult:
         restored_from_json = LoadResult(**json_data)
         assert restored_from_json == original
 
-    def test_extra_fields_ignored(self):
+    def test_extra_fields_ignored(self) -> None:
         """Test extra fields are ignored during creation."""
         data = {
             "rows_affected": 100,
             "columns_affected": ["id"],
             "extra_field": "should_be_ignored",
         }
-        result = LoadResult(**data)
+        result = LoadResult(**data)  # type: ignore[arg-type]
         assert result.rows_affected == 100
         # Extra field should not cause an error (Pydantic ignores by default)
 
@@ -501,7 +500,7 @@ class TestLoadResult:
 class TestSessionInfoResult:
     """Test SessionInfoResult model - one of the critical models."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid SessionInfoResult creation."""
         result = SessionInfoResult(
             created_at="2023-01-01T10:00:00Z",
@@ -513,7 +512,7 @@ class TestSessionInfoResult:
         assert result.data_loaded is True
         assert result.row_count == 100
 
-    def test_optional_count_fields(self):
+    def test_optional_count_fields(self) -> None:
         """Test optional count fields can be None."""
         result = SessionInfoResult(
             created_at="2023-01-01T10:00:00Z",
@@ -527,7 +526,7 @@ class TestSessionInfoResult:
 class TestExportResult:
     """Test ExportResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid ExportResult creation."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             result = ExportResult(
@@ -541,14 +540,14 @@ class TestExportResult:
             # Clean up
             Path(tmp.name).unlink()
 
-    def test_literal_format_validation(self):
+    def test_literal_format_validation(self) -> None:
         """Test format field validates against literal values."""
-        valid_formats = ["csv", "json", "excel", "html", "markdown"]
+        valid_formats = ["csv", "tsv", "json", "excel", "parquet", "html", "markdown"]
         with tempfile.NamedTemporaryFile() as tmp:
             for fmt in valid_formats:
                 result = ExportResult(
                     file_path=tmp.name,
-                    format=fmt,
+                    format=fmt,  # type: ignore[arg-type]
                     rows_exported=10,
                 )
                 assert result.format == fmt
@@ -557,46 +556,9 @@ class TestExportResult:
             with pytest.raises(ValidationError):
                 ExportResult(
                     file_path=tmp.name,
-                    format="invalid_format",
+                    format="invalid_format",  # type: ignore[arg-type]
                     rows_exported=10,
                 )
-
-
-class TestSessionListResult:
-    """Test SessionListResult model."""
-
-    def test_valid_creation(self):
-        """Test valid SessionListResult creation."""
-        sessions = [
-            IOSessionInfo(
-                session_id="s1",
-                created_at="2023-01-01T10:00:00Z",
-                last_accessed="2023-01-01T10:30:00Z",
-                row_count=100,
-                column_count=5,
-                columns=["a", "b", "c", "d", "e"],
-                memory_usage_mb=2.0,
-            ),
-        ]
-        result = SessionListResult(
-            sessions=sessions,
-            total_sessions=1,
-            active_sessions=1,
-        )
-        assert len(result.sessions) == 1
-        assert result.total_sessions == 1
-
-
-class TestCloseSessionResult:
-    """Test CloseSessionResult model."""
-
-    def test_valid_creation(self):
-        """Test valid CloseSessionResult creation."""
-        result = CloseSessionResult(
-            message="Session closed successfully",
-            data_preserved=True,
-        )
-        assert result.data_preserved is True
 
 
 # =============================================================================
@@ -607,7 +569,7 @@ class TestCloseSessionResult:
 class TestStatisticsResult:
     """Test StatisticsResult model - one of the critical models."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid StatisticsResult creation."""
         stats = {
             "age": StatisticsSummary(
@@ -630,7 +592,7 @@ class TestStatisticsResult:
         assert "age" in result.statistics
         assert result.statistics["age"].mean == 35.5
 
-    def test_multiple_columns(self):
+    def test_multiple_columns(self) -> None:
         """Test StatisticsResult with multiple columns."""
         stats = {
             "age": StatisticsSummary(
@@ -667,7 +629,7 @@ class TestStatisticsResult:
 class TestCorrelationResult:
     """Test CorrelationResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid CorrelationResult creation."""
         matrix = {
             "age": {"age": 1.0, "salary": 0.75},
@@ -681,23 +643,23 @@ class TestCorrelationResult:
         assert result.method == "pearson"
         assert result.correlation_matrix["age"]["salary"] == 0.75
 
-    def test_correlation_methods(self):
+    def test_correlation_methods(self) -> None:
         """Test all valid correlation methods."""
         matrix = {"a": {"a": 1.0}}
         for method in ["pearson", "spearman", "kendall"]:
             result = CorrelationResult(
                 correlation_matrix=matrix,
-                method=method,
+                method=method,  # type: ignore[arg-type]
                 columns_analyzed=["a"],
             )
             assert result.method == method
 
-    def test_invalid_correlation_method(self):
+    def test_invalid_correlation_method(self) -> None:
         """Test invalid correlation method raises ValidationError."""
         with pytest.raises(ValidationError):
             CorrelationResult(
                 correlation_matrix={"a": {"a": 1.0}},
-                method="invalid_method",
+                method="invalid_method",  # type: ignore[arg-type]
                 columns_analyzed=["a"],
             )
 
@@ -705,7 +667,7 @@ class TestCorrelationResult:
 class TestValueCountsResult:
     """Test ValueCountsResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid ValueCountsResult creation."""
         result = ValueCountsResult(
             column="status",
@@ -716,7 +678,7 @@ class TestValueCountsResult:
         assert result.column == "status"
         assert result.value_counts["active"] == 75
 
-    def test_mixed_value_types(self):
+    def test_mixed_value_types(self) -> None:
         """Test ValueCountsResult with mixed value types."""
         result = ValueCountsResult(
             column="mixed",
@@ -730,7 +692,7 @@ class TestValueCountsResult:
 class TestOutliersResult:
     """Test OutliersResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid OutliersResult creation."""
         outliers = {
             "age": [
@@ -747,14 +709,14 @@ class TestOutliersResult:
         assert result.outliers_found == 2
         assert len(result.outliers_by_column["age"]) == 2
 
-    def test_outlier_methods(self):
+    def test_outlier_methods(self) -> None:
         """Test all valid outlier detection methods."""
         outliers = {"col": [OutlierInfo(row_index=0, value=100.0)]}
         for method in ["zscore", "iqr", "isolation_forest"]:
             result = OutliersResult(
                 outliers_found=1,
                 outliers_by_column=outliers,
-                method=method,
+                method=method,  # type: ignore[arg-type]
                 threshold=2.0,
             )
             assert result.method == method
@@ -763,7 +725,7 @@ class TestOutliersResult:
 class TestColumnStatisticsResult:
     """Test ColumnStatisticsResult model - one of the critical models."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid ColumnStatisticsResult creation."""
         stats = StatisticsSummary(
             count=100,
@@ -785,7 +747,7 @@ class TestColumnStatisticsResult:
         assert result.data_type == "int64"
         assert result.statistics.mean == 45.5
 
-    def test_all_data_types(self):
+    def test_all_data_types(self) -> None:
         """Test all valid data types."""
         stats = StatisticsSummary(
             count=10,
@@ -801,7 +763,7 @@ class TestColumnStatisticsResult:
             result = ColumnStatisticsResult(
                 column="test_col",
                 statistics=stats,
-                data_type=dtype,
+                data_type=dtype,  # type: ignore[arg-type]
                 non_null_count=10,
             )
             assert result.data_type == dtype
@@ -815,7 +777,7 @@ class TestColumnStatisticsResult:
 class TestCellValueResult:
     """Test CellValueResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid CellValueResult creation."""
         result = CellValueResult(
             value="John Doe",
@@ -825,9 +787,9 @@ class TestCellValueResult:
         assert result.value == "John Doe"
         assert result.coordinates["row"] == 5
 
-    def test_various_value_types(self):
+    def test_various_value_types(self) -> None:
         """Test CellValueResult with various value types."""
-        test_values = [42, 3.14, "text", True, None]
+        test_values: list[str | int | float | bool | None] = [42, 3.14, "text", True, None]
         for value in test_values:
             result = CellValueResult(
                 value=value,
@@ -840,7 +802,7 @@ class TestCellValueResult:
 class TestInsertRowResult:
     """Test InsertRowResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid InsertRowResult creation."""
         result = InsertRowResult(
             row_index=10,
@@ -854,7 +816,7 @@ class TestInsertRowResult:
         assert result.rows_before == 100
         assert result.rows_after == 101
 
-    def test_default_operation_field(self):
+    def test_default_operation_field(self) -> None:
         """Test default operation field value."""
         result = InsertRowResult(
             row_index=5,
@@ -869,7 +831,7 @@ class TestInsertRowResult:
 class TestDeleteRowResult:
     """Test DeleteRowResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid DeleteRowResult creation."""
         result = DeleteRowResult(
             row_index=5,
@@ -885,7 +847,7 @@ class TestDeleteRowResult:
 class TestUpdateRowResult:
     """Test UpdateRowResult model."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid UpdateRowResult creation."""
         result = UpdateRowResult(
             row_index=10,
@@ -907,7 +869,7 @@ class TestUpdateRowResult:
 class TestFilterOperationResult:
     """Test FilterOperationResult model - one of the critical models."""
 
-    def test_valid_creation(self):
+    def test_valid_creation(self) -> None:
         """Test valid FilterOperationResult creation."""
         result = FilterOperationResult(
             rows_before=1000,
@@ -920,7 +882,7 @@ class TestFilterOperationResult:
         assert result.rows_filtered == 250
         assert result.conditions_applied == 2
 
-    def test_calculated_fields_consistency(self):
+    def test_calculated_fields_consistency(self) -> None:
         """Test that filter counts are logically consistent."""
         result = FilterOperationResult(
             rows_before=100,
@@ -931,7 +893,7 @@ class TestFilterOperationResult:
         # Verify mathematical relationship
         assert result.rows_before - result.rows_after == result.rows_filtered
 
-    def test_missing_required_field(self):
+    def test_missing_required_field(self) -> None:
         """Test missing required fields raise ValidationError."""
         with pytest.raises(ValidationError):
             FilterOperationResult(  # type: ignore [call-arg]
@@ -939,7 +901,7 @@ class TestFilterOperationResult:
                 # Missing rows_after, rows_filtered, conditions_applied
             )
 
-    def test_negative_values_validation(self):
+    def test_negative_values_validation(self) -> None:
         """Test validation handles negative values appropriately."""
         # This should work (though logically odd)
         result = FilterOperationResult(
@@ -954,7 +916,7 @@ class TestFilterOperationResult:
 class TestColumnOperationResult:
     """Test ColumnOperationResult model - one of the critical models."""
 
-    def test_valid_creation_minimal(self):
+    def test_valid_creation_minimal(self) -> None:
         """Test valid ColumnOperationResult creation with minimal fields."""
         result = ColumnOperationResult(
             operation="add_column",
@@ -971,7 +933,7 @@ class TestColumnOperationResult:
         assert result.transform is None
         assert result.nulls_filled is None
 
-    def test_valid_creation_with_all_fields(self):
+    def test_valid_creation_with_all_fields(self) -> None:
         """Test valid ColumnOperationResult creation with all optional fields."""
         result = ColumnOperationResult(
             operation="transform_column",
@@ -989,7 +951,7 @@ class TestColumnOperationResult:
         assert result.transform == "uppercase"
         assert result.nulls_filled == 5
 
-    def test_mixed_sample_types(self):
+    def test_mixed_sample_types(self) -> None:
         """Test ColumnOperationResult with mixed types in samples."""
         result = ColumnOperationResult(
             operation="clean_column",
@@ -1007,7 +969,7 @@ class TestColumnOperationResult:
         assert result.updated_sample is not None
         assert result.updated_sample[3] == "N/A"
 
-    def test_serialization_with_optional_fields(self):
+    def test_serialization_with_optional_fields(self) -> None:
         """Test serialization handles optional fields correctly."""
         result = ColumnOperationResult(
             operation="remove_column",
@@ -1034,7 +996,7 @@ class TestColumnOperationResult:
 class TestComprehensiveEdgeCases:
     """Test comprehensive edge cases across all models."""
 
-    def test_empty_collections(self):
+    def test_empty_collections(self) -> None:
         """Test models handle empty collections appropriately."""
         # Empty columns list
         result = LoadResult(
@@ -1052,7 +1014,7 @@ class TestComprehensiveEdgeCases:
         )
         assert len(stats_result.statistics) == 0
 
-    def test_unicode_and_special_characters(self):
+    def test_unicode_and_special_characters(self) -> None:
         """Test models handle Unicode and special characters."""
         result = LoadResult(
             rows_affected=1,
@@ -1060,7 +1022,7 @@ class TestComprehensiveEdgeCases:
         )
         assert "名前" in result.columns_affected
 
-    def test_very_large_numbers(self):
+    def test_very_large_numbers(self) -> None:
         """Test models handle very large numbers."""
         result = FilterOperationResult(
             rows_before=999999999,
@@ -1070,7 +1032,7 @@ class TestComprehensiveEdgeCases:
         )
         assert result.rows_before == 999999999
 
-    def test_json_serialization_edge_cases(self):
+    def test_json_serialization_edge_cases(self) -> None:
         """Test JSON serialization handles edge cases."""
         # Model with None values
         result = SessionInfoResult(
@@ -1087,7 +1049,7 @@ class TestComprehensiveEdgeCases:
         restored = SessionInfoResult(**parsed)
         assert restored == result
 
-    def test_model_validation_with_extra_fields(self):
+    def test_model_validation_with_extra_fields(self) -> None:
         """Test all models handle extra fields appropriately."""
         # Test with LoadResult (critical model)
         data_with_extra = {
@@ -1097,12 +1059,12 @@ class TestComprehensiveEdgeCases:
             "another_extra": 42,
         }
 
-        result = LoadResult(**data_with_extra)
+        result = LoadResult(**data_with_extra)  # type: ignore[arg-type]
         assert result.rows_affected == 50
         # Should not have extra fields as attributes
         assert not hasattr(result, "unknown_field")
 
-    def test_pydantic_config_behavior(self):
+    def test_pydantic_config_behavior(self) -> None:
         """Test Pydantic configuration behavior."""
         # Test StatisticsSummary Config settings
         stats = StatisticsSummary(
@@ -1127,10 +1089,10 @@ class TestComprehensiveEdgeCases:
             "75%": 60.0,
             "max": 90.0,
         }
-        stats_from_alias = StatisticsSummary(**data_with_alias)
+        stats_from_alias = StatisticsSummary(**data_with_alias)  # type: ignore[arg-type]
         assert stats_from_alias == stats
 
-    def test_inheritance_behavior(self):
+    def test_inheritance_behavior(self) -> None:
         """Test BaseToolResponse inheritance behavior."""
         # All response models should inherit from BaseToolResponse
         result = LoadResult(
@@ -1164,12 +1126,12 @@ class TestSortDataResult:
     )
     def test_sort_data_result_creation(
         self,
-        session_id,
-        sorted_by,
-        ascending,
-        rows_processed,
-        description,
-    ):
+        session_id: str,
+        sorted_by: list[str],
+        ascending: list[bool],
+        rows_processed: int,
+        description: str,
+    ) -> None:
         """Test SortDataResult creation with various configurations."""
         result = SortDataResult(
             sorted_by=sorted_by,
@@ -1181,7 +1143,7 @@ class TestSortDataResult:
         assert result.rows_processed == rows_processed
         assert len(result.sorted_by) == len(ascending)
 
-    def test_serialization_roundtrip(self):
+    def test_serialization_roundtrip(self) -> None:
         """Test serialization and deserialization."""
         original = SortDataResult(
             sorted_by=["col1", "col2"],
@@ -1198,7 +1160,7 @@ class TestSortDataResult:
 # class TestSelectColumnsResult:
 #     """Test SelectColumnsResult model."""
 #
-#     def test_valid_creation(self):
+#     def test_valid_creation(self) -> None:
 #         """Test valid SelectColumnsResult creation."""
 #         result = SelectColumnsResult(
 #             session_id="select-123",
@@ -1215,7 +1177,7 @@ class TestSortDataResult:
 # # class TestRenameColumnsResult:  # Not yet implemented
 #     """Test RenameColumnsResult model."""
 #
-#     def test_valid_creation(self):
+#     def test_valid_creation(self) -> None:
 #         """Test valid RenameColumnsResult creation."""
 #         result = RenameColumnsResult(
 #             session_id="rename-123",
@@ -1226,7 +1188,7 @@ class TestSortDataResult:
 #         assert result.renamed["old_name"] == "new_name"
 #         assert "new_name" in result.columns
 #
-#     def test_single_rename(self):
+#     def test_single_rename(self) -> None:
 #         """Test renaming single column."""
 #         result = RenameColumnsResult(
 #             session_id="single-rename",
@@ -1236,7 +1198,7 @@ class TestSortDataResult:
 #         assert len(result.renamed) == 1
 #         assert result.renamed["old_col"] == "new_col"
 #
-#     def test_multiple_renames(self):
+#     def test_multiple_renames(self) -> None:
 #         """Test renaming multiple columns."""
 #         renames = {
 #             "first_name": "fname",
@@ -1251,7 +1213,7 @@ class TestSortDataResult:
 #         assert len(result.renamed) == 3
 #         assert all(new_name in result.columns for new_name in renames.values())
 #
-#     def test_empty_rename_map(self):
+#     def test_empty_rename_map(self) -> None:
 #         """Test with no columns renamed."""
 #         result = RenameColumnsResult(
 #             session_id="no-renames",
@@ -1261,7 +1223,7 @@ class TestSortDataResult:
 #         assert len(result.renamed) == 0
 #         assert len(result.columns) == 3
 #
-#     def test_serialization_roundtrip(self):
+#     def test_serialization_roundtrip(self) -> None:
 #         """Test serialization and deserialization."""
 #         original = RenameColumnsResult(
 #             session_id="serialize-test",

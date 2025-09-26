@@ -65,7 +65,7 @@ uv run ruff check src/ tests/
 uv run ruff format --check src/ tests/
 
 # 4. Type checking
-uv run --directory src mypy .
+uv run mypy src/databeak/
 
 # 5. MCP documentation compliance
 scripts/check_docstring_args.py         # Ensure no Args sections in MCP tools
@@ -268,7 +268,7 @@ uv run ruff check src/ tests/ --output-format=json
 uv run ruff format --check src/ tests/
 
 # Type checking (collect all MyPy errors)
-uv run --directory src mypy . --error-format=json
+uv run mypy src/databeak/ --error-format=json
 
 # Testing with coverage
 uv run pytest -n auto tests/ --cov=src --cov-report=json --cov-report=term-missing

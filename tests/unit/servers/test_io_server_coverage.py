@@ -2,14 +2,15 @@
 
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from typing import cast
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
+from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from databeak.servers.io_server import (
-    close_session,
     export_csv,
     get_encoding_fallbacks,
     get_session_info,
@@ -22,7 +23,7 @@ from tests.test_mock_context import create_mock_context
 class TestEncodingFallbacks:
     """Test encoding detection and fallback mechanisms."""
 
-    def test_get_encoding_fallbacks_utf8(self):
+    def test_get_encoding_fallbacks_utf8(self) -> None:
         """Test fallback encodings for UTF-8."""
         fallbacks = get_encoding_fallbacks("utf-8")
         # UTF-8 is not included when it's the primary encoding (line 245 in io_server.py)
@@ -30,20 +31,20 @@ class TestEncodingFallbacks:
         assert "latin1" in fallbacks  # Note: latin1 not latin-1
         assert "iso-8859-1" in fallbacks
 
-    def test_get_encoding_fallbacks_latin1(self):
+    def test_get_encoding_fallbacks_latin1(self) -> None:
         """Test fallback encodings for Latin-1."""
         fallbacks = get_encoding_fallbacks("latin1")
         assert "latin1" in fallbacks
         assert "utf-8" in fallbacks
         assert "cp1252" in fallbacks
 
-    def test_get_encoding_fallbacks_windows(self):
+    def test_get_encoding_fallbacks_windows(self) -> None:
         """Test fallback encodings for Windows-1252."""
         fallbacks = get_encoding_fallbacks("cp1252")
         assert "cp1252" in fallbacks
         assert "windows-1252" in fallbacks
 
-    def test_get_encoding_fallbacks_unknown(self):
+    def test_get_encoding_fallbacks_unknown(self) -> None:
         """Test fallback encodings for unknown encoding."""
         fallbacks = get_encoding_fallbacks("unknown-encoding")
         # Should return the primary encoding first
@@ -55,7 +56,7 @@ class TestEncodingFallbacks:
 class TestLoadCsvWithEncoding:
     """Test CSV loading with various encodings."""
 
-    async def test_load_csv_with_encoding_fallback(self):
+    async def test_load_csv_with_encoding_fallback(self) -> None:
         """Test loading CSV with encoding that needs fallback."""
         # Create a file with Latin-1 encoding
         with tempfile.NamedTemporaryFile(
@@ -72,7 +73,7 @@ class TestLoadCsvWithEncoding:
         try:
             # Try to load with wrong encoding first (will trigger fallback)
             result = await load_csv(
-                create_mock_context(),
+                cast(Context, create_mock_context()),
                 file_path=temp_path,
                 encoding="ascii",  # This will fail and trigger fallback
             )
@@ -82,7 +83,7 @@ class TestLoadCsvWithEncoding:
         finally:
             Path(temp_path).unlink()
 
-    async def test_load_csv_with_utf8_bom(self):
+    async def test_load_csv_with_utf8_bom(self) -> None:
         """Test loading CSV with UTF-8 BOM."""
         # Create a file with UTF-8 BOM
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
@@ -93,13 +94,13 @@ class TestLoadCsvWithEncoding:
             temp_path = f.name
 
         try:
-            result = await load_csv(create_mock_context(), file_path=temp_path)
+            result = await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
             assert result.rows_affected == 1
             assert result.columns_affected == ["name", "value"]
         finally:
             Path(temp_path).unlink()
 
-    async def test_load_csv_encoding_error_all_fallbacks_fail(self):
+    async def test_load_csv_encoding_error_all_fallbacks_fail(self) -> None:
         """Test when all encoding fallbacks fail."""
         # Create a file with mixed/corrupted encoding
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
@@ -110,7 +111,9 @@ class TestLoadCsvWithEncoding:
 
         try:
             # This should try all fallbacks and eventually succeed with error handling
-            result = await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
+            result = await load_csv(
+                cast(Context, create_mock_context()), file_path=temp_path, encoding="utf-8"
+            )
             # latin-1 should handle any byte sequence
             assert result is not None
         except ToolError:
@@ -123,7 +126,7 @@ class TestLoadCsvWithEncoding:
 class TestLoadCsvSizeConstraints:
     """Test file size and memory constraints."""
 
-    async def test_load_csv_max_rows_exceeded(self):
+    async def test_load_csv_max_rows_exceeded(self) -> None:
         """Test loading CSV that exceeds max rows."""
         # Create a large CSV
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -139,11 +142,11 @@ class TestLoadCsvSizeConstraints:
                 patch("databeak.servers.io_server.MAX_ROWS", 5),
                 pytest.raises(ToolError, match="rows exceeds limit"),
             ):
-                await load_csv(create_mock_context(), file_path=temp_path)
+                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
-    async def test_load_csv_memory_limit_exceeded(self):
+    async def test_load_csv_memory_limit_exceeded(self) -> None:
         """Test loading CSV that exceeds memory limit."""
         # Create a CSV with large strings
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -160,78 +163,29 @@ class TestLoadCsvSizeConstraints:
                 patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                 pytest.raises(ToolError, match="exceeds memory limit"),
             ):
-                await load_csv(create_mock_context(), file_path=temp_path)
+                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
-
-
-class TestCloseSession:
-    """Test session closing functionality."""
-
-    @pytest.mark.asyncio
-    async def test_close_session_success(self, csv_session_with_data):
-        """Test successfully closing a session with isolated context."""
-        # Get the isolated context from fixture
-        isolated_context, _load_result = csv_session_with_data
-        session_id = isolated_context.session_id
-
-        # Close the session
-        result = await close_session(isolated_context)
-
-        assert result.success is True
-
-        # Verify session is closed - create a new context with same session_id
-        with pytest.raises(ToolError, match="Failed to get session info"):
-            await get_session_info(create_mock_context(session_id))
-
-    @pytest.mark.asyncio
-    async def test_close_session_not_found(self, isolated_context):
-        """Test closing non-existent session with isolated context."""
-        # Use a completely different session ID that doesn't exist
-        nonexistent_id = "definitely-nonexistent-" + isolated_context.session_id
-
-        with pytest.raises(ToolError, match="Session not found"):
-            await close_session(create_mock_context(nonexistent_id))
-
-    async def test_close_session_with_context(self):
-        """Test closing session with context reporting."""
-        # Create a session
-        csv_content = "col1,col2\n1,2"
-        ctx = create_mock_context()
-        await load_csv_from_content(ctx, csv_content)
-        session_id = ctx.session_id
-
-        # Mock context with async method
-        from unittest.mock import AsyncMock
-
-        mock_ctx = MagicMock()
-        mock_ctx.session_id = session_id
-        mock_ctx.info = AsyncMock(return_value=None)
-
-        # Close with context
-        result = await close_session(mock_ctx)
-
-        assert result.success is True
-        # Context info should have been called
-        mock_ctx.info.assert_called()
 
 
 class TestExportCsvAdvanced:
     """Test advanced export functionality."""
 
-    async def test_export_csv_with_tabs(self):
+    async def test_export_csv_with_tabs(self) -> None:
         """Test exporting as TSV (tab-separated)."""
         # Create session with data
         csv_content = "name,value,category\ntest1,100,A\ntest2,200,B"
         ctx = create_mock_context()
-        await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(cast(Context, ctx), csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".tsv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
+            result = await export_csv(
+                cast(Context, create_mock_context(session_id)), file_path=temp_path
+            )
 
             assert result.success is True
             assert result.format == "tsv"
@@ -244,21 +198,23 @@ class TestExportCsvAdvanced:
         finally:
             Path(temp_path).unlink()
 
-    async def test_export_csv_with_quotes(self):
+    async def test_export_csv_with_quotes(self) -> None:
         """Test exporting with quote handling."""
         # Create session with data containing commas and quotes
         csv_content = (
             'name,description\n"Smith, John","He said ""Hello"""\n"Doe, Jane","Normal text"'
         )
         ctx = create_mock_context()
-        await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(cast(Context, ctx), csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
+            result = await export_csv(
+                cast(Context, create_mock_context(session_id)), file_path=temp_path
+            )
 
             assert result.success is True
 
@@ -269,11 +225,11 @@ class TestExportCsvAdvanced:
         finally:
             Path(temp_path).unlink()
 
-    async def test_export_csv_create_directory(self):
+    async def test_export_csv_create_directory(self) -> None:
         """Test export creates directory if it doesn't exist."""
         csv_content = "col1,col2\n1,2"
         ctx = create_mock_context()
-        await load_csv_from_content(ctx, csv_content)
+        await load_csv_from_content(cast(Context, ctx), csv_content)
         session_id = ctx.session_id
 
         # Use a directory that doesn't exist
@@ -281,7 +237,9 @@ class TestExportCsvAdvanced:
             new_dir = Path(tmpdir) / "new" / "nested" / "dir"
             file_path = new_dir / "export.csv"
 
-            result = await export_csv(create_mock_context(session_id), file_path=str(file_path))
+            result = await export_csv(
+                cast(Context, create_mock_context(session_id)), file_path=str(file_path)
+            )
 
             assert result.success is True
             assert file_path.exists()
@@ -295,41 +253,41 @@ class TestExportCsvAdvanced:
 class TestLoadCsvFromContentEdgeCases:
     """Test edge cases in load_csv_from_content."""
 
-    async def test_load_csv_from_content_single_row(self):
+    async def test_load_csv_from_content_single_row(self) -> None:
         """Test loading CSV with only header and one row."""
         csv_content = "col1,col2\n1,2"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
 
         assert result.rows_affected == 1
         assert result.columns_affected == ["col1", "col2"]
 
-    async def test_load_csv_from_content_special_characters(self):
+    async def test_load_csv_from_content_special_characters(self) -> None:
         """Test loading CSV with special characters."""
         csv_content = "name,symbol\nAlpha,a\nBeta,b\nGamma,y"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
 
         assert result.rows_affected == 3
         assert result.columns_affected == ["name", "symbol"]
 
-    async def test_load_csv_from_content_numeric_columns(self):
+    async def test_load_csv_from_content_numeric_columns(self) -> None:
         """Test loading CSV with numeric column names."""
         csv_content = "1,2,3\na,b,c\nd,e,f"
-        result = await load_csv_from_content(create_mock_context(), csv_content)
+        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
 
         assert result.rows_affected == 2
         # Pandas converts numeric column names to strings
         assert len(result.columns_affected) == 3
 
-    async def test_load_csv_from_content_with_index(self):
+    async def test_load_csv_from_content_with_index(self) -> None:
         """Test that data is loaded correctly."""
         csv_content = "id,name,value\n1,test1,100\n2,test2,200"
         ctx = create_mock_context()
-        result = await load_csv_from_content(ctx, csv_content)
+        result = await load_csv_from_content(cast(Context, ctx), csv_content)
         session_id = ctx.session_id
 
         assert result.rows_affected == 2
         assert result.columns_affected == ["id", "name", "value"]
         # Verify the session has data
-        info = await get_session_info(create_mock_context(session_id))
+        info = await get_session_info(cast(Context, create_mock_context(session_id)))
         assert info.row_count == 2
         assert info.column_count == 3

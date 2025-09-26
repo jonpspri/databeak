@@ -151,7 +151,7 @@ uv run pytest -n auto tests/unit/ --cov=src/databeak --cov-report=term-missing
 
 # Quality checks
 uv run ruff check tests/
-uv run --directory src mypy ../tests/
+uv run mypy tests/
 ```
 
 ## Test Requirements

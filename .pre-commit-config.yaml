@@ -37,7 +37,6 @@ repos:
       - id: check-merge-conflict
       - id: check-toml
       - id: check-vcs-permalinks
-      - id: check-xml
       - id: check-yaml
         args: ['--unsafe']
       - id: debug-statements
@@ -79,8 +78,8 @@ repos:
           - fastmcp>=0.1.0
           - pandera>=0.22.0
           - .
-        args: ['--config-file', 'pyproject.toml', 'src/']
-        pass_filenames: false
+        args: ['--config-file', 'pyproject.toml']
+        pass_filenames: true
 
   # YAML linting with yamllint
   - repo: https://github.com/adrienverge/yamllint
