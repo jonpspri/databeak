@@ -32,7 +32,7 @@ Provides the main fixtures for integration testing:
 @pytest.mark.asyncio
 async def test_something(server_fixture):
     tools = await server_fixture.list_tools()
-    result = await server_fixture.call_tool("list_sessions")
+    result = await server_fixture.call_tool("get_session_info")
     assert len(tools) > 0
 ```
 
@@ -45,7 +45,7 @@ async def test_something():
         tools = await server.list_tools()
         result = await server.call_tool("load_csv", file_path="/path/to/file.csv")
         # Multiple tool calls supported
-        sessions = await server.call_tool("list_sessions")
+        info = await server.call_tool("get_session_info")
 ```
 
 ### Multiple Tool Calls
@@ -54,16 +54,18 @@ The fixture supports multiple tool calls within the same test function:
 
 ```python
 async def test_workflow(server_fixture):
-    # Call 1: Check initial state
-    sessions = await server_fixture.call_tool("list_sessions")
+    # Call 1: Check initial state (no data loaded)
+    initial_info = await server_fixture.call_tool("get_session_info")
 
     # Call 2: Load data
     result = await server_fixture.call_tool("load_csv", file_path="test.csv")
 
-    # Call 3: Verify loaded
-    new_sessions = await server_fixture.call_tool("list_sessions")
+    # Call 3: Verify data was loaded
+    loaded_info = await server_fixture.call_tool("get_session_info")
 
-    assert len(new_sessions) > len(sessions)
+    # Session should now have data
+    assert result.isError is False
+    assert loaded_info != initial_info  # Session state changed
 ```
 
 ## Configuration
@@ -100,15 +102,27 @@ uv run pytest -v tests/integration/
 uv run pytest --cov=src/databeak tests/integration/
 ```
 
+## Available Tools for Testing
+
+The integration tests can work with these MCP tools:
+
+- **`load_csv`**: Load CSV files from filesystem paths
+- **`load_csv_from_url`**: Load CSV files from HTTP URLs
+- **`load_csv_from_content`**: Load CSV data from string content
+- **`export_csv`**: Export session data to various formats (CSV, JSON, Excel, etc.)
+- **`get_session_info`**: Get information about the current session (data loaded, row/column counts, etc.)
+
+Note: Session lifecycle management (creation, listing, closing) is handled by the MCP server infrastructure, not by individual tools.
+
 ## Test Organization
 
 Integration tests should focus on:
 
-- **End-to-end workflows**: Complete user scenarios
-- **Tool integration**: How tools work together
-- **Data persistence**: Session management across tool calls
-- **Error handling**: Server behavior under various conditions
-- **Performance**: Response times and resource usage
+- **End-to-end workflows**: Complete user scenarios (load → process → export)
+- **Tool integration**: How CSV loading, processing, and export tools work together
+- **Data persistence**: Session state management across tool calls
+- **Error handling**: Server behavior with invalid files, network issues, etc.
+- **Performance**: Response times and resource usage for large datasets
 
 ## Comparison with Unit Tests
 
