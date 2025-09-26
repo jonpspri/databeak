@@ -90,6 +90,7 @@ dev = [
     "types-pytz>=2024.2",
     "ipython>=8.29.0",
     "rich>=13.9.0",
+    "mcp>=1.0.1",
 ]
 docs = [
     "mkdocs>=1.6.0",

@@ -65,12 +65,8 @@ class TestServerIntegration:
 
             # Call 3: Get session info - test with a known session_id pattern
             # This may fail with invalid session, which is expected for this test
-            try:
-                info_result = await server.call_tool("get_session_info", {"session_id": "test"})
-                assert isinstance(info_result, types.CallToolResult)
-            except Exception:  # noqa: S110
-                # Expected failure for invalid session - we're testing multiple calls work
-                pass
+            info_result = await server.call_tool("get_session_info", {"session_id": "test"})
+            assert isinstance(info_result, types.CallToolResult)
 
     @pytest.mark.asyncio
     async def test_server_cleanup(self):

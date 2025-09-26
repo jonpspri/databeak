@@ -41,19 +41,20 @@ class DatabeakServerFixture:
         self.stdio_client = stdio_client(
             StdioServerParameters(command="uv", args=["run", "databeak"])
         )
-        mcp_read, mcp_write = await self.stdio_client.__aenter__()  # First yield is the session
+        mcp_read, mcp_write = await self.stdio_client.__aenter__()
 
         self.client_session = ClientSession(mcp_read, mcp_write)
         await self.client_session.__aenter__()
         await self.client_session.initialize()
         return self
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
         """Clean up the client and stop the server."""
         await self.client_session.__aexit__(None, None, None)
         await self.stdio_client.__aexit__(None, None, None)
+        return False
 
-    async def call_tool(self, tool_name: str, args: dict[str, Any]) -> Any:
+    async def call_tool(self, tool_name: str, args: dict[str, Any]) -> types.CallToolResult:
         """Call a tool on the server.
 
         Args:
