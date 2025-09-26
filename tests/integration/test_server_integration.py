@@ -19,7 +19,7 @@ class TestServerIntegration:
 
             # Check for some expected tools - tools should be Tool objects with name attribute
             tool_names = {tool.name for tool in tools}
-            expected_tools = {"list_sessions", "load_csv", "get_session_info"}
+            expected_tools = {"load_csv", "get_session_info"}
 
             # At least some expected tools should be present
             assert expected_tools.intersection(tool_names), (
@@ -27,18 +27,14 @@ class TestServerIntegration:
             )
 
     @pytest.mark.asyncio
-    async def test_list_sessions_tool(self):
-        """Test the list_sessions tool."""
+    async def test_get_session_info_tool(self):
+        """Test the get_session_info tool."""
         async with DatabeakServerFixture() as server:
-            result = await server.call_tool("list_sessions", {})
+            # This should fail since no data is loaded, but should return a valid result
+            result = await server.call_tool("get_session_info", {})
 
             # Should return a CallToolResult
             assert isinstance(result, types.CallToolResult)
-
-            # Check the content - should be a list of sessions (empty initially)
-            if result.content:
-                # Content should be a list of TextContent or similar
-                assert isinstance(result.content, list)
 
     @pytest.mark.asyncio
     async def test_context_manager_usage(self):
@@ -46,10 +42,10 @@ class TestServerIntegration:
         async with DatabeakServerFixture() as server:
             # Test that we can call multiple tools
             tools = await server.list_tools()
-            sessions_result = await server.call_tool("list_sessions", {})
+            info_result = await server.call_tool("get_session_info", {})
 
             assert len(tools) > 0
-            assert isinstance(sessions_result, types.CallToolResult)
+            assert isinstance(info_result, types.CallToolResult)
 
     @pytest.mark.asyncio
     async def test_multiple_tool_calls_in_same_session(self):
@@ -59,14 +55,13 @@ class TestServerIntegration:
             tools = await server.list_tools()
             assert len(tools) > 0
 
-            # Call 2: List sessions (should be empty)
-            sessions_result = await server.call_tool("list_sessions", {})
-            assert isinstance(sessions_result, types.CallToolResult)
-
-            # Call 3: Get session info - test with a known session_id pattern
-            # This may fail with invalid session, which is expected for this test
-            info_result = await server.call_tool("get_session_info", {"session_id": "test"})
+            # Call 2: Get session info
+            info_result = await server.call_tool("get_session_info", {})
             assert isinstance(info_result, types.CallToolResult)
+
+            # Call 3: Get session info again (should be consistent)
+            info_result2 = await server.call_tool("get_session_info", {})
+            assert isinstance(info_result2, types.CallToolResult)
 
     @pytest.mark.asyncio
     async def test_server_cleanup(self):

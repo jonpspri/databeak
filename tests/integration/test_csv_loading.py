@@ -24,9 +24,8 @@ class TestCsvLoading:
             # Should return a CallToolResult
             assert isinstance(result, types.CallToolResult)
 
-            # Verify we can list sessions and see our loaded data
-            sessions_result = await server.call_tool("list_sessions", {})
-            assert isinstance(sessions_result, types.CallToolResult)
+            # Verify the result contains expected data
+            assert result.isError is False
 
     @pytest.mark.asyncio
     async def test_load_sales_data_and_get_info(self):
@@ -37,10 +36,8 @@ class TestCsvLoading:
             load_result = await server.call_tool("load_csv", {"file_path": csv_path})
             assert isinstance(load_result, types.CallToolResult)
 
-            # Get session ID from the load result (assuming it contains session info)
-            # This will depend on how your load_csv tool returns the session ID
-            sessions_result = await server.call_tool("list_sessions", {})
-            assert isinstance(sessions_result, types.CallToolResult)
+            # Verify the load was successful
+            assert load_result.isError is False
 
     @pytest.mark.asyncio
     async def test_load_missing_values_csv(self):
@@ -51,9 +48,8 @@ class TestCsvLoading:
             result = await server.call_tool("load_csv", {"file_path": csv_path})
             assert isinstance(result, types.CallToolResult)
 
-            # Verify the data was loaded
-            sessions_result = await server.call_tool("list_sessions", {})
-            assert isinstance(sessions_result, types.CallToolResult)
+            # Verify the load was successful
+            assert result.isError is False
 
     @pytest.mark.asyncio
     async def test_fixture_path_resolution(self):
