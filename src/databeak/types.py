@@ -7,6 +7,31 @@ from pydantic import BaseModel, Field, NonNegativeInt
 NonNegativeIntString = Annotated[str, Field(pattern=r"^(0|[1-9]\d*)$")]
 PositiveIntString = Annotated[str, Field(pattern=r"^[1-9]\d*$")]
 
+# Special type for handling "null" string that should be converted to None
+NullableIntString = Annotated[str, Field(pattern=r"^(null|(0|[1-9]\d*))$")]
+
+
+def parse_nullable_int_string(value: str) -> int | None:
+    """Convert string representation to int or None.
+
+    Args:
+        value: String value ("null", "0", "123", etc.)
+
+    Returns:
+        Parsed integer or None for "null"
+
+    Raises:
+        ValueError: If string is not valid
+
+    """
+    if value == "null":
+        return None
+    try:
+        return int(value)
+    except ValueError as e:
+        msg = f"Invalid integer string: {value}"
+        raise ValueError(msg) from e
+
 
 class AutoDetectHeader(BaseModel):
     """Auto-detect whether file has headers using pandas inference."""

@@ -34,6 +34,7 @@ from databeak.models.statistics_models import (
     StatisticsResult,
     ValueCountsResult,
 )
+from databeak.types import NullableIntString, parse_nullable_int_string
 
 logger = logging.getLogger(__name__)
 
@@ -493,8 +494,11 @@ async def get_value_counts(
         Field(description="Sort in ascending order (False = descending)"),
     ] = False,
     top_n: Annotated[
-        int | None,
-        Field(description="Maximum number of values to return (None = all values)"),
+        int | NullableIntString | None,
+        Field(
+            default=None,
+            description="Maximum number of values to return (None = all values, 'null' = all values)",
+        ),
     ] = None,
 ) -> ValueCountsResult:
     """Get frequency distribution of values in a column.
@@ -534,6 +538,10 @@ async def get_value_counts(
         # Get session_id from FastMCP context
         session_id = ctx.session_id
         _session, df = get_session_data(session_id)  # Only need df, not session
+
+        # Convert string top_n to integer if needed
+        if isinstance(top_n, str):
+            top_n = parse_nullable_int_string(top_n)
 
         if column not in df.columns:
             raise ColumnNotFoundError(column, df.columns.tolist())
