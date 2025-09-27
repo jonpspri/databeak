@@ -19,7 +19,7 @@ import chardet
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, Field
 
 from databeak.core.session import get_session_data, get_session_manager, get_session_only
 from databeak.core.settings import get_settings
@@ -29,7 +29,7 @@ from databeak.models import DataPreview, ExportFormat
 from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
-from databeak.types import NonNegativeIntString
+from databeak.types import AutoDetectHeader, HeaderConfig, resolve_header_param
 from databeak.utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
@@ -242,10 +242,10 @@ async def load_csv(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
-    header: Annotated[
-        NonNegativeInt | NonNegativeIntString | None,
-        Field(description="Row number to use as header (0=first row, None=no header)"),
-    ] = 0,  # TODO: The semantics of this are confusing - Need an alternative to None and default?
+    header_config: Annotated[
+        HeaderConfig | None,
+        Field(description="Header detection configuration"),
+    ] = None,
     na_values: Annotated[
         list[str] | None, Field(description="Additional strings to recognize as NA/NaN")
     ] = None,
@@ -285,13 +285,17 @@ async def load_csv(
 
         await ctx.report_progress(0.3)
 
+        # Handle default header configuration
+        if header_config is None:
+            header_config = AutoDetectHeader()
+
         # Build pandas read_csv parameters
         # Using dict[str, Any] due to pandas read_csv's complex overloaded signature
         read_params: dict[str, Any] = {
             "filepath_or_buffer": validated_path,
             "encoding": encoding,
             "delimiter": delimiter,
-            "header": int(header) if header is not None else None,
+            "header": resolve_header_param(header_config),
             # Note: Temporarily disabled dtype_backend="numpy_nullable" due to serialization issues
         }
 
