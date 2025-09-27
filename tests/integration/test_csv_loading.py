@@ -28,6 +28,23 @@ class TestCsvLoading:
             assert result.isError is False
 
     @pytest.mark.asyncio
+    async def test_load_sample_data_string_header(self):
+        """Test loading a sample CSV file."""
+        async with get_server_fixture() as server:
+            # Get the real path to the fixture
+            csv_path = get_fixture_path("sample_data.csv")
+
+            # Load the CSV file
+            result = await server.call_tool("load_csv", {"file_path": csv_path, "header": "0"})
+            # result = await server.call_tool("load_csv", {"file_path": csv_path, "header": "0"})
+
+            # Should return a CallToolResult
+            assert isinstance(result, types.CallToolResult)
+
+            # Verify the result contains expected data
+            assert result.isError is False
+
+    @pytest.mark.asyncio
     async def test_load_sales_data_and_get_info(self):
         """Test loading sales data and getting session info."""
         async with get_server_fixture() as server:

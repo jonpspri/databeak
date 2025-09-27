@@ -19,7 +19,7 @@ import chardet
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
 
 from databeak.core.session import get_session_data, get_session_manager, get_session_only
 from databeak.core.settings import get_settings
@@ -29,6 +29,7 @@ from databeak.models import DataPreview, ExportFormat
 from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
+from databeak.types import NonNegativeIntString
 from databeak.utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
@@ -242,8 +243,9 @@ async def load_csv(
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
     header: Annotated[
-        int | None, Field(description="Row number to use as header (0=first row, None=no header)")
-    ] = 0,
+        NonNegativeInt | NonNegativeIntString | None,
+        Field(description="Row number to use as header (0=first row, None=no header)"),
+    ] = 0,  # TODO: The semantics of this are confusing - Need an alternative to None and default?
     na_values: Annotated[
         list[str] | None, Field(description="Additional strings to recognize as NA/NaN")
     ] = None,
@@ -289,7 +291,7 @@ async def load_csv(
             "filepath_or_buffer": validated_path,
             "encoding": encoding,
             "delimiter": delimiter,
-            "header": header,
+            "header": int(header) if header is not None else None,
             # Note: Temporarily disabled dtype_backend="numpy_nullable" due to serialization issues
         }
 
