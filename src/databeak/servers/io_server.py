@@ -29,6 +29,7 @@ from databeak.models import DataPreview, ExportFormat
 from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
+from databeak.types import AutoDetectHeader, HeaderConfig, resolve_header_param
 from databeak.utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
@@ -241,9 +242,10 @@ async def load_csv(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
-    header: Annotated[
-        int | None, Field(description="Row number to use as header (0=first row, None=no header)")
-    ] = 0,
+    header_config: Annotated[
+        HeaderConfig | None,
+        Field(default=None, description="Header detection configuration"),
+    ] = None,
     na_values: Annotated[
         list[str] | None, Field(description="Additional strings to recognize as NA/NaN")
     ] = None,
@@ -283,13 +285,17 @@ async def load_csv(
 
         await ctx.report_progress(0.3)
 
+        # Handle default header configuration
+        if header_config is None:
+            header_config = AutoDetectHeader()
+
         # Build pandas read_csv parameters
         # Using dict[str, Any] due to pandas read_csv's complex overloaded signature
         read_params: dict[str, Any] = {
             "filepath_or_buffer": validated_path,
             "encoding": encoding,
             "delimiter": delimiter,
-            "header": header,
+            "header": resolve_header_param(header_config),
             # Note: Temporarily disabled dtype_backend="numpy_nullable" due to serialization issues
         }
 
@@ -461,6 +467,10 @@ async def load_csv_from_url(
     delimiter: Annotated[
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
+    header_config: Annotated[
+        HeaderConfig | None,
+        Field(default=None, description="Header detection configuration"),
+    ] = None,
 ) -> LoadResult:
     """Load CSV file from URL into DataBeak session.
 
@@ -470,6 +480,10 @@ async def load_csv_from_url(
     try:
         # Get session_id from FastMCP context
         session_id = ctx.session_id
+
+        # Handle default header configuration
+        if header_config is None:
+            header_config = AutoDetectHeader()
 
         # Validate URL
         is_valid, validated_url = validate_url(url)
@@ -519,7 +533,12 @@ async def load_csv_from_url(
                 await ctx.report_progress(0.3)
 
             # Download and parse CSV using pandas with timeout
-            df = pd.read_csv(url, encoding=encoding, delimiter=delimiter)
+            df = pd.read_csv(
+                url,
+                encoding=encoding,
+                delimiter=delimiter,
+                header=resolve_header_param(header_config),
+            )
 
             # Apply memory and row limits to downloaded data
             if len(df) > MAX_ROWS:
@@ -552,7 +571,12 @@ async def load_csv_from_url(
             for alt_encoding in fallback_encodings:
                 if alt_encoding != encoding:  # Skip the original encoding we already tried
                     try:
-                        df = pd.read_csv(url, encoding=alt_encoding, delimiter=delimiter)
+                        df = pd.read_csv(
+                            url,
+                            encoding=alt_encoding,
+                            delimiter=delimiter,
+                            header=resolve_header_param(header_config),
+                        )
 
                         # Apply same memory checks to fallback encoding
                         if len(df) > MAX_ROWS:
@@ -654,9 +678,10 @@ async def load_csv_from_content(
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
     *,
-    has_header: Annotated[
-        bool, Field(description="Whether first row contains column headers")
-    ] = True,
+    header_config: Annotated[
+        HeaderConfig | None,
+        Field(default=None, description="Header detection configuration"),
+    ] = None,
 ) -> LoadResult:
     """Load CSV data from string content into DataBeak session.
 
@@ -669,6 +694,10 @@ async def load_csv_from_content(
 
         await ctx.info("Loading CSV from content string")
 
+        # Handle default header configuration
+        if header_config is None:
+            header_config = AutoDetectHeader()
+
         if not content or not content.strip():
             msg = "Content cannot be empty"
             raise ToolError(msg)
@@ -678,7 +707,7 @@ async def load_csv_from_content(
             df = pd.read_csv(
                 StringIO(content),
                 delimiter=delimiter,
-                header=0 if has_header else None,
+                header=resolve_header_param(header_config),
             )
         except pd.errors.EmptyDataError as e:
             msg = "CSV content is empty or contains no data"

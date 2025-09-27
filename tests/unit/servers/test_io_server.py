@@ -24,6 +24,7 @@ from databeak.servers.io_server import (
     load_csv_from_content,
     load_csv_from_url,
 )
+from databeak.types import NoHeader
 from tests.test_mock_context import create_mock_context
 
 
@@ -236,7 +237,7 @@ class TestEdgeCases:
         """Test content loading without headers."""
         content = "John,30,NYC\nJane,25,LA"
         result = await load_csv_from_content(
-            cast(Context, create_mock_context()), content, has_header=False
+            cast(Context, create_mock_context()), content, header_config=NoHeader()
         )
         assert result.success
         assert result.rows_affected == 2

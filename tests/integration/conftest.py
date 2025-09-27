@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from pathlib import Path
+from types import TracebackType
 from typing import Any, Literal
 
 import httpx
@@ -114,12 +115,22 @@ class DatabeakServerFixture(ABC):
         return self
 
     @abstractmethod
-    async def _finalize_stream(self): ...
+    async def _finalize_stream(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> bool:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool:
         """Clean up the client and stop the server."""
         await self.client_session.__aexit__(exc_type, exc_val, exc_tb)
-        await self._finalize_stream()
+        await self._finalize_stream(exc_type, exc_val, exc_tb)
         return False
 
     async def call_tool(self, tool_name: str, args: dict[str, Any]) -> types.CallToolResult:
@@ -167,8 +178,13 @@ class DatabeakStdioServerFixture(DatabeakServerFixture):
         )
         return await self._stdio_client.__aenter__()
 
-    async def _finalize_stream(self):
-        await self._stdio_client.__aexit__(None, None, None)
+    async def _finalize_stream(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        await self._stdio_client.__aexit__(exc_type, exc_val, exc_tb)
 
 
 class DatabeakHttpServerFixture(DatabeakServerFixture):
@@ -271,12 +287,17 @@ class DatabeakHttpServerFixture(DatabeakServerFixture):
         msg = f"MCP endpoint failed to be ready within {timeout} seconds"
         raise RuntimeError(msg)
 
-    async def _finalize_stream(self) -> None:
+    async def _finalize_stream(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         """Clean up HTTP client and server."""
         # Close HTTP client
         if hasattr(self, "_http_client") and self._http_client:
             try:
-                await self._http_client.__aexit__(None, None, None)
+                await self._http_client.__aexit__(exc_type, exc_val, exc_tb)
             except Exception:  # noqa: S110
                 pass
             self._http_client = None
