@@ -399,7 +399,7 @@ repo_url = "https://github.com/jonpspri/databeak"
 repo_name = "databeak"
 
 [tool.uv.sources]
-fastmcp = { path = "../fastmcp", editable = true }
+fastmcp = { git = "https://github.com/jonpspri/fastmcp", branch = "jsonschema_validation_loosening" }
 
 [dependency-groups]
 dev = [
