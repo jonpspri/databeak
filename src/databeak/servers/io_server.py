@@ -82,7 +82,6 @@ class ExplicitHeaderRow(HeaderConfig):
 HeaderConfigUnion = Annotated[
     AutoDetectHeader | NoHeader | ExplicitHeaderRow,
     Discriminator("mode"),
-    Field(discriminator="mode"),
 ]
 
 
