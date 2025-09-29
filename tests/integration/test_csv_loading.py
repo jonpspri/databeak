@@ -3,120 +3,104 @@
 from pathlib import Path
 
 import pytest
-from mcp import types
 
-from tests.integration.conftest import get_fixture_path, get_server_fixture
+from tests.integration.conftest import get_fixture_path
 
 
 class TestCsvLoading:
     """Test CSV file loading and basic operations."""
 
     @pytest.mark.asyncio
-    async def test_load_sample_data(self):
+    async def test_load_sample_data(self, databeak_client):
         """Test loading a sample CSV file."""
-        async with get_server_fixture() as server:
-            # Get the real path to the fixture
-            csv_path = get_fixture_path("sample_data.csv")
+        # Get the real path to the fixture
+        csv_path = get_fixture_path("sample_data.csv")
 
-            # Load the CSV file
-            result = await server.call_tool("load_csv", {"file_path": csv_path})
+        # Load the CSV file
+        result = await databeak_client.call_tool("load_csv", {"file_path": csv_path})
 
-            # Should return a CallToolResult
-            assert isinstance(result, types.CallToolResult)
+        # Should return a CallToolResult
 
-            # Verify the result contains expected data
-            assert result.isError is False
+        # Verify the result contains expected data
+        assert result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_auto_detect(self):
+    async def test_header_auto_detect(self, databeak_client):
         """Test auto-detection of headers."""
-        async with get_server_fixture() as server:
-            csv_path = get_fixture_path("sample_data.csv")
+        csv_path = get_fixture_path("sample_data.csv")
 
-            # Test auto-detect header mode (default)
-            result = await server.call_tool(
-                "load_csv", {"file_path": csv_path, "header_config": {"mode": "auto"}}
-            )
+        # Test auto-detect header mode (default)
+        result = await databeak_client.call_tool(
+            "load_csv", {"file_path": csv_path, "header_config": {"mode": "auto"}}
+        )
 
-            assert isinstance(result, types.CallToolResult)
-            assert result.isError is False
+        assert result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_explicit_row(self):
+    async def test_header_explicit_row(self, databeak_client):
         """Test explicit row number for headers."""
-        async with get_server_fixture() as server:
-            csv_path = get_fixture_path("sample_data.csv")
+        csv_path = get_fixture_path("sample_data.csv")
 
-            # Test explicit row 0 as header
-            result = await server.call_tool(
-                "load_csv",
-                {"file_path": csv_path, "header_config": {"mode": "row", "row_number": 0}},
-            )
+        # Test explicit row 0 as header
+        result = await databeak_client.call_tool(
+            "load_csv",
+            {"file_path": csv_path, "header_config": {"mode": "row", "row_number": 0}},
+        )
 
-            assert isinstance(result, types.CallToolResult)
-            assert result.isError is False
+        assert result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_no_header(self):
+    async def test_header_no_header(self, databeak_client):
         """Test no header mode with generated column names."""
-        async with get_server_fixture() as server:
-            csv_path = get_fixture_path("sample_data.csv")
+        csv_path = get_fixture_path("sample_data.csv")
 
-            # Test no header mode
-            result = await server.call_tool(
-                "load_csv", {"file_path": csv_path, "header_config": {"mode": "none"}}
-            )
+        # Test no header mode
+        result = await databeak_client.call_tool(
+            "load_csv", {"file_path": csv_path, "header_config": {"mode": "none"}}
+        )
 
-            assert isinstance(result, types.CallToolResult)
-            assert result.isError is False
+        assert result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_modes_produce_different_results(self):
+    async def test_header_modes_produce_different_results(self, databeak_client):
         """Test that different header modes actually produce different column structures."""
-        async with get_server_fixture() as server:
-            csv_path = get_fixture_path("sample_data.csv")
+        csv_path = get_fixture_path("sample_data.csv")
 
-            # Load with auto-detect (should use first row as headers: name, age, city, salary)
-            auto_result = await server.call_tool(
-                "load_csv", {"file_path": csv_path, "header_config": {"mode": "auto"}}
-            )
-            assert isinstance(auto_result, types.CallToolResult)
-            assert auto_result.isError is False
+        # Load with auto-detect (should use first row as headers: name, age, city, salary)
+        auto_result = await databeak_client.call_tool(
+            "load_csv", {"file_path": csv_path, "header_config": {"mode": "auto"}}
+        )
+        assert auto_result.is_error is False
 
-            # Load with no headers (should generate: Column_0, Column_1, Column_2, Column_3)
-            none_result = await server.call_tool(
-                "load_csv", {"file_path": csv_path, "header_config": {"mode": "none"}}
-            )
-            assert isinstance(none_result, types.CallToolResult)
-            assert none_result.isError is False
+        # Load with no headers (should generate: Column_0, Column_1, Column_2, Column_3)
+        none_result = await databeak_client.call_tool(
+            "load_csv", {"file_path": csv_path, "header_config": {"mode": "none"}}
+        )
+        assert none_result.is_error is False
 
-            # The results should be different (different column names)
-            # Note: We can't directly compare column names here since we'd need session access
-            # But we can verify both loaded successfully with different structures
+        # The results should be different (different column names)
+        # Note: We can't directly compare column names here since we'd need session access
+        # But we can verify both loaded successfully with different structures
 
     @pytest.mark.asyncio
-    async def test_load_sales_data_and_get_info(self):
+    async def test_load_sales_data_and_get_info(self, databeak_client):
         """Test loading sales data and getting session info."""
-        async with get_server_fixture() as server:
-            # Load sales data
-            csv_path = get_fixture_path("sales_data.csv")
-            load_result = await server.call_tool("load_csv", {"file_path": csv_path})
-            assert isinstance(load_result, types.CallToolResult)
+        # Load sales data
+        csv_path = get_fixture_path("sales_data.csv")
+        load_result = await databeak_client.call_tool("load_csv", {"file_path": csv_path})
 
-            # Verify the load was successful
-            assert load_result.isError is False
+        # Verify the load was successful
+        assert load_result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_load_missing_values_csv(self):
+    async def test_load_missing_values_csv(self, databeak_client):
         """Test loading CSV with missing values."""
-        async with get_server_fixture() as server:
-            csv_path = get_fixture_path("missing_values.csv")
+        csv_path = get_fixture_path("missing_values.csv")
 
-            result = await server.call_tool("load_csv", {"file_path": csv_path})
-            assert isinstance(result, types.CallToolResult)
+        result = await databeak_client.call_tool("load_csv", {"file_path": csv_path})
 
-            # Verify the load was successful
-            assert result.isError is False
+        # Verify the load was successful
+        assert result.is_error is False
 
     @pytest.mark.asyncio
     async def test_fixture_path_resolution(self):

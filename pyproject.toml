@@ -398,6 +398,9 @@ site_author = "Santosh Ray"
 repo_url = "https://github.com/jonpspri/databeak"
 repo_name = "databeak"
 
+[tool.uv.sources]
+fastmcp = { path = "../fastmcp", editable = true }
+
 [dependency-groups]
 dev = [
     "mdformat>=0.7.22",
