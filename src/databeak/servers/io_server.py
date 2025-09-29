@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import socket
+from abc import ABC, abstractmethod
 from io import StringIO
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -19,7 +20,7 @@ import chardet
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Discriminator, Field, NonNegativeInt
 
 from databeak.core.session import get_session_data, get_session_manager, get_session_only
 from databeak.core.settings import get_settings
@@ -29,10 +30,73 @@ from databeak.models import DataPreview, ExportFormat
 from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
-from databeak.types import AutoDetectHeader, HeaderConfig, resolve_header_param
 from databeak.utils.validators import validate_file_path, validate_url
 
 logger = logging.getLogger(__name__)
+
+
+# Header configuration types with discriminated union
+class HeaderConfig(BaseModel, ABC):
+    """Abstract base class for header configuration."""
+
+    mode: str = Field(description="Header detection mode")
+
+    @abstractmethod
+    def get_pandas_param(self) -> int | None | Literal["infer"]:
+        """Convert to pandas read_csv header parameter."""
+        ...
+
+
+class AutoDetectHeader(HeaderConfig):
+    """Auto-detect whether file has headers using pandas inference."""
+
+    mode: Literal["auto"] = "auto"
+
+    def get_pandas_param(self) -> Literal["infer"]:
+        """Return pandas parameter for auto-detection."""
+        return "infer"
+
+
+class NoHeader(HeaderConfig):
+    """File has no headers - generate default column names (Column_0, Column_1, etc.)."""
+
+    mode: Literal["none"] = "none"
+
+    def get_pandas_param(self) -> None:
+        """Return pandas parameter for no headers."""
+        return None
+
+
+class ExplicitHeaderRow(HeaderConfig):
+    """Use specific row number as header."""
+
+    mode: Literal["row"] = "row"
+    row_number: NonNegativeInt = Field(description="Row number to use as header (0-based)")
+
+    def get_pandas_param(self) -> int:
+        """Return pandas parameter for explicit header row."""
+        return self.row_number
+
+
+# Discriminated union type
+HeaderConfigUnion = Annotated[
+    AutoDetectHeader | NoHeader | ExplicitHeaderRow,
+    Discriminator("mode"),
+]
+
+
+def resolve_header_param(config: HeaderConfig) -> int | None | Literal["infer"]:
+    """Convert HeaderConfig to pandas read_csv header parameter.
+
+    Args:
+        config: Header configuration object
+
+    Returns:
+        Value for pandas read_csv header parameter
+
+    """
+    return config.get_pandas_param()
+
 
 # Configuration constants
 MAX_FILE_SIZE_MB = 500  # Maximum file size in MB
@@ -78,67 +142,6 @@ class SessionInfoResult(BaseToolResponse):
     data_loaded: bool = Field(description="Whether session has data loaded")
     row_count: int | None = Field(None, description="Number of rows if data loaded")
     column_count: int | None = Field(None, description="Number of columns if data loaded")
-
-
-# ============================================================================
-# PYDANTIC MODELS FOR VALIDATION
-# ============================================================================
-
-
-class LoadCSVParams(BaseModel):
-    """Parameters for CSV loading operations."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    file_path: str = Field(description="Path to the CSV file (absolute or relative)")
-    encoding: str = Field("utf-8", description="File encoding (utf-8, latin1, cp1252, etc.)")
-    delimiter: str = Field(",", description="Column delimiter (comma, tab, semicolon, pipe)")
-    session_id: str | None = Field(None, description="Optional existing session ID")
-    header: int | None = Field(
-        0, description="Row number to use as header (0=first row, None=no header)"
-    )
-    na_values: list[str] | None = Field(
-        None, description="Additional strings to recognize as NA/NaN"
-    )
-    parse_dates: list[str] | None = Field(None, description="Columns to parse as dates")
-
-
-class LoadCSVFromURLParams(BaseModel):
-    """Parameters for CSV loading from URL operations."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    url: str = Field(description="URL of the CSV file")
-    encoding: str = Field("utf-8", description="File encoding")
-    delimiter: str = Field(",", description="Column delimiter")
-    session_id: str | None = Field(None, description="Optional existing session ID")
-
-
-class LoadCSVFromContentParams(BaseModel):
-    """Parameters for CSV loading from content operations."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    content: str = Field(description="CSV content as string")
-    delimiter: str = Field(",", description="Column delimiter")
-    session_id: str | None = Field(None, description="Optional existing session ID")
-    has_header: bool = Field(default=True, description="Whether first row is header")
-
-
-class ExportCSVParams(BaseModel):
-    """Parameters for CSV export operations."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    session_id: str = Field(description="Session ID to export")
-    file_path: str | None = Field(
-        None, description="Optional output file path (auto-generated if not provided)"
-    )
-    format: Literal["csv", "tsv", "json", "excel", "parquet", "html", "markdown"] = Field(
-        "csv", description="Export format"
-    )
-    encoding: str = Field("utf-8", description="Output encoding")
-    index: bool = Field(default=False, description="Whether to include index in output")
 
 
 # ============================================================================
@@ -243,7 +246,7 @@ async def load_csv(
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
     header_config: Annotated[
-        HeaderConfig | None,
+        HeaderConfigUnion | None,
         Field(default=None, description="Header detection configuration"),
     ] = None,
     na_values: Annotated[
@@ -468,7 +471,7 @@ async def load_csv_from_url(
         str, Field(description="Column delimiter character (comma, tab, semicolon, pipe)")
     ] = ",",
     header_config: Annotated[
-        HeaderConfig | None,
+        HeaderConfigUnion | None,
         Field(default=None, description="Header detection configuration"),
     ] = None,
 ) -> LoadResult:
@@ -679,7 +682,7 @@ async def load_csv_from_content(
     ] = ",",
     *,
     header_config: Annotated[
-        HeaderConfig | None,
+        HeaderConfigUnion | None,
         Field(default=None, description="Header detection configuration"),
     ] = None,
 ) -> LoadResult:

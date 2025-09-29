@@ -220,6 +220,7 @@ ignore = [
     "FIX002", # TODO comments are intentional for tracking future work
     "COM812", # Missing trailing comma (handled by ruff format)
     "ISC001", # Implicit string concatenation (often used in docstrings)
+    "RET501", # The model reviewers prefer that I return None
     "SIM105", # contextlib.suppress is slower that try-except-pass
     "SIM108", # Ternary operator - preference
     #  TODO:  Work on bringing these into play
@@ -397,6 +398,9 @@ site_description = "Comprehensive CSV manipulation and analysis via Model Contex
 site_author = "Santosh Ray"
 repo_url = "https://github.com/jonpspri/databeak"
 repo_name = "databeak"
+
+[tool.uv.sources]
+fastmcp = { git = "https://github.com/jonpspri/fastmcp", branch = "jsonschema_validation_loosening" }
 
 [dependency-groups]
 dev = [

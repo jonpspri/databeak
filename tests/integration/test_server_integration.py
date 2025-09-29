@@ -1,80 +1,79 @@
 """Integration tests for DataBeak server functionality."""
 
 import pytest
-from mcp import types
-
-from tests.integration.conftest import get_server_fixture
 
 
 class TestServerIntegration:
     """Test basic server functionality."""
 
     @pytest.mark.asyncio
-    async def test_server_starts_and_lists_tools(self):
+    async def test_server_starts_and_lists_tools(self, databeak_client):
         """Test that server starts and can list tools."""
-        async with get_server_fixture() as server:
-            tools = await server.list_tools()
-            assert isinstance(tools, list)
-            assert len(tools) > 0
+        tools = await databeak_client.list_tools()
+        assert isinstance(tools, list)
+        assert len(tools) > 0
 
-            # Check for some expected tools - tools should be Tool objects with name attribute
-            tool_names = {tool.name for tool in tools}
-            expected_tools = {"load_csv", "get_session_info"}
+        # Check for some expected tools - tools should be Tool objects with name attribute
+        tool_names = {tool.name for tool in tools}
+        expected_tools = {"load_csv", "get_session_info"}
 
-            # At least some expected tools should be present
-            assert expected_tools.intersection(tool_names), (
-                f"Expected tools not found in {tool_names}"
-            )
+        # At least some expected tools should be present
+        assert expected_tools.intersection(tool_names), f"Expected tools not found in {tool_names}"
 
     @pytest.mark.asyncio
-    async def test_get_session_info_tool(self):
+    async def test_get_session_info_tool(self, databeak_client):
         """Test the get_session_info tool."""
-        async with get_server_fixture() as server:
-            # This should fail since no data is loaded, but should return a valid result
-            result = await server.call_tool("get_session_info", {})
+        from fastmcp.exceptions import ToolError
 
-            # Should return a CallToolResult
-            assert isinstance(result, types.CallToolResult)
+        # Should raise ToolError when no data is loaded
+        with pytest.raises(ToolError, match="No data loaded"):
+            await databeak_client.call_tool("get_session_info", {})
 
     @pytest.mark.asyncio
-    async def test_context_manager_usage(self):
+    async def test_context_manager_usage(self, databeak_client):
         """Test using the context manager directly."""
-        async with get_server_fixture() as server:
-            # Test that we can call multiple tools
-            tools = await server.list_tools()
-            info_result = await server.call_tool("get_session_info", {})
+        # Test that we can call multiple tools
+        tools = await databeak_client.list_tools()
 
-            assert len(tools) > 0
-            assert isinstance(info_result, types.CallToolResult)
+        # Load some data first so we can test get_session_info
+        load_result = await databeak_client.call_tool(
+            "load_csv_from_content", {"content": "name,age\nAlice,25"}
+        )
+        assert load_result.is_error is False
+
+        info_result = await databeak_client.call_tool("get_session_info", {})
+        assert info_result.is_error is False
+
+        assert len(tools) > 0
 
     @pytest.mark.asyncio
-    async def test_multiple_tool_calls_in_same_session(self):
+    async def test_multiple_tool_calls_in_same_session(self, databeak_client):
         """Test making multiple tool calls within the same test function."""
-        async with get_server_fixture() as server:
-            # Call 1: List tools
-            tools = await server.list_tools()
-            assert len(tools) > 0
+        # Call 1: List tools
+        tools = await databeak_client.list_tools()
+        assert len(tools) > 0
 
-            # Call 2: Get session info
-            info_result = await server.call_tool("get_session_info", {})
-            assert isinstance(info_result, types.CallToolResult)
+        # Call 2: Load data so we can test session info
+        load_result = await databeak_client.call_tool(
+            "load_csv_from_content", {"content": "name,age\nAlice,25"}
+        )
+        assert load_result.is_error is False
 
-            # Call 3: Get session info again (should be consistent)
-            info_result2 = await server.call_tool("get_session_info", {})
-            assert isinstance(info_result2, types.CallToolResult)
+        # Call 3: Get session info
+        info_result = await databeak_client.call_tool("get_session_info", {})
+        assert info_result.is_error is False
+
+        # Call 4: Get session info again (should be consistent)
+        info_result2 = await databeak_client.call_tool("get_session_info", {})
+        assert info_result2.is_error is False
 
     @pytest.mark.asyncio
-    async def test_server_cleanup(self):
+    async def test_server_cleanup(self, databeak_client):
         """Test that server properly cleans up after context manager exits."""
-        server_ref = None
+        # Test that we can use the client normally
+        tools = await databeak_client.list_tools()
+        assert len(tools) > 0
 
-        # Use server in context
-        async with get_server_fixture() as server:
-            server_ref = server
-            tools = await server.list_tools()
-            assert len(tools) > 0
-
-        # After context exits, the session should be closed
-        # Note: We can't easily test stdio_client cleanup since it's internal
-        # But we can verify the server context exited without errors
-        assert server_ref is not None
+        # The databeak_client fixture handles cleanup automatically
+        # This test verifies the client works properly during the session
+        assert databeak_client is not None

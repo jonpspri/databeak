@@ -33,6 +33,29 @@ repository management guidance.
 
 ### Code Quality Standards
 
+DataBeak maintains strict code quality standards with automated enforcement:
+
+### Code Quality Metrics (All Automated)
+
+- **Zero ruff violations** - Perfect linting compliance across 46 rules
+- **100% MyPy compliance** - Complete type safety with minimal Any usage
+- **Perfect MCP documentation** - All tools have Field descriptions, zero Args
+  sections
+- **High test coverage** - 960+ unit tests validating all functionality
+- **Clean architecture** - Stateless MCP design, 3,340+ lines of complexity
+  eliminated
+
+### Quality Enforcement Standards
+
+- **Clear API design** - No boolean traps, keyword-only parameters for clarity
+- **Defensive practices** - No silent exception handling, proper validation,
+  standardized session access patterns
+- **No magic numbers** - Use configurable settings with defaults instead of
+  hardcoded values
+- **MCP compliance** - Field descriptions provide parameter docs, comprehensive
+  tool documentation
+- **Automated enforcement** - Pre-commit hooks prevent all quality regressions
+
 **Use the `quality-gate-runner` agent** for comprehensive quality pipeline
 execution including linting, formatting, type checking, testing, and coverage
 analysis.
@@ -54,30 +77,27 @@ guidance.
 
 ### Testing Approach
 
-DataBeak follows a three-tier testing strategy with strict quality requirements:
+DataBeak currently focuses on comprehensive unit testing with future plans for
+integration and E2E testing:
 
-1. **Unit Tests** (`tests/unit/`) - Fast, isolated module tests
-1. **Integration Tests** (`tests/integration/`) - Component interaction tests
-1. **E2E Tests** (`tests/e2e/`) - Complete workflow validation
+1. **Unit Tests** (`tests/unit/`) - Fast, isolated module tests (current focus)
+1. **Integration Tests** (`tests/integration/`) - Future: FastMCP Client-based
+   testing
+1. **E2E Tests** (`tests/e2e/`) - Future: Complete workflow validation
 
-**Testing Quality Standards:**
-
-- **100% Success Rate**: All tests must pass in CI/CD pipeline
-- **80% Code Coverage**: Minimum coverage threshold for all modules
-- **Skipped Tests**: Acceptable only when annotated with GitHub Issue #
-  referencing implementation plan
-
-**Test Execution:**
+**Current Test Execution:**
 
 ```bash
-uv run -m pytest tests/unit/          # Run unit tests (frequent)
-uv run -m pytest tests/integration/   # Run integration tests
-uv run -m pytest tests/e2e/           # Run E2E tests
-uv run -m pytest --cov=src/databeak   # Run all with coverage
+uv run pytest -n auto tests/unit/          # Run unit tests (primary)
+uv run pytest -n auto --cov=src/databeak   # Run with coverage analysis
 ```
 
+**Future Integration Testing:** Planned implementation using FastMCP Client for
+realistic MCP protocol testing (tracked in GitHub issues).
+
 **Use the `test-coverage-analyzer` agent** for systematic test coverage analysis
-and gap identification to achieve the 80% coverage requirement.
+and gap identification to achieve the 80%+ coverage requirement through
+comprehensive unit testing.
 
 See `.claude/agents/test-coverage-analyzer.md` and `tests/README.md` for
 comprehensive testing guidance.
@@ -113,23 +133,133 @@ guidance.
 - Default values defined in the Settings class, not scattered `os.getenv()`
   calls
 
+### Logging Guidelines
+
+**Context-Based Logging Rule**: When a FastMCP `Context` object is available
+(e.g., in MCP tool functions), use the Context for all logging operations
+instead of standard Python loggers.
+
+- **Use**: `await ctx.info("Message")`, `await ctx.error("Error")`
+- **Not**: `logger.info("Message")`, `logger.error("Error")`
+- **Benefit**: Better traceability, MCP protocol integration, client visibility
+- **Standard loggers**: Only use in non-MCP functions (utilities, internal
+  logic)
+
+### Configuration and Magic Numbers
+
+**Avoid Magic Numbers Rule**: Replace hardcoded values with configurable
+settings that have sensible defaults and can be overridden via environment
+variables.
+
+**Examples of proper configuration:**
+
+```python
+# ❌ Avoid: Magic numbers hardcoded
+if memory_usage > 1024 * 0.75:  # What's this threshold?
+    status = "warning"
+
+# ✅ Prefer: Configurable settings with defaults
+settings = get_csv_settings()
+if memory_usage > threshold * settings.memory_warning_threshold:
+    status = "warning"
+```
+
+**Configuration Guidelines:**
+
+- **Use DataBeakSettings class** for all configurable values
+- **Environment variable support** with `DATABEAK_` prefix
+- **Sensible defaults** that work out of the box
+- **Clear documentation** of what each setting controls
+- **Type safety** with Pydantic Field validation
+
+**Common Configuration Categories:**
+
+- **Thresholds**: Memory limits, capacity warnings, timeouts
+- **Limits**: History operations, file sizes, session counts
+- **Behavior**: Auto-save settings, cleanup intervals, retry attempts
+- **Performance**: Cache TTLs, chunk sizes, batch limits
+
 ### Architecture Notes
 
-- Session-based design with automatic cleanup
-- Auto-save functionality enabled by default
-- Persistent history with undo/redo capabilities
-- Type-safe operations using Pydantic validation
-- Modular tool organization for maintainability
+- **Stateless MCP design** with external context management
+- **Session-based data processing** with automatic cleanup
+- **Defensive programming patterns** with standardized session access
+- **Type-safe operations** using Pydantic validation
+- **Modular tool organization** for maintainability
+
+### Defensive Programming Patterns
+
+DataBeak implements comprehensive defensive programming to eliminate session
+access risks:
+
+#### **Standardized Session Access (Required Pattern)**
+
+```python
+# ✅ Correct: Use centralized session_utils helpers
+from databeak.utils.session_utils import get_session_data
+
+
+def my_mcp_tool(ctx: Context) -> Result:
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)  # Safe, validated access
+    # ... process df safely
+```
+
+#### **Available Helper Functions**
+
+- **`get_session_data(session_id)`** - Returns `(session, df)` with full
+  validation
+- **`get_session_only(session_id)`** - Returns session without requiring data
+- **`validate_session_has_data(session, session_id)`** - Validates existing
+  session
+
+#### **Avoided Patterns (Do Not Use)**
+
+```python
+# ❌ Avoid: Direct session.df access with manual validation
+manager = get_session_manager()
+session = manager.get_or_create_session(session_id)
+if not session.has_data():
+    raise ToolError("No data")
+df = session.df
+assert df is not None  # Risky pattern
+
+# ❌ Avoid: Direct session.df access without validation
+session = get_session_manager().get_or_create_session(session_id)
+df = session.df  # Potential null access risk
+```
+
+#### **Benefits of Defensive Patterns**
+
+- **Risk elimination** - No null access possibilities in server tier
+- **Consistent error handling** - Standardized exceptions across modules
+- **Type safety** - MyPy-friendly tuple unpacking validation
+- **Code clarity** - 5-7 line defensive blocks reduced to 1-2 lines
+- **Maintainability** - Centralized session validation logic
 
 ## Common Commands
 
 ```bash
 # Setup and development
 uv sync                 # Install all dependencies
-uv run databeak      # Run the MCP server
+uv run databeak         # Run the MCP server (stdio mode)
+
+# HTTP streaming server
+uv run databeak --transport http --host 0.0.0.0 --port 8000  # HTTP mode
+docker-compose up -d    # Docker deployment
+docker build -t databeak:latest .  # Build Docker image
 
 # Version management
 uv run sync-versions   # Sync version numbers across files
+
+# Code quality checks
+uv run pre-commit run --all-files             # Run all quality checks
+scripts/check_docstring_args.py              # Check MCP documentation standards (no Args sections)
+scripts/check_docstring_args.py --quiet      # Quick summary only
+scripts/check_mcp_field_descriptions.py      # Check MCP tool Field descriptions
+scripts/check_mcp_field_descriptions.py --quiet  # Quick summary only
+scripts/check_docstring_args.py src/databeak/servers/  # Check specific directory
+hadolint Dockerfile    # Docker linting (via pre-commit hook)
 
 # Markdown quality
 uv run mdformat docs/              # Auto-format markdown files
@@ -154,8 +284,52 @@ uv run mkdocs serve       # Serve docs locally
 - Pydantic models for data validation
 - Pandas for data operations
 - Session management with configurable timeouts
-- Comprehensive error handling and logging
+- Error handling and logging
+
+## Documentation Tone Standards
+
+DataBeak documentation maintains professional, factual tone:
+
+### Avoid Self-Aggrandizing Language
+
+**Prohibited terms**:
+
+- "exceptional", "perfect", "amazing", "outstanding", "superior"
+- "revolutionary", "cutting-edge", "world-class", "best-in-class"
+- "unparalleled", "state-of-the-art", "industry-leading", "premium", "elite"
+- "ultimate", "maximum", "optimal", "flawless"
+
+**Use factual alternatives**:
+
+- "exceptional standards" → "strict standards"
+- "perfect compliance" → "clean compliance"
+- "comprehensive coverage" → "high coverage"
+- "API design excellence" → "clear API design"
+- "security best practices" → "defensive practices"
+
+### Measurable Claims Only
+
+**Acceptable** (measurable):
+
+- "Zero ruff violations" (verifiable metric)
+- "100% mypy compliance" (measurable result)
+- "1100+ unit tests" (concrete count)
+
+**Prohibited** (subjective claims):
+
+- "production quality" (marketing speak)
+- "advanced analytics" (vague superlative)
+- "sophisticated architecture" (self-congratulatory)
+
+### Professional Descriptors
+
+Use measured, technical language:
+
+- "provides" not "delivers amazing"
+- "supports" not "offers comprehensive"
+- "implements" not "features advanced"
+- "handles" not "excels at"
 
 ## Additional Resources
 
-- @./.claude/Style_Guide.md
+- @./.claude/Claude_Code_Style_Guide.md

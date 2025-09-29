@@ -18,13 +18,13 @@ from databeak.servers.io_server import (
     MAX_MEMORY_USAGE_MB,
     MAX_ROWS,
     MAX_URL_SIZE_MB,
+    NoHeader,
     export_csv,
     get_session_info,
     load_csv,
     load_csv_from_content,
     load_csv_from_url,
 )
-from databeak.types import NoHeader
 from tests.test_mock_context import create_mock_context
 
 
