@@ -64,7 +64,7 @@ class NoHeader(HeaderConfig):
 
     def get_pandas_param(self) -> None:
         """Return pandas parameter for no headers."""
-        return
+        return None
 
 
 class ExplicitHeaderRow(HeaderConfig):
