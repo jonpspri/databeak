@@ -34,7 +34,7 @@ from databeak.models.statistics_models import (
     StatisticsResult,
     ValueCountsResult,
 )
-from databeak.types import NullableIntString, parse_nullable_int_string
+from databeak.types import parse_nullable_int_string
 
 logger = logging.getLogger(__name__)
 
@@ -494,7 +494,8 @@ async def get_value_counts(
         Field(description="Sort in ascending order (False = descending)"),
     ] = False,
     top_n: Annotated[
-        int | NullableIntString | None,
+        int | None,
+        # int | NullableIntString | None,
         Field(
             default=None,
             description="Maximum number of values to return (None = all values, 'null' = all values)",

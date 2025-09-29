@@ -16,7 +16,7 @@ from typing import Any, Literal
 import httpx
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from mcp import ClientSession, types
-from mcp.client.stdio import StdioServerParameters, stdio_client
+from mcp.client.stdio import StdioServerParameters, get_default_environment, stdio_client
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.shared.message import SessionMessage
 
@@ -174,7 +174,14 @@ class DatabeakServerFixture(ABC):
 class DatabeakStdioServerFixture(DatabeakServerFixture):
     async def _initialize_stream(self):
         self._stdio_client = stdio_client(
-            StdioServerParameters(command="uv", args=["run", "databeak"])
+            StdioServerParameters(
+                command="uv",
+                args=["run", "databeak"],
+                env={
+                    "FASTMCP_LOG_LEVEL": os.environ.get("FASTMCP_LOG_LEVEL", "ERROR"),
+                    **get_default_environment(),
+                },
+            )
         )
         return await self._stdio_client.__aenter__()
 
@@ -231,8 +238,6 @@ class DatabeakHttpServerFixture(DatabeakServerFixture):
             self.host,
             "--port",
             str(self.port),
-            "--log-level",
-            "ERROR",  # Minimize server logs during testing
             cwd=project_root,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

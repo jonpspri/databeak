@@ -8,6 +8,8 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
+from .core.settings import get_settings
+
 # Local imports
 from .servers.column_server import column_server
 from .servers.column_text_server import column_text_server
@@ -112,17 +114,14 @@ def main() -> None:
     )
     parser.add_argument("--host", default="127.0.0.1", help="Host for HTTP/SSE transport")  # nosec B104
     parser.add_argument("--port", type=int, default=8000, help="Port for HTTP/SSE transport")
-    parser.add_argument(
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
-        help="Logging level",
-    )
 
     args = parser.parse_args()
 
+    # Get log level from settings
+    settings = get_settings()
+
     # Setup structured logging
-    setup_structured_logging(args.log_level)
+    setup_structured_logging(settings.log_level)
 
     # Set server-level correlation ID
     server_correlation_id = set_correlation_id()
@@ -134,7 +133,7 @@ def main() -> None:
             "transport": args.transport,
             "host": args.host if args.transport != "stdio" else None,
             "port": args.port if args.transport != "stdio" else None,
-            "log_level": args.log_level,
+            "log_level": settings.log_level,
             "server_id": server_correlation_id,
         },
     )

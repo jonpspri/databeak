@@ -11,6 +11,9 @@ from pydantic_settings import BaseSettings
 class DataBeakSettings(BaseSettings):
     """Configuration settings for session management."""
 
+    log_level: str = Field(
+        default="INFO", description="Logging level (DEBUG, INFO, WARNING, ERROR)"
+    )
     max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
     session_timeout: int = Field(default=3600, description="Session timeout in seconds")
     chunk_size: int = Field(
