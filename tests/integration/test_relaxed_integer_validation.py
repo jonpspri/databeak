@@ -191,7 +191,7 @@ async def test_string_float_notation(databeak_client):
     # String "1.0" should be accepted
     result = await databeak_client.call_tool(
         "get_cell_value",
-        {"row_index": "1", "column": "name"},  # Changed from "1.0" to "1"
+        {"row_index": "1.0", "column": "name"},  # Test string float notation "1.0"
     )
     assert result.is_error is False
     assert "Bob" in result.content[0].text
