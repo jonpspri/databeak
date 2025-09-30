@@ -1,5 +1,6 @@
 """Unit tests for JSON schema validation with relaxed integer type checking."""
 
+import pytest
 from jsonschema import ValidationError, validate
 from jsonschema.validators import validator_for
 
@@ -39,18 +40,12 @@ def test_relaxed_integer_validation_rejects_non_integers() -> None:
     schema = {"type": "object", "properties": {"value": {"type": "integer"}}}
 
     # Non-integer string should fail
-    try:
+    with pytest.raises(ValidationError):
         validate(instance={"value": "not_a_number"}, schema=schema)
-        assert False, "Should have raised ValidationError"
-    except ValidationError:
-        pass
 
     # Float with decimal should fail
-    try:
+    with pytest.raises(ValidationError):
         validate(instance={"value": 42.5}, schema=schema)
-        assert False, "Should have raised ValidationError"
-    except ValidationError:
-        pass
 
 
 def test_relaxed_validation_preserves_standard_types() -> None:
@@ -73,11 +68,8 @@ def test_relaxed_validation_preserves_standard_types() -> None:
     )
 
     # Invalid types should still fail
-    try:
+    with pytest.raises(ValidationError):
         validate(instance={"name": 123}, schema=schema)
-        assert False, "Should have raised ValidationError"
-    except ValidationError:
-        pass
 
 
 def test_validator_registration() -> None:

@@ -460,6 +460,52 @@ We follow [Semantic Versioning](https://semver.org/):
 1. **Tag release** after merge
 1. **Publish to PyPI** (automated)
 
+## Documentation Standards
+
+### Writing Style and Tone
+
+DataBeak documentation maintains professional, factual tone:
+
+#### Avoid Self-Aggrandizing Language
+
+**Prohibited terms**:
+
+- "exceptional", "perfect", "amazing", "outstanding", "superior"
+- "revolutionary", "cutting-edge", "world-class", "best-in-class"
+- "unparalleled", "state-of-the-art", "industry-leading", "premium", "elite"
+- "ultimate", "maximum", "optimal", "flawless"
+
+**Use factual alternatives**:
+
+- "exceptional standards" → "strict standards"
+- "perfect compliance" → "clean compliance"
+- "comprehensive coverage" → "high coverage"
+- "API design excellence" → "clear API design"
+- "security best practices" → "defensive practices"
+
+#### Measurable Claims Only
+
+**Acceptable** (measurable):
+
+- "Zero ruff violations" (verifiable metric)
+- "100% mypy compliance" (measurable result)
+- "1100+ unit tests" (concrete count)
+
+**Prohibited** (subjective claims):
+
+- "production quality" (marketing speak)
+- "advanced analytics" (vague superlative)
+- "sophisticated architecture" (self-congratulatory)
+
+#### Professional Descriptors
+
+Use measured, technical language:
+
+- "provides" not "delivers amazing"
+- "supports" not "offers comprehensive"
+- "implements" not "features advanced"
+- "handles" not "excels at"
+
 ## Getting Help
 
 - **Issues**: Use GitHub Issues for bugs and features
