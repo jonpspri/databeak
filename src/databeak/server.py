@@ -8,6 +8,9 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
+# This module will tweak the JSON schema validator to accept relaxed types
+from .core import json_schema_validate  # noqa: F401
+
 # Local imports
 from .servers.column_server import column_server
 from .servers.column_text_server import column_text_server
