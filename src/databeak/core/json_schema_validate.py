@@ -1,6 +1,6 @@
 """Patch jsonschema to support integer values represented as strings or floats."""
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 from jsonschema import validators
 from jsonschema._types import TypeChecker, is_integer
@@ -24,7 +24,9 @@ def _is_integer(checker: TypeChecker, instance: Any) -> bool:
             pass
     return isinstance(instance, float) and instance.is_integer()
 
-_llm_validator : Validator | None = None
+
+_llm_validator: Validator | None = None
+
 
 def initialize_relaxed_validation() -> None:
     """Initialize a custom JSON schema validator that accepts integers as strings or floats."""
@@ -35,4 +37,4 @@ def initialize_relaxed_validation() -> None:
     _llm_validator = validators.extend(default_validator, type_checker=llm_type_checker)
 
     # Patch _LATEST_VERSION to use our custom validator
-    validators._LATEST_VERSION = _llm_validator  # type: ignore[attr-defined]
+    validators._LATEST_VERSION = _llm_validator  # type: ignore[attr-defined]  # noqa: SLF001
