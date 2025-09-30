@@ -19,13 +19,16 @@ def _is_integer(checker: TypeChecker, instance: Any) -> bool:
     return isinstance(instance, float) and instance.is_integer()
 
 
-validator = validator_for({})
-llm_type_checker = validator.TYPE_CHECKER.redefine("integer", _is_integer)
+def _do_it() -> None:
+    validator = validator_for({})
+    llm_type_checker = validator.TYPE_CHECKER.redefine("integer", _is_integer)
 
-llm_validator = validators.extend(
-    validator,
-    type_checker=llm_type_checker,
-)
+    llm_validator = validators.extend(
+        validator,
+        type_checker=llm_type_checker,
+    )
 
-# Register the custom validator to handle the specific JSON schema URI used by this application.
-validators.validates(validator.META_SCHEMA["$schema"])(llm_validator)
+    # Register the custom validator to handle the specific JSON schema URI used by this application.
+    validators.validates(validator.META_SCHEMA["$schema"])(llm_validator)
+
+_do_it()
