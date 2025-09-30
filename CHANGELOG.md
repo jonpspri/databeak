@@ -10,26 +10,38 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.0.4] - 2025-09-30
+
 ### Added
 
-- **Docker HTTP Streaming Server**: Complete containerized deployment solution
-  with multi-stage builds, security best practices, and health checks
-- **HTTP Transport Support**: FastMCP-powered HTTP streaming server with FastAPI
-  integration for health endpoints and production deployment
-- **Docker Compose Configuration**: Production and development service profiles
-  with health monitoring, restart policies, and volume management
-- **hadolint Pre-commit Integration**: Docker linting with customizable rules
-  and CI/CD integration for Dockerfile quality enforcement
-- **Comprehensive Deployment Documentation**: Production-ready deployment guide
-  with scaling, security, and troubleshooting guidance
+- **Relaxed JSON Schema Validation**: Custom jsonschema validator that accepts
+  integers as strings or floats, handling LLM-generated parameters that don't
+  strictly conform to integer types (PR #115)
+- **Integration Testing Framework**: Comprehensive integration testing with
+  pytest configuration, isolated test environment, and coverage reporting (PR #110)
+- **ReadTheDocs Configuration**: Official documentation site with MkDocs
+  integration and automated deployment (PR #108)
+- **Type Safety Enhancements**: MCP-specific type definitions including
+  NonNegativeIntString and PositiveIntString with regex validation (PR #111)
 
 ### Changed
 
-- **Server Architecture**: Enhanced server.py with HTTP transport support and
-  health endpoint integration using FastAPI
-- **Dependencies**: Added fastapi and uvicorn for HTTP streaming capabilities
-- **Pre-commit Configuration**: Integrated hadolint for automated Dockerfile
-  linting with appropriate rule configuration
+- **Header Type Architecture**: Refactored HeaderConfig to use Abstract Base
+  Class with Pydantic discriminated union pattern for cleaner polymorphic
+  behavior (PR #113)
+- **FastMCP Dependency**: Updated to use released fastmcp version instead of
+  development branch (PR #114)
+- **Testing Configuration**: Enhanced pytest configuration with integration test
+  markers, coverage settings, and proper test isolation
+- **Project Structure**: Streamlined documentation and removed unmaintained
+  agent files and Docker infrastructure (PR #116)
+
+### Removed
+
+- **Docker Support**: Removed Dockerfile and docker-compose.yml as Docker
+  deployment is not officially supported
+- **Agent Documentation**: Removed specialized agent documentation files that
+  are no longer actively maintained
 
 ## [0.0.3] - 2025-01-24
 
@@ -120,3 +132,5 @@ and this project adheres to
 
 [0.0.1]: https://github.com/jonpspri/databeak/releases/tag/v0.0.1
 [0.0.2]: https://github.com/jonpspri/databeak/releases/tag/v0.0.2
+[0.0.3]: https://github.com/jonpspri/databeak/releases/tag/v0.0.3
+[0.0.4]: https://github.com/jonpspri/databeak/releases/tag/v0.0.4
