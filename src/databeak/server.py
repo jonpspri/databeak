@@ -9,19 +9,19 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 # This module will tweak the JSON schema validator to accept relaxed types
-from .core import json_schema_validate  # noqa: F401
+from databeak.core.json_schema_validate import initialize_relaxed_validation
 
 # Local imports
-from .servers.column_server import column_server
-from .servers.column_text_server import column_text_server
-from .servers.discovery_server import discovery_server
-from .servers.io_server import io_server
-from .servers.row_operations_server import row_operations_server
-from .servers.statistics_server import statistics_server
-from .servers.system_server import system_server
-from .servers.transformation_server import transformation_server
-from .servers.validation_server import validation_server
-from .utils.logging_config import set_correlation_id, setup_structured_logging
+from databeak.servers.column_server import column_server
+from databeak.servers.column_text_server import column_text_server
+from databeak.servers.discovery_server import discovery_server
+from databeak.servers.io_server import io_server
+from databeak.servers.row_operations_server import row_operations_server
+from databeak.servers.statistics_server import statistics_server
+from databeak.servers.system_server import system_server
+from databeak.servers.transformation_server import transformation_server
+from databeak.servers.validation_server import validation_server
+from databeak.utils.logging_config import set_correlation_id, setup_structured_logging
 
 # Configure structured logging
 logger = logging.getLogger(__name__)
@@ -44,6 +44,9 @@ def _load_instructions() -> str:
         logger.exception("Error loading instructions: %s", e)
         return "DataBeak MCP Server - Error loading instructions"
 
+
+# Initialize relaxed JSON schema validation before creating server
+initialize_relaxed_validation()
 
 # Initialize FastMCP server
 mcp = FastMCP("DataBeak", instructions=_load_instructions())
