@@ -214,7 +214,8 @@ async def extract_from_column(
         raise InvalidParameterError(msg, pattern, f"Invalid regex pattern: {e}") from e
 
     # Apply extraction
-    # Note: mypy has issues with overloaded extract method, but this is valid
+    # pandas typing limitation: str.extract(expand=bool) overload not properly typed in pandas-stubs
+    # See: https://github.com/pandas-dev/pandas-stubs/issues/43
     extracted = df[column].astype(str).str.extract(pattern, expand=expand)  # type: ignore[call-overload]
 
     if expand and isinstance(extracted, pd.DataFrame):
@@ -304,7 +305,8 @@ async def split_column(
         raise InvalidParameterError(msg, delimiter, "Delimiter cannot be empty")
 
     # Apply split operation
-    # Note: mypy has issues with overloaded split method, but this is valid
+    # pandas typing limitation: str.split(expand=bool) overload not properly typed in pandas-stubs
+    # See: https://github.com/pandas-dev/pandas-stubs/issues/43
     split_data = df[column].astype(str).str.split(delimiter, expand=expand_to_columns)  # type: ignore[call-overload]
 
     if expand_to_columns:
