@@ -589,8 +589,20 @@ class SecureExpressionEvaluator:
     ) -> pd.Series:
         """Evaluate mathematical expression without re-validation.
 
-        This is used internally by evaluate_string_expression to avoid double-validation.
-        Assumes expression has already been validated by the caller.
+        This method is used internally by evaluate_string_expression to avoid double-validation.
+        The caller must ensure that the expression has already been validated for safety.
+
+        Validation requirements:
+            - The expression must be checked for unsafe AST nodes (e.g., no function calls except allowlisted ones, no attribute access, no system calls).
+            - Only allowlisted functions and operators should be permitted.
+            - Column references must be validated against the DataFrame.
+
+        If validation is skipped:
+            - Unsafe or malicious expressions may be executed, potentially leading to code injection, data leakage, or other security vulnerabilities.
+            - This method does not perform any validation itself and should never be called directly with untrusted input.
+
+        Raises:
+            InvalidParameterError: If evaluation fails.
         """
         return self._evaluate_with_context(expression, dataframe, column_context)
 
