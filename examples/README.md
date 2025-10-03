@@ -4,50 +4,30 @@ This directory contains example scripts demonstrating DataBeak's capabilities.
 
 ## Available Examples
 
-### auto_save_demo.py
-
-Demonstrates auto-save functionality with different strategies:
-
-- Configuring auto-save settings
-- Multiple save strategies (backup, versioned, overwrite)
-- Testing auto-save behavior
-
-### auto_save_overwrite.py
-
-Shows auto-save with overwrite strategy for seamless file updates.
-
-### history_demo.py
-
-Comprehensive history and undo/redo demonstration:
-
-- Operation tracking
-- Undo/redo capabilities
-- History export
-- Session management
-
 ### dependency_injection_demo.py
 
 Advanced example showing dependency injection patterns for testing and
-modularity.
+modularity. Demonstrates how to structure DataBeak integrations with proper
+separation of concerns and testable architecture.
 
 ### claude_code_null_example.py
 
-Demonstrates null value handling and data validation.
+Demonstrates null value handling and data validation. Shows best practices for
+handling missing data, validation errors, and defensive programming patterns
+when working with CSV data.
 
 ### update_consignee_example.py
 
-Real-world example updating business data with validation.
-
-### test_default_autosave.py
-
-Testing example for default auto-save behavior.
+Real-world example updating business data with validation. Illustrates a
+complete workflow for loading, transforming, validating, and exporting modified
+CSV data in a business context.
 
 ## Running Examples
 
 ```bash
-uv run python examples/auto_save_demo.py
-uv run python examples/history_demo.py
-# etc.
+uv run python examples/dependency_injection_demo.py
+uv run python examples/claude_code_null_example.py
+uv run python examples/update_consignee_example.py
 ```
 
 ## Architecture

@@ -1,0 +1,122 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-checks:
+    name: PR Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run all pre-commit hooks
+        run: |
+          uv run pre-commit install
+          uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Check for TODO/FIXME additions
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD -- '*.py' | \
+          grep -E '^\+.*\b(TODO|FIXME)\b' && \
+          echo "::warning::New TODO/FIXME comments added. Consider creating issues instead." || \
+          echo "No new TODO/FIXME comments found."
+
+      - name: Verify test coverage
+        run: |
+          uv run pytest tests/unit/ \
+            --cov=src/databeak \
+            --cov-report=term-missing \
+            --cov-fail-under=80 \
+            --quiet
+
+      - name: Check for large file additions
+        run: |
+          large_files=$(git diff --diff-filter=A --name-only origin/${{ github.base_ref }}...HEAD | \
+            xargs -I {} find {} -type f -size +100k 2>/dev/null || true)
+          if [ -n "$large_files" ]; then
+            echo "::warning::Large files detected: $large_files"
+          fi
+
+      - name: Validate commit messages
+        run: |
+          commits=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
+          echo "$commits" | while read msg; do
+            if ! echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|build|perf|style|revert)(\(.+\))?: .+'; then
+              echo "::warning::Commit message may not follow conventional commits: $msg"
+            fi
+          done
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run security checks with ruff
+        run: uv run ruff check --select S src/ tests/
+
+      - name: Check for hardcoded secrets
+        run: |
+          if grep -r -E '(password|secret|key|token)\s*=\s*["\'].*["\']' src/ --include='*.py'; then
+            echo "::error::Potential hardcoded secrets found"
+            exit 1
+          fi
+
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          files_changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+          lines_changed=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | \
+            grep -oE '[0-9]+ insertions|[0-9]+ deletions' | grep -oE '[0-9]+' | \
+            awk '{sum+=$1} END {print sum}')
+
+          echo "Files changed: $files_changed"
+          echo "Lines changed: $lines_changed"
+
+          if [ "$files_changed" -gt 50 ]; then
+            echo "::warning::Large PR: $files_changed files changed. Consider splitting into smaller PRs."
+          fi
+
+          if [ "$lines_changed" -gt 1000 ]; then
+            echo "::warning::Large PR: $lines_changed lines changed. Consider splitting into smaller PRs."
+          fi

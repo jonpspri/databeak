@@ -1,5 +1,11 @@
 # DataBeak
 
+[![Tests](https://github.com/jonpspri/databeak/actions/workflows/test.yml/badge.svg)](https://github.com/jonpspri/databeak/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/jonpspri/databeak/branch/main/graph/badge.svg)](https://codecov.io/gh/jonpspri/databeak)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
 ## AI-Powered CSV Processing via Model Context Protocol
 
 Transform how AI assistants work with CSV data. DataBeak provides 40+
@@ -48,20 +54,20 @@ DataBeak works with Continue, Cline, Windsurf, and Zed. See the
 [installation guide](https://jonpspri.github.io/databeak/installation) for
 specific configuration examples.
 
-### Docker Deployment
+### HTTP Mode (Advanced)
 
-For production deployments or HTTP-based AI clients:
+For HTTP-based AI clients or custom deployments:
 
 ```bash
-# Quick start with Docker Compose
-docker-compose up -d
+# Run in HTTP mode
+uv run databeak --transport http --host 0.0.0.0 --port 8000
 
 # Access server at http://localhost:8000/mcp
 # Health check at http://localhost:8000/health
 ```
 
-See the [Docker deployment guide](docs/docker-deployment.md) for production
-configuration, scaling, and security considerations.
+See the [deployment guide](docs/docker-deployment.md) for production
+configuration and security considerations.
 
 ### Quick Test
 
@@ -129,18 +135,18 @@ uv run mypy src/databeak/
 
 ### Testing Structure
 
-DataBeak currently focuses on comprehensive unit testing with future plans for
-integration and E2E testing:
+DataBeak implements comprehensive unit and integration testing:
 
-- **Unit Tests** (`tests/unit/`) - Fast, isolated module tests (current focus)
-- **Integration Tests** (`tests/integration/`) - Future: FastMCP Client-based
-  testing
-- **E2E Tests** (`tests/e2e/`) - Future: Complete workflow validation
+- **Unit Tests** (`tests/unit/`) - 983 fast, isolated module tests
+- **Integration Tests** (`tests/integration/`) - 9 FastMCP Client-based protocol
+  tests
+- **E2E Tests** (`tests/e2e/`) - Planned: Complete workflow validation
 
-**Current Test Execution:**
+**Test Execution:**
 
 ```bash
-uv run pytest -n auto tests/unit/          # Run unit tests (primary)
+uv run pytest -n auto tests/unit/          # Run unit tests (983 tests)
+uv run pytest -n auto tests/integration/   # Run integration tests
 uv run pytest -n auto --cov=src/databeak   # Run with coverage analysis
 ```
 
