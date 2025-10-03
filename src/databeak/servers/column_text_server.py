@@ -66,41 +66,35 @@ def _count_column_changes(original: pd.Series, modified: pd.Series) -> int:
     return int(changed_mask.sum())
 
 
-def _handle_text_operation_errors(
-    operation_name: str,
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def _handle_text_operation_errors(func: Callable[..., Any]) -> Callable[..., Any]:
     """Handle common errors in text operations consistently.
 
-    Args:
-        operation_name: Name of the operation for error messages
-
     Returns:
-        Decorator function
+        Decorated function with error handling
 
     """
     from functools import wraps
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
-        @wraps(func)
-        async def wrapper(*args: Any, **kwargs: Any) -> Any:
-            try:
-                return await func(*args, **kwargs)
-            except (
-                SessionNotFoundError,
-                NoDataLoadedError,
-                ColumnNotFoundError,
-                InvalidParameterError,
-            ) as e:
-                logger.exception("%s failed: %s", operation_name, e.message)
-                raise ToolError(e.message) from e
-            except Exception as e:
-                logger.exception("Error in %s: %s", operation_name, str(e))
-                msg = f"Error in {operation_name}: {e}"
-                raise ToolError(msg) from e
+    operation_name = func.__name__
 
-        return wrapper
+    @wraps(func)
+    async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return await func(*args, **kwargs)
+        except (
+            SessionNotFoundError,
+            NoDataLoadedError,
+            ColumnNotFoundError,
+            InvalidParameterError,
+        ) as e:
+            logger.exception("%s failed: %s", operation_name, e.message)
+            raise ToolError(e.message) from e
+        except Exception as e:
+            logger.exception("Error in %s: %s", operation_name, str(e))
+            msg = f"Error in {operation_name}: {e}"
+            raise ToolError(msg) from e
 
-    return decorator
+    return wrapper
 
 
 # =============================================================================
@@ -108,7 +102,7 @@ def _handle_text_operation_errors(
 # =============================================================================
 
 
-@_handle_text_operation_errors("replace_in_column")
+@_handle_text_operation_errors
 async def replace_in_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to apply pattern replacement in")],
@@ -176,7 +170,7 @@ async def replace_in_column(
     )
 
 
-@_handle_text_operation_errors("extract_from_column")
+@_handle_text_operation_errors
 async def extract_from_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to extract patterns from")],
@@ -208,7 +202,7 @@ async def extract_from_column(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
-    session, df = get_session_data(session_id)
+    _session, df = get_session_data(session_id)
 
     _validate_column_exists(column, df)
 
@@ -223,15 +217,12 @@ async def extract_from_column(
     # Note: mypy has issues with overloaded extract method, but this is valid
     extracted = df[column].astype(str).str.extract(pattern, expand=expand)  # type: ignore[call-overload]
 
-    # Type narrowing: get_session_data ensures session.df is not None
-    assert session.df is not None  # noqa: S101
-
     if expand and isinstance(extracted, pd.DataFrame):
         # Multiple capturing groups - create new columns
         columns_created = []
         for i in range(len(extracted.columns)):
             new_col_name = f"{column}_extracted_{i}"
-            session.df[new_col_name] = extracted.iloc[:, i]
+            df[new_col_name] = extracted.iloc[:, i]
             columns_created.append(new_col_name)
 
         affected_columns = columns_created
@@ -240,10 +231,10 @@ async def extract_from_column(
         # Single group or no expand - replace original column
         if isinstance(extracted, pd.DataFrame):
             # Multiple groups but not expanding - take first group
-            session.df[column] = extracted.iloc[:, 0]
+            df[column] = extracted.iloc[:, 0]
         else:
             # Single series result
-            session.df[column] = extracted
+            df[column] = extracted
 
         affected_columns = [column]
         operation_desc = "extract_pattern"
@@ -263,7 +254,7 @@ async def extract_from_column(
     )
 
 
-@_handle_text_operation_errors("split_column")
+@_handle_text_operation_errors
 async def split_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to split values in")],
@@ -304,7 +295,7 @@ async def split_column(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
-    session, df = get_session_data(session_id)
+    _session, df = get_session_data(session_id)
 
     _validate_column_exists(column, df)
 
@@ -315,9 +306,6 @@ async def split_column(
     # Apply split operation
     # Note: mypy has issues with overloaded split method, but this is valid
     split_data = df[column].astype(str).str.split(delimiter, expand=expand_to_columns)  # type: ignore[call-overload]
-
-    # Type narrowing: get_session_data ensures session.df is not None
-    assert session.df is not None  # noqa: S101
 
     if expand_to_columns:
         # Expanding to multiple columns
@@ -342,7 +330,7 @@ async def split_column(
             # Create new columns
             for i, col_name in enumerate(column_names):
                 if i < len(split_data.columns):
-                    session.df[col_name] = split_data.iloc[:, i]
+                    df[col_name] = split_data.iloc[:, i]
                     columns_created.append(col_name)
 
             affected_columns = columns_created
@@ -364,10 +352,10 @@ async def split_column(
         if isinstance(split_data, pd.DataFrame):
             # This shouldn't happen with expand=False, but handle it
             if part_index < len(split_data.columns):
-                session.df[column] = split_data.iloc[:, part_index]
+                df[column] = split_data.iloc[:, part_index]
             else:
                 # Index out of range - fill with NaN
-                session.df[column] = pd.NA
+                df[column] = pd.NA
         else:
             # Series of lists - extract specified part
             def get_part(split_list: Any) -> Any:
@@ -375,13 +363,13 @@ async def split_column(
                     return split_list[part_index]
                 return pd.NA
 
-            session.df[column] = split_data.apply(get_part)
+            df[column] = split_data.apply(get_part)
 
         affected_columns = [column]
         operation_desc = f"split_keep_part_{part_index}"
 
         # Count successful splits (non-null results)
-        rows_affected = int(session.df[column].notna().sum())
+        rows_affected = int(df[column].notna().sum())
 
     return ColumnOperationResult(
         operation=operation_desc,
@@ -390,7 +378,7 @@ async def split_column(
     )
 
 
-@_handle_text_operation_errors("transform_column_case")
+@_handle_text_operation_errors
 async def transform_column_case(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to transform text case in")],
@@ -420,7 +408,7 @@ async def transform_column_case(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
-    session, df = get_session_data(session_id)
+    _session, df = get_session_data(session_id)
 
     _validate_column_exists(column, df)
 
@@ -430,17 +418,14 @@ async def transform_column_case(
     # Apply case transformation
     str_col = df[column].astype(str)
 
-    # Type narrowing: get_session_data ensures session.df is not None
-    assert session.df is not None  # noqa: S101
-
     if transform == "upper":
-        session.df[column] = str_col.str.upper()
+        df[column] = str_col.str.upper()
     elif transform == "lower":
-        session.df[column] = str_col.str.lower()
+        df[column] = str_col.str.lower()
     elif transform == "title":
-        session.df[column] = str_col.str.title()
+        df[column] = str_col.str.title()
     elif transform == "capitalize":
-        session.df[column] = str_col.str.capitalize()
+        df[column] = str_col.str.capitalize()
     else:
         msg = "transform"
         raise InvalidParameterError(
@@ -450,7 +435,7 @@ async def transform_column_case(
         )
 
     # Count changes made
-    changes_made = _count_column_changes(original_data, session.df[column])
+    changes_made = _count_column_changes(original_data, df[column])
 
     return ColumnOperationResult(
         operation=f"case_{transform}",
@@ -459,7 +444,7 @@ async def transform_column_case(
     )
 
 
-@_handle_text_operation_errors("strip_column")
+@_handle_text_operation_errors
 async def strip_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to strip characters from")],
@@ -489,26 +474,23 @@ async def strip_column(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
-    session, df = get_session_data(session_id)
+    _session, df = get_session_data(session_id)
 
     _validate_column_exists(column, df)
 
     # Store original for comparison
     original_data = df[column].copy()
 
-    # Type narrowing: get_session_data ensures session.df is not None
-    assert session.df is not None  # noqa: S101
-
     # Apply strip operation
     if chars is None:
         # Strip whitespace
-        session.df[column] = df[column].astype(str).str.strip()
+        df[column] = df[column].astype(str).str.strip()
     else:
         # Strip specified characters
-        session.df[column] = df[column].astype(str).str.strip(chars)
+        df[column] = df[column].astype(str).str.strip(chars)
 
     # Count changes made
-    changes_made = _count_column_changes(original_data, session.df[column])
+    changes_made = _count_column_changes(original_data, df[column])
 
     return ColumnOperationResult(
         operation=f"strip_{'whitespace' if chars is None else 'chars'}",
@@ -517,7 +499,7 @@ async def strip_column(
     )
 
 
-@_handle_text_operation_errors("fill_column_nulls")
+@_handle_text_operation_errors
 async def fill_column_nulls(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to fill null values in")],
@@ -544,7 +526,7 @@ async def fill_column_nulls(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
-    session, df = get_session_data(session_id)
+    _session, df = get_session_data(session_id)
 
     _validate_column_exists(column, df)
 
@@ -559,19 +541,16 @@ async def fill_column_nulls(
             columns_affected=[column],
         )
 
-    # Type narrowing: get_session_data ensures session.df is not None
-    assert session.df is not None  # noqa: S101
-
     # Fill null values
     # Use explicit assignment to avoid downcasting warnings
     with pd.option_context("future.no_silent_downcasting", True):  # noqa: FBT003
         filled_series = df[column].fillna(value)
         if hasattr(filled_series, "infer_objects"):
             filled_series = filled_series.infer_objects(copy=False)
-        session.df[column] = filled_series
+        df[column] = filled_series
 
     # Verify fills worked
-    nulls_after = int(session.df[column].isna().sum())
+    nulls_after = int(df[column].isna().sum())
     filled_count = nulls_before - nulls_after
 
     return ColumnOperationResult(
