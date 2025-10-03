@@ -41,8 +41,9 @@ jobs:
 
       - name: Check for large file additions
         run: |
+          set -euo pipefail
           large_files=$(git diff --diff-filter=A --name-only origin/${{ github.base_ref }}...HEAD | \
-            xargs -I {} find {} -type f -size +100k 2>/dev/null || true)
+            xargs -r -I {} find {} -type f -size +100k 2>/dev/null || true)
           if [ -n "$large_files" ]; then
             echo "::warning::Large files detected: $large_files"
           fi
@@ -54,10 +55,11 @@ jobs:
           commits=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
 
           while IFS= read -r msg; do
-            if ! echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|build|perf|style|revert)(\(.+\))?: .+'; then
+            if ! echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|build|perf|style|revert)(\(.+\))?: \S.+'; then
               echo "::error::Invalid commit message: $msg"
               echo "Expected format: type(scope): description"
               echo "Valid types: feat, fix, docs, test, refactor, chore, ci, build, perf, style, revert"
+              echo "Description must contain at least one non-whitespace character"
               invalid_commits=$((invalid_commits + 1))
             fi
           done <<< "$commits"
@@ -107,13 +109,17 @@ jobs:
 
       - name: Check PR size
         run: |
+          set -euo pipefail
           files_changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
-          lines_changed=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | \
-            grep -oE '[0-9]+' | \
-            awk '{sum+=$1} END {print sum}')
+
+          # Use --shortstat to get accurate insertion/deletion counts
+          stat_line=$(git diff --shortstat origin/${{ github.base_ref }}...HEAD)
+          insertions=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo "0")
+          deletions=$(echo "$stat_line" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo "0")
+          lines_changed=$((insertions + deletions))
 
           echo "Files changed: $files_changed"
-          echo "Lines changed: $lines_changed"
+          echo "Lines changed: $lines_changed (insertions: $insertions, deletions: $deletions)"
 
           if [ "$files_changed" -gt 50 ]; then
             echo "::warning::Large PR: $files_changed files changed. Consider splitting into smaller PRs."
