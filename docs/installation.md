@@ -10,7 +10,7 @@ and client configuration.
 
 ## Prerequisites
 
-- **Python 3.10+** (3.11+ recommended for best performance)
+- **Python 3.12+** (required)
 - **Operating System**: Windows, macOS, or Linux
 - **Package Manager**: uv (recommended) or pip
 
