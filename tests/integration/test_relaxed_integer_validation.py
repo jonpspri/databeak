@@ -7,7 +7,6 @@ conform to expected integer types.
 
 import pytest
 from fastmcp.exceptions import ToolError
-from jsonschema import ValidationError
 
 
 @pytest.mark.asyncio
@@ -120,9 +119,8 @@ async def test_invalid_string_integer_rejected(databeak_client):
     load_result = await databeak_client.call_tool("load_csv_from_content", {"content": csv_content})
     assert load_result.is_error is False
 
-    # Invalid string should be rejected (validation error before tool execution)
-    # Note: This should raise a validation error, not ToolError
-    with pytest.raises(ValidationError):
+    # Invalid string should be rejected (FastMCP wraps ValidationError in ToolError)
+    with pytest.raises(ToolError, match="Input validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": "abc", "column": "name"},
@@ -137,8 +135,8 @@ async def test_fractional_float_rejected(databeak_client):
     load_result = await databeak_client.call_tool("load_csv_from_content", {"content": csv_content})
     assert load_result.is_error is False
 
-    # Non-integer float should be rejected
-    with pytest.raises(ValidationError):
+    # Non-integer float should be rejected (FastMCP wraps ValidationError in ToolError)
+    with pytest.raises(ToolError, match="Input validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": 1.5, "column": "name"},
@@ -153,8 +151,8 @@ async def test_empty_string_rejected(databeak_client):
     load_result = await databeak_client.call_tool("load_csv_from_content", {"content": csv_content})
     assert load_result.is_error is False
 
-    # Empty string should be rejected
-    with pytest.raises(ValidationError):
+    # Empty string should be rejected (FastMCP wraps ValidationError in ToolError)
+    with pytest.raises(ToolError, match="Input validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": "", "column": "name"},

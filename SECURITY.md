@@ -6,8 +6,8 @@ We actively support the following versions of DataBeak:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 0.0.4+  | :white_check_mark: |
+| < 0.0.4 | :x:                |
 
 ## Reporting a Vulnerability
 

@@ -79,7 +79,8 @@ src/databeak/
 - **Zero static analysis violations** - Clean ruff compliance across all
   categories
 - **Strong type safety** - 100% mypy compliance with minimal Any usage
-- **High test coverage** - 1100+ unit tests with good coverage targets
+- **High test coverage** - 983 unit tests + 43 integration tests with good
+  coverage targets
 - **Server composition pattern** - Modular FastMCP servers for different domains
 - **Context-based logging** - MCP-integrated logging for better traceability
 - **Clear API design** - Keyword-only boolean parameters, no boolean traps
@@ -136,7 +137,8 @@ DataBeak maintains strict code quality standards with automated enforcement:
 - **100% MyPy compliance** - Complete type safety with minimal Any usage
 - **Perfect MCP documentation** - Comprehensive Field descriptions, no Args
   sections
-- **High test coverage** - 960+ unit tests validating all functionality
+- **High test coverage** - 983 unit tests + 43 integration tests validating all
+  functionality
 - **Clean architecture** - Stateless MCP design with eliminated complexity
 
 ### Quality Enforcement Tools

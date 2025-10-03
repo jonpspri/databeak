@@ -10,23 +10,23 @@ functionality across all components.
 
 ### Current Testing Approach
 
-DataBeak currently focuses on comprehensive unit testing with future plans for
-integration and E2E testing:
+DataBeak implements a comprehensive testing strategy with unit and integration
+testing:
 
 ```
         /\
        /E2E\      <- Future: Complete workflow validation
       /------\
-     /Integr. \   <- Future: FastMCP Client-based testing
+     /Integr. \   <- Current: 43 tests across 7 test files
     /----------\
-   /   Unit     \ <- Current focus: 1100+ comprehensive tests
+   /   Unit     \ <- Current: 983 comprehensive tests
   /--------------\
 ```
 
-- **Unit Tests (Current)**: 1100+ fast, isolated module tests with high coverage
-- **Integration Tests (Planned)**: FastMCP Client-based realistic protocol
-  testing
-- **E2E Tests (Planned)**: Complete workflow validation
+- **Unit Tests**: 983 fast, isolated module tests with high coverage
+- **Integration Tests**: 43 tests across 7 files covering FastMCP Client-based
+  protocol interactions
+- **E2E Tests (Planned)**: Complete end-to-end workflow validation
 
 ### Key Principles
 
@@ -56,15 +56,24 @@ integration and E2E testing:
 
 ```
 tests/
-├── unit/              # Mirrors src/ structure
-│   ├── models/
-│   ├── prompts/
-│   ├── resources/
-│   ├── servers/
-│   ├── services/
-│   └── utils/
-├── integration/       # Cross-component tests
-└── e2e/              # Full workflow tests
+├── unit/              # Mirrors src/ structure (983 tests)
+│   ├── core/            # Core functionality tests
+│   ├── models/          # Data model tests
+│   ├── prompts/         # Prompt tests
+│   ├── servers/         # MCP server tests
+│   ├── services/        # Business logic tests
+│   └── utils/           # Utility function tests
+├── integration/       # Cross-component tests (43 tests across 7 files)
+│   ├── test_csv_loading.py
+│   ├── test_direct_client.py
+│   ├── test_fastmcp_client_fixture.py
+│   ├── test_fixture_security.py
+│   ├── test_relaxed_integer_validation.py
+│   ├── test_server_integration.py
+│   ├── test_unified_header_system.py
+│   └── conftest.py      # Integration test fixtures
+├── fixtures/          # Test data and reusable fixtures
+└── e2e/              # Full workflow tests (planned)
 ```
 
 ### Naming Conventions

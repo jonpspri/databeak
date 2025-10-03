@@ -1,0 +1,131 @@
+name: PR Quality Gates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-checks:
+    name: PR Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      - name: Run all pre-commit hooks
+        run: |
+          uv run pre-commit run --all-files --show-diff-on-failure
+
+      - name: Check for TODO/FIXME additions
+        run: |
+          set -euo pipefail
+          if git diff origin/${{ github.base_ref }}...HEAD -- '*.py' | grep -qE '^\+.*\b(TODO|FIXME)\b'; then
+            echo "::warning::New TODO/FIXME comments added. Consider creating issues instead."
+          fi
+
+      - name: Check for large file additions
+        run: |
+          set -euo pipefail
+          large_files=$(git diff --diff-filter=A --name-only origin/${{ github.base_ref }}...HEAD | \
+            xargs -r -I {} find {} -type f -size +100k 2>/dev/null || true)
+          if [ -n "$large_files" ]; then
+            echo "::warning::Large files detected: $large_files"
+          fi
+
+      - name: Validate commit messages
+        run: |
+          set -euo pipefail
+          invalid_commits=0
+          commits=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
+
+          while IFS= read -r msg; do
+            if ! echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|build|perf|style|revert)(\(.+\))?: \S.+'; then
+              echo "::error::Invalid commit message: $msg"
+              echo "Expected format: type(scope): description"
+              echo "Valid types: feat, fix, docs, test, refactor, chore, ci, build, perf, style, revert"
+              echo "Description must contain at least one non-whitespace character"
+              invalid_commits=$((invalid_commits + 1))
+            fi
+          done <<< "$commits"
+
+          if [ "$invalid_commits" -gt 0 ]; then
+            echo "::error::Found $invalid_commits commit(s) with invalid conventional commit format"
+            exit 1
+          fi
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run security checks with ruff
+        run: uv run ruff check --select S src/ tests/
+
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
+
+      - name: Check PR size
+        run: |
+          set -euo pipefail
+          files_changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+
+          # Use --shortstat to get accurate insertion/deletion counts
+          stat_line=$(git diff --shortstat origin/${{ github.base_ref }}...HEAD)
+          insertions=$(echo "$stat_line" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo "0")
+          deletions=$(echo "$stat_line" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo "0")
+          lines_changed=$((insertions + deletions))
+
+          echo "Files changed: $files_changed"
+          echo "Lines changed: $lines_changed (insertions: $insertions, deletions: $deletions)"
+
+          if [ "$files_changed" -gt 50 ]; then
+            echo "::warning::Large PR: $files_changed files changed. Consider splitting into smaller PRs."
+          fi
+
+          if [ "$lines_changed" -gt 1000 ]; then
+            echo "::warning::Large PR: $lines_changed lines changed. Consider splitting into smaller PRs."
+          fi

@@ -46,7 +46,7 @@ By participating in this project, you agree to abide by our Code of Conduct:
 
 ### Prerequisites
 
-- Python 3.8 or higher (3.11+ recommended)
+- Python 3.12 or higher
 - Git
 - [uv](https://github.com/astral-sh/uv) - Ultra-fast package manager (required)
 
