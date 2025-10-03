@@ -211,7 +211,7 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 mypy_path = "./src"
 namespace_packages = false
 explicit_package_bases = false
