@@ -70,14 +70,7 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=80
 
-      - name: Check if Codecov token is configured
-        if: secrets.CODECOV_TOKEN == ''
-        run: |
-          echo "::warning::CODECOV_TOKEN secret not configured. Coverage upload will be skipped."
-          echo "To enable coverage uploads, add CODECOV_TOKEN to repository secrets."
-
       - name: Upload coverage to Codecov
-        if: secrets.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
