@@ -17,15 +17,15 @@ testing:
         /\
        /E2E\      <- Future: Complete workflow validation
       /------\
-     /Integr. \   <- Current: 9 integration test files
+     /Integr. \   <- Current: 43 tests across 7 test files
     /----------\
    /   Unit     \ <- Current: 983 comprehensive tests
   /--------------\
 ```
 
 - **Unit Tests**: 983 fast, isolated module tests with high coverage
-- **Integration Tests**: 9 test files covering FastMCP Client-based protocol
-  interactions
+- **Integration Tests**: 43 tests across 7 files covering FastMCP Client-based
+  protocol interactions
 - **E2E Tests (Planned)**: Complete end-to-end workflow validation
 
 ### Key Principles
@@ -63,7 +63,7 @@ tests/
 │   ├── servers/         # MCP server tests
 │   ├── services/        # Business logic tests
 │   └── utils/           # Utility function tests
-├── integration/       # Cross-component tests (9 test files)
+├── integration/       # Cross-component tests (43 tests across 7 files)
 │   ├── test_csv_loading.py
 │   ├── test_direct_client.py
 │   ├── test_fastmcp_client_fixture.py
