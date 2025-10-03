@@ -65,9 +65,6 @@ uv run databeak --transport http --host 0.0.0.0 --port 8000
 # Health check at http://localhost:8000/health
 ```
 
-See the [deployment guide](docs/docker-deployment.md) for production
-configuration and security considerations.
-
 ### Quick Test
 
 Once configured, ask your AI assistant:
