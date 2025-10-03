@@ -16,7 +16,7 @@ from databeak.services.statistics_service import StatisticsService
 
 
 @pytest.fixture
-def test_data():
+def test_data() -> None:
     """Create test data for statistics service tests."""
     return pd.DataFrame(
         {
@@ -29,13 +29,13 @@ def test_data():
 
 
 @pytest.fixture
-def session_id():
+def session_id() -> None:
     """Provide a unique session ID for each test."""
     return uuid.uuid4().hex
 
 
 @pytest.fixture
-def mock_session_manager(test_data, session_id):
+def mock_session_manager(test_data, session_id) -> None:
     """Create a fresh MockSessionManager with test data for each test."""
     mock_manager = MockSessionManager()
     mock_manager.add_test_data(session_id, test_data)
@@ -43,13 +43,13 @@ def mock_session_manager(test_data, session_id):
 
 
 @pytest.fixture
-def service_factory(mock_session_manager):
+def service_factory(mock_session_manager) -> None:
     """Create a SessionServiceFactory with injected mock session manager."""
     return SessionServiceFactory(mock_session_manager)
 
 
 @pytest.fixture
-def statistics_service(service_factory):
+def statistics_service(service_factory) -> None:
     """Create a StatisticsService with injected dependencies."""
     return cast(StatisticsService, service_factory.create_service(StatisticsService))
 

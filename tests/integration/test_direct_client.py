@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_direct_client_tool_listing(databeak_client):
+async def test_direct_client_tool_listing(databeak_client) -> None:
     """Test listing tools using direct FastMCP client."""
     tools = await databeak_client.list_tools()
 
@@ -21,7 +21,7 @@ async def test_direct_client_tool_listing(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_direct_client_tool_execution(databeak_client):
+async def test_direct_client_tool_execution(databeak_client) -> None:
     """Test executing tools using direct FastMCP client."""
     # Test loading CSV content first
     csv_content = "name,age\nAlice,30\nBob,25"
@@ -36,7 +36,7 @@ async def test_direct_client_tool_execution(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_direct_client_multiple_operations(databeak_client):
+async def test_direct_client_multiple_operations(databeak_client) -> None:
     """Test multiple operations using direct client."""
     csv_content = "name,age\nAlice,30\nBob,25"
 

@@ -22,7 +22,7 @@ from databeak.utils.logging_config import (
 class TestCorrelationFilter:
     """Test correlation filter functionality."""
 
-    def test_filter_adds_correlation_id_when_set(self):
+    def test_filter_adds_correlation_id_when_set(self) -> None:
         """Test filter adds correlation ID when one is set."""
         # Setup
         test_id = "test-correlation-123"
@@ -49,7 +49,7 @@ class TestCorrelationFilter:
         # Cleanup
         clear_correlation_id()
 
-    def test_filter_adds_default_correlation_id_when_none_set(self):
+    def test_filter_adds_default_correlation_id_when_none_set(self) -> None:
         """Test filter adds default when no correlation ID is set."""
         # Setup
         clear_correlation_id()
@@ -72,7 +72,7 @@ class TestCorrelationFilter:
         assert result is True
         assert record.correlation_id == "no-correlation"  # type: ignore[attr-defined]
 
-    def test_filter_adds_default_when_empty_correlation_id(self):
+    def test_filter_adds_default_when_empty_correlation_id(self) -> None:
         """Test filter adds default when correlation ID is empty string."""
         # Setup - set empty string (falsy value)
         correlation_id.set("")
@@ -99,7 +99,7 @@ class TestCorrelationFilter:
 class TestStructuredFormatter:
     """Test structured JSON formatter."""
 
-    def test_format_basic_log_record(self):
+    def test_format_basic_log_record(self) -> None:
         """Test basic log record formatting."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -128,7 +128,7 @@ class TestStructuredFormatter:
         assert log_data["line"] == 42
         assert "timestamp" in log_data
 
-    def test_format_with_exception_info(self):
+    def test_format_with_exception_info(self) -> None:
         """Test formatting with exception information."""
         formatter = StructuredFormatter()
 
@@ -159,7 +159,7 @@ class TestStructuredFormatter:
             assert "exception" in log_data
             assert "ValueError: Test exception" in log_data["exception"]
 
-    def test_format_with_session_id(self):
+    def test_format_with_session_id(self) -> None:
         """Test formatting with session ID."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -182,7 +182,7 @@ class TestStructuredFormatter:
         log_data = json.loads(result)
         assert log_data["session_id"] == "session-456"
 
-    def test_format_with_operation_type(self):
+    def test_format_with_operation_type(self) -> None:
         """Test formatting with operation type."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -205,7 +205,7 @@ class TestStructuredFormatter:
         log_data = json.loads(result)
         assert log_data["operation_type"] == "data_load"
 
-    def test_format_with_user_context(self):
+    def test_format_with_user_context(self) -> None:
         """Test formatting with user context."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -228,7 +228,7 @@ class TestStructuredFormatter:
         log_data = json.loads(result)
         assert log_data["user_context"] == {"user_id": "user-789"}
 
-    def test_format_without_correlation_id_attribute(self):
+    def test_format_without_correlation_id_attribute(self) -> None:
         """Test formatting when correlation_id attribute is missing."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -250,7 +250,7 @@ class TestStructuredFormatter:
         log_data = json.loads(result)
         assert log_data["correlation_id"] == "no-correlation"
 
-    def test_format_without_extra_attributes(self):
+    def test_format_without_extra_attributes(self) -> None:
         """Test formatting when no extra attributes are present."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -276,7 +276,7 @@ class TestStructuredFormatter:
         assert "user_context" not in log_data
         assert log_data["correlation_id"] == "test-123"
 
-    def test_format_without_exception_info(self):
+    def test_format_without_exception_info(self) -> None:
         """Test formatting when no exception info is present."""
         formatter = StructuredFormatter()
         record = logging.LogRecord(
@@ -303,7 +303,7 @@ class TestStructuredFormatter:
 class TestSetupStructuredLogging:
     """Test structured logging setup."""
 
-    def test_setup_structured_logging_default_level(self):
+    def test_setup_structured_logging_default_level(self) -> None:
         """Test setup with default INFO level."""
         with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
@@ -317,7 +317,7 @@ class TestSetupStructuredLogging:
             mock_logger.setLevel.assert_called_once_with(logging.INFO)
             assert mock_logger.addHandler.called
 
-    def test_setup_structured_logging_custom_level(self):
+    def test_setup_structured_logging_custom_level(self) -> None:
         """Test setup with custom log level."""
         with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
@@ -329,7 +329,7 @@ class TestSetupStructuredLogging:
             # Verify
             mock_logger.setLevel.assert_called_once_with(logging.DEBUG)
 
-    def test_setup_structured_logging_clears_existing_handlers(self):
+    def test_setup_structured_logging_clears_existing_handlers(self) -> None:
         """Test that existing handlers are cleared."""
         with patch("logging.getLogger") as mock_get_logger:
             mock_logger = MagicMock()
@@ -343,7 +343,7 @@ class TestSetupStructuredLogging:
             # Verify
             mock_logger.removeHandler.assert_called_once_with(existing_handler)
 
-    def test_setup_structured_logging_adds_console_handler(self):
+    def test_setup_structured_logging_adds_console_handler(self) -> None:
         """Test that console handler is added with proper configuration."""
         with (
             patch("logging.getLogger") as mock_get_logger,
@@ -368,7 +368,7 @@ class TestSetupStructuredLogging:
 class TestCorrelationIdManagement:
     """Test correlation ID context management."""
 
-    def test_get_correlation_id_when_set(self):
+    def test_get_correlation_id_when_set(self) -> None:
         """Test getting correlation ID when one is set."""
         test_id = "test-correlation-456"
         set_correlation_id(test_id)
@@ -378,7 +378,7 @@ class TestCorrelationIdManagement:
         assert result == test_id
         clear_correlation_id()
 
-    def test_get_correlation_id_when_not_set(self):
+    def test_get_correlation_id_when_not_set(self) -> None:
         """Test getting correlation ID when none is set."""
         clear_correlation_id()
 
@@ -386,7 +386,7 @@ class TestCorrelationIdManagement:
 
         assert result == "no-correlation"
 
-    def test_get_correlation_id_when_empty_string(self):
+    def test_get_correlation_id_when_empty_string(self) -> None:
         """Test getting correlation ID when set to empty string."""
         correlation_id.set("")
 
@@ -394,7 +394,7 @@ class TestCorrelationIdManagement:
 
         assert result == "no-correlation"
 
-    def test_set_correlation_id_with_provided_id(self):
+    def test_set_correlation_id_with_provided_id(self) -> None:
         """Test setting correlation ID with provided value."""
         test_id = "custom-correlation-789"
 
@@ -404,7 +404,7 @@ class TestCorrelationIdManagement:
         assert get_correlation_id() == test_id
         clear_correlation_id()
 
-    def test_set_correlation_id_with_none_generates_uuid(self):
+    def test_set_correlation_id_with_none_generates_uuid(self) -> None:
         """Test setting correlation ID with None generates UUID."""
         result = set_correlation_id(None)
 
@@ -413,7 +413,7 @@ class TestCorrelationIdManagement:
         assert get_correlation_id() == result
         clear_correlation_id()
 
-    def test_set_correlation_id_no_argument_generates_uuid(self):
+    def test_set_correlation_id_no_argument_generates_uuid(self) -> None:
         """Test setting correlation ID with no argument generates UUID."""
         result = set_correlation_id()
 
@@ -422,7 +422,7 @@ class TestCorrelationIdManagement:
         assert get_correlation_id() == result
         clear_correlation_id()
 
-    def test_clear_correlation_id(self):
+    def test_clear_correlation_id(self) -> None:
         """Test clearing correlation ID."""
         set_correlation_id("test-id")
 
@@ -438,14 +438,14 @@ class TestCorrelationIdManagement:
 class TestBackwardCompatibility:
     """Test backward compatibility functions."""
 
-    def test_setup_logging_calls_setup_structured_logging(self):
+    def test_setup_logging_calls_setup_structured_logging(self) -> None:
         """Test setup_logging calls setup_structured_logging for backward compatibility."""
         with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging("WARNING")
 
             mock_setup.assert_called_once_with("WARNING")
 
-    def test_setup_logging_default_level(self):
+    def test_setup_logging_default_level(self) -> None:
         """Test setup_logging with default level."""
         with patch("databeak.utils.logging_config.setup_structured_logging") as mock_setup:
             setup_logging()

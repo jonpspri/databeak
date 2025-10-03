@@ -38,7 +38,7 @@ server.tool(name="filter_rows")(filter_rows)
 ```python
 # Don't use decorator pattern
 @server.tool
-async def filter_rows(...):
+async def filter_rows(*args, **kwargs):
     pass
 ```
 
@@ -56,15 +56,17 @@ initialization.
 ```python
 class FilterCondition(BaseModel):
     """Filter condition for row filtering."""
+
     column: str = Field(description="Column name to filter on")
     operator: Literal["==", "!=", ">", "<"] = Field(description="Comparison operator")
     value: Any = Field(default=None, description="Value to compare against")
+
 
 # Function should accept both
 async def filter_rows(
     session_id: str,
     conditions: list[FilterCondition | dict[str, Any]],  # Accept both types
-    ...
+    ctx: Context | None = None,
 ) -> FilterOperationResult:
     # Handle both types
     for cond in conditions:
@@ -85,12 +87,13 @@ async def filter_rows(
 
 ```python
 # server file
-async def filter_rows(...) -> FilterOperationResult:
+async def filter_rows(*args, **kwargs) -> FilterOperationResult:
     """MCP tool wrapper."""
-    return await transformations.filter_rows(...)
+    return await transformations.filter_rows(*args, **kwargs)
+
 
 # separate transformations file
-async def filter_rows(...) -> FilterOperationResult:
+async def filter_rows(*args, **kwargs) -> FilterOperationResult:
     """Actual implementation."""
     # Business logic here
 ```
@@ -284,7 +287,12 @@ async def test_filter_rows_basic(test_session):
 - [ ] Add usage examples
 
 ```python
-async def filter_rows(...) -> FilterOperationResult:
+async def filter_rows(
+    session_id: str,
+    conditions: list,
+    mode: str = "and",
+    ctx: Context | None = None,
+) -> FilterOperationResult:
     """Filter rows using flexible conditions with comprehensive null value support.
 
     Provides powerful filtering capabilities optimized for AI-driven data analysis.

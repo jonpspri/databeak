@@ -23,7 +23,9 @@ class ContextProtocol(Protocol):
 class MockContext:
     """Mock implementation of FastMCP Context for testing."""
 
-    def __init__(self, session_id: str | None = None, session_data: dict[str, Any] | None = None):
+    def __init__(
+        self, session_id: str | None = None, session_data: dict[str, Any] | None = None
+    ) -> None:
         self._session_id = session_id or uuid.uuid4().hex
         self._session_data = dict(session_data or {})
 

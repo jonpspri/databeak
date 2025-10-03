@@ -58,7 +58,7 @@ async def demonstrate_before_after() -> None:
     print("1. Creating service with mock session manager...")
     mock_session_manager = MockSessionManager()
     service_factory = SessionServiceFactory(mock_session_manager)
-    statistics_service = service_factory.create_service(StatisticsService)
+    statistics_service: StatisticsService = service_factory.create_service(StatisticsService)  # type: ignore[assignment]
 
     # Add data to mock session
     session_id = "demo_session_001"
@@ -135,7 +135,7 @@ async def demonstrate_before_after() -> None:
     # Create second service with different data
     mock_session_manager_2 = MockSessionManager()
     service_factory_2 = SessionServiceFactory(mock_session_manager_2)
-    statistics_service_2 = service_factory_2.create_service(StatisticsService)
+    statistics_service_2: StatisticsService = service_factory_2.create_service(StatisticsService)  # type: ignore[assignment]
 
     # Different dataset
     inventory_data = pd.DataFrame(

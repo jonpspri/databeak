@@ -603,6 +603,7 @@ class SecureExpressionEvaluator:
 
         Raises:
             InvalidParameterError: If evaluation fails.
+
         """
         return self._evaluate_with_context(expression, dataframe, column_context)
 

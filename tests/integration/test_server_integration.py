@@ -7,7 +7,7 @@ class TestServerIntegration:
     """Test basic server functionality."""
 
     @pytest.mark.asyncio
-    async def test_server_starts_and_lists_tools(self, databeak_client):
+    async def test_server_starts_and_lists_tools(self, databeak_client) -> None:
         """Test that server starts and can list tools."""
         tools = await databeak_client.list_tools()
         assert isinstance(tools, list)
@@ -21,7 +21,7 @@ class TestServerIntegration:
         assert expected_tools.intersection(tool_names), f"Expected tools not found in {tool_names}"
 
     @pytest.mark.asyncio
-    async def test_get_session_info_tool(self, databeak_client):
+    async def test_get_session_info_tool(self, databeak_client) -> None:
         """Test the get_session_info tool."""
         from fastmcp.exceptions import ToolError
 
@@ -30,7 +30,7 @@ class TestServerIntegration:
             await databeak_client.call_tool("get_session_info", {})
 
     @pytest.mark.asyncio
-    async def test_context_manager_usage(self, databeak_client):
+    async def test_context_manager_usage(self, databeak_client) -> None:
         """Test using the context manager directly."""
         # Test that we can call multiple tools
         tools = await databeak_client.list_tools()
@@ -47,7 +47,7 @@ class TestServerIntegration:
         assert len(tools) > 0
 
     @pytest.mark.asyncio
-    async def test_multiple_tool_calls_in_same_session(self, databeak_client):
+    async def test_multiple_tool_calls_in_same_session(self, databeak_client) -> None:
         """Test making multiple tool calls within the same test function."""
         # Call 1: List tools
         tools = await databeak_client.list_tools()
@@ -68,7 +68,7 @@ class TestServerIntegration:
         assert info_result2.is_error is False
 
     @pytest.mark.asyncio
-    async def test_server_cleanup(self, databeak_client):
+    async def test_server_cleanup(self, databeak_client) -> None:
         """Test that server properly cleans up after context manager exits."""
         # Test that we can use the client normally
         tools = await databeak_client.list_tools()

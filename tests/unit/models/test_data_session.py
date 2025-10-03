@@ -8,7 +8,7 @@ from databeak.models.data_session import DataSession
 class TestDataSession:
     """Tests for DataSession class."""
 
-    def test_data_session_initialization(self):
+    def test_data_session_initialization(self) -> None:
         """Test DataSession initialization."""
         session = DataSession(session_id="test-session-123")
         assert session.df is None
@@ -17,7 +17,7 @@ class TestDataSession:
         assert session.session_id == "test-session-123"
         assert session.metadata == {}
 
-    def test_has_data(self):
+    def test_has_data(self) -> None:
         """Test has_data method."""
         session = DataSession(session_id="test-session-456")
         assert session.has_data() is False
@@ -25,7 +25,7 @@ class TestDataSession:
         session.df = pd.DataFrame({"col1": [1, 2, 3]})
         assert session.has_data() is True
 
-    def test_load_data(self):
+    def test_load_data(self) -> None:
         """Test load_data method."""
         session = DataSession(session_id="test-session-789")
         df = pd.DataFrame({"col1": [1, 2, 3]})

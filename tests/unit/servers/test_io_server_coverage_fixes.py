@@ -2,13 +2,11 @@
 
 import tempfile
 from pathlib import Path
-from typing import cast
 from unittest.mock import MagicMock, patch
 from urllib.error import URLError
 
 import pandas as pd
 import pytest
-from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from databeak.servers.io_server import (
@@ -139,7 +137,7 @@ class TestLoadCsvEncodingFallbackPaths:
 
                 # This should trigger the fallback encoding path
                 result = await load_csv(
-                    cast(Context, create_mock_context()),
+                    create_mock_context(),
                     file_path=temp_path,
                     encoding="utf-8",  # Will fail, trigger fallbacks
                 )
@@ -179,9 +177,7 @@ class TestLoadCsvEncodingFallbackPaths:
                 ]
 
                 with pytest.raises(ToolError):
-                    await load_csv(
-                        cast(Context, create_mock_context()), file_path=temp_path, encoding="utf-8"
-                    )
+                    await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
 
         finally:
             Path(temp_path).unlink()
@@ -212,9 +208,7 @@ class TestLoadCsvEncodingFallbackPaths:
                 ]
 
                 with pytest.raises(ToolError):
-                    await load_csv(
-                        cast(Context, create_mock_context()), file_path=temp_path, encoding="utf-8"
-                    )
+                    await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
 
         finally:
             Path(temp_path).unlink()
@@ -230,7 +224,7 @@ class TestLoadCsvErrorPaths:
             patch("pathlib.Path.stat", side_effect=OSError("File access denied")),
             pytest.raises(ToolError, match="Invalid file path"),
         ):
-            await load_csv(cast(Context, create_mock_context()), file_path="/some/file.csv")
+            await load_csv(create_mock_context(), file_path="/some/file.csv")
 
     async def test_load_csv_pandas_empty_data_error(self) -> None:
         """Test pandas EmptyDataError handling."""
@@ -243,7 +237,7 @@ class TestLoadCsvErrorPaths:
                 patch("pandas.read_csv", side_effect=pd.errors.EmptyDataError("No data")),
                 pytest.raises(ToolError, match="CSV format error"),
             ):
-                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                await load_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -258,7 +252,7 @@ class TestLoadCsvErrorPaths:
                 patch("pandas.read_csv", side_effect=pd.errors.ParserError("Parse failed")),
                 pytest.raises(ToolError, match="CSV format error"),
             ):
-                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                await load_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -273,7 +267,7 @@ class TestLoadCsvErrorPaths:
                 patch("pandas.read_csv", side_effect=MemoryError("Out of memory")),
                 pytest.raises(ToolError, match="File too large - insufficient memory"),
             ):
-                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                await load_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -307,7 +301,7 @@ class TestLoadCsvFromUrlEncodingFallbacks:
             pytest.raises(ToolError),
         ):
             await load_csv_from_url(
-                cast(Context, create_mock_context()),
+                create_mock_context(),
                 url="http://example.com/data.csv",
                 encoding="utf-8",
             )
@@ -334,7 +328,7 @@ class TestLoadCsvFromUrlEncodingFallbacks:
 
         with patch("databeak.servers.io_server.MAX_ROWS", 5), pytest.raises(ToolError):
             await load_csv_from_url(
-                cast(Context, create_mock_context()),
+                create_mock_context(),
                 url="http://example.com/data.csv",
                 encoding="utf-8",
             )
@@ -353,9 +347,7 @@ class TestLoadCsvFromUrlErrorPaths:
             ),
             pytest.raises(ToolError, match="Network error"),
         ):
-            await load_csv_from_url(
-                cast(Context, create_mock_context()), url="http://example.com/data.csv"
-            )
+            await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")
 
     async def test_load_url_url_error(self) -> None:
         """Test URLError handling."""
@@ -366,9 +358,7 @@ class TestLoadCsvFromUrlErrorPaths:
             ),
             pytest.raises(ToolError, match="Network error"),
         ):
-            await load_csv_from_url(
-                cast(Context, create_mock_context()), url="http://example.com/data.csv"
-            )
+            await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")
 
     @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_content_size_exceeded(self, mock_urlopen: MagicMock) -> None:
@@ -381,9 +371,7 @@ class TestLoadCsvFromUrlErrorPaths:
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
         with pytest.raises(ToolError, match="Download too large.*exceeds limit"):
-            await load_csv_from_url(
-                cast(Context, create_mock_context()), url="http://example.com/large_file.csv"
-            )
+            await load_csv_from_url(create_mock_context(), url="http://example.com/large_file.csv")
 
     @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_content_type_warning(self, mock_urlopen: MagicMock) -> None:
@@ -395,7 +383,7 @@ class TestLoadCsvFromUrlErrorPaths:
         # Mock pandas to succeed
         with patch("pandas.read_csv", return_value=pd.DataFrame({"col": [1, 2]})):
             result = await load_csv_from_url(
-                cast(Context, create_mock_context()),
+                create_mock_context(),
                 url="http://example.com/data.csv",
             )
             assert result.success
@@ -411,9 +399,7 @@ class TestLoadCsvFromUrlErrorPaths:
                 patch("pandas.read_csv", side_effect=pd.errors.EmptyDataError("No data")),
                 pytest.raises(ToolError, match="CSV format error from URL"),
             ):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), url="http://example.com/empty.csv"
-                )
+                await load_csv_from_url(create_mock_context(), url="http://example.com/empty.csv")
 
     async def test_load_url_pandas_parser_error(self) -> None:
         """Test pandas ParserError in URL loading."""
@@ -426,9 +412,7 @@ class TestLoadCsvFromUrlErrorPaths:
                 patch("pandas.read_csv", side_effect=pd.errors.ParserError("Parse error")),
                 pytest.raises(ToolError, match="CSV format error from URL"),
             ):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), url="http://example.com/bad.csv"
-                )
+                await load_csv_from_url(create_mock_context(), url="http://example.com/bad.csv")
 
     async def test_load_url_memory_error(self) -> None:
         """Test MemoryError in URL loading."""
@@ -441,9 +425,7 @@ class TestLoadCsvFromUrlErrorPaths:
                 patch("pandas.read_csv", side_effect=MemoryError("Out of memory")),
                 pytest.raises(ToolError, match="Downloaded file too large - insufficient memory"),
             ):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), url="http://example.com/large.csv"
-                )
+                await load_csv_from_url(create_mock_context(), url="http://example.com/large.csv")
 
     async def test_load_url_os_error(self) -> None:
         """Test OSError in URL loading."""
@@ -456,9 +438,7 @@ class TestLoadCsvFromUrlErrorPaths:
                 patch("pandas.read_csv", side_effect=OSError("Network error")),
                 pytest.raises(ToolError, match="Network error"),
             ):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), url="http://example.com/file.csv"
-                )
+                await load_csv_from_url(create_mock_context(), url="http://example.com/file.csv")
 
 
 @pytest.mark.asyncio
@@ -472,7 +452,7 @@ class TestLoadCsvFromContentErrorPaths:
             patch("pandas.read_csv", return_value=pd.DataFrame()),
             pytest.raises(ToolError, match="Parsed CSV contains no data rows"),
         ):
-            await load_csv_from_content(cast(Context, create_mock_context()), content="header\n")
+            await load_csv_from_content(create_mock_context(), content="header\n")
 
 
 @pytest.mark.asyncio
@@ -483,7 +463,7 @@ class TestExportCsvErrorPaths:
         """Test Excel export with missing openpyxl dependency."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
@@ -495,9 +475,7 @@ class TestExportCsvErrorPaths:
                 patch("pandas.DataFrame.to_excel", side_effect=Exception("openpyxl")),
                 pytest.raises(ToolError, match="Failed to export data"),
             ):
-                await export_csv(
-                    cast(Context, create_mock_context(session_id)), file_path=temp_path
-                )
+                await export_csv(create_mock_context(session_id), file_path=temp_path)
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -505,7 +483,7 @@ class TestExportCsvErrorPaths:
         """Test Parquet export with missing pyarrow dependency."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
@@ -520,9 +498,7 @@ class TestExportCsvErrorPaths:
                 ),
                 pytest.raises(ToolError, match="Parquet export requires pyarrow package"),
             ):
-                await export_csv(
-                    cast(Context, create_mock_context(session_id)), file_path=temp_path
-                )
+                await export_csv(create_mock_context(session_id), file_path=temp_path)
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -530,14 +506,12 @@ class TestExportCsvErrorPaths:
         """Test export with invalid file path."""
         # Create session with data
         csv_content = "name,value\ntest,123"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         with pytest.raises(ToolError, match="Failed to export data"):
-            await export_csv(
-                cast(Context, create_mock_context(session_id)), file_path="\x00invalid\x00path"
-            )
+            await export_csv(create_mock_context(session_id), file_path="\x00invalid\x00path")
 
     # Note: temp file cleanup test removed since export_csv no longer uses temp files
 
@@ -551,7 +525,7 @@ class TestSessionManagementErrorPaths:
         with patch("databeak.servers.io_server.get_session_only") as mock_get_session_only:
             mock_get_session_only.side_effect = Exception("Session manager error")
             with pytest.raises(ToolError, match="Failed to get session info"):
-                await get_session_info(cast(Context, create_mock_context()))
+                await get_session_info(create_mock_context())
 
 
 @pytest.mark.asyncio
@@ -579,7 +553,7 @@ class TestSpecificCoveragePaths:
                 ]
 
                 result = await load_csv(
-                    cast(Context, create_mock_context()),
+                    create_mock_context(),
                     file_path=temp_path,
                     encoding="utf-8",
                 )
@@ -608,7 +582,7 @@ class TestSpecificCoveragePaths:
         ]
 
         result = await load_csv_from_url(
-            cast(Context, create_mock_context()),
+            create_mock_context(),
             url="http://example.com/data.csv",
             encoding="utf-8",
         )
@@ -630,9 +604,7 @@ class TestSpecificCoveragePaths:
                 ),
                 pytest.raises(ToolError, match="Encoding error with all attempted encodings"),
             ):
-                await load_csv(
-                    cast(Context, create_mock_context()), file_path=temp_path, encoding="utf-8"
-                )
+                await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -650,9 +622,7 @@ class TestSpecificCoveragePaths:
             ),
             pytest.raises(ToolError, match="Encoding error with all attempted encodings"),
         ):
-            await load_csv_from_url(
-                cast(Context, create_mock_context()), url="http://example.com/data.csv"
-            )
+            await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")
 
     @patch("databeak.servers.io_server.urlopen")
     async def test_load_url_df_none_check(self, mock_urlopen: MagicMock) -> None:
@@ -662,6 +632,4 @@ class TestSpecificCoveragePaths:
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
         with patch("pandas.read_csv", return_value=None), pytest.raises(ToolError):
-            await load_csv_from_url(
-                cast(Context, create_mock_context()), url="http://example.com/data.csv"
-            )
+            await load_csv_from_url(create_mock_context(), url="http://example.com/data.csv")

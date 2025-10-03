@@ -14,7 +14,7 @@ from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
-async def stats_session():
+async def stats_session() -> None:
     """Create a session with diverse data for statistics testing."""
     csv_content = """name,age,salary,department,years_exp,performance_rating
 John Smith,35,75000.50,Engineering,8,4.5
@@ -34,7 +34,7 @@ Helen Black,40,92000.00,Engineering,14,4.4"""
 
 
 @pytest.fixture
-async def sparse_session():
+async def sparse_session() -> None:
     """Create a session with sparse/missing data."""
     csv_content = """id,value1,value2,value3,category
 1,10.5,,20.0,A
@@ -50,7 +50,7 @@ async def sparse_session():
 
 
 @pytest.fixture
-async def edge_case_session():
+async def edge_case_session() -> None:
     """Create a session with edge case data."""
     csv_content = """single_value,zeros,identical,negative,mixed
 5,0,100,-10,1
@@ -68,7 +68,7 @@ async def edge_case_session():
 class TestGetStatistics:
     """Tests for get_statistics function."""
 
-    async def test_get_statistics_all_columns(self, stats_session):
+    async def test_get_statistics_all_columns(self, stats_session) -> None:
         """Test getting statistics for all columns."""
         ctx = create_mock_context(stats_session)
         result = await get_statistics(ctx)
@@ -88,7 +88,7 @@ class TestGetStatistics:
                 assert col_stats.min is not None
                 assert col_stats.max is not None
 
-    async def test_get_statistics_specific_columns(self, stats_session):
+    async def test_get_statistics_specific_columns(self, stats_session) -> None:
         """Test getting statistics for specific columns."""
         ctx = create_mock_context(stats_session)
         result = await get_statistics(ctx, columns=["age", "salary"])
@@ -106,7 +106,7 @@ class TestGetStatistics:
         assert int(age_stats.max) <= 45
         assert 30 <= int(age_stats.mean) <= 40
 
-    async def test_get_statistics_with_nulls(self, sparse_session):
+    async def test_get_statistics_with_nulls(self, sparse_session) -> None:
         """Test statistics calculation with null values."""
         ctx = create_mock_context(sparse_session)
         result = await get_statistics(ctx, columns=["value1", "value2"])
@@ -121,7 +121,7 @@ class TestGetStatistics:
         v2_stats = result.statistics["value2"]
         assert v2_stats.count < 6
 
-    async def test_get_statistics_non_numeric(self, stats_session):
+    async def test_get_statistics_non_numeric(self, stats_session) -> None:
         """Test that statistics for non-numeric columns returns empty results."""
         # The refactored server only handles numeric columns, non-numeric are silently skipped
         ctx = create_mock_context(stats_session)
@@ -130,7 +130,7 @@ class TestGetStatistics:
         assert result.success is True
         assert len(result.statistics) == 0  # No numeric columns in the selection
 
-    async def test_get_statistics_with_data(self):
+    async def test_get_statistics_with_data(self) -> None:
         """Test statistics on DataFrame with data."""
         csv_content = "col1,col2,col3\n1,2,3"
         load_ctx = create_mock_context()
@@ -141,14 +141,14 @@ class TestGetStatistics:
         assert stats.success is True
         assert stats.total_rows == 1
 
-    async def test_get_statistics_invalid_session(self):
+    async def test_get_statistics_invalid_session(self) -> None:
         """Test statistics with invalid session ID."""
         ctx = create_mock_context("invalid-session-id")
 
         with pytest.raises(ToolError, match="No data loaded in session"):
             await get_statistics(ctx)
 
-    async def test_get_statistics_invalid_columns(self, stats_session):
+    async def test_get_statistics_invalid_columns(self, stats_session) -> None:
         """Test statistics with non-existent columns."""
         ctx = create_mock_context(stats_session)
 
@@ -160,7 +160,7 @@ class TestGetStatistics:
 class TestGetColumnStatistics:
     """Tests for get_column_statistics function."""
 
-    async def test_numeric_column_statistics(self, stats_session):
+    async def test_numeric_column_statistics(self, stats_session) -> None:
         """Test detailed statistics for numeric column."""
         ctx = create_mock_context(stats_session)
         result = await get_column_statistics(ctx, "salary")
@@ -179,7 +179,7 @@ class TestGetColumnStatistics:
         # Additional stats
         assert result.non_null_count == 10
 
-    async def test_integer_column_statistics(self, stats_session):
+    async def test_integer_column_statistics(self, stats_session) -> None:
         """Test statistics for integer column."""
         ctx = create_mock_context(stats_session)
         result = await get_column_statistics(ctx, "age")
@@ -192,7 +192,7 @@ class TestGetColumnStatistics:
         assert int(stats.mean) > 0
         assert stats.count == 10
 
-    async def test_string_column_statistics(self, stats_session):
+    async def test_string_column_statistics(self, stats_session) -> None:
         """Test statistics for string column."""
         ctx = create_mock_context(stats_session)
         result = await get_column_statistics(ctx, "department")
@@ -212,7 +212,7 @@ class TestGetColumnStatistics:
         assert stats.min is None or isinstance(stats.min, str)
         assert stats.max is None or isinstance(stats.max, str)
 
-    async def test_column_with_nulls(self, sparse_session):
+    async def test_column_with_nulls(self, sparse_session) -> None:
         """Test statistics for column with null values."""
         ctx = create_mock_context(sparse_session)
         result = await get_column_statistics(ctx, "value1")
@@ -221,7 +221,7 @@ class TestGetColumnStatistics:
         assert result.non_null_count < 6
         assert result.statistics.count == result.non_null_count
 
-    async def test_single_value_column(self, edge_case_session):
+    async def test_single_value_column(self, edge_case_session) -> None:
         """Test statistics for column with single unique value."""
         ctx = create_mock_context(edge_case_session)
         result = await get_column_statistics(ctx, "single_value")
@@ -231,7 +231,7 @@ class TestGetColumnStatistics:
         assert stats.std == 0  # No variation
         assert stats.min == stats.max == stats.mean == 5
 
-    async def test_invalid_column(self, stats_session):
+    async def test_invalid_column(self, stats_session) -> None:
         """Test with non-existent column."""
         ctx = create_mock_context(stats_session)
 
@@ -243,7 +243,7 @@ class TestGetColumnStatistics:
 class TestGetCorrelationMatrix:
     """Tests for get_correlation_matrix function."""
 
-    async def test_correlation_all_numeric(self, stats_session):
+    async def test_correlation_all_numeric(self, stats_session) -> None:
         """Test correlation matrix for all numeric columns."""
         ctx = create_mock_context(stats_session)
         result = await get_correlation_matrix(ctx)
@@ -259,7 +259,7 @@ class TestGetCorrelationMatrix:
             # Diagonal should be 1 (perfect correlation with self)
             assert abs(result.correlation_matrix[col][col] - 1.0) < 0.0001
 
-    async def test_correlation_specific_columns(self, stats_session):
+    async def test_correlation_specific_columns(self, stats_session) -> None:
         """Test correlation for specific columns."""
         ctx = create_mock_context(stats_session)
         result = await get_correlation_matrix(ctx, columns=["age", "salary", "years_exp"])
@@ -274,7 +274,7 @@ class TestGetCorrelationMatrix:
         correlation = result.correlation_matrix["salary"]["years_exp"]
         assert correlation > 0.5  # Moderate to strong positive correlation
 
-    async def test_correlation_methods(self, stats_session):
+    async def test_correlation_methods(self, stats_session) -> None:
         """Test different correlation methods."""
         # Pearson correlation
         ctx = create_mock_context(stats_session)
@@ -300,7 +300,7 @@ class TestGetCorrelationMatrix:
             else:
                 raise
 
-    async def test_correlation_with_nulls(self, sparse_session):
+    async def test_correlation_with_nulls(self, sparse_session) -> None:
         """Test correlation with missing values."""
         ctx = create_mock_context(sparse_session)
         result = await get_correlation_matrix(ctx, columns=["value1", "value2", "value3"])
@@ -309,14 +309,14 @@ class TestGetCorrelationMatrix:
         # Should handle nulls appropriately
         assert len(result.correlation_matrix) == 3
 
-    async def test_correlation_insufficient_columns(self, stats_session):
+    async def test_correlation_insufficient_columns(self, stats_session) -> None:
         """Test correlation with only one numeric column."""
         ctx = create_mock_context(stats_session)
 
         with pytest.raises(ToolError, match="at least two numeric columns"):
             await get_correlation_matrix(ctx, columns=["age"])
 
-    async def test_correlation_non_numeric(self, stats_session):
+    async def test_correlation_non_numeric(self, stats_session) -> None:
         """Test correlation with non-numeric columns."""
         ctx = create_mock_context(stats_session)
 
@@ -328,7 +328,7 @@ class TestGetCorrelationMatrix:
 class TestGetValueCounts:
     """Tests for get_value_counts function."""
 
-    async def test_value_counts_categorical(self, stats_session):
+    async def test_value_counts_categorical(self, stats_session) -> None:
         """Test value counts for categorical column."""
         ctx = create_mock_context(stats_session)
         result = await get_value_counts(ctx, "department")
@@ -344,7 +344,7 @@ class TestGetValueCounts:
         total = sum(result.value_counts.values())
         assert total == 10
 
-    async def test_value_counts_numeric(self, edge_case_session):
+    async def test_value_counts_numeric(self, edge_case_session) -> None:
         """Test value counts for numeric column."""
         ctx = create_mock_context(edge_case_session)
         result = await get_value_counts(ctx, "zeros")
@@ -354,7 +354,7 @@ class TestGetValueCounts:
         # Check if key is string "0" or numeric 0
         assert result.value_counts.get("0", 0) == 5 or result.value_counts.get(0, 0) == 5  # type: ignore[call-overload]
 
-    async def test_value_counts_with_nulls(self, sparse_session):
+    async def test_value_counts_with_nulls(self, sparse_session) -> None:
         """Test value counts with null values."""
         ctx = create_mock_context(sparse_session)
         result = await get_value_counts(ctx, "value1")
@@ -365,7 +365,7 @@ class TestGetValueCounts:
         total = sum(result.value_counts.values())
         assert total <= 6  # Total rows including or excluding nulls
 
-    async def test_value_counts_top_n(self, stats_session):
+    async def test_value_counts_top_n(self, stats_session) -> None:
         """Test limiting value counts to top N."""
         ctx = create_mock_context(stats_session)
         result = await get_value_counts(ctx, "department")
@@ -373,7 +373,7 @@ class TestGetValueCounts:
         assert result.success is True
         assert len(result.value_counts) <= 10  # Default limit
 
-    async def test_value_counts_invalid_column(self, stats_session):
+    async def test_value_counts_invalid_column(self, stats_session) -> None:
         """Test value counts with invalid column."""
         ctx = create_mock_context(stats_session)
 
@@ -385,7 +385,7 @@ class TestGetValueCounts:
 class TestEdgeCasesAndIntegration:
     """Test edge cases and integration scenarios."""
 
-    async def test_single_row_statistics(self):
+    async def test_single_row_statistics(self) -> None:
         """Test statistics with single row."""
         csv_content = "value\n42"
         load_ctx = create_mock_context()
@@ -399,7 +399,7 @@ class TestEdgeCasesAndIntegration:
         assert col_stats.statistics.count == 1
         assert col_stats.statistics.std == 0  # No variation
 
-    async def test_all_null_column(self):
+    async def test_all_null_column(self) -> None:
         """Test statistics on column with all null values."""
         csv_content = "id,empty\n1,\n2,\n3,"
         load_ctx = create_mock_context()
@@ -410,7 +410,7 @@ class TestEdgeCasesAndIntegration:
         assert col_stats.success is True
         assert col_stats.non_null_count == 0
 
-    async def test_mixed_type_handling(self):
+    async def test_mixed_type_handling(self) -> None:
         """Test handling of mixed data types."""
         csv_content = "mixed\n1\n2.5\ntext\n4"
         ctx = create_mock_context()
