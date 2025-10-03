@@ -70,6 +70,14 @@ jobs:
             --cov-report=term-missing \
             --cov-fail-under=80
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
   integration-tests:
     name: Integration Tests
     runs-on: ubuntu-latest

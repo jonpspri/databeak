@@ -1,6 +1,7 @@
 # DataBeak
 
 [![Tests](https://github.com/jonpspri/databeak/actions/workflows/test.yml/badge.svg)](https://github.com/jonpspri/databeak/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/jonpspri/databeak/branch/main/graph/badge.svg)](https://codecov.io/gh/jonpspri/databeak)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
