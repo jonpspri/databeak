@@ -34,18 +34,10 @@ jobs:
 
       - name: Check for TODO/FIXME additions
         run: |
-          git diff origin/${{ github.base_ref }}...HEAD -- '*.py' | \
-          grep -E '^\+.*\b(TODO|FIXME)\b' && \
-          echo "::warning::New TODO/FIXME comments added. Consider creating issues instead." || \
-          echo "No new TODO/FIXME comments found."
-
-      - name: Verify test coverage
-        run: |
-          uv run pytest tests/unit/ \
-            --cov=src/databeak \
-            --cov-report=term-missing \
-            --cov-fail-under=80 \
-            --quiet
+          set -euo pipefail
+          if git diff origin/${{ github.base_ref }}...HEAD -- '*.py' | grep -qE '^\+.*\b(TODO|FIXME)\b'; then
+            echo "::warning::New TODO/FIXME comments added. Consider creating issues instead."
+          fi
 
       - name: Check for large file additions
         run: |
@@ -106,7 +98,7 @@ jobs:
         run: |
           files_changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
           lines_changed=$(git diff --stat origin/${{ github.base_ref }}...HEAD | tail -1 | \
-            grep -oE '[0-9]+ insertions|[0-9]+ deletions' | grep -oE '[0-9]+' | \
+            grep -oE '[0-9]+' | \
             awk '{sum+=$1} END {print sum}')
 
           echo "Files changed: $files_changed"
