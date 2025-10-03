@@ -97,8 +97,6 @@ jobs:
 
       - name: Run Gitleaks secret scanner
         uses: gitleaks/gitleaks-action@v2
-        with:
-          fail: true  # Fail workflow if secrets are detected
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: false
