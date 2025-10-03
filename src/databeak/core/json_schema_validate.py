@@ -18,10 +18,10 @@ def _is_integer(checker: TypeChecker, instance: Any) -> bool:
         return True
     if isinstance(instance, str):
         try:
-            int(instance)
-            return True
+            parsed = float(instance)
+            return parsed.is_integer()
         except ValueError:
-            pass
+            return False
     return isinstance(instance, float) and instance.is_integer()
 
 
