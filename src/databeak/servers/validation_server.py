@@ -450,30 +450,6 @@ QualityRuleType = Annotated[
 ]
 
 
-def _default_anomaly_methods() -> list[Literal["statistical", "pattern", "missing"]]:
-    """Return default methods for anomaly detection."""
-    return ["statistical", "pattern", "missing"]
-
-
-class AnomalyDetectionParams(BaseModel):
-    """Parameters for anomaly detection."""
-
-    columns: list[str] | None = Field(
-        None,
-        description="Specific columns to analyze (None for all columns)",
-    )
-    sensitivity: float = Field(
-        0.95,
-        ge=0.0,
-        le=1.0,
-        description="Detection sensitivity threshold (higher = more strict)",
-    )
-    methods: list[Literal["statistical", "pattern", "missing"]] = Field(
-        default_factory=_default_anomaly_methods,
-        description="Anomaly detection methods to apply",
-    )
-
-
 # ============================================================================
 # VALIDATION RESOURCE MANAGEMENT
 # ============================================================================

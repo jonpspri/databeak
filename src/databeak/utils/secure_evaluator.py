@@ -499,63 +499,7 @@ class SecureExpressionEvaluator:
         """
         # Validate expression syntax first
         self.validate_expression_syntax(expression)
-
-        # Build context with column data
-        context = {}
-
-        # Handle column context mapping (e.g., x -> actual column name)
-        if column_context:
-            for var_name, column_name in column_context.items():
-                if column_name not in dataframe.columns:
-                    msg = "column"
-                    raise InvalidParameterError(
-                        msg,
-                        column_name,
-                        f"Column '{column_name}' not found in DataFrame",
-                    )
-                context[var_name] = dataframe[column_name]
-
-        # Add all column names as direct references
-        for col in dataframe.columns:
-            # Use backticks for column names with spaces/special chars
-            safe_col_name = col.replace("`", "")  # Remove existing backticks
-            context[safe_col_name] = dataframe[col]
-            context[f"`{safe_col_name}`"] = dataframe[col]
-
-        # Add constants and safe functions to context
-        context.update(self._evaluator.names)
-
-        try:
-            # Use simpleeval for safe execution
-            self._evaluator.names.update(context)
-            result = self._evaluator.eval(expression)
-
-            # Ensure result is a pandas Series
-            if not isinstance(result, pd.Series):
-                # Convert scalar or array results to Series
-                if hasattr(result, "__len__") and len(result) == len(dataframe):
-                    result = pd.Series(result, index=dataframe.index)
-                else:
-                    # Scalar result - broadcast to all rows
-                    result = pd.Series([result] * len(dataframe), index=dataframe.index)
-
-            return result  # type: ignore[no-any-return]
-
-        except NameNotDefined as e:
-            msg = "expression"
-            raise InvalidParameterError(
-                msg,
-                expression,
-                f"Undefined variable in expression: {e}. "
-                f"Available columns: {list(dataframe.columns)}",
-            ) from e
-        except Exception as e:
-            msg = "expression"
-            raise InvalidParameterError(
-                msg,
-                expression,
-                f"Expression evaluation failed: {e}",
-            ) from e
+        return self._evaluate_with_context(expression, dataframe, column_context)
 
     def evaluate_simple_formula(self, formula: str, dataframe: pd.DataFrame) -> pd.Series:
         """Evaluate a formula with direct column references.
@@ -645,7 +589,45 @@ class SecureExpressionEvaluator:
     ) -> pd.Series:
         """Evaluate mathematical expression without re-validation.
 
-        This is used internally by evaluate_string_expression to avoid double-validation.
+        This method is used internally by evaluate_string_expression to avoid double-validation.
+        The caller must ensure that the expression has already been validated for safety.
+
+        Validation requirements:
+            - The expression must be checked for unsafe AST nodes (e.g., no function calls except allowlisted ones, no attribute access, no system calls).
+            - Only allowlisted functions and operators should be permitted.
+            - Column references must be validated against the DataFrame.
+
+        If validation is skipped:
+            - Unsafe or malicious expressions may be executed, potentially leading to code injection, data leakage, or other security vulnerabilities.
+            - This method does not perform any validation itself and should never be called directly with untrusted input.
+
+        Raises:
+            InvalidParameterError: If evaluation fails.
+        """
+        return self._evaluate_with_context(expression, dataframe, column_context)
+
+    def _evaluate_with_context(
+        self,
+        expression: str,
+        dataframe: pd.DataFrame,
+        column_context: dict[str, str] | None = None,
+    ) -> pd.Series:
+        """Core evaluation logic used by both validated and pre-validated paths.
+
+        This method performs the actual expression evaluation with column context.
+        It does NOT validate the expression - callers must validate before calling.
+
+        Args:
+            expression: The expression to evaluate (must be pre-validated)
+            dataframe: DataFrame containing the data
+            column_context: Optional mapping of variable names to column names
+
+        Returns:
+            pd.Series: Result of the expression evaluation
+
+        Raises:
+            InvalidParameterError: If column references are invalid or evaluation fails
+
         """
         # Build context with column data
         context = {}
