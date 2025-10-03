@@ -1,7 +1,10 @@
 """Mock Context for testing FastMCP Context state management."""
 
 import uuid
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 class ContextProtocol(Protocol):
@@ -48,6 +51,10 @@ class MockContext:
 def create_mock_context(
     session_id: str | None = None,
     session_data: dict[str, Any] | None = None,
-) -> MockContext:
-    """Create a mock context with session data."""
-    return MockContext(session_id=session_id, session_data=session_data)
+) -> "Context":
+    """Create a mock context with session data.
+
+    Returns:
+        MockContext cast to Context for type compatibility
+    """
+    return cast("Context", MockContext(session_id=session_id, session_data=session_data))
