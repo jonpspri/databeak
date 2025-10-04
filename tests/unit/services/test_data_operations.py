@@ -166,7 +166,7 @@ class TestCreateDataPreviewWithIndices:
             (-np.inf, float("-inf")),
         ],
     )
-    def test_special_values(self, special_value, expected) -> None:
+    def test_special_values(self, special_value: float, expected: float) -> None:
         """Test handling of special pandas/numpy values."""
         df = pd.DataFrame({"col": [1, special_value, 3]})
 
@@ -553,7 +553,7 @@ class TestSafeTypeConversion:
             ("boolean", "bool"),
         ],
     )
-    def test_all_type_conversions_dtype(self, target_type, expected_dtype) -> None:
+    def test_all_type_conversions_dtype(self, target_type: str, expected_dtype: str) -> None:
         """Test that all conversions produce expected dtypes."""
         if target_type == "float":
             # Use numeric data for float conversion

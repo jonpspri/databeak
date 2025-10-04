@@ -7,7 +7,6 @@ between server modules and session management implementation.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Protocol
 
 from .data_models import SessionInfo
@@ -114,59 +113,3 @@ def get_default_session_service_factory() -> SessionServiceFactory:
     from databeak.core.session import get_session_manager
 
     return SessionServiceFactory(get_session_manager())
-
-
-class MockSessionManager:
-    """Mock session manager for testing.
-
-    This provides a simple in-memory implementation suitable for unit testing without requiring the
-    full session management infrastructure.
-    """
-
-    def __init__(self) -> None:
-        """Initialize empty mock session manager."""
-        self.sessions: dict[str, DatabeakSession] = {}
-        self.next_id = 1
-
-    def get_or_create_session(self, session_id: str) -> DatabeakSession:
-        """Get or create a session by ID."""
-        session = self.sessions.get(session_id)
-        if not session:
-            # Lazy import to avoid circular dependency
-            from databeak.core.session import DatabeakSession as _DatabeakSession
-
-            # Create new session like the real implementation
-            session = _DatabeakSession(session_id=session_id)
-            self.sessions[session_id] = session
-        return session
-
-    def list_sessions(self) -> list[SessionInfo]:
-        """List all active sessions."""
-        results = []
-        for session_id, session in self.sessions.items():
-            df = session.df if session.has_data() else None
-            info = SessionInfo(
-                session_id=session_id,
-                created_at=datetime.now(UTC),
-                last_accessed=datetime.now(UTC),
-                row_count=len(df) if df is not None else 0,
-                column_count=len(df.columns) if df is not None else 0,
-                columns=list(df.columns) if df is not None else [],
-                memory_usage_mb=0.0,
-                operations_count=0,
-                file_path=None,
-            )
-            results.append(info)
-        return results
-
-    async def remove_session(self, session_id: str) -> bool:
-        """Remove a session."""
-        if session_id in self.sessions:
-            del self.sessions[session_id]
-            return True
-        return False
-
-    def add_test_data(self, session_id: str, df: pd.DataFrame) -> None:
-        """Add test data to a session (for testing purposes)."""
-        session = self.get_or_create_session(session_id)
-        session.load_data(df, None)

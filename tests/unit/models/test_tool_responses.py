@@ -50,9 +50,6 @@ from databeak.servers.discovery_server import (
     OutliersResult,
     ProfileInfo,
 )
-from databeak.servers.io_server import (
-    DataPreview as IODataPreview,  # Import io_server's DataPreview for LoadResult
-)
 
 # Import IO server models that moved to modular architecture
 from databeak.servers.io_server import (
@@ -103,7 +100,7 @@ class TestSessionInfo:
         self, session_data: dict[str, Any], expected_attrs: dict[str, Any]
     ) -> None:
         """Test SessionInfo creation with different configurations."""
-        session = SessionInfo(**session_data)  # type: ignore[arg-type]
+        session = SessionInfo(**session_data)
         for attr, expected_value in expected_attrs.items():
             assert getattr(session, attr) == expected_value
 
@@ -158,7 +155,7 @@ class TestOutlierInfo:
     def test_invalid_types(self) -> None:
         """Test invalid data types raise ValidationError."""
         with pytest.raises(ValidationError):
-            OutlierInfo(row_index="not_an_int", value=99.9)  # type: ignore[arg-type]
+            OutlierInfo(row_index="not_an_int", value=99.9)
 
 
 class TestStatisticsSummary:
@@ -192,7 +189,7 @@ class TestStatisticsSummary:
             "75%": 65.0,  # alias
             "max": 90.0,
         }
-        stats = StatisticsSummary(**data)  # type: ignore[arg-type]
+        stats = StatisticsSummary(**data)
         assert stats.percentile_25 == 35.0
         assert stats.percentile_50 == 50.0
         assert stats.percentile_75 == 65.0
@@ -223,7 +220,7 @@ class TestDataTypeInfo:
         """Test valid data types."""
         for dtype in ["int64", "float64", "object", "bool", "datetime64", "category"]:
             info = DataTypeInfo(
-                type=dtype,  # type: ignore[arg-type]
+                type=dtype,
                 nullable=True,
                 unique_count=10,
                 null_count=2,
@@ -234,7 +231,7 @@ class TestDataTypeInfo:
         """Test invalid data type raises ValidationError."""
         with pytest.raises(ValidationError) as exc_info:
             DataTypeInfo(
-                type="invalid_type",  # type: ignore[arg-type]
+                type="invalid_type",
                 nullable=True,
                 unique_count=10,
                 null_count=2,
@@ -324,15 +321,15 @@ class TestCellLocation:
     def test_csv_cell_value_types(self) -> None:
         """Test CellLocation accepts standard CSV value types."""
         for value in [42, 3.14, "text", True, None]:
-            cell = CellLocation(row=0, column="test", value=value)  # type: ignore[arg-type]
+            cell = CellLocation(row=0, column="test", value=value)
             assert cell.value == value
 
     def test_invalid_complex_types(self) -> None:
         """Test CellLocation rejects complex types that aren't valid CSV cell values."""
         with pytest.raises(ValidationError):
-            CellLocation(row=0, column="test", value=[1, 2, 3])  # type: ignore[arg-type]
+            CellLocation(row=0, column="test", value=[1, 2, 3])
         with pytest.raises(ValidationError):
-            CellLocation(row=0, column="test", value={"key": "value"})  # type: ignore[arg-type]
+            CellLocation(row=0, column="test", value={"key": "value"})
 
 
 class TestProfileInfo:
@@ -439,7 +436,7 @@ class TestLoadResult:
 
     def test_valid_creation_with_optional_fields(self) -> None:
         """Test valid LoadResult creation with all fields."""
-        preview = IODataPreview(
+        preview = DataPreview(
             rows=[{"id": 1, "name": "John"}],
             row_count=1,
             column_count=2,
@@ -463,7 +460,7 @@ class TestLoadResult:
         """Test invalid field types raise ValidationError."""
         with pytest.raises(ValidationError):
             LoadResult(
-                rows_affected="not_an_int",  # type: ignore[arg-type]  # Should be int
+                rows_affected="not_an_int",  # Should be int
                 columns_affected=["col1"],
             )
 
@@ -492,7 +489,7 @@ class TestLoadResult:
             "columns_affected": ["id"],
             "extra_field": "should_be_ignored",
         }
-        result = LoadResult(**data)  # type: ignore[arg-type]
+        result = LoadResult(**data)
         assert result.rows_affected == 100
         # Extra field should not cause an error (Pydantic ignores by default)
 
@@ -547,7 +544,7 @@ class TestExportResult:
             for fmt in valid_formats:
                 result = ExportResult(
                     file_path=tmp.name,
-                    format=fmt,  # type: ignore[arg-type]
+                    format=fmt,
                     rows_exported=10,
                 )
                 assert result.format == fmt
@@ -556,7 +553,7 @@ class TestExportResult:
             with pytest.raises(ValidationError):
                 ExportResult(
                     file_path=tmp.name,
-                    format="invalid_format",  # type: ignore[arg-type]
+                    format="invalid_format",
                     rows_exported=10,
                 )
 
@@ -649,7 +646,7 @@ class TestCorrelationResult:
         for method in ["pearson", "spearman", "kendall"]:
             result = CorrelationResult(
                 correlation_matrix=matrix,
-                method=method,  # type: ignore[arg-type]
+                method=method,
                 columns_analyzed=["a"],
             )
             assert result.method == method
@@ -659,7 +656,7 @@ class TestCorrelationResult:
         with pytest.raises(ValidationError):
             CorrelationResult(
                 correlation_matrix={"a": {"a": 1.0}},
-                method="invalid_method",  # type: ignore[arg-type]
+                method="invalid_method",
                 columns_analyzed=["a"],
             )
 
@@ -716,7 +713,7 @@ class TestOutliersResult:
             result = OutliersResult(
                 outliers_found=1,
                 outliers_by_column=outliers,
-                method=method,  # type: ignore[arg-type]
+                method=method,
                 threshold=2.0,
             )
             assert result.method == method
@@ -763,7 +760,7 @@ class TestColumnStatisticsResult:
             result = ColumnStatisticsResult(
                 column="test_col",
                 statistics=stats,
-                data_type=dtype,  # type: ignore[arg-type]
+                data_type=dtype,
                 non_null_count=10,
             )
             assert result.data_type == dtype
@@ -1059,7 +1056,7 @@ class TestComprehensiveEdgeCases:
             "another_extra": 42,
         }
 
-        result = LoadResult(**data_with_extra)  # type: ignore[arg-type]
+        result = LoadResult(**data_with_extra)
         assert result.rows_affected == 50
         # Should not have extra fields as attributes
         assert not hasattr(result, "unknown_field")
@@ -1089,7 +1086,7 @@ class TestComprehensiveEdgeCases:
             "75%": 60.0,
             "max": 90.0,
         }
-        stats_from_alias = StatisticsSummary(**data_with_alias)  # type: ignore[arg-type]
+        stats_from_alias = StatisticsSummary(**data_with_alias)
         assert stats_from_alias == stats
 
     def test_inheritance_behavior(self) -> None:

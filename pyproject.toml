@@ -220,16 +220,20 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_any_unimported = false
 disallow_any_explicit = false
+disallow_any_generics = true  # From pydantic recommendation
 no_implicit_optional = true
+no_implicit_reexport = true   # From pydantic recommendation
 check_untyped_defs = true
 warn_redundant_casts = true
-warn_unused_ignores = false  # While we mark our Anys
+warn_unused_ignores = true
 warn_no_return = true
 show_error_codes = true
 strict_equality = true
 pretty = true
 show_column_numbers = true
 show_error_context = true
+follow_imports = "silent"  # From pydantic recommendation
+exclude = ["examples/"]
 plugins = [
     "pydantic.mypy",
     # "pandera.mypy",  # TODO: Enable when pre-commit environment supports pandera
@@ -237,9 +241,8 @@ plugins = [
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
-init_typed = true
+init_typed = false  # Too many Enums gumming up the works
 warn_required_dynamic_aliases = true
-warn_untyped_fields = true
 
 [tool.pandera.mypy]
 # Enable enhanced DataFrame type checking with Pandera
@@ -262,10 +265,10 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["tests.*", "tests.unit.*", "tests.integration.*", "tests.security.*"]
-disallow_untyped_defs = false
-disallow_any_explicit = false
-disable_error_code = ["arg-type", "no-untyped-def"]
-check_untyped_defs = false
+disallow_untyped_defs = true
+disallow_any_explicit = true
+#disable_error_code = ["arg-type", "no-untyped-def"]
+check_untyped_defs = true
 
 [[tool.mypy.overrides]]
 module = "examples.*"

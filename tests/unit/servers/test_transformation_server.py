@@ -5,11 +5,11 @@ transformation operations.
 """
 
 import pytest
+from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
-import databeak.servers.transformation_server  # noqa: F401
-from databeak.models.data_models import FilterCondition
+from databeak.models import FilterCondition
 from databeak.servers.io_server import load_csv_from_content
 from databeak.servers.transformation_server import (
     SortColumn,
@@ -22,7 +22,7 @@ from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
-async def transformation_session() -> None:
+async def transformation_ctx() -> Context:
     """Create a test session with transformation data."""
     csv_content = """name,age,score,status,notes
 John Doe,30,85.5,active,Good performance
@@ -33,64 +33,65 @@ Charlie Wilson,30,85.5,pending,"""
 
     ctx = create_mock_context()
     await load_csv_from_content(ctx, csv_content)
-    return ctx.session_id
+    return ctx
 
 
 @pytest.mark.asyncio
 class TestTransformationServerFilterRows:
     """Test filter_rows server function."""
 
-    async def test_filter_with_pydantic_models(self, transformation_session) -> None:
+    async def test_filter_with_pydantic_models(self, transformation_ctx: Context) -> None:
         """Test filtering using Pydantic FilterCondition models."""
         conditions = [
             FilterCondition(column="age", operator=">", value=27),
             FilterCondition(column="status", operator="=", value="active"),
         ]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = filter_rows(ctx, conditions, mode="and")
         assert result.success is True
         assert result.rows_before == 5
         assert result.rows_after == 2  # John (30, active) and Alice (28 > 27, active)
 
-    async def test_filter_with_mixed_formats(self, transformation_session) -> None:
+    async def test_filter_with_mixed_formats(self, transformation_ctx: Context) -> None:
         """Test filtering with mixed Pydantic models and dict formats."""
         conditions = [
             FilterCondition(column="age", operator=">=", value=30),
             {"column": "status", "operator": "!=", "value": "inactive"},
         ]
 
-        ctx = create_mock_context(transformation_session)
-        result = filter_rows(ctx, conditions, mode="and")
+        ctx = transformation_ctx
+        # TODO:  Should filter_rows legitimately accept Any?
+        result = filter_rows(ctx, conditions, mode="and")  # type: ignore[arg-type]  # Testing mixed types (Yay Pydantic!)
         assert result.success is True
         assert result.rows_after == 2  # John and Charlie
 
-    async def test_filter_null_operators(self, transformation_session) -> None:
+    async def test_filter_null_operators(self, transformation_ctx: Context) -> None:
         """Test null operators with Pydantic models."""
         conditions = [FilterCondition(column="notes", operator="is_null")]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = filter_rows(ctx, conditions)
         assert result.success is True
         assert result.rows_after == 2  # Jane and Charlie have empty notes
 
-    async def test_filter_text_operators(self, transformation_session) -> None:
+    async def test_filter_text_operators(self, transformation_ctx: Context) -> None:
         """Test text operators with Pydantic models."""
         conditions = [FilterCondition(column="name", operator="contains", value="o")]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = filter_rows(ctx, conditions)
         assert result.success is True
         assert result.rows_after == 4  # John Doe, Bob Johnson, Alice Brown, Charlie Wilson
 
-    async def test_filter_or_mode(self, transformation_session) -> None:
+    async def test_filter_or_mode(self, transformation_ctx: Context) -> None:
         """Test OR mode with multiple conditions."""
         conditions = [
             FilterCondition(column="age", operator="<", value=28),
             FilterCondition(column="score", operator=">", value=94),
         ]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = filter_rows(ctx, conditions, mode="or")
         assert result.success is True
         assert result.rows_after == 2  # Jane (age < 28) and Alice (score > 94)
@@ -100,19 +101,19 @@ class TestTransformationServerFilterRows:
 class TestTransformationServerSort:
     """Test sort_data server function."""
 
-    async def test_sort_with_pydantic_models(self, transformation_session) -> None:
+    async def test_sort_with_pydantic_models(self, transformation_ctx: Context) -> None:
         """Test sorting using Pydantic SortColumn models."""
-        columns = [
+        columns: list[str | SortColumn] = [
             SortColumn(column="age", ascending=False),
             SortColumn(column="score", ascending=True),
         ]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = sort_data(ctx, columns)
         assert result.sorted_by == ["age", "score"]
         assert len(result.ascending) == 2
 
-    async def test_sort_with_mixed_formats(self, transformation_session) -> None:
+    async def test_sort_with_mixed_formats(self, transformation_ctx: Context) -> None:
         """Test sorting with mixed formats."""
         columns = [
             SortColumn(column="status", ascending=True),
@@ -120,13 +121,14 @@ class TestTransformationServerSort:
             "name",  # Simple string format
         ]
 
-        ctx = create_mock_context(transformation_session)
-        result = sort_data(ctx, columns)
+        ctx = transformation_ctx
+        # TODO:  Should sort_data legitimately accept Any?
+        result = sort_data(ctx, columns)  # type: ignore[arg-type]  # Testing mixed types (Yay Pydantic!)
         assert result.success is True
 
-    async def test_sort_string_columns(self, transformation_session) -> None:
+    async def test_sort_string_columns(self, transformation_ctx: Context) -> None:
         """Test sorting simple string columns."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = sort_data(ctx, ["name", "status"])
         assert result.success is True
 
@@ -135,12 +137,12 @@ class TestTransformationServerSort:
 class TestTransformationServerDuplicates:
     """Test remove_duplicates server function."""
 
-    async def test_remove_duplicates_all_columns(self, transformation_session) -> None:
+    async def test_remove_duplicates_all_columns(self, transformation_ctx: Context) -> None:
         """Test removing exact duplicates."""
         # First add a duplicate row
         from databeak.servers.row_operations_server import insert_row
 
-        ctx_insert = create_mock_context(transformation_session)
+        ctx_insert = transformation_ctx
         insert_row(
             ctx_insert,
             row_index=-1,
@@ -153,22 +155,22 @@ class TestTransformationServerDuplicates:
             },
         )
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = remove_duplicates(ctx)
         assert result.operation == "remove_duplicates"
         assert result.rows_affected > 0
 
-    async def test_remove_duplicates_subset(self, transformation_session) -> None:
+    async def test_remove_duplicates_subset(self, transformation_ctx: Context) -> None:
         """Test removing duplicates based on subset of columns."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = remove_duplicates(ctx, subset=["age", "score"])
         assert result.success is True
 
-    async def test_remove_duplicates_keep_options(self, transformation_session) -> None:
+    async def test_remove_duplicates_keep_options(self, transformation_ctx: Context) -> None:
         """Test different keep options."""
         for keep_option in ["first", "last", "none"]:
-            ctx = create_mock_context(transformation_session)
-            result = remove_duplicates(ctx, keep=keep_option)
+            ctx = transformation_ctx
+            result = remove_duplicates(ctx, keep=keep_option)  # type: ignore[arg-type]  # Testing different keep options
             assert result.operation == "remove_duplicates"
 
 
@@ -176,36 +178,36 @@ class TestTransformationServerDuplicates:
 class TestTransformationServerFillMissing:
     """Test fill_missing_values server function."""
 
-    async def test_fill_missing_drop(self, transformation_session) -> None:
+    async def test_fill_missing_drop(self, transformation_ctx: Context) -> None:
         """Test dropping rows with missing values."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = fill_missing_values(ctx, strategy="drop")
         assert result.operation == "fill_missing_values"
         assert result.success is True
 
-    async def test_fill_missing_with_value(self, transformation_session) -> None:
+    async def test_fill_missing_with_value(self, transformation_ctx: Context) -> None:
         """Test filling with specific value."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = fill_missing_values(ctx, strategy="fill", value="Unknown")
         assert result.success is True
 
-    async def test_fill_missing_forward_fill(self, transformation_session) -> None:
+    async def test_fill_missing_forward_fill(self, transformation_ctx: Context) -> None:
         """Test forward fill strategy."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = fill_missing_values(ctx, strategy="forward")
         assert result.success is True
 
-    async def test_fill_missing_column_specific(self, transformation_session) -> None:
+    async def test_fill_missing_column_specific(self, transformation_ctx: Context) -> None:
         """Test filling specific columns only."""
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
         result = fill_missing_values(ctx, strategy="fill", value="N/A", columns=["notes"])
         assert result.success is True
 
-    async def test_fill_missing_statistical(self, transformation_session) -> None:
+    async def test_fill_missing_statistical(self, transformation_ctx: Context) -> None:
         """Test statistical fill strategies."""
         for strategy in ["mean", "median", "mode"]:
-            ctx = create_mock_context(transformation_session)
-            result = fill_missing_values(ctx, strategy=strategy)
+            ctx = transformation_ctx
+            result = fill_missing_values(ctx, strategy=strategy)  # type: ignore[arg-type]  # Testing different strategies
             assert result.success is True
 
 
@@ -224,27 +226,27 @@ class TestTransformationServerErrorHandling:
 
     async def test_sort_invalid_session(self) -> None:
         """Test sorting with invalid session."""
-        columns = [SortColumn(column="test", ascending=True)]
+        columns: list[str | SortColumn] = [SortColumn(column="test", ascending=True)]
 
         ctx = create_mock_context("invalid-session-id")
 
         with pytest.raises(ToolError, match="No data loaded in session"):
             sort_data(ctx, columns)
 
-    async def test_filter_invalid_column(self, transformation_session) -> None:
+    async def test_filter_invalid_column(self, transformation_ctx: Context) -> None:
         """Test filtering with invalid column name."""
         conditions = [FilterCondition(column="nonexistent", operator="=", value="test")]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
 
         with pytest.raises(ToolError, match="not found"):
             filter_rows(ctx, conditions)
 
-    async def test_sort_invalid_column(self, transformation_session) -> None:
+    async def test_sort_invalid_column(self, transformation_ctx: Context) -> None:
         """Test sorting with invalid column name."""
-        columns = [SortColumn(column="nonexistent", ascending=True)]
+        columns: list[str | SortColumn] = [SortColumn(column="nonexistent", ascending=True)]
 
-        ctx = create_mock_context(transformation_session)
+        ctx = transformation_ctx
 
         with pytest.raises(ToolError):
             sort_data(ctx, columns)

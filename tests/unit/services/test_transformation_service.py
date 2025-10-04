@@ -1,6 +1,7 @@
 """Unit tests for transformation service functions."""
 
 import uuid
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -69,7 +70,7 @@ class TestFilterRows:
     """Tests for filter_rows_with_pydantic function."""
 
     @pytest.fixture
-    def session_with_data(self) -> None:
+    def session_with_data(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a real session with test data."""
         session_id = str(uuid.uuid4())
         manager = get_session_manager()
@@ -86,7 +87,9 @@ class TestFilterRows:
         return session_id, df
 
     @pytest.mark.asyncio
-    async def test_filter_rows_equals_condition(self, session_with_data) -> None:
+    async def test_filter_rows_equals_condition(
+        self, session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test filtering with equals condition."""
         session_id, _original_df = session_with_data
 
@@ -101,7 +104,9 @@ class TestFilterRows:
         assert result.conditions_applied == 1
 
     @pytest.mark.asyncio
-    async def test_filter_rows_greater_than(self, session_with_data) -> None:
+    async def test_filter_rows_greater_than(
+        self, session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test filtering with greater than condition."""
         session_id, _original_df = session_with_data
 
@@ -111,7 +116,7 @@ class TestFilterRows:
         assert result.rows_filtered == 3  # 3 rows removed (Alice, Bob, Diana), 1 kept (Charlie)
 
     @pytest.mark.asyncio
-    async def test_filter_rows_contains(self, session_with_data) -> None:
+    async def test_filter_rows_contains(self, session_with_data: tuple[str, pd.DataFrame]) -> None:
         """Test filtering with contains condition."""
         session_id, _original_df = session_with_data
 
@@ -123,7 +128,9 @@ class TestFilterRows:
         )  # Only Alice, Charlie, Diana contain 'i', so Bob is filtered out
 
     @pytest.mark.asyncio
-    async def test_filter_rows_in_condition(self, session_with_data) -> None:
+    async def test_filter_rows_in_condition(
+        self, session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test filtering with 'in' condition."""
         session_id, _original_df = session_with_data
 
@@ -133,11 +140,11 @@ class TestFilterRows:
         assert result.rows_filtered == 1  # Removes Chicago
 
     @pytest.mark.asyncio
-    async def test_filter_rows_or_mode(self, session_with_data) -> None:
+    async def test_filter_rows_or_mode(self, session_with_data: tuple[str, pd.DataFrame]) -> None:
         """Test filtering with OR mode."""
         session_id, _original_df = session_with_data
 
-        conditions = [
+        conditions: list[dict[str, Any]] = [
             {"column": "age", "operator": "<", "value": 27},
             {"column": "city", "operator": "==", "value": "Chicago"},
         ]
@@ -146,7 +153,9 @@ class TestFilterRows:
         assert result.rows_after >= 2  # Alice (25) or Charlie (Chicago)
 
     @pytest.mark.asyncio
-    async def test_filter_rows_column_not_found(self, session_with_data) -> None:
+    async def test_filter_rows_column_not_found(
+        self, session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test filtering with non-existent column."""
         session_id, _original_df = session_with_data
 
@@ -156,7 +165,9 @@ class TestFilterRows:
             await filter_rows_with_pydantic(session_id, conditions)
 
     @pytest.mark.asyncio
-    async def test_filter_rows_invalid_operator(self, session_with_data) -> None:
+    async def test_filter_rows_invalid_operator(
+        self, session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test filtering with invalid operator."""
         session_id, _original_df = session_with_data
 
@@ -167,7 +178,7 @@ class TestFilterRows:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_filter_rows_is_null(self, mock_get_session) -> None:
+    async def test_filter_rows_is_null(self, mock_get_session: MagicMock) -> None:
         """Test filtering with is_null condition."""
         session = MagicMock()
         df = pd.DataFrame({"name": ["Alice", None, "Charlie"], "age": [25, 30, None]})
@@ -196,7 +207,7 @@ class TestSortData:
     """Tests for sort_data_with_pydantic function."""
 
     @pytest.fixture
-    def mock_session_with_data(self) -> None:
+    def mock_session_with_data(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a mock session with test data."""
         session = MagicMock()
         df = pd.DataFrame(
@@ -207,7 +218,9 @@ class TestSortData:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_sort_single_column(self, mock_get_session, mock_session_with_data) -> None:
+    async def test_sort_single_column(
+        self, mock_get_session: MagicMock, mock_session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test sorting by single column."""
         session, original_df = mock_session_with_data
         mock_get_session.return_value = (session, original_df)
@@ -222,7 +235,9 @@ class TestSortData:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_sort_multiple_columns(self, mock_get_session, mock_session_with_data) -> None:
+    async def test_sort_multiple_columns(
+        self, mock_get_session: MagicMock, mock_session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test sorting by multiple columns."""
         session, original_df = mock_session_with_data
         mock_get_session.return_value = (session, original_df)
@@ -236,7 +251,9 @@ class TestSortData:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_sort_with_dict_format(self, mock_get_session, mock_session_with_data) -> None:
+    async def test_sort_with_dict_format(
+        self, mock_get_session: MagicMock, mock_session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test sorting with dictionary format columns."""
         session, original_df = mock_session_with_data
         mock_get_session.return_value = (session, original_df)
@@ -249,7 +266,9 @@ class TestSortData:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_sort_missing_column(self, mock_get_session, mock_session_with_data) -> None:
+    async def test_sort_missing_column(
+        self, mock_get_session: MagicMock, mock_session_with_data: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test sorting with non-existent column."""
         session, original_df = mock_session_with_data
         mock_get_session.return_value = (session, original_df)
@@ -262,7 +281,7 @@ class TestRemoveDuplicates:
     """Tests for remove_duplicates_with_pydantic function."""
 
     @pytest.fixture
-    def mock_session_with_duplicates(self) -> None:
+    def mock_session_with_duplicates(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a mock session with duplicate data."""
         session = MagicMock()
         df = pd.DataFrame(
@@ -279,9 +298,9 @@ class TestRemoveDuplicates:
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_all_columns(
         self,
-        mock_get_session,
-        mock_session_with_duplicates,
-    ):
+        mock_get_session: MagicMock,
+        mock_session_with_duplicates: tuple[str, pd.DataFrame],
+    ) -> None:
         """Test removing duplicates considering all columns."""
         session, original_df = mock_session_with_duplicates
         mock_get_session.return_value = (session, original_df)
@@ -299,7 +318,7 @@ class TestRemoveDuplicates:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_subset(
-        self, mock_get_session, mock_session_with_duplicates
+        self, mock_get_session: MagicMock, mock_session_with_duplicates: tuple[str, pd.DataFrame]
     ) -> None:
         """Test removing duplicates based on subset of columns."""
         session, original_df = mock_session_with_duplicates
@@ -314,9 +333,9 @@ class TestRemoveDuplicates:
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_keep_last(
         self,
-        mock_get_session,
-        mock_session_with_duplicates,
-    ):
+        mock_get_session: MagicMock,
+        mock_session_with_duplicates: tuple[str, pd.DataFrame],
+    ) -> None:
         """Test removing duplicates keeping last occurrence."""
         session, original_df = mock_session_with_duplicates
         mock_get_session.return_value = (session, original_df)
@@ -329,9 +348,9 @@ class TestRemoveDuplicates:
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_remove_duplicates_subset_not_found(
         self,
-        mock_get_session,
-        mock_session_with_duplicates,
-    ):
+        mock_get_session: MagicMock,
+        mock_session_with_duplicates: tuple[str, pd.DataFrame],
+    ) -> None:
         """Test removing duplicates with non-existent subset columns."""
         session, original_df = mock_session_with_duplicates
         mock_get_session.return_value = (session, original_df)
@@ -344,7 +363,7 @@ class TestFillMissingValues:
     """Tests for fill_missing_values_with_pydantic function."""
 
     @pytest.fixture
-    def mock_session_with_nulls(self) -> None:
+    def mock_session_with_nulls(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a mock session with missing data."""
         session = MagicMock()
         df = pd.DataFrame(
@@ -360,7 +379,7 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_drop_strategy(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test filling missing values with drop strategy."""
         session, original_df = mock_session_with_nulls
@@ -377,7 +396,7 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_fill_strategy(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test filling missing values with fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -396,7 +415,7 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_mean_strategy(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test filling missing values with mean strategy."""
         session, original_df = mock_session_with_nulls
@@ -414,7 +433,7 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_forward_strategy(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test filling missing values with forward fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -427,7 +446,7 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_no_value_for_fill(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test error when no value provided for fill strategy."""
         session, original_df = mock_session_with_nulls
@@ -439,19 +458,19 @@ class TestFillMissingValues:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_invalid_strategy(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test error with invalid strategy."""
         session, original_df = mock_session_with_nulls
         mock_get_session.return_value = (session, original_df)
 
         with pytest.raises(ToolError, match="Unknown strategy"):
-            await fill_missing_values_with_pydantic("test-session", strategy="invalid")
+            await fill_missing_values_with_pydantic("test-session", strategy="invalid")  # type: ignore[arg-type]
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_fill_missing_columns_not_found(
-        self, mock_get_session, mock_session_with_nulls
+        self, mock_get_session: MagicMock, mock_session_with_nulls: tuple[str, pd.DataFrame]
     ) -> None:
         """Test error when specified columns not found."""
         session, original_df = mock_session_with_nulls
@@ -465,7 +484,7 @@ class TestTransformColumnCase:
     """Tests for transform_column_case_with_pydantic function."""
 
     @pytest.fixture
-    def mock_session_with_text(self) -> None:
+    def mock_session_with_text(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a mock session with text data."""
         session = MagicMock()
         df = pd.DataFrame(
@@ -479,7 +498,9 @@ class TestTransformColumnCase:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_transform_column_upper(self, mock_get_session, mock_session_with_text) -> None:
+    async def test_transform_column_upper(
+        self, mock_get_session: MagicMock, mock_session_with_text: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test transforming column to uppercase."""
         session, original_df = mock_session_with_text
         mock_get_session.return_value = (session, original_df)
@@ -496,7 +517,9 @@ class TestTransformColumnCase:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_transform_column_lower(self, mock_get_session, mock_session_with_text) -> None:
+    async def test_transform_column_lower(
+        self, mock_get_session: MagicMock, mock_session_with_text: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test transforming column to lowercase."""
         session, original_df = mock_session_with_text
         mock_get_session.return_value = (session, original_df)
@@ -507,7 +530,9 @@ class TestTransformColumnCase:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_transform_column_title(self, mock_get_session, mock_session_with_text) -> None:
+    async def test_transform_column_title(
+        self, mock_get_session: MagicMock, mock_session_with_text: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test transforming column to title case."""
         session, original_df = mock_session_with_text
         mock_get_session.return_value = (session, original_df)
@@ -519,7 +544,7 @@ class TestTransformColumnCase:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_capitalize(
-        self, mock_get_session, mock_session_with_text
+        self, mock_get_session: MagicMock, mock_session_with_text: tuple[str, pd.DataFrame]
     ) -> None:
         """Test transforming column to capitalize."""
         session, original_df = mock_session_with_text
@@ -532,7 +557,7 @@ class TestTransformColumnCase:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_not_found(
-        self, mock_get_session, mock_session_with_text
+        self, mock_get_session: MagicMock, mock_session_with_text: tuple[str, pd.DataFrame]
     ) -> None:
         """Test error when column not found."""
         session, original_df = mock_session_with_text
@@ -545,22 +570,22 @@ class TestTransformColumnCase:
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_transform_column_invalid_transform(
         self,
-        mock_get_session,
-        mock_session_with_text,
-    ):
+        mock_get_session: MagicMock,
+        mock_session_with_text: tuple[str, pd.DataFrame],
+    ) -> None:
         """Test error with invalid transform."""
         session, original_df = mock_session_with_text
         mock_get_session.return_value = (session, original_df)
 
         with pytest.raises(ToolError, match="Unknown transform"):
-            await transform_column_case_with_pydantic("test-session", "name", "invalid")
+            await transform_column_case_with_pydantic("test-session", "name", "invalid")  # type: ignore[arg-type]
 
 
 class TestStripColumn:
     """Tests for strip_column_with_pydantic function."""
 
     @pytest.fixture
-    def mock_session_with_whitespace(self) -> None:
+    def mock_session_with_whitespace(self) -> tuple[str, pd.DataFrame]:
         """Fixture providing a mock session with whitespace data."""
         session = MagicMock()
         df = pd.DataFrame(
@@ -571,7 +596,9 @@ class TestStripColumn:
 
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
-    async def test_strip_column(self, mock_get_session, mock_session_with_whitespace) -> None:
+    async def test_strip_column(
+        self, mock_get_session: MagicMock, mock_session_with_whitespace: tuple[str, pd.DataFrame]
+    ) -> None:
         """Test stripping whitespace from column."""
         session, original_df = mock_session_with_whitespace
         mock_get_session.return_value = (session, original_df)
@@ -589,7 +616,7 @@ class TestStripColumn:
     @pytest.mark.asyncio
     @patch("databeak.services.transformation_service._get_session_data")
     async def test_strip_column_not_found(
-        self, mock_get_session, mock_session_with_whitespace
+        self, mock_get_session: MagicMock, mock_session_with_whitespace: tuple[str, pd.DataFrame]
     ) -> None:
         """Test error when column not found."""
         session, original_df = mock_session_with_whitespace

@@ -76,7 +76,7 @@ class TestEnvironmentVariableConfiguration:
         assert settings.chunk_size == 10000
         assert settings.max_anomaly_sample_size == 10000
 
-    def test_environment_variable_override(self, monkeypatch) -> None:
+    def test_environment_variable_override(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         """Test that environment variables properly override defaults."""
         # History functionality removed, so no temp directory needed
         # Set test environment variables

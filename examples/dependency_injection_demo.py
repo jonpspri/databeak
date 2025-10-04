@@ -10,11 +10,11 @@ from datetime import UTC, datetime
 import pandas as pd
 
 # Import the new service-based architecture
-from databeak.models.session_service import (  # type: ignore[import-not-found]
+from databeak.models.session_service import (  # type: ignore[attr-defined]
     MockSessionManager,
     SessionServiceFactory,
 )
-from databeak.services.statistics_service import StatisticsService  # type: ignore[import-not-found]
+from databeak.services.statistics_service import StatisticsService
 
 
 async def demonstrate_before_after() -> None:

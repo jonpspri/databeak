@@ -23,7 +23,7 @@ class ContextProtocol(Protocol):
 class MockContext:
     """Mock implementation of FastMCP Context for testing."""
 
-    def __init__(
+    def __init__(  # type: ignore[explicit-any]  # session_data is reaaaally amorphous
         self, session_id: str | None = None, session_data: dict[str, Any] | None = None
     ) -> None:
         self._session_id = session_id or uuid.uuid4().hex
@@ -50,7 +50,7 @@ class MockContext:
         """Mock progress reporting method."""
 
 
-def create_mock_context(
+def create_mock_context(  # type: ignore[explicit-any]  # session_data is reaaaally amorphous
     session_id: str | None = None,
     session_data: dict[str, Any] | None = None,
 ) -> "Context":

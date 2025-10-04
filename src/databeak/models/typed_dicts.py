@@ -12,8 +12,42 @@ from __future__ import annotations
 
 from typing import Any, NotRequired, TypedDict
 
-# Type aliases for common data types
-CellValue = str | int | float | bool | None
+from databeak.models import CellValue
+
+__all__ = [
+    "CellValue",
+    "ColumnAnalysis",
+    "ColumnProfile",
+    "ColumnRenameResult",
+    "ColumnSelectionResult",
+    "ColumnStatistics",
+    "ConfigDict",
+    "CsvDataResource",
+    "CsvReadParams",
+    "DataDict",
+    "DataPreviewRecord",
+    "DataPreviewResult",
+    "DataProfileResult",
+    "DataSessionMetadata",
+    "DataStatisticsDict",
+    "DataValidationIssues",
+    "ErrorDetails",
+    "ExportOptions",
+    "InternalDataSummary",
+    "MetadataDict",
+    "OperationMetadata",
+    "OperationResultDict",
+    "QualityCheckResult",
+    "RowUpdateResult",
+    "ServerConfig",
+    "SessionMetadataDict",
+    "SortSpecification",
+    "ToolConfig",
+    "TransformationPipeline",
+    "TransformationStep",
+    "UpdateColumnOperation",
+    "ValidationResult",
+]
 
 
 # Validation and Quality Check Results
@@ -95,15 +129,6 @@ class OperationMetadata(TypedDict):
     rows_affected: NotRequired[int]
     columns_affected: NotRequired[list[str]]
     execution_time_ms: NotRequired[float]
-
-
-class FilterConditionDict(TypedDict):
-    """Filter condition as dictionary (for legacy compatibility)."""
-
-    column: str
-    operator: str
-    value: CellValue
-    case_sensitive: NotRequired[bool]
 
 
 class SortSpecification(TypedDict):

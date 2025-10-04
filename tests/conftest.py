@@ -5,13 +5,14 @@ import os
 import sys
 import uuid
 from asyncio import AbstractEventLoop
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
 
 import pytest
+from fastmcp import Context
 
-from databeak.core.session import get_session_manager
-from databeak.servers.io_server import load_csv_from_content
+from databeak.core.session import DatabeakSession, get_session_manager
+from databeak.servers.io_server import LoadResult, load_csv_from_content
 from tests.test_mock_context import create_mock_context
 
 # Add src to path
@@ -65,13 +66,13 @@ Keyboard,79.99,25"""
 
 # Isolation fixtures for parallel execution safety
 @pytest.fixture
-def isolated_session_id():
+def isolated_session_id() -> str:
     """Provide unique session ID for each test to prevent interference."""
     return uuid.uuid4().hex
 
 
 @pytest.fixture
-def temp_work_dir(tmp_path):
+def temp_work_dir(tmp_path: Path) -> Generator[Path]:
     """Provide isolated temporary directory per test to avoid resource contention."""
     work_dir = tmp_path / "test_work"
     work_dir.mkdir()
@@ -82,13 +83,15 @@ def temp_work_dir(tmp_path):
 
 
 @pytest.fixture
-def isolated_context(isolated_session_id):
+def isolated_context(isolated_session_id: str) -> Context:
     """Provide isolated mock context with unique session ID."""
     return create_mock_context(isolated_session_id)
 
 
 @pytest.fixture
-async def isolated_session_with_cleanup(isolated_session_id, temp_work_dir):
+async def isolated_session_with_cleanup(
+    isolated_session_id: str, temp_work_dir: Path
+) -> AsyncGenerator[DatabeakSession]:
     """Create isolated session with automatic cleanup to prevent test interference."""
     manager = get_session_manager()
     session = manager.get_or_create_session(isolated_session_id)
@@ -106,7 +109,9 @@ async def isolated_session_with_cleanup(isolated_session_id, temp_work_dir):
 
 
 @pytest.fixture
-async def csv_session_with_data(isolated_context, temp_work_dir):
+async def csv_session_with_data(
+    isolated_context: Context, temp_work_dir: Path
+) -> tuple[Context, LoadResult]:
     """Create isolated CSV session with test data loaded."""
     csv_content = """product,price,quantity,category
 Laptop,999.99,10,Electronics

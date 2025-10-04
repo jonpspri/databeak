@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from . import CellValue
 from .typed_dicts import ValidationResult
 
 # Type aliases for common data types
-CellValue = str | int | float | bool | None
-FilterValue = CellValue | list[CellValue]
+type FilterValue = CellValue | list[CellValue]
 
 if TYPE_CHECKING:
     import pandas as pd

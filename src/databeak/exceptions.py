@@ -8,14 +8,16 @@ from typing import Any
 class DatabeakError(Exception):
     """Base exception with error details and serialization."""
 
-    def __init__(self, message: str, error_code: str | None = None, details: dict | None = None):
+    def __init__(
+        self, message: str, error_code: str | None = None, details: dict[Any, Any] | None = None
+    ):
         """Initialize with message, code, and details."""
         super().__init__(message)
         self.message = message
         self.error_code = error_code
         self.details = details or {}
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, str | None | dict[Any, Any]]:
         """Convert to dictionary for serialization."""
         return {
             "type": self.__class__.__name__,
@@ -99,7 +101,9 @@ class InvalidRowIndexError(DataError):
 class DataValidationError(DataError):
     """Data validation failed."""
 
-    def __init__(self, message: str, validation_errors: list | None = None):
+    def __init__(
+        self, message: str, validation_errors: list[Any] | None = None
+    ):  # TODO: improve type
         """Initialize with validation details."""
         super().__init__(
             message,
@@ -171,7 +175,7 @@ class ParameterError(DatabeakError):
 class InvalidParameterError(ParameterError):
     """Invalid parameter value."""
 
-    def __init__(  # type: ignore[explicit-any]
+    def __init__(
         self,
         parameter: str,
         value: Any,

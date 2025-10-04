@@ -1,10 +1,13 @@
 """Example test demonstrating FastMCP Client fixture usage."""
 
 import pytest
+from fastmcp import Client
+from fastmcp.client.transports import FastMCPTransport
+from mcp.types import TextContent
 
 
 @pytest.mark.asyncio
-async def test_list_tools(databeak_client) -> None:
+async def test_list_tools(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that we can list available tools using the FastMCP Client fixture."""
     tools = await databeak_client.list_tools()
 
@@ -19,7 +22,7 @@ async def test_list_tools(databeak_client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_session_info(databeak_client) -> None:
+async def test_get_session_info(databeak_client: Client[FastMCPTransport]) -> None:
     """Test calling get_session_info tool with no data loaded."""
     from fastmcp.exceptions import ToolError
 
@@ -29,7 +32,7 @@ async def test_get_session_info(databeak_client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_load_csv_workflow(databeak_client) -> None:
+async def test_load_csv_workflow(databeak_client: Client[FastMCPTransport]) -> None:
     """Test a complete workflow: load CSV data, check session info, export."""
     # Step 1: Load some CSV data
     csv_content = "name,age,city\nAlice,30,New York\nBob,25,Boston\nCharlie,35,Chicago"
@@ -42,6 +45,7 @@ async def test_load_csv_workflow(databeak_client) -> None:
     info_result = await databeak_client.call_tool("get_session_info", {})
     assert info_result.is_error is False
 
+    assert isinstance(info_result.content[0], TextContent)
     info_text = info_result.content[0].text
     # The info should contain data about rows and columns in JSON format
     assert "row_count" in info_text or "3" in info_text
@@ -53,6 +57,7 @@ async def test_load_csv_workflow(databeak_client) -> None:
     )
 
     assert export_result.is_error is False
+    assert isinstance(export_result.content[0], TextContent)
     exported_content = export_result.content[0].text
     # The export result contains status information about the export
     assert "success" in exported_content
@@ -61,7 +66,7 @@ async def test_load_csv_workflow(databeak_client) -> None:
 
 
 @pytest.mark.asyncio
-async def test_session_isolation(databeak_client) -> None:
+async def test_session_isolation(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that sessions are properly cleaned up between tests."""
     from fastmcp.exceptions import ToolError
 

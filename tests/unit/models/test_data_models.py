@@ -74,7 +74,7 @@ class TestFilterCondition:
     def test_filter_condition_invalid_operator(self) -> None:
         """Test invalid operator raises validation error."""
         with pytest.raises(ValidationError):
-            FilterCondition(column="test_col", operator="invalid_op", value="test_value")  # type: ignore[arg-type]
+            FilterCondition(column="test_col", operator="invalid_op", value="test_value")
 
     def test_filter_condition_various_value_types(self) -> None:
         """Test filter condition with various value types."""

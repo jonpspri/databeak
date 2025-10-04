@@ -28,9 +28,6 @@ from databeak.models.tool_responses import ColumnOperationResult
 
 logger = logging.getLogger(__name__)
 
-# Type aliases
-CellValue = str | int | float | bool | None
-
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================

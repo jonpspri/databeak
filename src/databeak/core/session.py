@@ -198,7 +198,7 @@ class SessionManager:
         self.sessions: dict[str, DatabeakSession] = {}
         self.max_sessions = max_sessions
         self.ttl_minutes = ttl_minutes
-        self.sessions_to_cleanup: set = set()
+        self.sessions_to_cleanup: set[str] = set()
 
     def get_session(self, session_id: str) -> DatabeakSession | None:
         """Get a session by ID without creating it if it doesn't exist.

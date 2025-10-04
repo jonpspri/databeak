@@ -121,7 +121,7 @@ class TestDataOperations:
         # Test the filter operation on price > 100 (should filter to Laptop, Desk, Chair)
         filter_result = filter_rows(
             isolated_context,
-            conditions=[{"column": "price", "operator": ">", "value": 100}],
+            conditions=[{"column": "price", "operator": ">", "value": 100}],  # type: ignore[list-item]
             mode="and",
         )
 
@@ -151,7 +151,7 @@ Chair,199.99,8,Furniture"""
 
         filter_result2 = filter_rows(
             isolated_context,
-            conditions=[{"column": "category", "operator": "==", "value": "Electronics"}],
+            conditions=[{"column": "category", "operator": "==", "value": "Electronics"}],  # type: ignore[list-item]
             mode="and",
         )
 
