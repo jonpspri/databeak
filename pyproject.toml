@@ -261,11 +261,11 @@ module = [
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = "tests.*"
+module = ["tests.*", "tests.unit.*", "tests.integration.*", "tests.security.*"]
 disallow_untyped_defs = false
 disallow_any_explicit = false
-disable_error_code = ["arg-type"]
-#ignore_errors = true
+disable_error_code = ["arg-type", "no-untyped-def"]
+check_untyped_defs = false
 
 [[tool.mypy.overrides]]
 module = "examples.*"

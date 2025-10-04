@@ -4,13 +4,12 @@ integration."""
 import tempfile
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from unittest.mock import AsyncMock, patch
 from urllib.error import HTTPError
 
 import pandas as pd
 import pytest
-from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from databeak.servers.io_server import (
@@ -35,7 +34,7 @@ class TestErrorConditions:
     async def test_load_csv_file_not_found(self) -> None:
         """Test loading non-existent CSV file."""
         with pytest.raises(ToolError, match="Invalid file path"):
-            await load_csv(cast(Context, create_mock_context()), "/nonexistent/path/file.csv")
+            await load_csv(create_mock_context(), "/nonexistent/path/file.csv")
 
     async def test_load_csv_invalid_extension(self) -> None:
         """Test loading file with invalid extension."""
@@ -45,7 +44,7 @@ class TestErrorConditions:
 
         try:
             with pytest.raises(ToolError, match="Invalid file path.*Invalid file extension"):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -66,7 +65,7 @@ class TestErrorConditions:
                 patch("pandas.read_csv", side_effect=mock_read_csv),
                 pytest.raises(ToolError, match="Encoding error with all attempted encodings"),
             ):
-                await load_csv(cast(Context, create_mock_context()), temp_path, encoding="utf-8")
+                await load_csv(create_mock_context(), temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -86,7 +85,7 @@ class TestErrorConditions:
                 patch("pandas.read_csv", return_value=large_data),
                 pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -110,7 +109,7 @@ class TestErrorConditions:
                 patch("pandas.DataFrame.memory_usage", side_effect=mock_memory_usage),
                 pytest.raises(ToolError, match="File too large.*MB exceeds memory limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -126,7 +125,7 @@ class TestErrorConditions:
 
         for url in private_urls:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
-                await load_csv_from_url(cast(Context, create_mock_context()), url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_load_csv_file_size_limit_exceeded(self) -> None:
         """Test file size limit enforcement before loading."""
@@ -145,7 +144,7 @@ class TestErrorConditions:
                 patch("pathlib.Path.stat", return_value=mock_stat_obj),
                 pytest.raises(ToolError, match="File size.*exceeds limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -162,7 +161,7 @@ class TestEdgeCases:
 
         try:
             with pytest.raises(ToolError, match="CSV format error.*No columns to parse"):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -174,7 +173,7 @@ class TestEdgeCases:
 
         try:
             # Loading CSV with only headers is valid - creates empty DataFrame with columns
-            result = await load_csv(cast(Context, create_mock_context()), temp_path)
+            result = await load_csv(create_mock_context(), temp_path)
             assert result.rows_affected == 0
         finally:
             Path(temp_path).unlink()
@@ -194,7 +193,7 @@ class TestEdgeCases:
             temp_path = f.name
 
         try:
-            result = await load_csv(cast(Context, create_mock_context()), temp_path)
+            result = await load_csv(create_mock_context(), temp_path)
             assert result.success
             assert result.rows_affected == 2
             assert result.data is not None
@@ -211,7 +210,7 @@ class TestEdgeCases:
 
         try:
             with pytest.raises(ToolError, match="CSV format error"):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -219,17 +218,13 @@ class TestEdgeCases:
         """Test content loading with different delimiters."""
         # Tab-separated
         content = "name\tage\tcity\nJohn\t30\tNYC\nJane\t25\tLA"
-        result = await load_csv_from_content(
-            cast(Context, create_mock_context()), content, delimiter="\t"
-        )
+        result = await load_csv_from_content(create_mock_context(), content, delimiter="\t")
         assert result.success
         assert result.rows_affected == 2
 
         # Semicolon-separated
         content = "name;age;city\nJohn;30;NYC\nJane;25;LA"
-        result = await load_csv_from_content(
-            cast(Context, create_mock_context()), content, delimiter=";"
-        )
+        result = await load_csv_from_content(create_mock_context(), content, delimiter=";")
         assert result.success
         assert result.rows_affected == 2
 
@@ -237,7 +232,7 @@ class TestEdgeCases:
         """Test content loading without headers."""
         content = "John,30,NYC\nJane,25,LA"
         result = await load_csv_from_content(
-            cast(Context, create_mock_context()), content, header_config=NoHeader()
+            create_mock_context(), content, header_config=NoHeader()
         )
         assert result.success
         assert result.rows_affected == 2
@@ -255,15 +250,13 @@ class TestIntegrationWithSessions:
             temp_path = f.name
 
         try:
-            ctx = cast(Context, create_mock_context())
+            ctx = create_mock_context()
             result = await load_csv(ctx, temp_path)
             assert result.success
             assert result.rows_affected == 2
 
             # Verify session exists and has data
-            session_info = await get_session_info(
-                cast(Context, create_mock_context(ctx.session_id))
-            )
+            session_info = await get_session_info(create_mock_context(ctx.session_id))
             assert session_info.data_loaded
             assert session_info.row_count == 2
             assert session_info.column_count == 2
@@ -278,7 +271,7 @@ class TestIntegrationWithSessions:
             temp_path1 = f.name
 
         try:
-            ctx1 = cast(Context, create_mock_context())
+            ctx1 = create_mock_context()
             await load_csv(ctx1, temp_path1)
             session_id = ctx1.session_id
 
@@ -288,13 +281,11 @@ class TestIntegrationWithSessions:
                 temp_path2 = f.name
 
             try:
-                result2 = await load_csv(cast(Context, create_mock_context(session_id)), temp_path2)
+                result2 = await load_csv(create_mock_context(session_id), temp_path2)
                 assert result2.rows_affected == 2
 
                 # Verify session now has the new data
-                session_info = await get_session_info(
-                    cast(Context, create_mock_context(session_id))
-                )
+                session_info = await get_session_info(create_mock_context(session_id))
                 assert session_info.row_count == 2
                 assert session_info.column_count == 3
             finally:
@@ -306,12 +297,12 @@ class TestIntegrationWithSessions:
         """Test complete session lifecycle: create, use, export, close."""
         # Load data
         content = "name,age,salary\nAlice,25,50000\nBob,30,60000\nCharlie,35,70000"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
 
         # Get session info
-        info = await get_session_info(cast(Context, create_mock_context(session_id)))
+        info = await get_session_info(create_mock_context(session_id))
         assert info.data_loaded
         assert info.row_count == 3
 
@@ -319,9 +310,7 @@ class TestIntegrationWithSessions:
         with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tmp:
             temp_path = tmp.name
 
-        export_result = await export_csv(
-            cast(Context, create_mock_context(session_id)), file_path=temp_path
-        )
+        export_result = await export_csv(create_mock_context(session_id), file_path=temp_path)
         assert export_result.rows_exported == 3
         assert Path(export_result.file_path).exists()
 
@@ -343,7 +332,7 @@ class TestTempFileCleanup:
                 mock_get_session_data.side_effect = Exception("Mock session error")
 
                 with pytest.raises(ToolError, match="Failed to export data"):
-                    await export_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                    await export_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
@@ -364,7 +353,7 @@ class TestURLValidationSecurity:
 
         for url in private_networks:
             with pytest.raises(ToolError, match="Invalid URL.*not allowed"):
-                await load_csv_from_url(cast(Context, create_mock_context()), url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_localhost_hostname_blocking(self) -> None:
         """Test blocking of localhost hostnames."""
@@ -375,7 +364,7 @@ class TestURLValidationSecurity:
 
         for url in localhost_urls:
             with pytest.raises(ToolError, match="Invalid URL.*Local addresses not allowed"):
-                await load_csv_from_url(cast(Context, create_mock_context()), url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_invalid_url_schemes(self) -> None:
         """Test rejection of non-HTTP schemes."""
@@ -388,7 +377,7 @@ class TestURLValidationSecurity:
 
         for url in invalid_schemes:
             with pytest.raises(ToolError, match="Only HTTP/HTTPS URLs are supported"):
-                await load_csv_from_url(cast(Context, create_mock_context()), url)
+                await load_csv_from_url(create_mock_context(), url)
 
     async def test_url_timeout_handling(self) -> None:
         """Test URL download timeout handling."""
@@ -397,9 +386,7 @@ class TestURLValidationSecurity:
             mock_urlopen.side_effect = TimeoutError("Connection timed out")
 
             with pytest.raises(ToolError, match="Network error"):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), "https://example.com/data.csv"
-                )
+                await load_csv_from_url(create_mock_context(), "https://example.com/data.csv")
 
     async def test_url_content_type_validation(self) -> None:
         """Test content-type verification for URLs."""
@@ -425,9 +412,7 @@ class TestURLValidationSecurity:
             mock_urlopen.return_value.__enter__.return_value = mock_response
 
             with pytest.raises(ToolError, match="Download too large.*exceeds limit"):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), "https://example.com/large_file.csv"
-                )
+                await load_csv_from_url(create_mock_context(), "https://example.com/large_file.csv")
 
     async def test_url_http_error_handling(self) -> None:
         """Test HTTP error handling (404, 403, etc.)."""
@@ -441,9 +426,7 @@ class TestURLValidationSecurity:
             )
 
             with pytest.raises(ToolError, match="Network error"):
-                await load_csv_from_url(
-                    cast(Context, create_mock_context()), "https://example.com/notfound.csv"
-                )
+                await load_csv_from_url(create_mock_context(), "https://example.com/notfound.csv")
 
 
 @pytest.mark.asyncio
@@ -454,7 +437,7 @@ class TestExportFormats:
     async def session_with_data(self) -> str:
         """Create session with test data."""
         content = "name,age,salary,active\nAlice,25,50000,true\nBob,30,60000,false"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, content)
         return ctx.session_id
 
@@ -464,9 +447,7 @@ class TestExportFormats:
             temp_path = tmp.name
 
         try:
-            result = await export_csv(
-                cast(Context, create_mock_context(session_with_data)), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
             assert result.format == "csv"
             assert result.file_path == temp_path
             assert result.rows_exported == 2
@@ -486,9 +467,7 @@ class TestExportFormats:
             temp_path = tmp.name
 
         try:
-            result = await export_csv(
-                cast(Context, create_mock_context(session_with_data)), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
             assert result.format == "tsv"
             assert result.file_path == temp_path
 
@@ -504,9 +483,7 @@ class TestExportFormats:
             temp_path = tmp.name
 
         try:
-            result = await export_csv(
-                cast(Context, create_mock_context(session_with_data)), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_with_data), file_path=temp_path)
             assert result.format == "json"
             assert result.file_path == temp_path
 
@@ -524,9 +501,7 @@ class TestExportFormats:
         """Test export with user-specified file path."""
         with tempfile.TemporaryDirectory() as temp_dir:
             custom_path = str(Path(temp_dir) / "my_export.csv")
-            result = await export_csv(
-                cast(Context, create_mock_context(session_with_data)), file_path=custom_path
-            )
+            result = await export_csv(create_mock_context(session_with_data), file_path=custom_path)
 
             assert result.file_path == custom_path
             assert Path(custom_path).exists()
@@ -552,9 +527,7 @@ class TestEncodingAndFallback:
 
         try:
             # Try to load with UTF-8 first, should fallback to latin1
-            result = await load_csv(
-                cast(Context, create_mock_context()), temp_path, encoding="utf-8"
-            )
+            result = await load_csv(create_mock_context(), temp_path, encoding="utf-8")
             assert result.success
             assert result.rows_affected == 1
         finally:
@@ -567,9 +540,7 @@ class TestEncodingAndFallback:
             temp_path = f.name
 
         try:
-            result = await load_csv(
-                cast(Context, create_mock_context()), temp_path, na_values=["MISSING", "N/A"]
-            )
+            result = await load_csv(create_mock_context(), temp_path, na_values=["MISSING", "N/A"])
             assert result.success
             # Verify NA values were handled properly (would need to check actual data)
         finally:
@@ -596,7 +567,7 @@ class TestEncodingAndFallback:
 
                 # Should use detected encoding instead of falling back
                 result = await load_csv(
-                    cast(Context, create_mock_context()),
+                    create_mock_context(),
                     temp_path,
                     encoding="utf-8",
                 )  # Will trigger fallback
@@ -640,9 +611,7 @@ class TestEncodingAndFallback:
 
                 mock_read_csv.side_effect = mock_read_side_effect
 
-                result = await load_csv(
-                    cast(Context, create_mock_context()), temp_path, encoding="utf-8"
-                )
+                result = await load_csv(create_mock_context(), temp_path, encoding="utf-8")
                 assert result.success
                 # Verify multiple attempts were made
                 assert mock_read_csv.call_count >= 3
@@ -668,7 +637,7 @@ class TestMemoryAndPerformance:
                 patch("pandas.read_csv", return_value=large_df),
                 pytest.raises(ToolError, match="File too large.*rows exceeds limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), temp_path)
+                await load_csv(create_mock_context(), temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -705,9 +674,7 @@ class TestMemoryAndPerformance:
                     patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                     pytest.raises(ToolError, match="exceeds memory limit"),
                 ):
-                    await load_csv(
-                        cast(Context, create_mock_context()), temp_path, encoding="utf-8"
-                    )
+                    await load_csv(create_mock_context(), temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
 
@@ -743,7 +710,7 @@ class TestProgressReporting:
 
         # Load data first
         content = "name,age\nJohn,30"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, content)
         session_id = ctx.session_id
         mock_ctx.session_id = session_id

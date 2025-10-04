@@ -9,7 +9,7 @@ class TestUnifiedHeaderSystem:
     """Test that all CSV loading functions use consistent HeaderConfig system."""
 
     @pytest.mark.asyncio
-    async def test_load_csv_all_header_modes(self, databeak_client):
+    async def test_load_csv_all_header_modes(self, databeak_client) -> None:
         """Test load_csv with all header configuration modes."""
         csv_path = get_fixture_path("sample_data.csv")
 
@@ -33,7 +33,7 @@ class TestUnifiedHeaderSystem:
         assert none_result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_load_csv_from_content_all_header_modes(self, databeak_client):
+    async def test_load_csv_from_content_all_header_modes(self, databeak_client) -> None:
         """Test load_csv_from_content with all header configuration modes."""
         content = "name,age,city\nAlice,25,NYC\nBob,30,LA"
 
@@ -57,7 +57,7 @@ class TestUnifiedHeaderSystem:
         assert none_result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_consistency_across_functions(self, databeak_client):
+    async def test_header_consistency_across_functions(self, databeak_client) -> None:
         """Test that all CSV loading functions handle headers consistently."""
         csv_path = get_fixture_path("sample_data.csv")
         content = "name,age,city\nAlice,25,NYC\nBob,30,LA"
@@ -79,7 +79,7 @@ class TestUnifiedHeaderSystem:
             assert content_result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_default_header_behavior_consistency(self, databeak_client):
+    async def test_default_header_behavior_consistency(self, databeak_client) -> None:
         """Test that default header behavior is consistent across all functions."""
         csv_path = get_fixture_path("sample_data.csv")
         content = "name,age,city\nAlice,25,NYC\nBob,30,LA"
@@ -95,7 +95,7 @@ class TestUnifiedHeaderSystem:
         assert content_result.is_error is False
 
     @pytest.mark.asyncio
-    async def test_header_mode_validation(self, databeak_client):
+    async def test_header_mode_validation(self, databeak_client) -> None:
         """Test that invalid header configurations are properly rejected."""
         csv_path = get_fixture_path("sample_data.csv")
 

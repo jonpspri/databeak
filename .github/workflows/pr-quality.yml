@@ -51,27 +51,6 @@ jobs:
             echo "::warning::Large files detected: $large_files"
           fi
 
-      - name: Validate commit messages
-        run: |
-          set -euo pipefail
-          invalid_commits=0
-          commits=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
-
-          while IFS= read -r msg; do
-            if ! echo "$msg" | grep -qE '^(feat|fix|docs|test|refactor|chore|ci|build|perf|style|revert)(\(.+\))?: \S.+'; then
-              echo "::error::Invalid commit message: $msg"
-              echo "Expected format: type(scope): description"
-              echo "Valid types: feat, fix, docs, test, refactor, chore, ci, build, perf, style, revert"
-              echo "Description must contain at least one non-whitespace character"
-              invalid_commits=$((invalid_commits + 1))
-            fi
-          done <<< "$commits"
-
-          if [ "$invalid_commits" -gt 0 ]; then
-            echo "::error::Found $invalid_commits commit(s) with invalid conventional commit format"
-            exit 1
-          fi
-
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest

@@ -13,7 +13,7 @@ class TestHealthCheck:
     """Test system health check functionality."""
 
     @pytest.mark.asyncio
-    async def test_health_check_healthy_status(self):
+    async def test_health_check_healthy_status(self) -> None:
         """Test health check returns healthy status under normal conditions."""
         with patch(
             "databeak.servers.system_server.get_session_manager"
@@ -35,7 +35,7 @@ class TestHealthCheck:
             assert result.session_ttl_minutes == 60
 
     @pytest.mark.asyncio
-    async def test_health_check_degraded_status(self):
+    async def test_health_check_degraded_status(self) -> None:
         """Test health check returns degraded status when near session limit."""
         with patch(
             "databeak.servers.system_server.get_session_manager"
@@ -56,7 +56,7 @@ class TestHealthCheck:
             assert result.max_sessions == 100
 
     @pytest.mark.asyncio
-    async def test_health_check_with_context(self):
+    async def test_health_check_with_context(self) -> None:
         """Test health check with FastMCP context logging."""
         from unittest.mock import AsyncMock
 
@@ -79,7 +79,7 @@ class TestHealthCheck:
             assert result.active_sessions == 2
 
     @pytest.mark.asyncio
-    async def test_health_check_handles_session_manager_failure(self):
+    async def test_health_check_handles_session_manager_failure(self) -> None:
         """Test health check handles session manager failures gracefully."""
         from unittest.mock import AsyncMock
 
@@ -100,7 +100,7 @@ class TestHealthCheck:
             mock_ctx.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_health_check_critical_failure(self):
+    async def test_health_check_critical_failure(self) -> None:
         """Test health check handles critical failures that prevent fallback response."""
         with (
             patch("databeak.servers.system_server.get_session_manager") as mock_session_manager,
@@ -119,7 +119,7 @@ class TestHealthCheck:
             assert result.active_sessions == 0
 
     @pytest.mark.asyncio
-    async def test_health_check_response_structure(self):
+    async def test_health_check_response_structure(self) -> None:
         """Test health check response has correct Pydantic model structure."""
         with patch(
             "databeak.servers.system_server.get_session_manager"
@@ -157,7 +157,7 @@ class TestHealthCheck:
             assert result.history_limit_per_session == 0
 
     @pytest.mark.asyncio
-    async def test_health_check_memory_monitoring_normal(self):
+    async def test_health_check_memory_monitoring_normal(self) -> None:
         """Test health check with normal memory usage."""
         with (
             patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
@@ -185,7 +185,7 @@ class TestHealthCheck:
             assert result.history_limit_per_session == 0
 
     @pytest.mark.asyncio
-    async def test_health_check_memory_warning(self):
+    async def test_health_check_memory_warning(self) -> None:
         """Test health check with high memory usage (warning level)."""
         with (
             patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
@@ -212,7 +212,7 @@ class TestHealthCheck:
             assert result.history_limit_per_session == 0
 
     @pytest.mark.asyncio
-    async def test_health_check_memory_critical(self):
+    async def test_health_check_memory_critical(self) -> None:
         """Test health check with critical memory usage."""
         with (
             patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
@@ -239,7 +239,7 @@ class TestHealthCheck:
             assert result.history_limit_per_session == 0
 
     @pytest.mark.asyncio
-    async def test_health_check_multiple_issues(self):
+    async def test_health_check_multiple_issues(self) -> None:
         """Test health check with multiple concurrent issues."""
         with (
             patch("databeak.servers.system_server.get_session_manager") as mock_get_session_manager,
@@ -270,7 +270,7 @@ class TestHealthCheck:
 class TestMemoryMonitoringUtils:
     """Test memory monitoring utility functions."""
 
-    def test_get_memory_status_normal(self):
+    def test_get_memory_status_normal(self) -> None:
         """Test memory status calculation for normal usage."""
         from databeak.servers.system_server import get_memory_status
 
@@ -278,7 +278,7 @@ class TestMemoryMonitoringUtils:
         status = get_memory_status(1024.0, 2048.0)
         assert status == "normal"
 
-    def test_get_memory_status_warning(self):
+    def test_get_memory_status_warning(self) -> None:
         """Test memory status calculation for warning level."""
         from databeak.servers.system_server import get_memory_status
 
@@ -286,7 +286,7 @@ class TestMemoryMonitoringUtils:
         status = get_memory_status(1638.4, 2048.0)
         assert status == "warning"
 
-    def test_get_memory_status_critical(self):
+    def test_get_memory_status_critical(self) -> None:
         """Test memory status calculation for critical level."""
         from databeak.servers.system_server import get_memory_status
 
@@ -294,7 +294,7 @@ class TestMemoryMonitoringUtils:
         status = get_memory_status(1945.6, 2048.0)
         assert status == "critical"
 
-    def test_get_memory_status_zero_threshold(self):
+    def test_get_memory_status_zero_threshold(self) -> None:
         """Test memory status with zero threshold (edge case)."""
         from databeak.servers.system_server import get_memory_status
 
@@ -306,7 +306,7 @@ class TestServerInfo:
     """Test server information functionality."""
 
     @pytest.mark.asyncio
-    async def test_get_server_info_basic_structure(self):
+    async def test_get_server_info_basic_structure(self) -> None:
         """Test server info returns proper structure with all required fields."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -328,7 +328,7 @@ class TestServerInfo:
             assert result.session_timeout_minutes == 60  # Converted from seconds
 
     @pytest.mark.asyncio
-    async def test_get_server_info_capabilities_structure(self):
+    async def test_get_server_info_capabilities_structure(self) -> None:
         """Test server info includes all expected capability categories."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -354,7 +354,7 @@ class TestServerInfo:
                 assert len(result.capabilities[category]) > 0
 
     @pytest.mark.asyncio
-    async def test_get_server_info_data_io_capabilities(self):
+    async def test_get_server_info_data_io_capabilities(self) -> None:
         """Test server info includes expected data I/O capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -377,7 +377,7 @@ class TestServerInfo:
                 assert cap in data_io_caps
 
     @pytest.mark.asyncio
-    async def test_get_server_info_supported_formats(self):
+    async def test_get_server_info_supported_formats(self) -> None:
         """Test server info includes expected supported formats."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -405,7 +405,7 @@ class TestServerInfo:
             assert len(result.supported_formats) == len(expected_formats)
 
     @pytest.mark.asyncio
-    async def test_get_server_info_with_context(self):
+    async def test_get_server_info_with_context(self) -> None:
         """Test server info with FastMCP context logging."""
         from unittest.mock import AsyncMock
 
@@ -425,7 +425,7 @@ class TestServerInfo:
             assert result.name == "DataBeak"
 
     @pytest.mark.asyncio
-    async def test_get_server_info_handles_settings_failure(self):
+    async def test_get_server_info_handles_settings_failure(self) -> None:
         """Test server info handles configuration loading failures."""
         from unittest.mock import AsyncMock
 
@@ -441,7 +441,7 @@ class TestServerInfo:
             mock_ctx.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_get_server_info_null_handling_capabilities(self):
+    async def test_get_server_info_null_handling_capabilities(self) -> None:
         """Test server info includes comprehensive null handling capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -464,7 +464,7 @@ class TestServerInfo:
                 assert cap in null_caps
 
     @pytest.mark.asyncio
-    async def test_get_server_info_data_manipulation_capabilities(self):
+    async def test_get_server_info_data_manipulation_capabilities(self) -> None:
         """Test server info includes expected data manipulation capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -492,7 +492,7 @@ class TestServerInfo:
                 assert cap in manipulation_caps
 
     @pytest.mark.asyncio
-    async def test_get_server_info_response_model_validation(self):
+    async def test_get_server_info_response_model_validation(self) -> None:
         """Test server info response validates as proper Pydantic model."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
@@ -524,7 +524,7 @@ class TestServerInfo:
 class TestSystemServerIntegration:
     """Test system server integration and patterns."""
 
-    def test_system_server_exists(self):
+    def test_system_server_exists(self) -> None:
         """Test that system server is properly exported."""
         from databeak.servers.system_server import system_server
 
@@ -532,7 +532,7 @@ class TestSystemServerIntegration:
         assert system_server.name == "DataBeak-System"
         assert system_server.instructions is not None
 
-    def test_system_server_has_correct_tools(self):
+    def test_system_server_has_correct_tools(self) -> None:
         """Test that system server has registered the expected tools."""
         from databeak.servers.system_server import system_server
 
@@ -542,7 +542,7 @@ class TestSystemServerIntegration:
         assert hasattr(system_server, "instructions")
 
     @pytest.mark.asyncio
-    async def test_system_functions_are_async(self):
+    async def test_system_functions_are_async(self) -> None:
         """Test that system functions are properly async."""
         import inspect
 
@@ -550,7 +550,7 @@ class TestSystemServerIntegration:
         assert inspect.iscoroutinefunction(health_check)
         assert inspect.iscoroutinefunction(get_server_info)
 
-    def test_system_server_follows_naming_pattern(self):
+    def test_system_server_follows_naming_pattern(self) -> None:
         """Test that system server follows DataBeak naming conventions."""
         from databeak.servers.system_server import system_server
 

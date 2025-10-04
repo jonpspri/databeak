@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_list_tools(databeak_client):
+async def test_list_tools(databeak_client) -> None:
     """Test that we can list available tools using the FastMCP Client fixture."""
     tools = await databeak_client.list_tools()
 
@@ -19,7 +19,7 @@ async def test_list_tools(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_get_session_info(databeak_client):
+async def test_get_session_info(databeak_client) -> None:
     """Test calling get_session_info tool with no data loaded."""
     from fastmcp.exceptions import ToolError
 
@@ -29,7 +29,7 @@ async def test_get_session_info(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_load_csv_workflow(databeak_client):
+async def test_load_csv_workflow(databeak_client) -> None:
     """Test a complete workflow: load CSV data, check session info, export."""
     # Step 1: Load some CSV data
     csv_content = "name,age,city\nAlice,30,New York\nBob,25,Boston\nCharlie,35,Chicago"
@@ -61,7 +61,7 @@ async def test_load_csv_workflow(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_session_isolation(databeak_client):
+async def test_session_isolation(databeak_client) -> None:
     """Test that sessions are properly cleaned up between tests."""
     from fastmcp.exceptions import ToolError
 

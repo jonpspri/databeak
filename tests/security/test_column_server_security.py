@@ -17,7 +17,7 @@ from databeak.utils.secure_evaluator import validate_expression_safety
 class TestColumnServerSecurity:
     """Test that column server operations are secure against code injection."""
 
-    def test_expression_validation_blocks_code_injection(self):
+    def test_expression_validation_blocks_code_injection(self) -> None:
         """Test that expression validation blocks code injection attacks."""
         malicious_formulas = [
             "__import__('os').system('rm -rf /')",
@@ -36,7 +36,7 @@ class TestColumnServerSecurity:
             with pytest.raises(InvalidParameterError):
                 validate_expression_safety(malicious_formula)
 
-    def test_secure_expression_model_validation(self):
+    def test_secure_expression_model_validation(self) -> None:
         """Test that SecureExpression model properly validates expressions."""
         # Test valid expressions work
         safe_expr = SecureExpression(expression="col1 + col2")
@@ -46,7 +46,7 @@ class TestColumnServerSecurity:
         with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression="exec('malicious')")
 
-    def test_safe_mathematical_expressions_allowed(self):
+    def test_safe_mathematical_expressions_allowed(self) -> None:
         """Test that legitimate mathematical expressions are validated as safe."""
         safe_formulas = [
             "col1 + col2",
@@ -67,7 +67,7 @@ class TestColumnServerSecurity:
             except Exception as e:
                 pytest.fail(f"Safe formula should not fail validation: {formula} - Error: {e}")
 
-    def test_vulnerability_fixed_confirmation(self):
+    def test_vulnerability_fixed_confirmation(self) -> None:
         """Test that specific vulnerability patterns are blocked.
 
         This test confirms that the exact attack patterns that would have worked with pandas.eval()

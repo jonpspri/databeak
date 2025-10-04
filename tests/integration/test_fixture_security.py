@@ -8,7 +8,7 @@ from tests.integration.conftest import get_fixture_path
 class TestFixtureSecurity:
     """Test security validation in fixture path handling."""
 
-    def test_valid_fixture_names(self):
+    def test_valid_fixture_names(self) -> None:
         """Test that valid fixture names work correctly."""
         # These should work without raising exceptions
         path1 = get_fixture_path("sample_data.csv")
@@ -19,7 +19,7 @@ class TestFixtureSecurity:
         assert path2.endswith("test_file.json")
         assert "tests/fixtures" in path2
 
-    def test_reject_path_separators(self):
+    def test_reject_path_separators(self) -> None:
         """Test that fixture names with path separators are rejected."""
         # Unix path separator
         with pytest.raises(ValueError, match="cannot contain path separators"):
@@ -38,7 +38,7 @@ class TestFixtureSecurity:
             with pytest.raises(ValueError, match="cannot contain path separators"):
                 get_fixture_path(f"subdir{os.path.altsep}file.csv")
 
-    def test_reject_relative_path_components(self):
+    def test_reject_relative_path_components(self) -> None:
         """Test that relative path components are rejected."""
         # Note: ../sensitive_file.csv is caught by path separator check first
         with pytest.raises(ValueError, match="path separators|relative path components"):
@@ -53,7 +53,7 @@ class TestFixtureSecurity:
         with pytest.raises(ValueError, match="cannot contain relative path components"):
             get_fixture_path(".env")
 
-    def test_directory_traversal_attempts(self):
+    def test_directory_traversal_attempts(self) -> None:
         """Test various directory traversal attack patterns."""
         traversal_attempts = [
             "../../etc/passwd",
@@ -75,7 +75,7 @@ class TestFixtureSecurity:
                 exc_info.value
             )
 
-    def test_path_stays_within_fixtures_directory(self):
+    def test_path_stays_within_fixtures_directory(self) -> None:
         """Test that resolved paths stay within fixtures directory."""
         # This test assumes the validation logic works correctly
         # If someone found a way to bypass the separator checks,
@@ -89,7 +89,7 @@ class TestFixtureSecurity:
         # Should be an absolute path
         assert valid_path.startswith("/")
 
-    def test_empty_and_whitespace_names(self):
+    def test_empty_and_whitespace_names(self) -> None:
         """Test handling of empty and whitespace-only fixture names."""
         # Empty string
         with pytest.raises(ValueError, match="cannot be empty or whitespace-only"):
@@ -103,7 +103,7 @@ class TestFixtureSecurity:
         with pytest.raises(ValueError, match="cannot contain relative path components"):
             get_fixture_path("...")
 
-    def test_very_long_names(self):
+    def test_very_long_names(self) -> None:
         """Test handling of very long fixture names."""
         # Very long name (but otherwise valid)
         long_name = "a" * 200 + ".csv"
@@ -112,7 +112,7 @@ class TestFixtureSecurity:
         path = get_fixture_path(long_name)
         assert path.endswith(long_name)
 
-    def test_special_characters_allowed(self):
+    def test_special_characters_allowed(self) -> None:
         """Test that some special characters are allowed in fixture names."""
         # These should be allowed
         valid_special_names = [

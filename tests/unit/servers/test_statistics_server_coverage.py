@@ -22,7 +22,7 @@ from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
-def session_with_test_data():
+def session_with_test_data() -> None:
     """Create real session with diverse test data."""
     # Create the test dataframe
     df = pd.DataFrame(
@@ -49,7 +49,7 @@ def session_with_test_data():
 
 
 @pytest.fixture
-def session_with_empty_data():
+def session_with_empty_data() -> None:
     """Create real session with empty dataframe."""
     df = pd.DataFrame()
 
@@ -66,7 +66,7 @@ def session_with_empty_data():
 class TestGetStatistics:
     """Test get_statistics function comprehensively."""
 
-    async def test_statistics_all_columns(self, session_with_test_data):
+    async def test_statistics_all_columns(self, session_with_test_data) -> None:
         """Test getting statistics for all columns."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -86,7 +86,7 @@ class TestGetStatistics:
         assert numeric1_stats.min == 1
         assert numeric1_stats.max == 10
 
-    async def test_statistics_specific_columns(self, session_with_test_data):
+    async def test_statistics_specific_columns(self, session_with_test_data) -> None:
         """Test getting statistics for specific columns."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -96,7 +96,7 @@ class TestGetStatistics:
         assert len(result.statistics) == 2
         assert all(col in ["numeric1", "numeric2"] for col in result.statistics)
 
-    async def test_statistics_with_nulls(self, session_with_test_data):
+    async def test_statistics_with_nulls(self, session_with_test_data) -> None:
         """Test statistics with null values."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -110,7 +110,7 @@ class TestGetStatistics:
         mostly_null_stats = result.statistics["mostly_null"]
         assert mostly_null_stats.count == 3  # Non-null count
 
-    async def test_statistics_non_numeric_columns(self, session_with_test_data):
+    async def test_statistics_non_numeric_columns(self, session_with_test_data) -> None:
         """Test statistics for non-numeric columns."""
         # get_statistics only works with numeric columns
         # Non-numeric columns are silently skipped
@@ -121,7 +121,7 @@ class TestGetStatistics:
         assert result.success is True
         assert len(result.statistics) == 0  # No numeric columns in the selection
 
-    async def test_statistics_empty_dataframe(self, session_with_empty_data):
+    async def test_statistics_empty_dataframe(self, session_with_empty_data) -> None:
         """Test statistics on empty dataframe."""
         session_id, _df = session_with_empty_data
         ctx = create_mock_context(session_id)
@@ -131,7 +131,7 @@ class TestGetStatistics:
         assert result.column_count == 0
         assert len(result.statistics) == 0
 
-    async def test_statistics_invalid_columns(self, session_with_test_data):
+    async def test_statistics_invalid_columns(self, session_with_test_data) -> None:
         """Test statistics with invalid column names."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -139,7 +139,7 @@ class TestGetStatistics:
         with pytest.raises(ToolError, match="not found"):
             await get_statistics(ctx, columns=["invalid_col"])
 
-    async def test_statistics_mixed_valid_invalid_columns(self, session_with_test_data):
+    async def test_statistics_mixed_valid_invalid_columns(self, session_with_test_data) -> None:
         """Test statistics with mix of valid and invalid columns."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -147,7 +147,7 @@ class TestGetStatistics:
         with pytest.raises(ToolError, match="not found"):
             await get_statistics(ctx, columns=["numeric1", "invalid_col"])
 
-    async def test_statistics_no_data_loaded(self):
+    async def test_statistics_no_data_loaded(self) -> None:
         """Test statistics when no data is loaded."""
         # Create a real session but don't load any data
         session_id = str(uuid.uuid4())
@@ -160,7 +160,7 @@ class TestGetStatistics:
         with pytest.raises(ToolError, match="No data loaded"):
             await get_statistics(ctx)
 
-    async def test_statistics_all_null_column(self, session_with_test_data):
+    async def test_statistics_all_null_column(self, session_with_test_data) -> None:
         """Test statistics for column with all null values."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -222,7 +222,7 @@ class TestGetColumnStatistics:
             assert result.statistics.mean is None
             assert result.statistics.std is None
 
-    async def test_column_statistics_invalid_column(self, session_with_test_data):
+    async def test_column_statistics_invalid_column(self, session_with_test_data) -> None:
         """Test column statistics with invalid column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -230,7 +230,7 @@ class TestGetColumnStatistics:
         with pytest.raises(ToolError, match="Column"):
             await get_column_statistics(ctx, "invalid_column")
 
-    async def test_column_statistics_with_nulls(self, session_with_test_data):
+    async def test_column_statistics_with_nulls(self, session_with_test_data) -> None:
         """Test column statistics handling null values."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -247,7 +247,7 @@ class TestGetColumnStatistics:
 class TestGetCorrelationMatrix:
     """Test get_correlation_matrix function."""
 
-    async def test_correlation_matrix_default(self, session_with_test_data):
+    async def test_correlation_matrix_default(self, session_with_test_data) -> None:
         """Test correlation matrix with default settings."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -270,7 +270,7 @@ class TestGetCorrelationMatrix:
         for col in result.columns_analyzed:
             assert abs(result.correlation_matrix[col][col] - 1.0) < 0.001
 
-    async def test_correlation_matrix_specific_columns(self, session_with_test_data):
+    async def test_correlation_matrix_specific_columns(self, session_with_test_data) -> None:
         """Test correlation matrix for specific columns."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -280,7 +280,7 @@ class TestGetCorrelationMatrix:
         assert len(result.columns_analyzed) == 3
         assert all(col in ["numeric1", "numeric2", "numeric3"] for col in result.columns_analyzed)
 
-    async def test_correlation_matrix_spearman(self, session_with_test_data):
+    async def test_correlation_matrix_spearman(self, session_with_test_data) -> None:
         """Test correlation matrix with Spearman method."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -289,7 +289,7 @@ class TestGetCorrelationMatrix:
         assert result.success is True
         assert result.method == "spearman"
 
-    async def test_correlation_matrix_kendall(self, session_with_test_data):
+    async def test_correlation_matrix_kendall(self, session_with_test_data) -> None:
         """Test correlation matrix with Kendall method."""
         session_id, _df = session_with_test_data
         pytest.importorskip("scipy", reason="scipy not installed")
@@ -305,7 +305,7 @@ class TestGetCorrelationMatrix:
             else:
                 raise
 
-    async def test_correlation_matrix_min_correlation(self, session_with_test_data):
+    async def test_correlation_matrix_min_correlation(self, session_with_test_data) -> None:
         """Test correlation matrix with minimum correlation filter."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -315,7 +315,7 @@ class TestGetCorrelationMatrix:
         # min_correlation parameter filters the matrix but doesn't add a significant_correlations field
         assert result.success is True
 
-    async def test_correlation_matrix_no_numeric_columns(self):
+    async def test_correlation_matrix_no_numeric_columns(self) -> None:
         """Test correlation matrix with no numeric columns."""
         # Create a session with only text columns
         session_id = str(uuid.uuid4())
@@ -329,7 +329,7 @@ class TestGetCorrelationMatrix:
         with pytest.raises(ToolError, match="No numeric columns"):
             await get_correlation_matrix(ctx)
 
-    async def test_correlation_matrix_invalid_method(self, session_with_test_data):
+    async def test_correlation_matrix_invalid_method(self, session_with_test_data) -> None:
         """Test correlation matrix with invalid method."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -337,7 +337,7 @@ class TestGetCorrelationMatrix:
         with pytest.raises(ToolError, match="method"):
             await get_correlation_matrix(ctx, method="invalid")
 
-    async def test_correlation_matrix_invalid_columns(self, session_with_test_data):
+    async def test_correlation_matrix_invalid_columns(self, session_with_test_data) -> None:
         """Test correlation matrix with invalid columns."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -345,7 +345,7 @@ class TestGetCorrelationMatrix:
         with pytest.raises(ToolError, match="not found"):
             await get_correlation_matrix(ctx, columns=["numeric1", "invalid_col"])
 
-    async def test_correlation_matrix_single_column(self, session_with_test_data):
+    async def test_correlation_matrix_single_column(self, session_with_test_data) -> None:
         """Test correlation matrix with single column."""
         session_id, _df = session_with_test_data
         # Single column should raise an error since correlation needs at least 2 columns
@@ -359,7 +359,7 @@ class TestGetCorrelationMatrix:
 class TestGetValueCounts:
     """Test get_value_counts function."""
 
-    async def test_value_counts_categorical(self, session_with_test_data):
+    async def test_value_counts_categorical(self, session_with_test_data) -> None:
         """Test value counts for categorical column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -376,7 +376,7 @@ class TestGetValueCounts:
         # Check all values are present
         assert set(result.value_counts.keys()) == {"A", "B", "C"}
 
-    async def test_value_counts_numeric(self, session_with_test_data):
+    async def test_value_counts_numeric(self, session_with_test_data) -> None:
         """Test value counts for numeric column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -386,7 +386,7 @@ class TestGetValueCounts:
         assert result.unique_values == 10
         assert len(result.value_counts) == 10
 
-    async def test_value_counts_with_nulls(self, session_with_test_data):
+    async def test_value_counts_with_nulls(self, session_with_test_data) -> None:
         """Test value counts with null values."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -396,7 +396,7 @@ class TestGetValueCounts:
         # value_counts doesn't include nulls
         assert None not in result.value_counts
 
-    async def test_value_counts_dropna(self, session_with_test_data):
+    async def test_value_counts_dropna(self, session_with_test_data) -> None:
         """Test value counts dropping null values."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -406,7 +406,7 @@ class TestGetValueCounts:
         # Should not include null values
         assert None not in result.value_counts
 
-    async def test_value_counts_normalized(self, session_with_test_data):
+    async def test_value_counts_normalized(self, session_with_test_data) -> None:
         """Test normalized value counts."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -416,7 +416,7 @@ class TestGetValueCounts:
         # When normalized, value_counts should be proportions
         assert all(0 <= v <= 1 for v in result.value_counts.values())
 
-    async def test_value_counts_top_n(self, session_with_test_data):
+    async def test_value_counts_top_n(self, session_with_test_data) -> None:
         """Test value counts with top N limit."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -425,7 +425,7 @@ class TestGetValueCounts:
         assert result.success is True
         assert len(result.value_counts) <= 2
 
-    async def test_value_counts_invalid_column(self, session_with_test_data):
+    async def test_value_counts_invalid_column(self, session_with_test_data) -> None:
         """Test value counts with invalid column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -433,7 +433,7 @@ class TestGetValueCounts:
         with pytest.raises(ToolError, match="Column"):
             await get_value_counts(ctx, "invalid_column")
 
-    async def test_value_counts_empty_column(self, session_with_test_data):
+    async def test_value_counts_empty_column(self, session_with_test_data) -> None:
         """Test value counts for empty/all-null column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -443,7 +443,7 @@ class TestGetValueCounts:
         assert result.unique_values == 0
         assert len(result.value_counts) == 0
 
-    async def test_value_counts_datetime(self, session_with_test_data):
+    async def test_value_counts_datetime(self, session_with_test_data) -> None:
         """Test value counts for datetime column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)
@@ -459,7 +459,7 @@ class TestGetValueCounts:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    async def test_large_dataframe(self):
+    async def test_large_dataframe(self) -> None:
         """Test with large dataframe."""
         rng = np.random.Generator(np.random.PCG64(seed=42))
         large_df = pd.DataFrame({f"col_{i}": rng.standard_normal(10000) for i in range(100)})
@@ -476,7 +476,7 @@ class TestEdgeCases:
         assert result.total_rows == 10000
         assert result.column_count == 100
 
-    async def test_single_row_dataframe(self):
+    async def test_single_row_dataframe(self) -> None:
         """Test with single row dataframe."""
         single_row_df = pd.DataFrame({"col1": [1], "col2": ["text"], "col3": [True]})
 
@@ -495,7 +495,7 @@ class TestEdgeCases:
         stats = result.statistics["col1"]
         assert stats.std == 0 or pd.isna(stats.std)
 
-    async def test_all_same_values(self):
+    async def test_all_same_values(self) -> None:
         """Test column with all same values."""
         same_values_df = pd.DataFrame({"constant": [5] * 10, "text_constant": ["same"] * 10})
 
@@ -514,7 +514,7 @@ class TestEdgeCases:
         assert const_stats.min == const_stats.max
         # text_constant is non-numeric, so it won't be in statistics
 
-    async def test_extreme_values(self):
+    async def test_extreme_values(self) -> None:
         """Test with extreme numeric values."""
         extreme_df = pd.DataFrame(
             {
@@ -535,7 +535,7 @@ class TestEdgeCases:
         assert result.success is True
         # Should handle extreme values without error
 
-    async def test_special_characters_in_columns(self):
+    async def test_special_characters_in_columns(self) -> None:
         """Test columns with special characters."""
         special_df = pd.DataFrame(
             {
@@ -557,7 +557,7 @@ class TestEdgeCases:
         assert result.success is True
         assert result.column_count == 4
 
-    async def test_mixed_type_column_statistics(self, session_with_test_data):
+    async def test_mixed_type_column_statistics(self, session_with_test_data) -> None:
         """Test statistics for mixed type column."""
         session_id, _df = session_with_test_data
         ctx = create_mock_context(session_id)

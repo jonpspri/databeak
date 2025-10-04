@@ -2,12 +2,10 @@
 
 import tempfile
 from pathlib import Path
-from typing import cast
 from unittest.mock import patch
 
 import pandas as pd
 import pytest
-from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from databeak.servers.io_server import (
@@ -73,7 +71,7 @@ class TestLoadCsvWithEncoding:
         try:
             # Try to load with wrong encoding first (will trigger fallback)
             result = await load_csv(
-                cast(Context, create_mock_context()),
+                create_mock_context(),
                 file_path=temp_path,
                 encoding="ascii",  # This will fail and trigger fallback
             )
@@ -94,7 +92,7 @@ class TestLoadCsvWithEncoding:
             temp_path = f.name
 
         try:
-            result = await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+            result = await load_csv(create_mock_context(), file_path=temp_path)
             assert result.rows_affected == 1
             assert result.columns_affected == ["name", "value"]
         finally:
@@ -111,9 +109,7 @@ class TestLoadCsvWithEncoding:
 
         try:
             # This should try all fallbacks and eventually succeed with error handling
-            result = await load_csv(
-                cast(Context, create_mock_context()), file_path=temp_path, encoding="utf-8"
-            )
+            result = await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
             # latin-1 should handle any byte sequence
             assert result is not None
         except ToolError:
@@ -142,7 +138,7 @@ class TestLoadCsvSizeConstraints:
                 patch("databeak.servers.io_server.MAX_ROWS", 5),
                 pytest.raises(ToolError, match="rows exceeds limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                await load_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -163,7 +159,7 @@ class TestLoadCsvSizeConstraints:
                 patch("databeak.servers.io_server.MAX_MEMORY_USAGE_MB", 0.001),
                 pytest.raises(ToolError, match="exceeds memory limit"),
             ):
-                await load_csv(cast(Context, create_mock_context()), file_path=temp_path)
+                await load_csv(create_mock_context(), file_path=temp_path)
         finally:
             Path(temp_path).unlink()
 
@@ -176,16 +172,14 @@ class TestExportCsvAdvanced:
         # Create session with data
         csv_content = "name,value,category\ntest1,100,A\ntest2,200,B"
         ctx = create_mock_context()
-        await load_csv_from_content(cast(Context, ctx), csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".tsv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(
-                cast(Context, create_mock_context(session_id)), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
 
             assert result.success is True
             assert result.format == "tsv"
@@ -205,16 +199,14 @@ class TestExportCsvAdvanced:
             'name,description\n"Smith, John","He said ""Hello"""\n"Doe, Jane","Normal text"'
         )
         ctx = create_mock_context()
-        await load_csv_from_content(cast(Context, ctx), csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as f:
             temp_path = f.name
 
         try:
-            result = await export_csv(
-                cast(Context, create_mock_context(session_id)), file_path=temp_path
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=temp_path)
 
             assert result.success is True
 
@@ -229,7 +221,7 @@ class TestExportCsvAdvanced:
         """Test export creates directory if it doesn't exist."""
         csv_content = "col1,col2\n1,2"
         ctx = create_mock_context()
-        await load_csv_from_content(cast(Context, ctx), csv_content)
+        await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         # Use a directory that doesn't exist
@@ -237,9 +229,7 @@ class TestExportCsvAdvanced:
             new_dir = Path(tmpdir) / "new" / "nested" / "dir"
             file_path = new_dir / "export.csv"
 
-            result = await export_csv(
-                cast(Context, create_mock_context(session_id)), file_path=str(file_path)
-            )
+            result = await export_csv(create_mock_context(session_id), file_path=str(file_path))
 
             assert result.success is True
             assert file_path.exists()
@@ -256,7 +246,7 @@ class TestLoadCsvFromContentEdgeCases:
     async def test_load_csv_from_content_single_row(self) -> None:
         """Test loading CSV with only header and one row."""
         csv_content = "col1,col2\n1,2"
-        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 1
         assert result.columns_affected == ["col1", "col2"]
@@ -264,7 +254,7 @@ class TestLoadCsvFromContentEdgeCases:
     async def test_load_csv_from_content_special_characters(self) -> None:
         """Test loading CSV with special characters."""
         csv_content = "name,symbol\nAlpha,a\nBeta,b\nGamma,y"
-        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 3
         assert result.columns_affected == ["name", "symbol"]
@@ -272,7 +262,7 @@ class TestLoadCsvFromContentEdgeCases:
     async def test_load_csv_from_content_numeric_columns(self) -> None:
         """Test loading CSV with numeric column names."""
         csv_content = "1,2,3\na,b,c\nd,e,f"
-        result = await load_csv_from_content(cast(Context, create_mock_context()), csv_content)
+        result = await load_csv_from_content(create_mock_context(), csv_content)
 
         assert result.rows_affected == 2
         # Pandas converts numeric column names to strings
@@ -282,12 +272,12 @@ class TestLoadCsvFromContentEdgeCases:
         """Test that data is loaded correctly."""
         csv_content = "id,name,value\n1,test1,100\n2,test2,200"
         ctx = create_mock_context()
-        result = await load_csv_from_content(cast(Context, ctx), csv_content)
+        result = await load_csv_from_content(ctx, csv_content)
         session_id = ctx.session_id
 
         assert result.rows_affected == 2
         assert result.columns_affected == ["id", "name", "value"]
         # Verify the session has data
-        info = await get_session_info(cast(Context, create_mock_context(session_id)))
+        info = await get_session_info(create_mock_context(session_id))
         assert info.row_count == 2
         assert info.column_count == 3

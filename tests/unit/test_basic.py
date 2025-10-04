@@ -1,9 +1,17 @@
 """Basic unit tests for CSV Editor."""
 
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
 import pytest
 
 from databeak.core.session import get_session_manager
 from databeak.utils.validators import sanitize_filename, validate_column_name, validate_url
+
+if TYPE_CHECKING:
+    from fastmcp import Context
 
 
 class TestValidators:
@@ -82,7 +90,9 @@ class TestDataOperations:
     """Test basic data operations."""
 
     @pytest.mark.asyncio
-    async def test_load_csv_from_content(self, isolated_context, temp_work_dir) -> None:
+    async def test_load_csv_from_content(
+        self, isolated_context: Context, temp_work_dir: Path
+    ) -> None:
         """Test loading CSV from string content with isolated session."""
         from databeak.servers.io_server import load_csv_from_content
 
@@ -101,7 +111,7 @@ class TestDataOperations:
         assert len(isolated_context.session_id) > 0
 
     @pytest.mark.asyncio
-    async def test_filter_rows(self, csv_session_with_data) -> None:
+    async def test_filter_rows(self, csv_session_with_data: tuple[Context, Any]) -> None:
         """Test filtering rows with isolated session."""
         from databeak.servers.transformation_server import filter_rows
 
@@ -122,7 +132,9 @@ class TestDataOperations:
         assert filter_result.rows_after == 3
 
     @pytest.mark.asyncio
-    async def test_filter_rows_category(self, isolated_context, csv_session_with_data) -> None:
+    async def test_filter_rows_category(
+        self, isolated_context: Context, csv_session_with_data: tuple[Context, Any]
+    ) -> None:
         # Test a different filter condition - Electronics category on fresh data
         # Need to reload data first since previous filter modified the session
         from databeak.servers.io_server import load_csv_from_content
