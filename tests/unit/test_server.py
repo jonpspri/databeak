@@ -212,7 +212,7 @@ class TestMainFunction:
         mock_setup_logging: MagicMock,
         mock_parser: MagicMock,
         transport: str,
-        expected_run_args: dict,
+        expected_run_args: dict[str, dict[str, str | int]],
     ) -> None:
         """Test main function with various transport configurations - covers transport branching logic."""
         from databeak.server import main

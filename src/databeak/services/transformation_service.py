@@ -15,6 +15,7 @@ from databeak.exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
+from databeak.models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 # TYPE ALIASES
 # ============================================================================
 
-CsvCellValue = str | int | float | bool | None
+CsvCellValue = CellValue
 RowData = dict[str, CsvCellValue] | list[CsvCellValue]
 
 # ============================================================================

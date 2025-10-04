@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Annotated, Literal
+from typing import Annotated, Literal, TypeVar
 
 import numpy as np
 import pandas as pd
 
 # Pandera import for validation - required dependency
-import pandera.pandas as pa
+import pandera
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
 from pandera.pandas import Check, Column, DataFrameSchema
@@ -20,6 +20,9 @@ from databeak.core.session import get_session_data
 from databeak.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Type variable for generic violation lists
+T = TypeVar("T")
 
 # ============================================================================
 # PYDANTIC MODELS
@@ -455,7 +458,9 @@ QualityRuleType = Annotated[
 # ============================================================================
 
 
-def apply_violation_limits(violations: list, limit: int, operation_name: str) -> tuple[list, bool]:
+def apply_violation_limits[T](
+    violations: list[T], limit: int, operation_name: str
+) -> tuple[list[T], bool]:
     """Apply resource limits to violation collections.
 
     Returns:
@@ -638,7 +643,7 @@ def validate_schema(
             validation_summary.valid_columns = len(pandera_columns)
             validation_summary.invalid_columns = len(validation_errors)  # Only missing columns
 
-        except pa.errors.SchemaErrors as schema_errors:
+        except pandera.errors.SchemaErrors as schema_errors:
             # Process Pandera validation errors
             for error_data in schema_errors.failure_cases.to_dict("records"):
                 col_name = str(error_data.get("column", "unknown"))

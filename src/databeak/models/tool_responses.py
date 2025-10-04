@@ -10,8 +10,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-# Type alias for CSV cell values - more specific than Any while still flexible
-CsvCellValue = str | int | float | bool | None
+from databeak.models import CellValue
+
+# Type alias for CSV cell values - backward compatibility
+CsvCellValue = CellValue
 
 # =============================================================================
 # NESTED PYDANTIC MODELS FOR STRUCTURED DATA

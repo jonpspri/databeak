@@ -11,17 +11,14 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 from databeak.core.session import get_session_data
+from databeak.models import CellValue, FilterCondition
 from databeak.models.tool_responses import (
     ColumnOperationResult,
     FilterOperationResult,
     SortDataResult,
 )
-from databeak.models.typed_dicts import FilterConditionDict
 
 logger = logging.getLogger(__name__)
-
-# Type aliases
-CellValue = str | int | float | bool | None
 
 # ============================================================================
 # PYDANTIC MODELS FOR REQUEST PARAMETERS
@@ -48,7 +45,7 @@ class SortColumn(BaseModel):
 def filter_rows(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     conditions: Annotated[
-        list[FilterConditionDict],
+        list[FilterCondition],
         Field(description="List of filter conditions with column, operator, and value"),
     ],
     mode: Annotated[
@@ -86,18 +83,27 @@ def filter_rows(
         # Initialize mask based on mode: AND starts True, OR starts False
         mask = pd.Series([mode == "and"] * len(df))
 
-        # Process conditions (handles both FilterConditionDict and FilterCondition objects)
-        for condition in conditions:
-            if isinstance(condition, dict):
-                # It's a FilterConditionDict
-                column = condition.get("column")
-                operator = condition.get("operator")
-                value = condition.get("value")
+        # Convert dict conditions to FilterCondition objects if needed
+        typed_conditions: list[FilterCondition] = []
+        for cond in conditions:
+            if isinstance(cond, dict):
+                # Normalize operator: convert == to = for compatibility
+                normalized_cond = dict(cond)
+                if "operator" in normalized_cond and normalized_cond["operator"] == "==":
+                    normalized_cond["operator"] = "="
+                typed_conditions.append(FilterCondition(**normalized_cond))
             else:
-                # It's a FilterCondition object
-                column = condition.column
-                operator = condition.operator
-                value = condition.value
+                typed_conditions.append(cond)
+
+        # Process conditions
+        for condition in typed_conditions:
+            column = condition.column
+            operator = (
+                condition.operator.value
+                if hasattr(condition.operator, "value")
+                else condition.operator
+            )
+            value = condition.value
 
             if column is None or column not in df.columns:
                 msg = f"Column '{column}' not found in data"
@@ -149,21 +155,7 @@ def filter_rows(
         session.df = df[mask].reset_index(drop=True)
         rows_after = len(session.df)
 
-        # Convert conditions to JSON-serializable format for history
-        serializable_conditions = []
-        for condition in conditions:
-            if isinstance(condition, dict):
-                # It's already a dict
-                serializable_conditions.append(dict(condition))
-            else:
-                # It's a FilterCondition object - convert to dict
-                serializable_conditions.append(
-                    {
-                        "column": condition.column,
-                        "operator": condition.operator,
-                        "value": condition.value,
-                    },
-                )
+        # No longer needed - conditions are already FilterCondition objects
 
         # No longer recording operations (simplified MCP architecture)
 

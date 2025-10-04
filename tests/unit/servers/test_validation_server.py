@@ -212,7 +212,7 @@ class TestSchemaValidation:
     async def test_validate_schema_empty_schema(self, clean_test_session: str) -> None:
         """Test schema validation with empty schema."""
         ctx = create_mock_context(clean_test_session)
-        result = validate_schema(ctx, ValidationSchema({}))  # type: ignore[arg-type]
+        result = validate_schema(ctx, ValidationSchema({}))
         assert result.valid is True
 
 

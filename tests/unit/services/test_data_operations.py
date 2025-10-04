@@ -30,7 +30,7 @@ from databeak.services.data_operations import (
 class TestCreateDataPreviewWithIndices:
     """Test create_data_preview_with_indices function with various data types."""
 
-    def test_basic_dataframe(self):
+    def test_basic_dataframe(self) -> None:
         """Test with simple dataframe."""
         df = pd.DataFrame(
             {
@@ -55,7 +55,7 @@ class TestCreateDataPreviewWithIndices:
         assert record["age"] == 30
         assert record["salary"] == 60000.0
 
-    def test_with_nan_values(self):
+    def test_with_nan_values(self) -> None:
         """Test handling of NaN values."""
         df = pd.DataFrame({"col1": [1, np.nan, 3], "col2": ["a", "b", np.nan]})
 
@@ -65,7 +65,7 @@ class TestCreateDataPreviewWithIndices:
         assert records[1]["col1"] is None  # NaN converted to None
         assert records[2]["col2"] is None  # NaN converted to None
 
-    def test_with_timestamp_values(self):
+    def test_with_timestamp_values(self) -> None:
         """Test handling of pandas Timestamp objects."""
         timestamps = pd.to_datetime(["2023-01-01", "2023-01-02", "2023-01-03"])
         df = pd.DataFrame({"date": timestamps, "value": [1, 2, 3]})
@@ -77,7 +77,7 @@ class TestCreateDataPreviewWithIndices:
         assert isinstance(records[0]["date"], str)
         assert "2023-01-01" in records[0]["date"]
 
-    def test_with_numpy_types(self):
+    def test_with_numpy_types(self) -> None:
         """Test handling of numpy scalar types."""
         df = pd.DataFrame(
             {
@@ -95,7 +95,7 @@ class TestCreateDataPreviewWithIndices:
         assert isinstance(records[0]["float_col"], float)
         assert isinstance(records[0]["bool_col"], bool)
 
-    def test_with_non_integer_index(self):
+    def test_with_non_integer_index(self) -> None:
         """Test handling of non-integer row indices."""
         df = pd.DataFrame(
             {"col1": [1, 2, 3], "col2": ["a", "b", "c"]},
@@ -109,7 +109,7 @@ class TestCreateDataPreviewWithIndices:
         assert records[0]["__row_index__"] == 0
         assert records[1]["__row_index__"] == 0
 
-    def test_with_complex_column_names(self):
+    def test_with_complex_column_names(self) -> None:
         """Test handling of complex column names."""
         df = pd.DataFrame(
             {
@@ -127,7 +127,7 @@ class TestCreateDataPreviewWithIndices:
         assert "spaced column" in records[0]
         assert "('tuple', 'col')" in records[0]
 
-    def test_empty_dataframe(self):
+    def test_empty_dataframe(self) -> None:
         """Test with empty dataframe."""
         df = pd.DataFrame()
 
@@ -139,7 +139,7 @@ class TestCreateDataPreviewWithIndices:
         assert result["records"] == []
         assert result["columns"] == []
 
-    def test_more_rows_requested_than_available(self):
+    def test_more_rows_requested_than_available(self) -> None:
         """Test when requesting more preview rows than available."""
         df = pd.DataFrame({"col1": [1, 2]})
 
@@ -149,7 +149,7 @@ class TestCreateDataPreviewWithIndices:
         assert result["preview_rows"] == 2
         assert len(result["records"]) == 2
 
-    def test_zero_preview_rows(self):
+    def test_zero_preview_rows(self) -> None:
         """Test with zero preview rows requested."""
         df = pd.DataFrame({"col1": [1, 2, 3]})
 
@@ -166,7 +166,7 @@ class TestCreateDataPreviewWithIndices:
             (-np.inf, float("-inf")),
         ],
     )
-    def test_special_values(self, special_value, expected):
+    def test_special_values(self, special_value: float, expected: float) -> None:
         """Test handling of special pandas/numpy values."""
         df = pd.DataFrame({"col": [1, special_value, 3]})
 
@@ -175,7 +175,7 @@ class TestCreateDataPreviewWithIndices:
         record_value = result["records"][1]["col"]
         assert record_value == expected
 
-    def test_pd_na_values(self):
+    def test_pd_na_values(self) -> None:
         """Test handling of pandas NA values separately."""
         df = pd.DataFrame({"col": [1, pd.NA, 3]})
 
@@ -188,7 +188,7 @@ class TestCreateDataPreviewWithIndices:
 class TestGetDataSummary:
     """Test get_data_summary function with various scenarios."""
 
-    def test_successful_summary(self):
+    def test_successful_summary(self) -> None:
         """Test successful data summary generation."""
         # Create test data
         df = pd.DataFrame(
@@ -224,7 +224,7 @@ class TestGetDataSummary:
         assert "preview" in result
         assert result["memory_usage_mb"] >= 0  # Memory usage can be 0 for very small dataframes
 
-    def test_no_data_loaded(self):
+    def test_no_data_loaded(self) -> None:
         """Test NoDataLoadedError when session has no data."""
         # Create a real session with no data
         session_id = str(uuid.uuid4())
@@ -237,7 +237,7 @@ class TestGetDataSummary:
 
         assert session_id in str(exc_info.value)
 
-    def test_large_dataframe_memory_calculation(self):
+    def test_large_dataframe_memory_calculation(self) -> None:
         """Test memory calculation for larger dataframes."""
         # Create a larger dataframe
         df = pd.DataFrame({"col1": range(1000), "col2": ["text"] * 1000, "col3": [1.5] * 1000})
@@ -255,7 +255,7 @@ class TestGetDataSummary:
         assert result["preview"]["total_rows"] == 1000
         assert len(result["preview"]["records"]) == 10  # Default preview rows
 
-    def test_empty_dataframe_summary(self):
+    def test_empty_dataframe_summary(self) -> None:
         """Test summary of empty dataframe."""
         # Create empty dataframe
         df = pd.DataFrame()
@@ -278,7 +278,7 @@ class TestGetDataSummary:
 class TestValidateRowIndex:
     """Test validate_row_index function with boundary conditions."""
 
-    def test_valid_index(self):
+    def test_valid_index(self) -> None:
         """Test with valid row index."""
         df = pd.DataFrame({"col": [1, 2, 3, 4, 5]})
 
@@ -287,7 +287,7 @@ class TestValidateRowIndex:
         validate_row_index(df, 2)
         validate_row_index(df, 4)  # Last valid index
 
-    def test_negative_index(self):
+    def test_negative_index(self) -> None:
         """Test with negative row index."""
         df = pd.DataFrame({"col": [1, 2, 3]})
 
@@ -298,7 +298,7 @@ class TestValidateRowIndex:
         assert error.details["row_index"] == -1
         assert error.details["max_index"] == 2
 
-    def test_index_too_large(self):
+    def test_index_too_large(self) -> None:
         """Test with index larger than dataframe."""
         df = pd.DataFrame({"col": [1, 2, 3]})
 
@@ -309,7 +309,7 @@ class TestValidateRowIndex:
         assert error.details["row_index"] == 3
         assert error.details["max_index"] == 2
 
-    def test_index_much_too_large(self):
+    def test_index_much_too_large(self) -> None:
         """Test with index much larger than dataframe."""
         df = pd.DataFrame({"col": [1]})
 
@@ -320,14 +320,14 @@ class TestValidateRowIndex:
         assert error.details["row_index"] == 100
         assert error.details["max_index"] == 0
 
-    def test_empty_dataframe(self):
+    def test_empty_dataframe(self) -> None:
         """Test with empty dataframe."""
         df = pd.DataFrame()
 
         with pytest.raises(InvalidRowIndexError):
             validate_row_index(df, 0)
 
-    def test_single_row_dataframe(self):
+    def test_single_row_dataframe(self) -> None:
         """Test with single row dataframe."""
         df = pd.DataFrame({"col": [42]})
 
@@ -342,7 +342,7 @@ class TestValidateRowIndex:
 class TestValidateColumnExists:
     """Test validate_column_exists function with various scenarios."""
 
-    def test_existing_column(self):
+    def test_existing_column(self) -> None:
         """Test with existing column."""
         df = pd.DataFrame({"name": [1, 2], "age": [3, 4], "salary": [5, 6]})
 
@@ -351,7 +351,7 @@ class TestValidateColumnExists:
         validate_column_exists(df, "age")
         validate_column_exists(df, "salary")
 
-    def test_missing_column(self):
+    def test_missing_column(self) -> None:
         """Test with missing column."""
         df = pd.DataFrame({"name": [1, 2], "age": [3, 4]})
 
@@ -362,7 +362,7 @@ class TestValidateColumnExists:
         assert error.details["column_name"] == "salary"
         assert error.details["available_columns"] == ["name", "age"]
 
-    def test_case_sensitive_column_names(self):
+    def test_case_sensitive_column_names(self) -> None:
         """Test that column validation is case sensitive."""
         df = pd.DataFrame({"Name": [1, 2], "AGE": [3, 4]})
 
@@ -377,18 +377,18 @@ class TestValidateColumnExists:
         with pytest.raises(ColumnNotFoundError):
             validate_column_exists(df, "age")
 
-    def test_numeric_column_names(self):
+    def test_numeric_column_names(self) -> None:
         """Test with numeric column names."""
         df = pd.DataFrame({1: [1, 2], 2: [3, 4], "text": [5, 6]})
 
-        validate_column_exists(df, 1)
-        validate_column_exists(df, 2)
+        validate_column_exists(df, 1)  # type: ignore[arg-type]
+        validate_column_exists(df, 2)  # type: ignore[arg-type]
         validate_column_exists(df, "text")
 
         with pytest.raises(ColumnNotFoundError):
-            validate_column_exists(df, 3)
+            validate_column_exists(df, 3)  # type: ignore[arg-type]
 
-    def test_empty_dataframe(self):
+    def test_empty_dataframe(self) -> None:
         """Test with empty dataframe."""
         df = pd.DataFrame()
 
@@ -398,7 +398,7 @@ class TestValidateColumnExists:
         error = exc_info.value
         assert error.details["available_columns"] == []
 
-    def test_special_column_names(self):
+    def test_special_column_names(self) -> None:
         """Test with special characters in column names."""
         df = pd.DataFrame(
             {
@@ -418,7 +418,7 @@ class TestValidateColumnExists:
 class TestSafeTypeConversion:
     """Test safe_type_conversion function with all supported types."""
 
-    def test_convert_to_int(self):
+    def test_convert_to_int(self) -> None:
         """Test conversion to int type."""
         series = pd.Series(["1", "2", "3.0", "invalid", ""])
 
@@ -433,7 +433,7 @@ class TestSafeTypeConversion:
         # Check dtype is nullable integer
         assert result.dtype == "Int64"
 
-    def test_convert_to_float(self):
+    def test_convert_to_float(self) -> None:
         """Test conversion to float type."""
         series = pd.Series(["1.1", "2", "3.14", "invalid", ""])
 
@@ -446,7 +446,7 @@ class TestSafeTypeConversion:
         assert pd.isna(result.iloc[4])
         assert result.dtype == "float64"
 
-    def test_convert_to_string(self):
+    def test_convert_to_string(self) -> None:
         """Test conversion to string type."""
         series = pd.Series([1, 2.5, True, None, np.nan])
 
@@ -459,7 +459,7 @@ class TestSafeTypeConversion:
         assert "nan" in result.iloc[4].lower()
         assert result.dtype == "object"
 
-    def test_convert_to_datetime(self):
+    def test_convert_to_datetime(self) -> None:
         """Test conversion to datetime type."""
         series = pd.Series(["2023-01-01", "2023-12-31", "invalid", "2023-01-01 12:30:45"])
 
@@ -476,7 +476,7 @@ class TestSafeTypeConversion:
             result.iloc[3],
         )  # Either valid or NaT is acceptable
 
-    def test_convert_to_boolean(self):
+    def test_convert_to_boolean(self) -> None:
         """Test conversion to boolean type."""
         series = pd.Series([1, 0, "true", "false", None])
 
@@ -488,14 +488,14 @@ class TestSafeTypeConversion:
         assert bool(result.iloc[3]) is True  # 'false' becomes True (non-empty string)
         # None might become True or False depending on pandas behavior
 
-    def test_unsupported_type(self):
+    def test_unsupported_type(self) -> None:
         """Test with unsupported target type."""
         series = pd.Series([1, 2, 3])
 
         with pytest.raises(ValueError, match="Unsupported type: complex"):
             safe_type_conversion(series, "complex")
 
-    def test_conversion_exception_handling(self):
+    def test_conversion_exception_handling(self) -> None:
         """Test that conversion exceptions are properly wrapped."""
         # Create a series that will cause conversion issues
         series = pd.Series([1, 2, 3])
@@ -504,7 +504,7 @@ class TestSafeTypeConversion:
         with pytest.raises(ValueError, match="Unsupported type"):
             safe_type_conversion(series, "nonexistent_type")
 
-    def test_numeric_conversion_edge_cases(self):
+    def test_numeric_conversion_edge_cases(self) -> None:
         """Test numeric conversions with edge cases."""
         # Test with very large numbers, scientific notation, etc.
         series = pd.Series(["1e10", "1.23e-5", "inf", "-inf", "nan"])
@@ -517,7 +517,7 @@ class TestSafeTypeConversion:
         assert float_result.iloc[3] < 0
         assert pd.isna(float_result.iloc[4])
 
-    def test_datetime_conversion_formats(self):
+    def test_datetime_conversion_formats(self) -> None:
         """Test datetime conversion with various formats."""
         series = pd.Series(
             [
@@ -535,7 +535,7 @@ class TestSafeTypeConversion:
         valid_count = sum(1 for i in range(len(result)) if pd.notna(result.iloc[i]))
         assert valid_count >= 1  # At least 1 should parse successfully
 
-    def test_empty_series_conversion(self):
+    def test_empty_series_conversion(self) -> None:
         """Test conversion with empty series."""
         series = pd.Series([], dtype=object)
 
@@ -553,7 +553,7 @@ class TestSafeTypeConversion:
             ("boolean", "bool"),
         ],
     )
-    def test_all_type_conversions_dtype(self, target_type, expected_dtype):
+    def test_all_type_conversions_dtype(self, target_type: str, expected_dtype: str) -> None:
         """Test that all conversions produce expected dtypes."""
         if target_type == "float":
             # Use numeric data for float conversion
@@ -568,7 +568,7 @@ class TestSafeTypeConversion:
         else:
             assert result.dtype == expected_dtype
 
-    def test_float_conversion_dtype(self):
+    def test_float_conversion_dtype(self) -> None:
         """Test float conversion specifically."""
         series = pd.Series([1.1, 2.2, 3.3])
         result = safe_type_conversion(series, "float")

@@ -30,12 +30,12 @@ class TestFileEncodingDetection:
     @patch("chardet.detect")
     def test_encoding_detection_scenarios(
         self,
-        mock_detect,
-        mock_encoding,
-        mock_confidence,
-        file_content,
-        expected_encoding,
-    ):
+        mock_detect: MagicMock,
+        mock_encoding: str | None,
+        mock_confidence: float,
+        file_content: bytes,
+        expected_encoding: str | list[str],
+    ) -> None:
         """Test encoding detection with different chardet results."""
         mock_detect.return_value = {"encoding": mock_encoding, "confidence": mock_confidence}
 
@@ -57,7 +57,7 @@ class TestFileEncodingDetection:
 class TestLoadCsvEncodingFallbacks:
     """Test CSV loading with encoding fallbacks."""
 
-    async def test_load_csv_with_context_reporting(self):
+    async def test_load_csv_with_context_reporting(self) -> None:
         """Test load_csv with context for progress reporting."""
         # Create a test file
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
@@ -81,7 +81,7 @@ class TestLoadCsvEncodingFallbacks:
             Path(temp_path).unlink()
 
     @patch("pandas.read_csv")
-    async def test_load_csv_all_encodings_fail(self, mock_read_csv):
+    async def test_load_csv_all_encodings_fail(self, mock_read_csv: MagicMock) -> None:
         """Test when all encoding attempts fail."""
         # Make all read attempts fail
         mock_read_csv.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
@@ -99,11 +99,11 @@ class TestLoadCsvEncodingFallbacks:
     @pytest.mark.skip(
         reason="Complex encoding fallback + memory limit edge case - needs refactoring",
     )
-    async def test_load_csv_memory_check_on_fallback(self):
+    async def test_load_csv_memory_check_on_fallback(self) -> None:
         """Test memory limit check during encoding fallback."""
 
     @pytest.mark.skip(reason="Complex encoding fallback + row limit edge case - needs refactoring")
-    async def test_load_csv_row_limit_on_fallback(self):
+    async def test_load_csv_row_limit_on_fallback(self) -> None:
         """Test row limit check during encoding fallback."""
 
 
@@ -112,7 +112,9 @@ class TestLoadCsvFromUrlFallbacks:
 
     @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
-    async def test_load_url_encoding_fallback_success(self, mock_read_csv, mock_urlopen):
+    async def test_load_url_encoding_fallback_success(
+        self, mock_read_csv: MagicMock, mock_urlopen: MagicMock
+    ) -> None:
         """Test URL loading with successful encoding fallback."""
         mock_df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
 
@@ -144,18 +146,20 @@ class TestLoadCsvFromUrlFallbacks:
     @pytest.mark.skip(
         reason="Complex URL encoding fallback + memory limit edge case - needs refactoring",
     )
-    async def test_load_url_memory_check_fallback(self):
+    async def test_load_url_memory_check_fallback(self) -> None:
         """Test URL loading with memory check during fallback."""
 
     @pytest.mark.skip(
         reason="Complex URL encoding fallback + row limit edge case - needs refactoring",
     )
-    async def test_load_url_row_limit_fallback(self):
+    async def test_load_url_row_limit_fallback(self) -> None:
         """Test URL loading with row limit during fallback."""
 
     @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
-    async def test_load_url_all_encodings_fail(self, mock_read_csv, mock_urlopen):
+    async def test_load_url_all_encodings_fail(
+        self, mock_read_csv: MagicMock, mock_urlopen: MagicMock
+    ) -> None:
         """Test URL loading when all encodings fail."""
         # Mock urlopen response
         mock_response = MagicMock()
@@ -174,7 +178,9 @@ class TestLoadCsvFromUrlFallbacks:
 
     @patch("databeak.servers.io_server.urlopen")
     @patch("pandas.read_csv")
-    async def test_load_url_other_exception_during_fallback(self, mock_read_csv, mock_urlopen):
+    async def test_load_url_other_exception_during_fallback(
+        self, mock_read_csv: MagicMock, mock_urlopen: MagicMock
+    ) -> None:
         """Test URL loading with non-encoding exception during fallback."""
         # Mock urlopen response
         mock_response = MagicMock()

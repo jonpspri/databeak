@@ -26,7 +26,7 @@ from databeak.utils.secure_evaluator import (
 class TestExpressionSecurity:
     """Test security aspects of expression evaluation."""
 
-    def setup_method(self):
+    def setup_method(self) -> None:
         """Set up test data for each test method."""
         self.evaluator = SecureExpressionEvaluator()
         self.test_df = pd.DataFrame(
@@ -39,7 +39,7 @@ class TestExpressionSecurity:
             },
         )
 
-    def test_code_injection_blocked(self):
+    def test_code_injection_blocked(self) -> None:
         """Test that various code injection attempts are blocked."""
         malicious_expressions = [
             # System access attempts
@@ -83,7 +83,7 @@ class TestExpressionSecurity:
                 for keyword in ["dangerous", "unsafe", "not allowed", "invalid"]
             ), f"Security error not properly indicated for: {malicious_expr}"
 
-    def test_safe_mathematical_expressions_allowed(self):
+    def test_safe_mathematical_expressions_allowed(self) -> None:
         """Test that legitimate mathematical expressions work correctly."""
         safe_expressions_and_expected = [
             # Basic arithmetic
@@ -113,15 +113,15 @@ class TestExpressionSecurity:
 
                 if expected is not None:
                     np.testing.assert_array_almost_equal(
-                        result.values,
-                        expected,
+                        result.values,  # type: ignore[arg-type]
+                        expected,  # type: ignore[arg-type]
                         err_msg=f"Unexpected result for: {expr}",
                     )
 
             except Exception as e:
                 pytest.fail(f"Safe expression failed: {expr} - Error: {e}")
 
-    def test_column_reference_validation(self):
+    def test_column_reference_validation(self) -> None:
         """Test that column references are properly validated."""
         # Valid column references (backticks are handled internally, not in user expressions)
         valid_expressions = [
@@ -137,7 +137,7 @@ class TestExpressionSecurity:
         with pytest.raises(InvalidParameterError):
             self.evaluator.evaluate_column_expression("nonexistent_col + 1", self.test_df)
 
-    def test_pydantic_model_validation(self):
+    def test_pydantic_model_validation(self) -> None:
         """Test that Pydantic models properly validate expressions."""
         # Valid expressions should work
         valid_expr = SecureExpression(expression="col1 + col2")
@@ -150,7 +150,7 @@ class TestExpressionSecurity:
         with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression(expression="__import__('os').system('bad')")
 
-    def test_apply_expression_model(self):
+    def test_apply_expression_model(self) -> None:
         """Test apply operation with unified SecureExpression."""
         apply_expr = SecureExpression.apply_operation("x * 2")
 
@@ -166,7 +166,7 @@ class TestExpressionSecurity:
         expected = [2, 4, 6, 8, 10]
         np.testing.assert_array_equal(result.values, expected)
 
-    def test_function_allowlist_enforcement(self):
+    def test_function_allowlist_enforcement(self) -> None:
         """Test that only allowlisted functions can be used."""
         # Allowed functions should work
         allowed_functions = [
@@ -198,7 +198,7 @@ class TestExpressionSecurity:
             with pytest.raises(InvalidParameterError):
                 validate_expression_safety(expr)
 
-    def test_performance_vs_pandas_eval(self):
+    def test_performance_vs_pandas_eval(self) -> None:
         """Test that secure evaluator performance is reasonable."""
         import time
 
@@ -235,7 +235,7 @@ class TestExpressionSecurity:
         performance_ratio = secure_time / pandas_time if pandas_time > 0 else 1
         assert performance_ratio < 10, f"Performance ratio too high: {performance_ratio:.2f}x"
 
-    def test_edge_cases(self):
+    def test_edge_cases(self) -> None:
         """Test edge cases and error conditions."""
         # Empty expression
         with pytest.raises(InvalidParameterError):
@@ -243,7 +243,7 @@ class TestExpressionSecurity:
 
         # None expression
         with pytest.raises(InvalidParameterError):
-            validate_expression_safety(None)
+            validate_expression_safety(None)  # type: ignore[arg-type]
 
         # Very long expression (should be blocked by Pydantic length validation)
         long_expr = "col1 + " * 1000 + "col2"
@@ -256,7 +256,7 @@ class TestExpressionSecurity:
         assert result[0] == 1.0  # 1/1 = 1
         assert np.isinf(result[1])  # 1/0 = inf
 
-    def test_numpy_integration(self):
+    def test_numpy_integration(self) -> None:
         """Test that numpy functions work correctly."""
         numpy_expressions = [
             ("np.abs(negative_col)", [1, 2, 3, 4, 5]),
@@ -267,9 +267,9 @@ class TestExpressionSecurity:
 
         for expr, expected in numpy_expressions:
             result = self.evaluator.evaluate_column_expression(expr, self.test_df)
-            np.testing.assert_array_almost_equal(result.values, expected)
+            np.testing.assert_array_almost_equal(result.values, expected)  # type: ignore[arg-type]
 
-    def test_constant_access(self):
+    def test_constant_access(self) -> None:
         """Test that mathematical constants are accessible."""
         constant_expressions = [
             ("col1 + pi", [i + math.pi for i in range(1, 6)]),
@@ -279,9 +279,9 @@ class TestExpressionSecurity:
 
         for expr, expected in constant_expressions:
             result = self.evaluator.evaluate_column_expression(expr, self.test_df)
-            np.testing.assert_array_almost_equal(result.values, expected)
+            np.testing.assert_array_almost_equal(result.values, expected)  # type: ignore[arg-type]
 
-    def test_supported_functions_list(self):
+    def test_supported_functions_list(self) -> None:
         """Test that the supported functions list is comprehensive."""
         supported = self.evaluator.get_supported_functions()
 
@@ -299,25 +299,25 @@ class TestExpressionSecurity:
 class TestUnifiedExpression:
     """Test unified SecureExpression functionality."""
 
-    def test_formula_creation(self):
+    def test_formula_creation(self) -> None:
         """Test creating formulas with unified SecureExpression."""
         formula = SecureExpression.formula("col1 + col2", "Sum of two columns")
         assert str(formula) == "col1 + col2"
         assert formula.description == "Sum of two columns"
 
-    def test_apply_operation_creation(self):
+    def test_apply_operation_creation(self) -> None:
         """Test creating apply operations with unified SecureExpression."""
         apply_expr = SecureExpression.apply_operation("x * 2 + 1")
         assert str(apply_expr) == "x * 2 + 1"
         assert apply_expr.variable_name == "x"
 
-    def test_condition_creation(self):
+    def test_condition_creation(self) -> None:
         """Test creating conditional expressions with unified SecureExpression."""
         condition = SecureExpression.condition("col1 > 0", "Positive values")
         assert str(condition) == "col1 > 0"
         assert condition.description == "Positive values"
 
-    def test_invalid_expressions_blocked(self):
+    def test_invalid_expressions_blocked(self) -> None:
         """Test that invalid expressions are blocked in all creation methods."""
         with pytest.raises(ValueError, match=r"(?i)unsafe"):
             SecureExpression.formula("exec('bad')")

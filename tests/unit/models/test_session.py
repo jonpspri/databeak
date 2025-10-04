@@ -20,7 +20,7 @@ from databeak.models.data_models import ExportFormat
 class TestDataBeakSettings:
     """Tests for DataBeakSettings configuration."""
 
-    def test_default_settings(self):
+    def test_default_settings(self) -> None:
         """Test default settings initialization."""
         settings = DataBeakSettings()
         assert settings.session_timeout == 3600
@@ -33,7 +33,7 @@ class TestDataBeakSettings:
 class TestDatabeakSession:
     """Tests for DatabeakSession class functionality."""
 
-    def test_df_property_setter_and_getter(self):
+    def test_df_property_setter_and_getter(self) -> None:
         """Test DataFrame property setter and getter."""
         session = DatabeakSession()
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
@@ -47,7 +47,7 @@ class TestDatabeakSession:
         retrieved_df = session.df
         pd.testing.assert_frame_equal(retrieved_df, df)
 
-    def test_df_property_deleter(self):
+    def test_df_property_deleter(self) -> None:
         """Test DataFrame property deleter (lines 109-113)."""
         session = DatabeakSession()
         df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
@@ -60,7 +60,7 @@ class TestDatabeakSession:
         del session.df
         assert session.df is None
 
-    def test_has_data_method(self):
+    def test_has_data_method(self) -> None:
         """Test has_data method (line 117)."""
         session = DatabeakSession()
 
@@ -77,7 +77,7 @@ class TestDatabeakSession:
         assert not session.has_data()
 
     @pytest.mark.asyncio
-    async def test_save_callback_csv_format(self, tmp_path):
+    async def test_save_callback_csv_format(self, tmp_path: Path) -> None:
         """Test _save_callback with CSV format (lines 199-227)."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -93,7 +93,7 @@ class TestDatabeakSession:
         assert Path(file_path).exists()
 
     @pytest.mark.asyncio
-    async def test_save_callback_tsv_format(self, tmp_path):
+    async def test_save_callback_tsv_format(self, tmp_path: Path) -> None:
         """Test _save_callback with TSV format."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -110,7 +110,7 @@ class TestDatabeakSession:
         assert "\t" in content
 
     @pytest.mark.asyncio
-    async def test_save_callback_json_format(self, tmp_path):
+    async def test_save_callback_json_format(self, tmp_path: Path) -> None:
         """Test _save_callback with JSON format."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -123,7 +123,7 @@ class TestDatabeakSession:
         assert Path(file_path).exists()
 
     @pytest.mark.asyncio
-    async def test_save_callback_excel_format(self, tmp_path):
+    async def test_save_callback_excel_format(self, tmp_path: Path) -> None:
         """Test _save_callback with Excel format."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -136,7 +136,7 @@ class TestDatabeakSession:
         assert Path(file_path).exists()
 
     @pytest.mark.asyncio
-    async def test_save_callback_parquet_format(self, tmp_path):
+    async def test_save_callback_parquet_format(self, tmp_path: Path) -> None:
         """Test _save_callback with Parquet format."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -149,7 +149,7 @@ class TestDatabeakSession:
         assert Path(file_path).exists()
 
     @pytest.mark.asyncio
-    async def test_save_callback_unsupported_format(self, tmp_path):
+    async def test_save_callback_unsupported_format(self, tmp_path: Path) -> None:
         """Test _save_callback with unsupported format."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -157,13 +157,13 @@ class TestDatabeakSession:
 
         file_path = str(tmp_path / "test.unknown")
         # Use a string that's not in ExportFormat enum
-        result = await session._save_callback(file_path, "UNKNOWN", "utf-8")
+        result = await session._save_callback(file_path, "UNKNOWN", "utf-8")  # type: ignore[arg-type]
 
         assert result["success"] is False
         assert "Unsupported format" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_save_callback_no_data(self, tmp_path):
+    async def test_save_callback_no_data(self, tmp_path: Path) -> None:
         """Test _save_callback when no data is loaded."""
         session = DatabeakSession()
         # Don't load any data
@@ -175,7 +175,7 @@ class TestDatabeakSession:
         assert "No data to save" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_save_callback_exception_handling(self, tmp_path):
+    async def test_save_callback_exception_handling(self, tmp_path: Path) -> None:
         """Test _save_callback exception handling."""
         session = DatabeakSession()
         df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
@@ -192,7 +192,7 @@ class TestDatabeakSession:
 class TestSessionManager:
     """Tests for SessionManager functionality."""
 
-    def test_get_session_manager(self):
+    def test_get_session_manager(self) -> None:
         """Test getting session manager instance."""
         manager = get_session_manager()
         assert manager is not None
@@ -200,7 +200,7 @@ class TestSessionManager:
         manager2 = get_session_manager()
         assert manager is manager2
 
-    def test_session_manager_init(self):
+    def test_session_manager_init(self) -> None:
         """Test SessionManager initialization."""
         manager = SessionManager(max_sessions=10, ttl_minutes=30)
         assert manager.max_sessions == 10
@@ -208,7 +208,7 @@ class TestSessionManager:
         assert len(manager.sessions) == 0
         assert len(manager.sessions_to_cleanup) == 0
 
-    def test_get_session_creates_new(self):
+    def test_get_session_creates_new(self) -> None:
         """Test get_session creates new session when needed."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
@@ -218,7 +218,7 @@ class TestSessionManager:
         assert session_id in manager.sessions
         assert len(manager.sessions) == 1
 
-    def test_get_session_max_sessions_limit(self):
+    def test_get_session_max_sessions_limit(self) -> None:
         """Test get_session when max sessions limit is reached (lines 453-454)."""
         manager = SessionManager(max_sessions=2, ttl_minutes=60)
 
@@ -245,7 +245,7 @@ class TestSessionManager:
             assert session2_id in manager.sessions
             assert session3_id in manager.sessions
 
-    def test_get_session_valid(self):
+    def test_get_session_valid(self) -> None:
         """Test getting a valid, non-expired session."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
@@ -255,7 +255,7 @@ class TestSessionManager:
         assert retrieved_session is not None
         assert retrieved_session.session_id == session_id
 
-    def test_get_session_nonexistent(self):
+    def test_get_session_nonexistent(self) -> None:
         """Test getting a non-existent session."""
         manager = SessionManager()
         # get_session creates if not exists, so check sessions dict directly
@@ -263,7 +263,7 @@ class TestSessionManager:
         assert retrieved_session is None
 
     @pytest.mark.skip(reason="Session expiration logic needs clarification")
-    def test_get_session_expired(self):
+    def test_get_session_expired(self) -> None:
         """Test getting an expired session (lines 467->470)."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
@@ -278,7 +278,7 @@ class TestSessionManager:
             assert session_id in manager.sessions_to_cleanup
 
     @pytest.mark.asyncio
-    async def test_remove_session_exists(self):
+    async def test_remove_session_exists(self) -> None:
         """Test removing an existing session (lines 474-479)."""
         manager = SessionManager()
         session_id = str(uuid.uuid4())
@@ -294,13 +294,13 @@ class TestSessionManager:
             mock_clear.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_remove_session_nonexistent(self):
+    async def test_remove_session_nonexistent(self) -> None:
         """Test removing a non-existent session."""
         manager = SessionManager()
         result = await manager.remove_session("nonexistent-id")
         assert result is False
 
-    def test_list_sessions_with_data(self):
+    def test_list_sessions_with_data(self) -> None:
         """Test listing sessions that have data (lines 483-484)."""
         manager = SessionManager()
 
@@ -325,7 +325,7 @@ class TestSessionManager:
             assert len(session_list) == 1
             assert session_list[0].session_id == session1_id
 
-    def test_list_sessions_cleanup_expired(self):
+    def test_list_sessions_cleanup_expired(self) -> None:
         """Test that list_sessions triggers cleanup of expired sessions."""
         manager = SessionManager()
 
@@ -333,7 +333,7 @@ class TestSessionManager:
             manager.list_sessions()
             mock_cleanup.assert_called_once()
 
-    def test_cleanup_expired_sessions(self):
+    def test_cleanup_expired_sessions(self) -> None:
         """Test _cleanup_expired marks expired sessions for cleanup."""
         manager = SessionManager()
         session1_id = str(uuid.uuid4())
@@ -354,7 +354,7 @@ class TestSessionManager:
             mock_logger.info.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_cleanup_marked_sessions(self):
+    async def test_cleanup_marked_sessions(self) -> None:
         """Test cleanup_marked_sessions method (lines 499-501)."""
         manager = SessionManager()
         session1_id = str(uuid.uuid4())
@@ -377,13 +377,13 @@ class TestSessionManager:
 class TestMemoryConfiguration:
     """Test memory threshold configuration functionality."""
 
-    def test_memory_threshold_configuration(self):
+    def test_memory_threshold_configuration(self) -> None:
         """Test that memory threshold is configurable via settings."""
         settings = DataBeakSettings(memory_threshold_mb=4096)
         assert settings.memory_threshold_mb == 4096
 
     @pytest.mark.asyncio
-    async def test_environment_variable_configuration(self):
+    async def test_environment_variable_configuration(self) -> None:
         """Test that memory settings can be configured via environment variables."""
         import os
 

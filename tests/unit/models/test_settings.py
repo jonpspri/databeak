@@ -50,7 +50,7 @@ class TestDataBeakSettings:
 class TestDataBeakSettingsIntegration:
     """Test DataBeak settings integration with sessions."""
 
-    def test_settings_are_configurable(self):
+    def test_settings_are_configurable(self) -> None:
         """Test that settings can be configured multiple ways."""
         # Test 1: Direct instantiation
         settings1 = DataBeakSettings(max_file_size_mb=512)
@@ -73,13 +73,13 @@ class TestDataBeakSettingsIntegration:
 class TestSettingsDocumentation:
     """Test that settings behavior matches documentation."""
 
-    def test_env_prefix_documentation(self):
+    def test_env_prefix_documentation(self) -> None:
         """Test that DATABEAK_ prefix works as documented."""
         with patch.dict(os.environ, {"DATABEAK_CHUNK_SIZE": "15000"}):
             settings = DataBeakSettings()
             assert settings.chunk_size == 15000
 
-    def test_default_values_documentation(self):
+    def test_default_values_documentation(self) -> None:
         """Test that default values match documentation."""
         # Clear environment and test default values
         with patch.dict(os.environ, {}, clear=True):

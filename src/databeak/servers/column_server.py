@@ -20,6 +20,7 @@ from databeak.exceptions import (
     NoDataLoadedError,
     SessionNotFoundError,
 )
+from databeak.models import CellValue
 from databeak.models.expression_models import SecureExpression
 from databeak.models.tool_responses import BaseToolResponse, ColumnOperationResult
 from databeak.utils.secure_evaluator import (
@@ -28,10 +29,6 @@ from databeak.utils.secure_evaluator import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-# Type aliases
-CellValue = str | int | float | bool | None
 
 # =============================================================================
 # PYDANTIC MODELS FOR REQUEST PARAMETERS

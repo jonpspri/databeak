@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from fastmcp import Client
+from fastmcp.client.transports import FastMCPTransport
 
 
 def get_fixture_path(fixture_name: str) -> str:
@@ -54,7 +55,7 @@ def get_fixture_path(fixture_name: str) -> str:
 
 
 @pytest.fixture
-async def databeak_client() -> AsyncGenerator[Client, None]:
+async def databeak_client() -> AsyncGenerator[Client[FastMCPTransport], None]:
     """Pytest fixture providing a FastMCP Client connected to DataBeak server.
 
     This fixture creates a direct in-memory connection to the DataBeak MCP server
@@ -65,7 +66,7 @@ async def databeak_client() -> AsyncGenerator[Client, None]:
 
     Example:
         @pytest.mark.asyncio
-        async def test_something(databeak_client):
+        async def test_something(databeak_client : Client):
             tools = await databeak_client.list_tools()
             result = await databeak_client.call_tool("get_session_info", {})
             assert result.is_error is False

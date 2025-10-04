@@ -6,11 +6,14 @@ conform to expected integer types.
 """
 
 import pytest
+from fastmcp import Client
+from fastmcp.client.transports import FastMCPTransport
 from fastmcp.exceptions import ToolError
+from mcp.types import TextContent
 
 
 @pytest.mark.asyncio
-async def test_get_cell_with_string_row_index(databeak_client):
+async def test_get_cell_with_string_row_index(databeak_client: Client[FastMCPTransport]) -> None:
     """Test get_cell_value accepts string representation of integer for row_index."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -23,11 +26,12 @@ async def test_get_cell_with_string_row_index(databeak_client):
         {"row_index": "0", "column": "name"},  # "0" instead of 0
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "Alice" in result.content[0].text
 
 
 @pytest.mark.asyncio
-async def test_get_cell_with_float_row_index(databeak_client):
+async def test_get_cell_with_float_row_index(databeak_client: Client[FastMCPTransport]) -> None:
     """Test get_cell_value accepts float representation of integer for row_index."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -40,11 +44,12 @@ async def test_get_cell_with_float_row_index(databeak_client):
         {"row_index": 1.0, "column": "age"},  # 1.0 instead of 1
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "25" in result.content[0].text
 
 
 @pytest.mark.asyncio
-async def test_get_cell_with_string_column_index(databeak_client):
+async def test_get_cell_with_string_column_index(databeak_client: Client[FastMCPTransport]) -> None:
     """Test get_cell_value accepts string for column index parameter."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -57,11 +62,12 @@ async def test_get_cell_with_string_column_index(databeak_client):
         {"row_index": "1", "column": "city"},  # Use column name
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "LA" in result.content[0].text
 
 
 @pytest.mark.asyncio
-async def test_negative_string_integer(databeak_client):
+async def test_negative_string_integer(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that negative integers as strings are handled correctly."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -77,7 +83,7 @@ async def test_negative_string_integer(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_zero_string_integer(databeak_client):
+async def test_zero_string_integer(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that zero as string is handled correctly."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -90,11 +96,12 @@ async def test_zero_string_integer(databeak_client):
         {"row_index": "0", "column": "name"},  # Use column name
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "Alice" in result.content[0].text
 
 
 @pytest.mark.asyncio
-async def test_large_integer_string(databeak_client):
+async def test_large_integer_string(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that large integers as strings are handled correctly."""
     # Load test data with more rows
     rows = "\n".join([f"Name{i},{20 + i},City{i}" for i in range(100)])
@@ -108,11 +115,12 @@ async def test_large_integer_string(databeak_client):
         {"row_index": "99", "column": "name"},
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "Name99" in result.content[0].text
 
 
 @pytest.mark.asyncio
-async def test_invalid_string_integer_rejected(databeak_client):
+async def test_invalid_string_integer_rejected(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that invalid string values are properly rejected."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -128,7 +136,7 @@ async def test_invalid_string_integer_rejected(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_fractional_float_rejected(databeak_client):
+async def test_fractional_float_rejected(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that non-integer floats are properly rejected."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -144,7 +152,7 @@ async def test_fractional_float_rejected(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_empty_string_rejected(databeak_client):
+async def test_empty_string_rejected(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that empty strings are properly rejected."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -160,7 +168,7 @@ async def test_empty_string_rejected(databeak_client):
 
 
 @pytest.mark.asyncio
-async def test_string_float_notation(databeak_client):
+async def test_string_float_notation(databeak_client: Client[FastMCPTransport]) -> None:
     """Test that strings with float notation for integers are accepted."""
     # Load test data
     csv_content = "name,age,city\nAlice,30,NYC\nBob,25,LA"
@@ -173,4 +181,5 @@ async def test_string_float_notation(databeak_client):
         {"row_index": "1.0", "column": "name"},  # Test string float notation "1.0"
     )
     assert result.is_error is False
+    assert isinstance(result.content[0], TextContent)
     assert "Bob" in result.content[0].text

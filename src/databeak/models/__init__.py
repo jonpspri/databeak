@@ -1,6 +1,11 @@
 """Data models for CSV Editor MCP Server."""
 
-from .data_models import (
+from __future__ import annotations
+
+# Type alias defined here to avoid circular imports
+CellValue = str | int | float | bool | None
+
+from .data_models import (  # noqa: E402
     AggregateFunction,
     ColumnSchema,
     ComparisonOperator,
@@ -17,8 +22,7 @@ from .data_models import (
     SessionInfo,
     SortSpec,
 )
-from .session_service import (
-    MockSessionManager,
+from .session_service import (  # noqa: E402
     SessionManagerProtocol,
     SessionService,
     SessionServiceFactory,
@@ -27,6 +31,7 @@ from .session_service import (
 
 __all__ = [
     "AggregateFunction",
+    "CellValue",
     "ColumnSchema",
     "ComparisonOperator",
     "DataPreview",
@@ -37,7 +42,6 @@ __all__ = [
     "ExportFormat",
     "FilterCondition",
     "LogicalOperator",
-    "MockSessionManager",
     "OperationResult",
     "OperationType",
     "SessionInfo",

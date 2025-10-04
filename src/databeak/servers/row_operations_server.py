@@ -14,6 +14,7 @@ from databeak.core.session import get_session_data
 
 # Import session management from the main package
 from databeak.exceptions import ColumnNotFoundError, InvalidParameterError
+from databeak.models import CellValue
 from databeak.models.tool_responses import (
     CellValueResult,
     ColumnDataResult,
@@ -35,7 +36,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 # Type aliases for better type safety
-CellValue = str | int | float | bool | None
 RowData = dict[str, CellValue] | list[CellValue]
 
 # ============================================================================
@@ -182,7 +182,7 @@ def get_cell_value(
         # No longer recording operations (simplified MCP architecture)
 
         return CellValueResult(
-            value=value,  # type: ignore[arg-type]
+            value=value,
             coordinates={"row": row_index, "column": column_name},
             data_type=data_type,
         )
@@ -283,8 +283,8 @@ def set_cell_value(
 
         return SetCellResult(
             coordinates={"row": row_index, "column": column_name},
-            old_value=old_value,  # type: ignore[arg-type]
-            new_value=new_value,  # type: ignore[arg-type]
+            old_value=old_value,
+            new_value=new_value,
             data_type=data_type,
         )
 
@@ -674,8 +674,8 @@ def update_row(
         return UpdateRowResult(
             row_index=row_index,
             columns_updated=columns_updated,
-            old_values=old_values,  # type: ignore[arg-type]
-            new_values=new_values,  # type: ignore[arg-type]
+            old_values=old_values,
+            new_values=new_values,
             changes_made=len(columns_updated),
         )
 

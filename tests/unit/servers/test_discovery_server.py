@@ -1,7 +1,5 @@
 """Comprehensive tests for discovery_server module - Fixed version."""
 
-from typing import cast
-
 import pytest
 from fastmcp import Context
 from fastmcp.exceptions import ToolError
@@ -19,7 +17,7 @@ from tests.test_mock_context import create_mock_context
 
 
 @pytest.fixture
-async def discovery_session():
+async def discovery_ctx() -> Context:
     """Create a session with diverse data for discovery testing."""
     csv_content = """customer_id,name,age,purchase_amount,category,region,is_premium
 1001,John Smith,25,150.50,Electronics,North,True
@@ -33,13 +31,13 @@ async def discovery_session():
 1009,George White,38,220.00,Clothing,West,False
 1010,Helen Black,33,180.50,Food,North,False"""
 
-    ctx = cast(Context, create_mock_context())
+    ctx = create_mock_context()
     _result = await load_csv_from_content(ctx, csv_content)
-    return ctx.session_id
+    return ctx
 
 
 @pytest.fixture
-async def outlier_session():
+async def outlier_ctx() -> Context:
     """Create a session with clear outliers."""
     csv_content = """id,value,amount,score
 1,10,100,50
@@ -53,13 +51,13 @@ async def outlier_session():
 9,11,101,51
 10,13,104,49"""
 
-    ctx = cast(Context, create_mock_context())
+    ctx = create_mock_context()
     _result = await load_csv_from_content(ctx, csv_content)
-    return ctx.session_id
+    return ctx
 
 
 @pytest.fixture
-async def grouped_session():
+async def grouped_ctx() -> Context:
     """Create a session for groupby operations."""
     csv_content = """department,employee,salary,bonus,years
 Engineering,Alice,75000,5000,3
@@ -71,18 +69,18 @@ Sales,Frank,60000,10000,3
 Sales,Grace,65000,12000,4
 Sales,Henry,70000,15000,5"""
 
-    ctx = cast(Context, create_mock_context())
+    ctx = create_mock_context()
     _result = await load_csv_from_content(ctx, csv_content)
-    return ctx.session_id
+    return ctx
 
 
 @pytest.mark.asyncio
 class TestDetectOutliers:
     """Tests for detect_outliers function."""
 
-    async def test_detect_outliers_iqr_method(self, outlier_session):
+    async def test_detect_outliers_iqr_method(self, outlier_ctx: Context) -> None:
         """Test outlier detection using IQR method."""
-        ctx = cast(Context, create_mock_context(outlier_session))
+        ctx = outlier_ctx
         result = await detect_outliers(ctx, columns=["value"], method="iqr")
 
         assert result.success is True
@@ -94,9 +92,9 @@ class TestDetectOutliers:
         assert len(value_outliers) > 0
         assert any(o.value == 500 for o in value_outliers)
 
-    async def test_detect_outliers_zscore_method(self, outlier_session):
+    async def test_detect_outliers_zscore_method(self, outlier_ctx: Context) -> None:
         """Test outlier detection using z-score method."""
-        ctx = cast(Context, create_mock_context(outlier_session))
+        ctx = outlier_ctx
         result = await detect_outliers(ctx, columns=["amount"], method="zscore", threshold=2.0)
 
         assert result.success is True
@@ -107,9 +105,9 @@ class TestDetectOutliers:
         assert len(amount_outliers) > 0
         assert any(o.value == 5000 for o in amount_outliers)
 
-    async def test_detect_outliers_multiple_columns(self, outlier_session):
+    async def test_detect_outliers_multiple_columns(self, outlier_ctx: Context) -> None:
         """Test outlier detection on multiple columns."""
-        ctx = cast(Context, create_mock_context(outlier_session))
+        ctx = outlier_ctx
         result = await detect_outliers(ctx, columns=["value", "amount", "score"])
 
         assert result.success is True
@@ -117,29 +115,28 @@ class TestDetectOutliers:
         assert "amount" in result.outliers_by_column
         assert "score" in result.outliers_by_column
 
-    async def test_detect_outliers_all_columns(self, outlier_session):
+    async def test_detect_outliers_all_columns(self, outlier_ctx: Context) -> None:
         """Test outlier detection on all numeric columns."""
-        ctx = cast(Context, create_mock_context(outlier_session))
+        ctx = outlier_ctx
         result = await detect_outliers(ctx)
 
         assert result.success is True
         assert len(result.outliers_by_column) > 0
         assert result.outliers_found > 0
 
-    async def test_detect_outliers_non_numeric(self, discovery_session):
+    async def test_detect_outliers_non_numeric(self, discovery_ctx: Context) -> None:
         """Test outlier detection with non-numeric columns."""
-        ctx = cast(Context, create_mock_context(discovery_session))
+        ctx = discovery_ctx
         with pytest.raises(ToolError, match="numeric"):
             await detect_outliers(ctx, columns=["name", "category"])
 
-    async def test_detect_outliers_no_outliers(self):
+    async def test_detect_outliers_no_outliers(self) -> None:
         """Test when no outliers are present."""
         csv_content = "value\n10\n11\n12\n13\n14"
-        ctx = cast(Context, create_mock_context())
+        ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
 
-        ctx_outliers = cast(Context, create_mock_context(ctx.session_id))
-        outliers = await detect_outliers(ctx_outliers, columns=["value"])
+        outliers = await detect_outliers(ctx, columns=["value"])
         assert outliers.success is True
         assert outliers.outliers_found == 0
 
@@ -148,9 +145,9 @@ class TestDetectOutliers:
 class TestProfileData:
     """Tests for profile_data function."""
 
-    async def test_profile_basic(self, discovery_session):
+    async def test_profile_basic(self, discovery_ctx: Context) -> None:
         """Test basic data profiling."""
-        ctx = cast(Context, create_mock_context(discovery_session))
+        ctx = discovery_ctx
         result = await profile_data(ctx)
 
         assert result.success is True
@@ -165,9 +162,9 @@ class TestProfileData:
         assert age_profile.unique_count > 0
         assert age_profile.unique_percentage > 0
 
-    async def test_profile_statistics(self, discovery_session):
+    async def test_profile_statistics(self, discovery_ctx: Context) -> None:
         """Test profile includes statistics for numeric columns."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await profile_data(ctx)
 
         # Check numeric column has appropriate info
@@ -179,14 +176,13 @@ class TestProfileData:
         assert name_profile is not None
         assert name_profile.most_frequent is not None
 
-    async def test_profile_with_data(self):
+    async def test_profile_with_data(self) -> None:
         """Test profiling with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
         ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
 
-        ctx_profile = create_mock_context(ctx.session_id)
-        profile = await profile_data(ctx_profile)
+        profile = await profile_data(ctx)
         assert profile.success is True
         assert profile.total_rows == 2
 
@@ -195,9 +191,9 @@ class TestProfileData:
 class TestGroupByAggregate:
     """Tests for group_by_aggregate function."""
 
-    async def test_groupby_single_column(self, grouped_session):
+    async def test_groupby_single_column(self, grouped_ctx: Context) -> None:
         """Test groupby with single grouping column."""
-        ctx = create_mock_context(grouped_session)
+        ctx = grouped_ctx
         result = await group_by_aggregate(
             ctx,
             group_by=["department"],
@@ -215,9 +211,9 @@ class TestGroupByAggregate:
             assert eng_group.mean is not None
             assert eng_group.mean > 70000
 
-    async def test_groupby_multiple_columns(self, discovery_session):
+    async def test_groupby_multiple_columns(self, discovery_ctx: Context) -> None:
         """Test groupby with multiple grouping columns."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await group_by_aggregate(
             ctx,
             group_by=["category", "region"],
@@ -227,9 +223,9 @@ class TestGroupByAggregate:
         assert result.success is True
         assert len(result.groups) > 0
 
-    async def test_groupby_all_aggregations(self, grouped_session):
+    async def test_groupby_all_aggregations(self, grouped_ctx: Context) -> None:
         """Test various aggregation functions."""
-        ctx = create_mock_context(grouped_session)
+        ctx = grouped_ctx
         result = await group_by_aggregate(
             ctx,
             group_by=["department"],
@@ -242,7 +238,7 @@ class TestGroupByAggregate:
         assert result.success is True
         assert len(result.groups) == 3
 
-    async def test_groupby_with_nulls(self):
+    async def test_groupby_with_nulls(self) -> None:
         """Test groupby with null values."""
         csv_content = """category,value
 A,10
@@ -255,7 +251,7 @@ C,40"""
         await load_csv_from_content(ctx, csv_content)
 
         agg_result = await group_by_aggregate(
-            create_mock_context(ctx.session_id),
+            ctx,
             group_by=["category"],
             aggregations={"value": ["mean", "count"]},
         )
@@ -263,20 +259,20 @@ C,40"""
         assert agg_result.success is True
         assert len(agg_result.groups) == 3
 
-    async def test_groupby_invalid_column(self, grouped_session):
+    async def test_groupby_invalid_column(self, grouped_ctx: Context) -> None:
         """Test groupby with invalid column."""
         with pytest.raises(ToolError, match="not found"):
             await group_by_aggregate(
-                create_mock_context(grouped_session),
+                grouped_ctx,
                 group_by=["fake_column"],
                 aggregations={"salary": ["mean"]},
             )
 
-    async def test_groupby_invalid_aggregation(self, grouped_session):
+    async def test_groupby_invalid_aggregation(self, grouped_ctx: Context) -> None:
         """Test groupby with invalid aggregation."""
         # Server ignores invalid aggregations and uses defaults
         result = await group_by_aggregate(
-            create_mock_context(grouped_session),
+            grouped_ctx,
             group_by=["department"],
             aggregations={"salary": ["invalid_func"]},
         )
@@ -287,9 +283,9 @@ C,40"""
 class TestFindCellsWithValue:
     """Tests for find_cells_with_value function."""
 
-    async def test_find_exact_match(self, discovery_session):
+    async def test_find_exact_match(self, discovery_ctx: Context) -> None:
         """Test finding cells with exact value match."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, "John Smith")
 
         assert result.success is True
@@ -300,17 +296,17 @@ class TestFindCellsWithValue:
         assert result.coordinates[0].column == "name"
         assert result.coordinates[0].value == "John Smith"
 
-    async def test_find_numeric_value(self, discovery_session):
+    async def test_find_numeric_value(self, discovery_ctx: Context) -> None:
         """Test finding numeric values."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, 180.00)
 
         assert result.success is True
         assert result.matches_found > 0  # Multiple cells might have this value
 
-    async def test_find_in_specific_columns(self, discovery_session):
+    async def test_find_in_specific_columns(self, discovery_ctx: Context) -> None:
         """Test finding values in specific columns."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, "North", columns=["region"])
 
         assert result.success is True
@@ -318,9 +314,9 @@ class TestFindCellsWithValue:
         assert all(c.column == "region" for c in result.coordinates)
         assert all(c.value == "North" for c in result.coordinates)
 
-    async def test_find_substring_match(self, discovery_session):
+    async def test_find_substring_match(self, discovery_ctx: Context) -> None:
         """Test finding cells with substring match."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, "John", exact_match=False)
 
         assert result.success is True
@@ -328,39 +324,39 @@ class TestFindCellsWithValue:
         assert result.matches_found >= 1
         # Should find "John Smith"
 
-    async def test_find_case_insensitive(self, discovery_session):
+    async def test_find_case_insensitive(self, discovery_ctx: Context) -> None:
         """Test case-insensitive search."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, "john smith", exact_match=False)
 
         assert result.success is True
         assert result.matches_found >= 1
 
-    async def test_find_boolean_value(self, discovery_session):
+    async def test_find_boolean_value(self, discovery_ctx: Context) -> None:
         """Test finding boolean values."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, value=True, columns=["is_premium"])
 
         assert result.success is True
         assert result.matches_found > 0
         assert all(c.value is True for c in result.coordinates)
 
-    async def test_find_no_matches(self, discovery_session):
+    async def test_find_no_matches(self, discovery_ctx: Context) -> None:
         """Test when no matches are found."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await find_cells_with_value(ctx, "NonExistent")
 
         assert result.success is True
         assert result.matches_found == 0
         assert len(result.coordinates) == 0
 
-    async def test_find_null_values(self):
+    async def test_find_null_values(self) -> None:
         """Test finding null values."""
         csv_content = "col1,col2\nA,1\nB,\n,3\nD,4"
         ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
 
-        null_result = await find_cells_with_value(create_mock_context(ctx.session_id), None)
+        null_result = await find_cells_with_value(ctx, None)
         assert null_result.success is True
         assert null_result.matches_found == 2
 
@@ -369,9 +365,9 @@ class TestFindCellsWithValue:
 class TestInspectDataAround:
     """Tests for inspect_data_around function."""
 
-    async def test_inspect_center_cell(self, discovery_session):
+    async def test_inspect_center_cell(self, discovery_ctx: Context) -> None:
         """Test inspecting data around a specific cell."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await inspect_data_around(ctx, row=5, column_name="name", radius=2)
 
         assert result.success is True
@@ -383,11 +379,11 @@ class TestInspectDataAround:
         assert result.surrounding_data is not None
         assert len(result.surrounding_data.rows) <= 5
 
-    async def test_inspect_edge_cases(self, discovery_session):
+    async def test_inspect_edge_cases(self, discovery_ctx: Context) -> None:
         """Test inspection at edges of DataFrame."""
         # Top-left corner
         result = await inspect_data_around(
-            create_mock_context(discovery_session),
+            discovery_ctx,
             row=0,
             column_name="customer_id",
             radius=3,
@@ -398,7 +394,7 @@ class TestInspectDataAround:
 
         # Bottom-right area
         result = await inspect_data_around(
-            create_mock_context(discovery_session),
+            discovery_ctx,
             row=9,
             column_name="is_premium",
             radius=2,
@@ -406,10 +402,10 @@ class TestInspectDataAround:
 
         assert result.success is True
 
-    async def test_inspect_large_radius(self, discovery_session):
+    async def test_inspect_large_radius(self, discovery_ctx: Context) -> None:
         """Test with large radius."""
         result = await inspect_data_around(
-            create_mock_context(discovery_session),
+            discovery_ctx,
             row=5,
             column_name="category",
             radius=10,
@@ -419,17 +415,17 @@ class TestInspectDataAround:
         # Should return entire DataFrame since radius is large
         assert len(result.surrounding_data.rows) == 10
 
-    async def test_inspect_invalid_coordinates(self, discovery_session):
+    async def test_inspect_invalid_coordinates(self, discovery_ctx: Context) -> None:
         """Test with invalid coordinates."""
         # Server handles out-of-range coordinates gracefully
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await inspect_data_around(ctx, row=100, column_name="name", radius=1)
         assert result.surrounding_data.row_count == 0  # No rows in range
 
         # Invalid column should still raise error
         with pytest.raises(ToolError, match="not found"):
             await inspect_data_around(
-                create_mock_context(discovery_session),
+                discovery_ctx,
                 row=0,
                 column_name="nonexistent",
                 radius=1,
@@ -440,9 +436,9 @@ class TestInspectDataAround:
 class TestGetDataSummary:
     """Tests for get_data_summary function."""
 
-    async def test_data_summary_with_preview(self, discovery_session):
+    async def test_data_summary_with_preview(self, discovery_ctx: Context) -> None:
         """Test comprehensive data summary with preview."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await get_data_summary(ctx, include_preview=True)
 
         assert result.success is True
@@ -473,9 +469,9 @@ class TestGetDataSummary:
         assert result.preview is not None
         assert len(result.preview.rows) > 0
 
-    async def test_data_summary_without_preview(self, discovery_session):
+    async def test_data_summary_without_preview(self, discovery_ctx: Context) -> None:
         """Test data summary without preview."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await get_data_summary(ctx, include_preview=False)
 
         assert result.success is True
@@ -483,15 +479,15 @@ class TestGetDataSummary:
         assert result.shape is not None
         assert result.columns is not None
 
-    async def test_data_summary_memory_usage(self, discovery_session):
+    async def test_data_summary_memory_usage(self, discovery_ctx: Context) -> None:
         """Test memory usage in summary."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await get_data_summary(ctx)
 
         assert result.success is True
         assert result.memory_usage_mb >= 0
 
-    async def test_data_summary_with_nulls(self):
+    async def test_data_summary_with_nulls(self) -> None:
         """Test summary with null values."""
         csv_content = """col1,col2,col3
 A,1,
@@ -501,7 +497,7 @@ D,4,"""
         ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
 
-        summary = await get_data_summary(create_mock_context(ctx.session_id))
+        summary = await get_data_summary(ctx)
         assert summary.success is True
         assert summary.missing_data.total_missing > 0
         assert summary.missing_data.missing_percentage > 0
@@ -509,9 +505,9 @@ D,4,"""
         for col in ["col1", "col2", "col3"]:
             assert summary.missing_data.missing_by_column[col] >= 0
 
-    async def test_data_summary_type_detection(self, discovery_session):
+    async def test_data_summary_type_detection(self, discovery_ctx: Context) -> None:
         """Test correct data type detection."""
-        ctx = create_mock_context(discovery_session)
+        ctx = discovery_ctx
         result = await get_data_summary(ctx)
 
         assert result.success is True
@@ -530,29 +526,28 @@ D,4,"""
 class TestIntegrationAndEdgeCases:
     """Test integration scenarios and edge cases."""
 
-    async def test_with_actual_data(self):
+    async def test_with_actual_data(self) -> None:
         """Test all functions with actual DataFrame."""
         csv_content = "col1,col2\n1,2\n3,4"
         ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
-        session_id = ctx.session_id
 
         # Profile should work
-        profile = await profile_data(create_mock_context(session_id))
+        profile = await profile_data(ctx)
         assert profile.success is True
         assert profile.total_rows == 2
 
         # Summary should work
-        summary = await get_data_summary(create_mock_context(session_id))
+        summary = await get_data_summary(ctx)
         assert summary.success is True
         assert summary.shape["rows"] == 2
 
         # Find should return results
-        find_result = await find_cells_with_value(create_mock_context(session_id), 1)
+        find_result = await find_cells_with_value(ctx, 1)
         assert find_result.success is True
         assert find_result.matches_found == 1
 
-    async def test_single_row_operations(self):
+    async def test_single_row_operations(self) -> None:
         """Test with single row DataFrame."""
         csv_content = "name,value\nTest,42"
         ctx = create_mock_context()
@@ -569,40 +564,35 @@ class TestIntegrationAndEdgeCases:
         assert find_result.success is True
         assert find_result.matches_found == 1
 
-    async def test_large_radius_inspect(self):
+    async def test_large_radius_inspect(self) -> None:
         """Test inspect with radius larger than DataFrame."""
         csv_content = "a,b\n1,2\n3,4"
         ctx = create_mock_context()
         await load_csv_from_content(ctx, csv_content)
 
-        inspect = await inspect_data_around(
-            create_mock_context(ctx.session_id),
-            row=0,
-            column_name="a",
-            radius=100,
-        )
+        inspect = await inspect_data_around(ctx, row=0, column_name="a", radius=100)
 
         assert inspect.success is True
         assert len(inspect.surrounding_data.rows) == 2  # All rows
 
-    async def test_session_not_found(self):
+    async def test_session_not_found(self) -> None:
         """Test all functions with invalid session."""
         invalid_id = "nonexistent-session"
 
         with pytest.raises(ToolError):
-            await detect_outliers(invalid_id)
+            await detect_outliers(invalid_id)  # type: ignore[arg-type]
 
         with pytest.raises(ToolError):
-            await profile_data(create_mock_context(invalid_id))
+            await profile_data(invalid_id)  # type: ignore[arg-type]
 
         with pytest.raises(ToolError):
-            await group_by_aggregate(invalid_id, group_by=["col"], aggregations={"val": ["mean"]})
+            await group_by_aggregate(invalid_id, group_by=["col"], aggregations={"val": ["mean"]})  # type: ignore[arg-type]
 
         with pytest.raises(ToolError):
-            await find_cells_with_value(invalid_id, "value")
+            await find_cells_with_value(invalid_id, "value")  # type: ignore[arg-type]
 
         with pytest.raises(ToolError):
             await inspect_data_around(create_mock_context(invalid_id), 0, "col", 1)
 
         with pytest.raises(ToolError):
-            await get_data_summary(create_mock_context(invalid_id))
+            await get_data_summary(invalid_id)  # type: ignore[arg-type]

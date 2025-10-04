@@ -18,7 +18,7 @@ and this project adheres to
   integers as strings or floats, handling LLM-generated parameters that don't
   strictly conform to integer types (PR #115)
 - **Integration Testing Framework**: Comprehensive integration testing with
-  pytest configuration, isolated test environment, and coverage reporting (PR #110)
+  pytest config, isolated environment, and coverage reporting (PR #110)
 - **ReadTheDocs Configuration**: Official documentation site with MkDocs
   integration and automated deployment (PR #108)
 - **Type Safety Enhancements**: MCP-specific type definitions including

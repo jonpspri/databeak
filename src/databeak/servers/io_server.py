@@ -27,7 +27,6 @@ from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
 from databeak.models import DataPreview, ExportFormat
-from databeak.models.data_models import CellValue
 from databeak.models.tool_responses import BaseToolResponse
 from databeak.services.data_operations import create_data_preview_with_indices
 from databeak.utils.validators import validate_file_path, validate_url
@@ -108,10 +107,6 @@ MAX_URL_SIZE_MB = 100  # Maximum download size for URLs
 # ============================================================================
 # PYDANTIC MODELS FOR I/O OPERATIONS
 # ============================================================================
-
-# Type aliases
-# Note: CsvCellValue is an alias for CellValue for backward compatibility
-CsvCellValue = CellValue
 
 
 class LoadResult(BaseToolResponse):

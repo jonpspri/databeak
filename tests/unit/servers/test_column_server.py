@@ -33,8 +33,8 @@ async def ctx_fixture() -> Context:
 
     ctx = create_mock_context()
     _session = get_session_manager().get_or_create_session(ctx.session_id)
-    _result = await load_csv_from_content(cast(Context, ctx), csv_content)
-    return cast(Context, ctx)
+    _result = await load_csv_from_content(ctx, csv_content)
+    return ctx
 
 
 @pytest.mark.asyncio
@@ -317,7 +317,7 @@ class TestColumnServerErrorHandling:
     async def test_operations_invalid_session(self) -> None:
         """Test operations with invalid session ID."""
         invalid_session = "invalid-session-id"
-        ctx = cast(Context, create_mock_context(invalid_session))
+        ctx = create_mock_context(invalid_session)
 
         with pytest.raises(ToolError, match="No data loaded in session"):
             await select_columns(ctx, ["test"])

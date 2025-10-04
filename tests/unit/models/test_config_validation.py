@@ -11,7 +11,7 @@ from databeak.core.settings import DataBeakSettings
 class TestVersionLoading:
     """Test version loading functionality."""
 
-    def test_package_version_loading(self):
+    def test_package_version_loading(self) -> None:
         """Test that version can be loaded from package metadata."""
         # This should work in both development and production
         version = importlib.metadata.version("databeak")
@@ -19,7 +19,7 @@ class TestVersionLoading:
         assert isinstance(version, str)
         assert len(version.strip()) > 0
 
-    def test_version_module_import(self):
+    def test_version_module_import(self) -> None:
         """Test that version module imports and provides version."""
         from databeak._version import VERSION, __version__
 
@@ -28,7 +28,7 @@ class TestVersionLoading:
         assert __version__ == VERSION
         assert isinstance(__version__, str)
 
-    def test_version_fallback_mechanism(self):
+    def test_version_fallback_mechanism(self) -> None:
         """Test that version fallback mechanism is in place."""
         from databeak._version import __version__
 
@@ -41,7 +41,7 @@ class TestVersionLoading:
 class TestEnvironmentVariableConfiguration:
     """Test environment variable configuration matches DataBeakSettings."""
 
-    def test_databeak_settings_has_correct_prefix(self):
+    def test_databeak_settings_has_correct_prefix(self) -> None:
         """Test that DataBeakSettings uses DATABEAK_ prefix."""
         settings = DataBeakSettings()
         config = settings.model_config
@@ -50,7 +50,7 @@ class TestEnvironmentVariableConfiguration:
         assert config["env_prefix"] == "DATABEAK_"
         assert config.get("case_sensitive", True) is False
 
-    def test_environment_variables_mapping(self):
+    def test_environment_variables_mapping(self) -> None:
         """Test that documented environment variables map to settings fields."""
         settings = DataBeakSettings()
 
@@ -66,7 +66,7 @@ class TestEnvironmentVariableConfiguration:
             # Check that the field exists in the settings model
             assert hasattr(settings, field_name), f"Field {field_name} missing for {env_var}"
 
-    def test_settings_default_values(self):
+    def test_settings_default_values(self) -> None:
         """Test that settings have sensible defaults."""
         settings = DataBeakSettings()
 
@@ -76,7 +76,7 @@ class TestEnvironmentVariableConfiguration:
         assert settings.chunk_size == 10000
         assert settings.max_anomaly_sample_size == 10000
 
-    def test_environment_variable_override(self, monkeypatch):
+    def test_environment_variable_override(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         """Test that environment variables properly override defaults."""
         # History functionality removed, so no temp directory needed
         # Set test environment variables
@@ -99,7 +99,7 @@ class TestEnvironmentVariableConfiguration:
 class TestCoverageConfiguration:
     """Test coverage configuration is valid."""
 
-    def test_coverage_omit_paths_exist_or_are_valid_patterns(self):
+    def test_coverage_omit_paths_exist_or_are_valid_patterns(self) -> None:
         """Test that coverage omit paths are valid."""
         import tomllib
 
@@ -122,7 +122,7 @@ class TestCoverageConfiguration:
                         "src/",
                     ), f"Non-existent specific path in coverage omit: {pattern}"
 
-    def test_coverage_source_paths_exist(self):
+    def test_coverage_source_paths_exist(self) -> None:
         """Test that coverage source paths exist."""
         import tomllib
 
@@ -140,7 +140,7 @@ class TestCoverageConfiguration:
 class TestProjectStructureConsistency:
     """Test that project structure matches documentation."""
 
-    def test_documented_directories_exist(self):
+    def test_documented_directories_exist(self) -> None:
         """Test that directories mentioned in README project structure exist."""
         documented_dirs = [
             "src/databeak",
@@ -160,7 +160,7 @@ class TestProjectStructureConsistency:
             assert path.exists(), f"Documented directory doesn't exist: {dir_path}"
             assert path.is_dir(), f"Documented path is not a directory: {dir_path}"
 
-    def test_documented_key_files_exist(self):
+    def test_documented_key_files_exist(self) -> None:
         """Test that key files mentioned in project structure exist."""
         documented_files = [
             "src/databeak/server.py",

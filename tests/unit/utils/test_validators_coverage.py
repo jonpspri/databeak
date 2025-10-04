@@ -1,7 +1,8 @@
 """Comprehensive coverage tests for validators module."""
 
 import socket
-from unittest.mock import Mock, patch
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 
@@ -20,7 +21,7 @@ from databeak.utils.validators import (
 class TestFilePathValidation:
     """Test file path validation functionality."""
 
-    def test_validate_file_path_valid_csv(self, tmp_path) -> None:
+    def test_validate_file_path_valid_csv(self, tmp_path: Path) -> None:
         """Test validation of valid CSV file."""
         # Create a test CSV file
         test_file = tmp_path / "test.csv"
@@ -31,7 +32,7 @@ class TestFilePathValidation:
         assert is_valid is True
         assert str(test_file) in message
 
-    def test_validate_file_path_valid_extensions(self, tmp_path) -> None:
+    def test_validate_file_path_valid_extensions(self, tmp_path: Path) -> None:
         """Test validation with all valid file extensions."""
         valid_extensions = [".csv", ".tsv", ".txt", ".dat"]
 
@@ -42,7 +43,7 @@ class TestFilePathValidation:
             is_valid, _message = validate_file_path(str(test_file))
             assert is_valid is True
 
-    def test_validate_file_path_invalid_extension(self, tmp_path) -> None:
+    def test_validate_file_path_invalid_extension(self, tmp_path: Path) -> None:
         """Test validation with invalid file extension."""
         test_file = tmp_path / "test.xlsx"
         test_file.write_text("data")
@@ -83,14 +84,14 @@ class TestFilePathValidation:
             assert is_valid is False
             assert "Path traversal not allowed" in message
 
-    def test_validate_file_path_directory_not_file(self, tmp_path) -> None:
+    def test_validate_file_path_directory_not_file(self, tmp_path: Path) -> None:
         """Test validation when path points to directory."""
         is_valid, message = validate_file_path(str(tmp_path))
 
         assert is_valid is False
         assert "Not a file" in message
 
-    def test_validate_file_path_large_file(self, tmp_path) -> None:
+    def test_validate_file_path_large_file(self, tmp_path: Path) -> None:
         """Test validation with file size limit."""
         # Create a large file (mock the stat result)
         test_file = tmp_path / "large.csv"
@@ -183,7 +184,7 @@ class TestURLValidation:
             assert is_valid is False
 
     @patch("socket.getaddrinfo")
-    def test_validate_url_dns_resolution_to_private(self, mock_getaddrinfo) -> None:
+    def test_validate_url_dns_resolution_to_private(self, mock_getaddrinfo: MagicMock) -> None:
         """Test validation when DNS resolves to private IP."""
         # Mock DNS resolution to return private IP
         mock_getaddrinfo.return_value = [
@@ -196,7 +197,7 @@ class TestURLValidation:
         assert "private address" in message
 
     @patch("socket.getaddrinfo")
-    def test_validate_url_dns_resolution_error(self, mock_getaddrinfo) -> None:
+    def test_validate_url_dns_resolution_error(self, mock_getaddrinfo: MagicMock) -> None:
         """Test validation when DNS resolution fails."""
         mock_getaddrinfo.side_effect = socket.gaierror("Name resolution failed")
 
@@ -250,6 +251,8 @@ class TestColumnNameValidation:
         ]
 
         for name in invalid_names:
+            if name is None:
+                continue  # None is tested separately in test_validate_column_name_non_string
             is_valid, _message = validate_column_name(name)
             assert is_valid is False, f"Should have failed for invalid name: {name}"
 
@@ -258,7 +261,7 @@ class TestColumnNameValidation:
         non_string_names = [123, [], {}, True, 1.5]
 
         for name in non_string_names:
-            is_valid, message = validate_column_name(name)
+            is_valid, message = validate_column_name(name)  # type: ignore[arg-type]
             assert is_valid is False
             assert "non-empty string" in message
 

@@ -13,13 +13,13 @@ class TestStatisticsService:
     """Unit tests for StatisticsService class."""
 
     @pytest.fixture
-    def service(self):
+    def service(self) -> StatisticsService:
         """Create service instance."""
         mock_session_manager = Mock()
         return StatisticsService(session_manager=mock_session_manager)
 
     @pytest.fixture
-    def mock_session_and_data(self):
+    def mock_session_and_data(self) -> tuple[MagicMock, pd.DataFrame]:
         """Mock session and data for testing."""
         mock_session = MagicMock()
         mock_df = pd.DataFrame(
@@ -31,11 +31,13 @@ class TestStatisticsService:
         )
         return mock_session, mock_df
 
-    def test_get_service_name(self, service):
+    def test_get_service_name(self, service: StatisticsService) -> None:
         """Test service name."""
         assert service.get_service_name() == "StatisticsService"
 
-    async def test_get_statistics_all_columns(self, service, mock_session_and_data):
+    async def test_get_statistics_all_columns(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting statistics for all numeric columns."""
         mock_session, mock_df = mock_session_and_data
 
@@ -49,7 +51,9 @@ class TestStatisticsService:
             assert result.total_rows == 5
             assert set(result.numeric_columns) == {"numeric_col", "nullable_numeric"}
 
-    async def test_get_statistics_specific_columns(self, service, mock_session_and_data):
+    async def test_get_statistics_specific_columns(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting statistics for specific columns."""
         mock_session, mock_df = mock_session_and_data
 
@@ -60,7 +64,7 @@ class TestStatisticsService:
             assert "numeric_col" in result.statistics
             assert "nullable_numeric" not in result.statistics
 
-    async def test_get_statistics_no_numeric_columns(self, service):
+    async def test_get_statistics_no_numeric_columns(self, service: StatisticsService) -> None:
         """Test statistics with no numeric columns."""
         mock_session = MagicMock()
         mock_df = pd.DataFrame({"text_col1": ["a", "b", "c"], "text_col2": ["x", "y", "z"]})
@@ -73,7 +77,9 @@ class TestStatisticsService:
             assert result.numeric_columns == []
             assert result.total_rows == 3
 
-    async def test_get_statistics_invalid_columns(self, service, mock_session_and_data):
+    async def test_get_statistics_invalid_columns(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test statistics with invalid column names."""
         mock_session, mock_df = mock_session_and_data
 
@@ -88,7 +94,9 @@ class TestStatisticsService:
         ):
             await service.get_statistics("test_session", columns=["invalid_col"])
 
-    async def test_get_column_statistics_success(self, service, mock_session_and_data):
+    async def test_get_column_statistics_success(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting statistics for a single column."""
         mock_session, mock_df = mock_session_and_data
 
@@ -98,9 +106,12 @@ class TestStatisticsService:
             assert result.column == "numeric_col"
             assert result.statistics.count == 5
             assert result.statistics.mean == 3.0
+            assert result.statistics.std is not None
             assert result.statistics.std > 0
 
-    async def test_get_column_statistics_non_numeric(self, service, mock_session_and_data):
+    async def test_get_column_statistics_non_numeric(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting statistics for non-numeric column."""
         mock_session, mock_df = mock_session_and_data
 
@@ -114,7 +125,9 @@ class TestStatisticsService:
             assert result.statistics.mean is None  # No mean for non-numeric
             assert result.statistics.std is None  # No std for non-numeric
 
-    async def test_get_value_counts_success(self, service, mock_session_and_data):
+    async def test_get_value_counts_success(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting value counts."""
         mock_session, mock_df = mock_session_and_data
 
@@ -128,7 +141,9 @@ class TestStatisticsService:
             assert result.total_values == 5
             assert len(result.value_counts) > 0
 
-    async def test_get_value_counts_with_limit(self, service, mock_session_and_data):
+    async def test_get_value_counts_with_limit(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting value counts with limit."""
         mock_session, mock_df = mock_session_and_data
 
@@ -140,7 +155,9 @@ class TestStatisticsService:
 
             assert len(result.value_counts) <= 2
 
-    async def test_get_correlation_matrix_success(self, service, mock_session_and_data):
+    async def test_get_correlation_matrix_success(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test getting correlation matrix."""
         mock_session, mock_df = mock_session_and_data
 
@@ -153,7 +170,9 @@ class TestStatisticsService:
             first_col = result.columns_analyzed[0]
             assert len(result.correlation_matrix[first_col]) == 2
 
-    async def test_get_correlation_matrix_specific_columns(self, service, mock_session_and_data):
+    async def test_get_correlation_matrix_specific_columns(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test correlation matrix with specific columns."""
         mock_session, mock_df = mock_session_and_data
 
@@ -169,7 +188,9 @@ class TestStatisticsService:
             assert len(result.columns_analyzed) == 2
             assert len(result.correlation_matrix) == 2
 
-    async def test_get_correlation_matrix_insufficient_columns(self, service):
+    async def test_get_correlation_matrix_insufficient_columns(
+        self, service: StatisticsService
+    ) -> None:
         """Test correlation matrix with insufficient numeric columns."""
         mock_session = MagicMock()
         mock_df = pd.DataFrame({"text_col": ["a", "b", "c"]})
@@ -180,7 +201,7 @@ class TestStatisticsService:
         ):
             await service.get_correlation_matrix("test_session")
 
-    async def test_error_handling_empty_dataframe(self, service):
+    async def test_error_handling_empty_dataframe(self, service: StatisticsService) -> None:
         """Test error handling with empty DataFrame."""
         mock_session = MagicMock()
         mock_df = pd.DataFrame()
@@ -191,7 +212,7 @@ class TestStatisticsService:
             assert result.column_count == 0
             assert result.total_rows == 0
 
-    async def test_statistics_with_all_null_column(self, service):
+    async def test_statistics_with_all_null_column(self, service: StatisticsService) -> None:
         """Test statistics calculation with all-null numeric column."""
         mock_session = MagicMock()
         mock_df = pd.DataFrame({"all_null": [None, None, None], "valid_numeric": [1, 2, 3]})
@@ -203,7 +224,9 @@ class TestStatisticsService:
             assert result.column_count >= 1
             assert "valid_numeric" in result.statistics
 
-    async def test_percentiles_calculation(self, service, mock_session_and_data):
+    async def test_percentiles_calculation(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test percentiles calculation in statistics."""
         mock_session, mock_df = mock_session_and_data
 
@@ -221,7 +244,9 @@ class TestStatisticsService:
                     assert col_stats.percentile_50 is not None
                     assert col_stats.percentile_75 is not None
 
-    async def test_no_percentiles_calculation(self, service, mock_session_and_data):
+    async def test_no_percentiles_calculation(
+        self, service: StatisticsService, mock_session_and_data: tuple[MagicMock, pd.DataFrame]
+    ) -> None:
         """Test statistics without percentiles."""
         mock_session, mock_df = mock_session_and_data
 
