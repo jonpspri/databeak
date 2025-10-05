@@ -1,15 +1,39 @@
-"""Custom exceptions for DataBeak operations."""
+"""Custom exceptions for DataBeak operations.
+
+This module defines all custom exceptions for DataBeak with structured error details.
+All exceptions use specific types to maintain type safety while allowing serialization.
+
+Type Safety Notes:
+- ErrorDetail values are constrained to serializable types used in practice
+- InvalidParameterError.value uses Any because it receives arbitrary invalid input
+- Base class details dict uses specific union type matching actual usage patterns
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
+# Type alias for exception detail values - constrained to types actually used
+ErrorDetail = str | int | list[str] | None
+
 
 class DatabeakError(Exception):
-    """Base exception with error details and serialization."""
+    """Base exception with error details and serialization.
+
+    All DataBeak exceptions inherit from this class and provide:
+    - Structured error messages
+    - Error codes for programmatic handling
+    - Typed details dictionary for context
+
+    The details dictionary accepts ErrorDetail values (str, int, list[str], or None)
+    which covers all actual usage patterns in the codebase.
+    """
 
     def __init__(
-        self, message: str, error_code: str | None = None, details: dict[Any, Any] | None = None
+        self,
+        message: str,
+        error_code: str | None = None,
+        details: dict[str, ErrorDetail] | None = None,
     ):
         """Initialize with message, code, and details."""
         super().__init__(message)
@@ -17,7 +41,7 @@ class DatabeakError(Exception):
         self.error_code = error_code
         self.details = details or {}
 
-    def to_dict(self) -> dict[str, str | None | dict[Any, Any]]:
+    def to_dict(self) -> dict[str, str | None | dict[str, ErrorDetail]]:
         """Convert to dictionary for serialization."""
         return {
             "type": self.__class__.__name__,
@@ -98,20 +122,6 @@ class InvalidRowIndexError(DataError):
         )
 
 
-class DataValidationError(DataError):
-    """Data validation failed."""
-
-    def __init__(
-        self, message: str, validation_errors: list[Any] | None = None
-    ):  # TODO: improve type
-        """Initialize with validation details."""
-        super().__init__(
-            message,
-            error_code="DATA_VALIDATION_ERROR",
-            details={"validation_errors": validation_errors or []},
-        )
-
-
 class FileError(DatabeakError):
     """File access and format errors."""
 
@@ -173,21 +183,35 @@ class ParameterError(DatabeakError):
 
 
 class InvalidParameterError(ParameterError):
-    """Invalid parameter value."""
+    """Invalid parameter value.
+
+    Note on Type Safety:
+    The `value` parameter uses `Any` type annotation because this exception is raised
+    when validating user input, which can be of any type. The value is immediately
+    converted to string for safe serialization, so the Any type is contained and
+    justified for this validation error use case.
+    """
 
     def __init__(
         self,
         parameter: str,
-        value: Any,
+        value: Any,  # Any justified: receives arbitrary invalid input during validation
         expected: str | None = None,
-    ):  # Any justified: can receive any invalid value type
-        """Initialize with parameter details."""
+    ):
+        """Initialize with parameter details.
+
+        Args:
+            parameter: Name of the invalid parameter
+            value: The invalid value (Any type as it comes from user input validation)
+            expected: Optional description of expected value format
+
+        """
         super().__init__(
             f"Invalid value for parameter '{parameter}': {value}",
             error_code="INVALID_PARAMETER",
             details={
                 "parameter": parameter,
-                "value": str(value),
+                "value": str(value),  # Converted to string for safe serialization
                 "expected": expected,
             },
         )

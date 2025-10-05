@@ -813,8 +813,11 @@ def reset_secure_expression_evaluator() -> None:
 
 
 ####
-# TODO:  Should these functions be in some sort of service provided by the
-#        Session?
+# Expression evaluation convenience functions
+#
+# These module-level functions provide a convenient interface to the singleton
+# SecureExpressionEvaluator. They are kept as utilities rather than session methods
+# to maintain separation between session management and expression evaluation logic.
 ####
 
 

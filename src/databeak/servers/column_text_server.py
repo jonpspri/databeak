@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import re
 from collections.abc import Callable
+from functools import wraps
 from typing import Annotated, Any, Literal
 
 import pandas as pd
@@ -70,8 +71,6 @@ def _handle_text_operation_errors(func: Callable[..., Any]) -> Callable[..., Any
         Decorated function with error handling
 
     """
-    from functools import wraps
-
     operation_name = func.__name__
 
     @wraps(func)

@@ -32,8 +32,10 @@ from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
     StatisticsResult,
+    StatisticsSummary,
     ValueCountsResult,
 )
+from databeak.models.typed_dicts import ColumnStatistics
 
 logger = logging.getLogger(__name__)
 
@@ -124,10 +126,6 @@ async def get_statistics(
             col_data = numeric_df[col].dropna()
 
             # Create StatisticsSummary directly
-            from databeak.models.statistics_models import (  # Avoids circular import
-                StatisticsSummary,
-            )
-
             # Calculate statistics, using 0.0 for undefined values
             col_stats = StatisticsSummary.model_validate(
                 {
@@ -223,8 +221,6 @@ async def get_column_statistics(
         unique_count = int(col_data.nunique())
 
         # Initialize statistics dict using ColumnStatistics structure
-        from databeak.models.typed_dicts import ColumnStatistics  # Avoids circular import
-
         statistics: ColumnStatistics = {
             "count": count,
             "null_count": null_count,
@@ -272,10 +268,6 @@ async def get_column_statistics(
         # No longer recording operations (simplified MCP architecture)
 
         # Convert statistics dict to StatisticsSummary
-        from databeak.models.statistics_models import (  # Avoids circular import
-            StatisticsSummary,
-        )
-
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
             # Numeric columns - calculate percentiles for Pydantic model
             col_data_non_null = col_data.dropna()
