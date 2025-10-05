@@ -23,13 +23,17 @@ explains the technical architecture and design decisions.
 ```text
 src/databeak/
 ├── server.py                 # FastMCP server composition & routing
-├── models/                   # Data models and session management
-│   ├── csv_session.py          # Session management & settings
+├── core/                     # Core infrastructure
+│   ├── session.py              # Session management with lifecycle
+│   ├── settings.py             # Environment-based configuration
+│   └── json_schema_validate.py # Custom JSON schema validation
+├── models/                   # Data models and type definitions
 │   ├── data_models.py          # Core data types & enums
-│   ├── data_session.py         # Data operations
-│   ├── pandera_schemas.py      # Pandera schema integration for validation
+│   ├── data_session.py         # DataFrame session wrapper
 │   ├── typed_dicts.py          # TypedDict definitions for type safety
-│   └── tool_responses.py       # Pydantic response models
+│   ├── tool_responses.py       # Pydantic response models
+│   ├── statistics_models.py    # Statistics response types
+│   └── expression_models.py    # Secure expression types
 ├── servers/                  # Specialized MCP servers (server composition)
 │   ├── io_server.py            # Load/export operations
 │   ├── transformation_server.py # Data transformation
@@ -40,8 +44,14 @@ src/databeak/
 │   ├── column_text_server.py   # Text manipulation
 │   ├── row_operations_server.py # Row-level operations
 │   └── system_server.py        # Health & system info
-├── services/                 # Business logic services
+├── services/                 # Backend operation implementations
+│   ├── data_operations.py      # Data preview and transformation utilities
+│   └── transformation_service.py # Transformation logic
 ├── utils/                    # Utility functions
+│   ├── validators.py           # Input validation
+│   ├── secure_evaluator.py     # Safe expression evaluation
+│   ├── logging_config.py       # Logging configuration
+│   └── pydantic_validators.py  # Custom Pydantic validators
 ├── exceptions.py             # Custom error handling
 └── _version.py              # Dynamic version loading
 ```
@@ -71,7 +81,7 @@ src/databeak/
 ### Configuration Management
 
 - **Environment-based settings** using Pydantic Settings
-- **Centralized configuration** in CSVSettings class
+- **Centralized configuration** in DataBeakSettings class
 - **Runtime version detection** via importlib.metadata
 
 ### Code Quality & Architecture
@@ -79,8 +89,8 @@ src/databeak/
 - **Zero static analysis violations** - Clean ruff compliance across all
   categories
 - **Strong type safety** - 100% mypy compliance with minimal Any usage
-- **High test coverage** - 983 unit tests + 43 integration tests with good
-  coverage targets
+- **High test coverage** - 940+ unit tests + 43 integration tests with 87%
+  coverage
 - **Server composition pattern** - Modular FastMCP servers for different domains
 - **Context-based logging** - MCP-integrated logging for better traceability
 - **Clear API design** - Keyword-only boolean parameters, no boolean traps

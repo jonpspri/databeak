@@ -19,11 +19,11 @@ testing:
       /------\
      /Integr. \   <- Current: 43 tests across 7 test files
     /----------\
-   /   Unit     \ <- Current: 983 comprehensive tests
+   /   Unit     \ <- Current: 940+ comprehensive tests
   /--------------\
 ```
 
-- **Unit Tests**: 983 fast, isolated module tests with high coverage
+- **Unit Tests**: 940+ fast, isolated module tests with high coverage
 - **Integration Tests**: 43 tests across 7 files covering FastMCP Client-based
   protocol interactions
 - **E2E Tests (Planned)**: Complete end-to-end workflow validation
@@ -56,7 +56,7 @@ testing:
 
 ```
 tests/
-├── unit/              # Mirrors src/ structure (983 tests)
+├── unit/              # Mirrors src/ structure (940+ tests)
 │   ├── core/            # Core functionality tests
 │   ├── models/          # Data model tests
 │   ├── prompts/         # Prompt tests

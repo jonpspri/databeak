@@ -18,15 +18,8 @@ from .data_models import (  # noqa: E402
     FilterCondition,
     LogicalOperator,
     OperationResult,
-    OperationType,  # Still used in some places, can be removed in cleanup phase
     SessionInfo,
     SortSpec,
-)
-from .session_service import (  # noqa: E402
-    SessionManagerProtocol,
-    SessionService,
-    SessionServiceFactory,
-    get_default_session_service_factory,
 )
 
 __all__ = [
@@ -43,11 +36,6 @@ __all__ = [
     "FilterCondition",
     "LogicalOperator",
     "OperationResult",
-    "OperationType",
     "SessionInfo",
-    "SessionManagerProtocol",
-    "SessionService",
-    "SessionServiceFactory",
     "SortSpec",
-    "get_default_session_service_factory",
 ]

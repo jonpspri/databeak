@@ -14,30 +14,9 @@ from databeak.models.data_models import (
     DataType,
     FilterCondition,
     OperationResult,
-    OperationType,
     SessionInfo,
     SortSpec,
 )
-
-
-class TestOperationType:
-    """Test OperationType enum."""
-
-    def test_operation_type_values(self) -> None:
-        """Test all operation type values."""
-        # Test that core expected operations are present
-        expected_core_values = {"load", "filter", "sort", "transform", "export", "validate"}
-        actual_values = {op.value for op in OperationType}
-        assert expected_core_values.issubset(actual_values)
-
-        # Also test that we have a reasonable number of operations
-        assert len(actual_values) > 5
-
-    def test_operation_type_string_conversion(self) -> None:
-        """Test string conversion of operation types."""
-        assert OperationType.LOAD.value == "load"
-        assert OperationType.FILTER.value == "filter"
-        assert OperationType.SORT.value == "sort"
 
 
 class TestFilterCondition:

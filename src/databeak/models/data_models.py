@@ -29,34 +29,6 @@ class DataType(str, Enum):
     MIXED = "mixed"
 
 
-class OperationType(str, Enum):
-    """Types of operations that can be performed."""
-
-    LOAD = "load"
-    FILTER = "filter"
-    SORT = "sort"
-    TRANSFORM = "transform"
-    AGGREGATE = "aggregate"
-    EXPORT = "export"
-    ANALYZE = "analyze"
-    UPDATE_COLUMN = "update_column"
-    ADD_COLUMN = "add_column"
-    REMOVE_COLUMN = "remove_column"
-    RENAME = "rename"
-    SELECT = "select"
-    CHANGE_TYPE = "change_type"
-    FILL_MISSING = "fill_missing"
-    REMOVE_DUPLICATES = "remove_duplicates"
-    GROUP_BY = "group_by"
-    VALIDATE = "validate"
-    PROFILE = "profile"
-    QUALITY_CHECK = "quality_check"
-    ANOMALY_DETECTION = "anomaly_detection"
-    DATA_INSPECTION = "data_inspection"
-    DATA_MODIFICATION = "data_modification"
-    CUSTOM_OPERATION = "custom_operation"
-
-
 class ComparisonOperator(str, Enum):
     """Comparison operators for filtering."""
 

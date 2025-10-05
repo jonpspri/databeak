@@ -16,8 +16,9 @@ enforcement. This document outlines our quality metrics, tools, and processes.
 - ✅ **100% MyPy compliance** - Complete type safety with minimal Any usage
 - ✅ **Perfect MCP documentation** - All tools have Field descriptions, zero Args
   sections
-- ✅ **High test coverage** - 960+ unit tests validating all functionality
-- ✅ **Clean architecture** - Stateless MCP design, eliminated 3,340+ lines of
+- ✅ **High test coverage** - 940+ unit tests + 43 integration tests, 87%
+  coverage
+- ✅ **Clean architecture** - Stateless MCP design, eliminated 4,600+ lines of
   complexity
 
 ### Quality Enforcement Tools
@@ -28,7 +29,7 @@ enforcement. This document outlines our quality metrics, tools, and processes.
 | -------------- | -------------------- | -------------------------------------- |
 | **Ruff**       | Linting & formatting | 46 rules enabled, 100-char line length |
 | **MyPy**       | Static type checking | Strict mode, pandas-stubs integration  |
-| **Pytest**     | Unit testing         | 960+ tests, 80% coverage minimum       |
+| **Pytest**     | Unit testing         | 940+ tests, 80% coverage minimum       |
 | **Pre-commit** | Quality gates        | Automated enforcement on commits       |
 
 #### MCP Documentation Tools

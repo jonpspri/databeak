@@ -10,6 +10,40 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Fixed
+
+- **Type Safety**: Resolved 10 mypy type checking errors including missing type
+  parameters, circular imports, and unused type ignore comments
+- **Test Suite**: Fixed 35 failing tests by correcting fixture names, adding
+  dict-to-object conversion for FilterCondition, and handling None values in
+  validators
+- **Circular Import**: Moved `CellValue` type alias to `models/__init__.py` to
+  eliminate circular dependency between `typed_dicts.py` and `data_models.py`
+- **Filter Operations**: Added dict-to-FilterCondition conversion with `==` to
+  `=` operator normalization for backward compatibility
+
+### Changed
+
+- **Type Annotations**: Added generic TypeVar `T` to `apply_violation_limits`
+  for improved type safety
+- **Pandera Integration**: Fixed pandera.errors import path in
+  validation_server.py
+- **MyPy Configuration**: Excluded `examples/` directory from type checking to
+  prevent false positives
+- **Type Aliases**: Migrated `FilterValue` to modern `type` statement syntax
+  (PEP 695)
+
+### Removed
+
+- **Dead Code**: Removed unused `session_service.py` and `statistics_service.py`
+  modules with dependency injection abstractions (0% actual usage)
+- **Deprecated Enum**: Removed `OperationType` enum that was marked for cleanup
+  and had no active usage
+- **Misleading Documentation**: Removed `docs/docker-deployment.md` that
+  referenced deleted Docker files
+- **Example Code**: Removed `examples/dependency_injection_demo.py` that
+  referenced deleted modules
+
 ## [0.0.4] - 2025-09-30
 
 ### Added
