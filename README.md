@@ -157,7 +157,7 @@ uv run mypy src/databeak/
 
 DataBeak implements comprehensive unit and integration testing:
 
-- **Unit Tests** (`tests/unit/`) - 983 fast, isolated module tests
+- **Unit Tests** (`tests/unit/`) - 940+ fast, isolated module tests
 - **Integration Tests** (`tests/integration/`) - 43 FastMCP Client-based
   protocol tests across 7 test files
 - **E2E Tests** (`tests/e2e/`) - Planned: Complete workflow validation
@@ -165,7 +165,7 @@ DataBeak implements comprehensive unit and integration testing:
 **Test Execution:**
 
 ```bash
-uv run pytest -n auto tests/unit/          # Run unit tests (983 tests)
+uv run pytest -n auto tests/unit/          # Run unit tests (940+ tests)
 uv run pytest -n auto tests/integration/   # Run integration tests (43 tests)
 uv run pytest -n auto --cov=src/databeak   # Run with coverage analysis
 ```
