@@ -120,10 +120,10 @@ def validate_url(url: str) -> tuple[bool, str]:
                 # DNS resolution failed - allow but log warning
                 pass
 
-        return True, url
-
     except (ValueError, TypeError, AttributeError) as e:
         return False, f"Invalid URL: {e!s}"
+
+    return True, url
 
 
 # Implementation: Column name validation with regex pattern matching

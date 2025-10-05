@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, Field, field_validator
 
 from . import CellValue
-from .typed_dicts import ValidationResult
 
 # Type aliases for common data types
 type FilterValue = CellValue | list[CellValue]
 
 if TYPE_CHECKING:
-    import pandas as pd
+    pass
 
 
 class DataType(str, Enum):
@@ -127,68 +126,6 @@ class ColumnSchema(BaseModel):
         description="List of allowed values",
     )
     pattern: str | None = Field(default=None, description="Regex pattern for validation")
-
-
-class DataSchema(BaseModel):
-    """Complete schema for a dataset."""
-
-    columns: list[ColumnSchema] = Field(..., description="Column definitions")
-    row_count: int | None = Field(default=None, description="Expected number of rows")
-    primary_key: list[str] | None = Field(default=None, description="Primary key columns")
-
-    def validate_dataframe(self, df: pd.DataFrame) -> ValidationResult:
-        """Validate a DataFrame against this schema."""
-        errors = []
-        warnings = []
-
-        # Check columns
-        expected_cols = {col.name for col in self.columns}
-        actual_cols = set(df.columns)
-
-        missing_cols = expected_cols - actual_cols
-        extra_cols = actual_cols - expected_cols
-
-        if missing_cols:
-            errors.append(f"Missing columns: {missing_cols}")
-        if extra_cols:
-            warnings.append(f"Extra columns: {extra_cols}")
-
-        # Validate each column
-        for col_schema in self.columns:
-            if col_schema.name not in df.columns:
-                continue
-
-            col_data = df[col_schema.name]
-
-            # Check nullability
-            if not col_schema.nullable and col_data.isna().any():
-                errors.append(f"Column {col_schema.name} contains null values")
-
-            # Check uniqueness
-            if col_schema.unique and col_data.duplicated().any():
-                errors.append(f"Column {col_schema.name} contains duplicate values")
-
-            # Check allowed values
-            if col_schema.allowed_values:
-                invalid = ~col_data.isin(col_schema.allowed_values)
-                if invalid.any():
-                    errors.append(f"Column {col_schema.name} contains invalid values")
-
-        return ValidationResult(valid=len(errors) == 0, errors=errors, warnings=warnings)
-
-
-class DataQualityRule(BaseModel):
-    """A data quality rule to check."""
-
-    name: str = Field(..., description="Rule name")
-    description: str = Field(..., description="Rule description")
-    column: str | None = Field(default=None, description="Column to check (if applicable)")
-    rule_type: Literal["completeness", "uniqueness", "validity", "consistency", "accuracy"] = Field(
-        ...,
-        description="Type of quality check",
-    )
-    expression: str | None = Field(default=None, description="Expression to evaluate")
-    threshold: float | None = Field(default=None, description="Threshold for pass/fail")
 
 
 class OperationResult(BaseModel):

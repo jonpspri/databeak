@@ -669,8 +669,6 @@ class SecureExpressionEvaluator:
                     # Scalar result - broadcast to all rows
                     result = pd.Series([result] * len(dataframe), index=dataframe.index)
 
-            return result  # type: ignore[no-any-return]
-
         except NameNotDefined as e:
             msg = "expression"
             raise InvalidParameterError(
@@ -686,6 +684,8 @@ class SecureExpressionEvaluator:
                 expression,
                 f"Expression evaluation failed: {e}",
             ) from e
+        else:
+            return result  # type: ignore[no-any-return]
 
     def _evaluate_string_method(
         self, expression: str, series: pd.Series, var_name: str

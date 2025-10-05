@@ -9,7 +9,6 @@ from databeak.models.data_models import (
     ColumnSchema,
     ComparisonOperator,
     DataPreview,
-    DataSchema,
     DataStatistics,
     DataType,
     FilterCondition,
@@ -193,32 +192,6 @@ class TestColumnSchema:
         """Test nullable column schema."""
         schema = ColumnSchema(name="middle_name", dtype=DataType.STRING, nullable=True)
         assert schema.nullable is True
-
-
-class TestDataSchema:
-    """Test DataSchema model."""
-
-    def test_data_schema_basic(self) -> None:
-        """Test basic data schema creation."""
-        columns = [
-            ColumnSchema(name="id", dtype=DataType.INTEGER, nullable=False),
-            ColumnSchema(name="name", dtype=DataType.STRING, nullable=False),
-        ]
-
-        schema = DataSchema(columns=columns)
-
-        assert len(schema.columns) == 2
-        assert schema.columns[0].name == "id"
-
-    def test_data_schema_with_primary_key(self) -> None:
-        """Test data schema with primary key."""
-        columns = [
-            ColumnSchema(name="id", dtype=DataType.INTEGER, nullable=False),
-            ColumnSchema(name="email", dtype=DataType.STRING, nullable=False),
-        ]
-        schema = DataSchema(columns=columns, primary_key=["id"])
-        assert schema.primary_key == ["id"]
-        assert len(schema.columns) == 2
 
 
 class TestOperationResult:
