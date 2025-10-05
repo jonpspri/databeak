@@ -97,6 +97,29 @@ Once configured, ask your AI assistant:
 | `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
 | `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
 
+## Known Limitations
+
+DataBeak is designed for interactive CSV processing with AI assistants. Be aware
+of these constraints:
+
+- **File Size**: Maximum 1024MB per file (configurable via
+  `DATABEAK_MAX_FILE_SIZE_MB`)
+- **Session Management**: Maximum 100 concurrent sessions, 1-hour timeout
+  (configurable)
+- **Memory**: Large datasets may require significant memory; monitor with
+  `system_info` tool
+- **CSV Dialects**: Assumes standard CSV format; complex dialects may require
+  pre-processing
+- **Concurrency**: Single-threaded processing per session; parallel sessions
+  supported
+- **Data Types**: Automatic type inference; complex types may need explicit
+  conversion
+- **URL Loading**: HTTPS only; blocks private networks (127.0.0.1, 192.168.x.x,
+  10.x.x.x) for security
+
+For production deployments with larger datasets, consider adjusting environment
+variables and monitoring resource usage.
+
 ## Contributing
 
 We welcome contributions! Please:
