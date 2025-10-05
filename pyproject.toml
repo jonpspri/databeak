@@ -177,14 +177,11 @@ ignore = [
     "D203", # Incompatible with formatter
     "D211", "D213",  # Incompatible with D203, D212
     "E501",  # line too long (handled by ruff format)
-    "FIX002", # TODO comments are intentional for tracking future work
     "COM812", # Missing trailing comma (handled by ruff format)
-    "ISC001", # Implicit string concatenation (often used in docstrings)
-    "RET501", # The model reviewers prefer that I return None
+    "RET501", # Copilot and Clyde Code PR reviewers prefer 'return None' to 'return'
     "SIM105", # contextlib.suppress is slower that try-except-pass
     "SIM108", # Ternary operator - preference
     #  TODO:  Work on bringing these into play
-    "PLC0415", # Local import (often used to avoid circular imports)
     "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # Complexity findings that make the AI cry
     "TRY300", "TRY301", "TRY401",   # tryceratops statement in else (nah), inner raise, logging redundancy
 ]

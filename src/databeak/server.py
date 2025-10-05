@@ -4,6 +4,7 @@ from __future__ import annotations
 
 # All MCP tools have been migrated to specialized server modules
 import logging
+from argparse import ArgumentParser
 from pathlib import Path
 
 from fastmcp import FastMCP
@@ -107,9 +108,7 @@ Consider:
 
 def main() -> None:
     """Start the DataBeak server."""
-    import argparse  # Only used in main function
-
-    parser = argparse.ArgumentParser(description="DataBeak")
+    parser = ArgumentParser(description="DataBeak")
     parser.add_argument(
         "--transport",
         choices=["stdio", "http", "sse"],

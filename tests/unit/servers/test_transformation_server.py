@@ -61,8 +61,8 @@ class TestTransformationServerFilterRows:
         ]
 
         ctx = transformation_ctx
-        # TODO:  Should filter_rows legitimately accept Any?
-        result = filter_rows(ctx, conditions, mode="and")  # type: ignore[arg-type]  # Testing mixed types (Yay Pydantic!)
+        # Test validates dict-to-FilterCondition conversion (Pydantic handles this)
+        result = filter_rows(ctx, conditions, mode="and")  # type: ignore[arg-type]
         assert result.success is True
         assert result.rows_after == 2  # John and Charlie
 
@@ -122,8 +122,8 @@ class TestTransformationServerSort:
         ]
 
         ctx = transformation_ctx
-        # TODO:  Should sort_data legitimately accept Any?
-        result = sort_data(ctx, columns)  # type: ignore[arg-type]  # Testing mixed types (Yay Pydantic!)
+        # Test validates dict/string-to-SortSpec conversion (Pydantic handles this)
+        result = sort_data(ctx, columns)  # type: ignore[arg-type]
         assert result.success is True
 
     async def test_sort_string_columns(self, transformation_ctx: Context) -> None:
