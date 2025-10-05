@@ -56,7 +56,6 @@ class TestLoadInstructions:
 
     @patch("databeak.server.Path")
     @patch("databeak.server.logger")
-    @pytest.mark.skip(reason="Logger testing - logging patterns may have changed")
     def test_load_instructions_other_error(
         self, mock_logger: MagicMock, mock_path_constructor: MagicMock
     ) -> None:
@@ -77,13 +76,14 @@ class TestLoadInstructions:
         result = _load_instructions()
 
         assert "Error loading instructions" in result
-        mock_logger.error.assert_called_once()
+        # Code uses logger.exception() for OSError handling
+        mock_logger.exception.assert_called_once()
 
 
 class TestMainFunction:
     """Tests for main entry point function covering lines 225-264."""
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -127,7 +127,7 @@ class TestMainFunction:
         # Verify stdio transport execution (lines 261-262)
         mock_mcp.run.assert_called_once_with(transport="stdio")
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -160,7 +160,7 @@ class TestMainFunction:
         # Verify non-stdio transport execution (line 264)
         mock_mcp.run.assert_called_once_with(transport="http", host="localhost", port=8080)
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -199,7 +199,7 @@ class TestMainFunction:
             ("sse", {"transport": "sse", "host": "0.0.0.0", "port": 9000}),
         ],
     )
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -239,7 +239,7 @@ class TestMainFunction:
         else:
             mock_mcp.run.assert_called_once_with(**expected_run_args)
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     def test_main_argument_parser_configuration(self, mock_parser: MagicMock) -> None:
         """Test that argument parser is configured correctly - covers lines 227-241."""
         from databeak.server import main
@@ -280,7 +280,7 @@ class TestMainFunction:
         assert transport_call[1]["default"] == "stdio"
 
     @pytest.mark.parametrize("log_level", ["DEBUG", "INFO", "WARNING", "ERROR"])
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -313,7 +313,7 @@ class TestMainFunction:
         # Verify logging is set up with the correct level
         mock_setup_logging.assert_called_once_with(log_level)
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
@@ -349,7 +349,7 @@ class TestMainFunction:
         # Verify logging was called (implementation details not tested)
         mock_logger.info.assert_called_once()
 
-    @patch("argparse.ArgumentParser")
+    @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
