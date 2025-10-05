@@ -35,7 +35,6 @@ from databeak.models.statistics_models import (
     StatisticsSummary,
     ValueCountsResult,
 )
-from databeak.models.typed_dicts import ColumnStatistics
 
 logger = logging.getLogger(__name__)
 
@@ -217,59 +216,21 @@ async def get_column_statistics(
         col_data = df[column]
         dtype = str(col_data.dtype)
         count = int(col_data.count())
-        null_count = int(col_data.isna().sum())
         unique_count = int(col_data.nunique())
 
-        # Initialize statistics dict using ColumnStatistics structure
-        statistics: ColumnStatistics = {
-            "count": count,
-            "null_count": null_count,
-            "unique_count": unique_count,
-            "dtype": str(col_data.dtype),
-        }
-
-        # Add numeric statistics if column is numeric (but not boolean)
-        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            # Helper function to safely convert pandas scalars to float
-            def safe_float(value: Any) -> float:
-                """Safely convert pandas scalar to float."""
-                try:
-                    return float(value) if not pd.isna(value) else 0.0
-                except (TypeError, ValueError):
-                    return 0.0
-
-            statistics.update(
-                {
-                    "mean": safe_float(col_data.mean()),
-                    "std": safe_float(col_data.std()),
-                    "min": safe_float(col_data.min()),
-                    "max": safe_float(col_data.max()),
-                    "sum": safe_float(col_data.sum()),
-                    "variance": safe_float(col_data.var()),
-                    "skewness": safe_float(col_data.skew()),
-                    "kurtosis": safe_float(col_data.kurtosis()),
-                },
-            )
-        # Create additional dict for non-standard fields
-        additional_stats: dict[str, str | int] = {}
-        if (
-            not (
-                pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data)
-            )
-            and count > 0
-        ):
-            # For non-numeric columns, add most frequent value in additional dict
-            mode_result = col_data.mode()
-            most_frequent = mode_result.iloc[0] if len(mode_result) > 0 else None
-            if most_frequent is not None and not pd.isna(most_frequent):
-                additional_stats["most_frequent"] = str(most_frequent)
-                additional_stats["most_frequent_count"] = int(col_data.value_counts().iloc[0])
+        # Helper function to safely convert pandas scalars to float
+        def safe_float(value: Any) -> float:
+            """Safely convert pandas scalar to float."""
+            try:
+                return float(value) if not pd.isna(value) else 0.0
+            except (TypeError, ValueError):
+                return 0.0
 
         # No longer recording operations (simplified MCP architecture)
 
-        # Convert statistics dict to StatisticsSummary
+        # Build StatisticsSummary directly
         if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            # Numeric columns - calculate percentiles for Pydantic model
+            # Numeric columns - calculate all statistics
             col_data_non_null = col_data.dropna()
             percentile_25 = (
                 float(col_data_non_null.quantile(0.25)) if len(col_data_non_null) > 0 else None
@@ -282,20 +243,31 @@ async def get_column_statistics(
             )
 
             stats_summary = StatisticsSummary(
-                count=statistics["count"],
-                mean=statistics.get("mean"),
-                std=statistics.get("std"),
-                min=statistics.get("min"),
+                count=count,
+                mean=safe_float(col_data.mean()),
+                std=safe_float(col_data.std()),
+                min=safe_float(col_data.min()),
                 percentile_25=percentile_25,
                 percentile_50=percentile_50,
                 percentile_75=percentile_75,
-                max=statistics.get("max"),
-                unique=statistics["unique_count"],
+                max=safe_float(col_data.max()),
+                unique=unique_count,
             )
         else:
             # For non-numeric columns, populate categorical statistics
+            # Calculate most frequent value for categorical columns
+            most_frequent_val: str | None = None
+            most_frequent_count: int | None = None
+            if count > 0:
+                mode_result = col_data.mode()
+                if len(mode_result) > 0:
+                    mode_val = mode_result.iloc[0]
+                    if mode_val is not None and not pd.isna(mode_val):
+                        most_frequent_val = str(mode_val)
+                        most_frequent_count = int(col_data.value_counts().iloc[0])
+
             stats_summary = StatisticsSummary(
-                count=statistics["count"],
+                count=count,
                 mean=None,
                 std=None,
                 min=None,
@@ -303,14 +275,9 @@ async def get_column_statistics(
                 percentile_50=None,
                 percentile_75=None,
                 max=None,
-                unique=statistics["unique_count"],
-                top=str(additional_stats.get("most_frequent"))
-                if additional_stats.get("most_frequent")
-                else None,
-                freq=int(freq_value)
-                if (freq_value := additional_stats.get("most_frequent_count"))
-                and isinstance(freq_value, int)
-                else None,
+                unique=unique_count,
+                top=most_frequent_val,
+                freq=most_frequent_count,
             )
 
         # Map dtype to expected literal type
