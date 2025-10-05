@@ -10,47 +10,22 @@ Issue: #45 - Reduce Any usage by 70%
 
 from __future__ import annotations
 
-from typing import Any, NotRequired, TypedDict
+from typing import Any, TypedDict
 
 from databeak.models import CellValue
 
 __all__ = [
     "CellValue",
-    "ColumnAnalysis",
-    "ColumnProfile",
-    "ColumnRenameResult",
-    "ColumnSelectionResult",
-    "ColumnStatistics",
-    "ConfigDict",
-    "CsvDataResource",
-    "CsvReadParams",
     "DataDict",
-    "DataPreviewRecord",
     "DataPreviewResult",
-    "DataProfileResult",
-    "DataSessionMetadata",
-    "DataStatisticsDict",
     "DataValidationIssues",
-    "ErrorDetails",
-    "ExportOptions",
     "InternalDataSummary",
     "MetadataDict",
-    "OperationMetadata",
-    "OperationResultDict",
-    "QualityCheckResult",
-    "RowUpdateResult",
-    "ServerConfig",
-    "SessionMetadataDict",
-    "SortSpecification",
-    "ToolConfig",
-    "TransformationPipeline",
-    "TransformationStep",
-    "UpdateColumnOperation",
     "ValidationResult",
 ]
 
 
-# Validation and Quality Check Results
+# Validation Results (used in validators and data models)
 class ValidationResult(TypedDict):
     """Result of DataFrame schema validation."""
 
@@ -67,267 +42,22 @@ class DataValidationIssues(TypedDict):
     info: dict[str, Any]  # Any justified: flexible validation metadata
 
 
-class QualityCheckResult(TypedDict):
-    """Result of data quality assessment."""
-
-    rule_name: str
-    passed: bool
-    score: float
-    message: str
-    details: NotRequired[dict[str, Any]]  # Any justified: flexible rule-specific data
-
-
-class DataStatisticsDict(TypedDict):
-    """Statistical summary of column data (internal use - use DataStatistics Pydantic model for API responses)."""
-
-    count: int
-    mean: NotRequired[float]  # Only for numeric columns
-    std: NotRequired[float]  # Only for numeric columns
-    min: NotRequired[CellValue]
-    max: NotRequired[CellValue]
-    unique_count: int
-    null_count: int
-    dtype: str
-
-
-class ColumnProfile(TypedDict):
-    """Comprehensive column profiling information."""
-
-    name: str
-    dtype: str
-    statistics: DataStatisticsDict
-    sample_values: list[CellValue]
-    quality_issues: list[str]
-
-
-# Session and Operation Metadata
-class SessionMetadataDict(TypedDict):
-    """Session state and configuration metadata (internal use)."""
-
-    created_at: str
-    last_accessed: str
-    operations_count: int
-    data_shape: NotRequired[tuple[int, int]]  # (rows, columns) if data loaded
-
-
-class DataSessionMetadata(TypedDict):
-    """Metadata stored in DataSession for loaded data."""
-
-    file_path: str | None
-    shape: tuple[int, int]
-    columns: list[str]
-    dtypes: dict[str, str]
-    loaded_at: str
-
-
-class OperationMetadata(TypedDict):
-    """Metadata for tracking operations in session history."""
-
-    operation_type: str
-    timestamp: str
-    parameters: dict[str, CellValue]
-    rows_affected: NotRequired[int]
-    columns_affected: NotRequired[list[str]]
-    execution_time_ms: NotRequired[float]
-
-
-class SortSpecification(TypedDict):
-    """Sort specification for column sorting."""
-
-    column: str
-    ascending: bool
-
-
-# I/O and Data Processing
-class CsvReadParams(TypedDict):
-    """Parameters for CSV reading operations."""
-
-    sep: NotRequired[str]
-    header: NotRequired[int | None]
-    names: NotRequired[list[str]]
-    dtype: NotRequired[dict[str, str]]
-    parse_dates: NotRequired[list[str]]
-    encoding: NotRequired[str]
-    skiprows: NotRequired[int]
-    nrows: NotRequired[int]
-
-
-class ExportOptions(TypedDict):
-    """Options for data export operations."""
-
-    format: str  # 'csv', 'json', 'excel', etc.
-    include_index: bool
-    encoding: NotRequired[str]
-    sep: NotRequired[str]  # For CSV
-    sheet_name: NotRequired[str]  # For Excel
-
-
-# Data Transformation Structures
-class TransformationStep(TypedDict):
-    """Single step in a data transformation pipeline."""
-
-    operation: str
-    parameters: dict[str, CellValue]
-    target_columns: NotRequired[list[str]]
-
-
-class TransformationPipeline(TypedDict):
-    """Complete transformation pipeline specification."""
-
-    steps: list[TransformationStep]
-    description: NotRequired[str]
-    validation_rules: NotRequired[list[str]]
-
-
-# Column Operation Structures
-class UpdateColumnOperation(TypedDict):
-    """Column update operation specification."""
-
-    operation_type: str  # "replace", "map", "apply", "fillna"
-    value: NotRequired[CellValue]  # For replace/fillna operations
-    old_value: NotRequired[CellValue]  # For replace operations
-    new_value: NotRequired[CellValue]  # For replace operations
-    mapping: NotRequired[dict[str, CellValue]]  # For map operations
-    expression: NotRequired[str]  # For apply operations
-    fill_method: NotRequired[str]  # For fillna operations
-
-
-class ColumnStatistics(TypedDict):
-    """Statistical information for a column."""
-
-    count: int
-    null_count: int
-    unique_count: int
-    dtype: str
-    mean: NotRequired[float]  # Numeric columns only
-    std: NotRequired[float]  # Numeric columns only
-    min: NotRequired[CellValue]
-    max: NotRequired[CellValue]
-    sum: NotRequired[float]  # Numeric columns only
-    variance: NotRequired[float]  # Numeric columns only
-    skewness: NotRequired[float]  # Numeric columns only
-    kurtosis: NotRequired[float]  # Numeric columns only
-
-
-# Internal operation results (for legacy transformation functions)
-class ColumnSelectionResult(TypedDict):
-    """Result of internal column selection operation."""
-
-    session_id: str
-    selected_columns: list[str]
-    columns_before: int
-    columns_after: int
-
-
-class RowUpdateResult(TypedDict):
-    """Result of internal row update operation."""
-
-    session_id: str
-    row_index: int
-    updated_fields: dict[str, CellValue]
-    columns_modified: list[str]
-
-
-class ColumnRenameResult(TypedDict):
-    """Result of internal column rename operation."""
-
-    session_id: str
-    renamed: dict[str, str]  # old_name -> new_name mapping
-    columns: list[str]  # Final column list after rename
-
-
-# Tool Response Components
-class OperationResultDict(TypedDict):
-    """Standard operation result structure (internal use - use OperationResult Pydantic model for API responses)."""
-
-    success: bool
-    operation_type: str
-    rows_affected: int
-    columns_affected: list[str]
-    execution_time_ms: float
-    message: NotRequired[str]
-
-
-class ErrorDetails(TypedDict):
-    """Detailed error information."""
-
-    error_type: str
-    message: str
-    parameter: NotRequired[str]
-    suggested_fix: NotRequired[str]
-
-
-# Discovery and Analysis Results
-class ColumnAnalysis(TypedDict):
-    """Analysis results for a single column."""
-
-    column_name: str
-    data_type: str
-    unique_values: int
-    null_percentage: float
-    sample_values: list[CellValue]
-    patterns: NotRequired[list[str]]
-    anomalies: NotRequired[list[str]]
-
-
-class DataProfileResult(TypedDict):
-    """Complete data profiling results."""
-
-    total_rows: int
-    total_columns: int
-    memory_usage_mb: float
-    column_analyses: list[ColumnAnalysis]
-    correlations: NotRequired[dict[str, dict[str, float]]]
-    summary_statistics: NotRequired[dict[str, DataStatisticsDict]]
-
-
-# Configuration and Settings
-class ServerConfig(TypedDict):
-    """Server configuration parameters."""
-
-    host: str
-    port: int
-    debug: bool
-    session_timeout_minutes: int
-    max_memory_mb: NotRequired[int]
-
-
-class ToolConfig(TypedDict):
-    """Individual tool configuration."""
-
-    enabled: bool
-    timeout_seconds: NotRequired[int]
-    memory_limit_mb: NotRequired[int]
-    validation_level: NotRequired[str]  # 'strict', 'normal', 'permissive'
-
-
-# Data Preview Structures
-class DataPreviewRecord(TypedDict):
-    """Single record in data preview with row index."""
-
-    __row_index__: int  # Original DataFrame row index
-    # Additional fields are column data as CellValue
-
-
+# Data Preview Structure (used in services for internal operations)
 class DataPreviewResult(TypedDict):
-    """Complete data preview with metadata."""
+    """Complete data preview with metadata.
+
+    Used internally by data_operations.py. Fields map to DataPreview Pydantic model
+    but with different naming for backward compatibility.
+    """
 
     records: list[dict[str, CellValue]]  # Preview records with actual column data
     total_rows: int
-    total_columns: int  # Required by io_server.py
+    total_columns: int
     columns: list[str]
     preview_rows: int
 
 
-class CsvDataResource(TypedDict):
-    """CSV data resource response for MCP resource endpoint."""
-
-    session_id: str
-    shape: tuple[int, int]  # (rows, columns)
-    preview: DataPreviewResult  # Enhanced preview data with indices
-    columns_info: dict[str, Any]  # Any justified: flexible column metadata
-
-
+# Internal data structures (used in services)
 class InternalDataSummary(TypedDict):
     """Internal data summary structure (not an MCP tool response)."""
 
@@ -340,7 +70,6 @@ class InternalDataSummary(TypedDict):
     preview: DataPreviewResult
 
 
-# Legacy compatibility - gradually replace these
+# Type aliases for common data patterns
 DataDict = dict[str, CellValue]  # Structured data with known value types
 MetadataDict = dict[str, str | int | float | bool]  # Metadata with primitive types
-ConfigDict = dict[str, str | int | bool]  # Configuration with known types
