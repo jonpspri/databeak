@@ -43,13 +43,13 @@ and this project adheres to
   referenced deleted Docker files
 - **Example Code**: Removed `examples/dependency_injection_demo.py` that
   referenced deleted modules
-- **Try-Except Wrappers**: Removed 58 unnecessary try-except wrapper blocks
-  from MCP tool functions (TRY301 violations) - FastMCP handles exception
+- **Try-Except Wrappers**: Removed 58 unnecessary try-except wrapper blocks from
+  MCP tool functions (TRY301 violations) - FastMCP handles exception
   transformation automatically
 - **Transformation Service**: Removed unused transformation_service.py module
   (676 lines, zero production usage)
-- **Dead TypedDicts**: Removed 22 unused TypedDict classes (343 lines,
-  88.7% reduction in typed_dicts.py)
+- **Dead TypedDicts**: Removed 22 unused TypedDict classes (343 lines, 88.7%
+  reduction in typed_dicts.py)
 
 ## [0.0.4] - 2025-09-30
 
