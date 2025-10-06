@@ -684,8 +684,8 @@ class SecureExpressionEvaluator:
                 expression,
                 f"Expression evaluation failed: {e}",
             ) from e
-        else:
-            return result  # type: ignore[no-any-return]
+
+        return result  # type: ignore[no-any-return]
 
     def _evaluate_string_method(
         self, expression: str, series: pd.Series, var_name: str

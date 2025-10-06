@@ -320,16 +320,9 @@ class ColumnValidationRules(BaseModel):
     @classmethod
     def validate_regex_pattern(cls, v: str | None) -> str | None:
         """Validate that str_matches pattern is a valid regular expression."""
-        if v is None:
-            return v
-
-        try:
+        if v is not None:
             re.compile(v)
-        except re.error as e:
-            msg = f"Invalid regular expression for str_matches: {e}"
-            raise ValueError(msg) from e
-        else:
-            return v
+        return v
 
     @field_validator("str_length", "in_range")
     @classmethod

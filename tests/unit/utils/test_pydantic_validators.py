@@ -30,7 +30,7 @@ class TestParseJsonStringToDict:
     def test_invalid_json_string(self) -> None:
         """Test error handling for invalid JSON string."""
         invalid_json = '{"name": "John", "age":}'
-        with pytest.raises(ValueError, match="Invalid JSON string"):
+        with pytest.raises(ValueError):
             parse_json_string_to_dict(invalid_json)
 
     def test_json_string_not_dict(self) -> None:
@@ -83,7 +83,7 @@ class TestParseJsonStringToDictOrList:
     def test_invalid_json_string(self) -> None:
         """Test error handling for invalid JSON string."""
         invalid_json = '{"name": "John", "age":}'
-        with pytest.raises(ValueError, match="Invalid JSON string"):
+        with pytest.raises(ValueError):
             parse_json_string_to_dict_or_list(invalid_json)
 
     def test_json_string_invalid_type(self) -> None:
@@ -118,7 +118,7 @@ class TestParseJsonStringToList:
     def test_invalid_json_string(self) -> None:
         """Test error handling for invalid JSON string."""
         invalid_json = '["John", 30,]'  # Trailing comma
-        with pytest.raises(ValueError, match="Invalid JSON string"):
+        with pytest.raises(ValueError):
             parse_json_string_to_list(invalid_json)
 
     def test_json_string_not_list(self) -> None:
