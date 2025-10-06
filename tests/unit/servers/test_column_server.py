@@ -5,11 +5,11 @@ from typing import cast
 
 import pytest
 from fastmcp import Context
-from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import databeak.servers.column_server  # noqa: F401
 from databeak.core.session import get_session_manager
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
 from databeak.servers.column_server import (
     add_column,
     change_column_type,
@@ -76,7 +76,7 @@ class TestColumnServerSelect:
 
     async def test_select_nonexistent_column(self, ctx_fixture: Context) -> None:
         """Test selecting non-existent column."""
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await select_columns(ctx_fixture, ["nonexistent", "first_name"])
 
 
@@ -115,7 +115,7 @@ class TestColumnServerRename:
         """Test renaming non-existent column."""
         mapping = {"nonexistent": "new_name"}
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await rename_columns(ctx_fixture, mapping)
 
 
@@ -157,17 +157,17 @@ class TestColumnServerAdd:
 
     async def test_add_duplicate_column_name(self, ctx_fixture: Context) -> None:
         """Test adding column with existing name."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await add_column(ctx_fixture, "first_name", "test")
 
     async def test_add_column_invalid_formula(self, ctx_fixture: Context) -> None:
         """Test adding column with invalid formula."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await add_column(ctx_fixture, "test", formula="invalid_syntax + ")
 
     async def test_add_column_mismatched_list_length(self, ctx_fixture: Context) -> None:
         """Test adding column with wrong list length."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await add_column(ctx_fixture, "test", value=[1, 2])  # Only 2 values for 4 rows
 
 
@@ -192,7 +192,7 @@ class TestColumnServerRemove:
 
     async def test_remove_nonexistent_column(self, ctx_fixture: Context) -> None:
         """Test removing non-existent column."""
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await remove_columns(ctx_fixture, ["nonexistent"])
 
 
@@ -239,12 +239,12 @@ class TestColumnServerChangeType:
 
     async def test_change_type_nonexistent_column(self, ctx_fixture: Context) -> None:
         """Test changing type of non-existent column."""
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await change_column_type(ctx_fixture, "nonexistent", "int")
 
     async def test_change_type_invalid_type(self, ctx_fixture: Context) -> None:
         """Test changing to invalid data type."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await change_column_type(ctx_fixture, "age", "invalid_type")  # type: ignore[arg-type]
 
 
@@ -288,7 +288,7 @@ class TestColumnServerUpdate:
 
     async def test_update_replace_missing_params(self, ctx_fixture: Context) -> None:
         """Test replace operation with missing parameters."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await update_column(
                 ctx_fixture,
                 "first_name",
@@ -297,7 +297,7 @@ class TestColumnServerUpdate:
 
     async def test_update_map_invalid_value(self, ctx_fixture: Context) -> None:
         """Test map operation with invalid value type."""
-        with pytest.raises(ToolError, match="Invalid value"):
+        with pytest.raises(InvalidParameterError):
             await update_column(
                 ctx_fixture,
                 "first_name",
@@ -306,7 +306,7 @@ class TestColumnServerUpdate:
 
     async def test_update_nonexistent_column(self, ctx_fixture: Context) -> None:
         """Test updating non-existent column."""
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await update_column(ctx_fixture, "nonexistent", {"operation": "fillna", "value": 0})
 
 
@@ -319,20 +319,20 @@ class TestColumnServerErrorHandling:
         invalid_session = "invalid-session-id"
         ctx = create_mock_context(invalid_session)
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await select_columns(ctx, ["test"])
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await rename_columns(ctx, {"old": "new"})
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await add_column(ctx, "test", "value")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await remove_columns(ctx, ["test"])
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await change_column_type(ctx, "test", "int")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await update_column(ctx, "test", {"operation": "fillna", "value": 0})

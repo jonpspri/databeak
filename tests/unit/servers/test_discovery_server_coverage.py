@@ -11,6 +11,7 @@ from fastmcp.exceptions import ToolError
 
 import databeak
 from databeak.core.session import get_session_manager
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError
 from databeak.servers.discovery_server import (
     DataSummaryResult,
     FindCellsResult,
@@ -93,7 +94,7 @@ class TestDetectOutliers:
         """Test that isolation_forest method is not supported."""
         ctx = outliers_ctx
 
-        with pytest.raises(ToolError, match="Unknown method: isolation_forest"):
+        with pytest.raises(InvalidParameterError):
             await detect_outliers(
                 ctx,
                 columns=["values", "values2"],
@@ -114,14 +115,14 @@ class TestDetectOutliers:
         """Test outlier detection with invalid method."""
         ctx = outliers_ctx
 
-        with pytest.raises(ToolError, match="Unknown method: invalid_method"):
+        with pytest.raises(InvalidParameterError):
             await detect_outliers(ctx, method="invalid_method")
 
     async def test_outliers_non_numeric_columns(self, outliers_ctx: Context) -> None:
         """Test outlier detection on non-numeric columns."""
         ctx = outliers_ctx
 
-        with pytest.raises(ToolError, match="No numeric columns found"):
+        with pytest.raises(InvalidParameterError):
             await detect_outliers(ctx, columns=["text"])
 
     async def test_outliers_no_outliers_found(self, outliers_ctx: Context) -> None:
@@ -341,7 +342,7 @@ class TestGroupByAggregate:
         """Test grouping by invalid column."""
         ctx = outliers_ctx
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ColumnNotFoundError):
             await group_by_aggregate(
                 ctx,
                 group_by=["invalid_col"],
@@ -593,7 +594,7 @@ class TestInspectDataAround:
         """Test inspecting around invalid column."""
         ctx = outliers_ctx
 
-        with pytest.raises(ToolError, match="Column"):
+        with pytest.raises(ColumnNotFoundError):
             await inspect_data_around(ctx, 50, "invalid_col")
 
     async def test_inspect_around_large_radius(self, outliers_ctx: Context) -> None:
@@ -630,12 +631,12 @@ class TestErrorHandling:
 
             ctx = create_mock_context("no-data")
 
-            with pytest.raises(ToolError, match="Invalid session or no data"):
+            with pytest.raises(ToolError):
                 await detect_outliers(ctx)
 
             ctx = create_mock_context("no-data")
 
-            with pytest.raises(ToolError, match="Invalid session or no data"):
+            with pytest.raises(ToolError):
                 await profile_data(ctx)
 
     async def test_edge_cases(self, outliers_ctx: Context) -> None:

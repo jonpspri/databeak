@@ -5,10 +5,10 @@ Tests the server wrapper layer and FastMCP integration for text and string colum
 
 import pytest
 from fastmcp import Context
-from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import databeak.servers.column_text_server  # noqa: F401
+from databeak.exceptions import ColumnNotFoundError, NoDataLoadedError
 from databeak.servers.column_text_server import (
     extract_from_column,
     fill_column_nulls,
@@ -72,7 +72,7 @@ class TestColumnTextServerReplace:
     async def test_replace_nonexistent_column(self, text_session_ctx: Context) -> None:
         """Test replacing in non-existent column."""
         ctx = text_session_ctx
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await replace_in_column(ctx, "nonexistent", "pattern", "replacement")
 
 
@@ -113,7 +113,7 @@ class TestColumnTextServerExtract:
         """Test extracting from non-existent column."""
         ctx = text_session_ctx
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await extract_from_column(ctx, "nonexistent", r"(\w+)")
 
 
@@ -174,7 +174,7 @@ class TestColumnTextServerSplit:
         """Test splitting non-existent column."""
         ctx = text_session_ctx
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await split_column(ctx, "nonexistent", " ")
 
 
@@ -215,7 +215,7 @@ class TestColumnTextServerCase:
         """Test transforming case of non-existent column."""
         ctx = text_session_ctx
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await transform_column_case(ctx, "nonexistent", "upper")
 
 
@@ -256,7 +256,7 @@ class TestColumnTextServerStrip:
         """Test stripping non-existent column."""
         ctx = text_session_ctx
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await strip_column(ctx, "nonexistent")
 
 
@@ -302,7 +302,7 @@ class TestColumnTextServerFillNulls:
         """Test filling nulls in non-existent column."""
         ctx = text_session_ctx
 
-        with pytest.raises(ToolError, match="Column.*not found"):
+        with pytest.raises(ColumnNotFoundError):
             await fill_column_nulls(ctx, "nonexistent", "value")
 
 
@@ -315,22 +315,22 @@ class TestColumnTextServerErrorHandling:
         invalid_session = "invalid-session-id"
 
         ctx = create_mock_context(invalid_session)
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await replace_in_column(ctx, "test", "pattern", "replacement")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await extract_from_column(ctx, "test", r"(\w+)")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await split_column(ctx, "test", " ")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await transform_column_case(ctx, "test", "upper")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await strip_column(ctx, "test")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             await fill_column_nulls(ctx, "test", "value")
 
 

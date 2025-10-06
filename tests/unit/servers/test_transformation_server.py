@@ -9,6 +9,7 @@ from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
+from databeak.exceptions import ColumnNotFoundError, NoDataLoadedError
 from databeak.models import FilterCondition
 from databeak.servers.io_server import load_csv_from_content
 from databeak.servers.transformation_server import (
@@ -217,20 +218,22 @@ class TestTransformationServerErrorHandling:
 
     async def test_filter_invalid_session(self) -> None:
         """Test filtering with invalid session."""
+
         conditions = [FilterCondition(column="test", operator="=", value="test")]
 
         ctx = create_mock_context("invalid-session-id")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_session(self) -> None:
         """Test sorting with invalid session."""
+
         columns: list[str | SortColumn] = [SortColumn(column="test", ascending=True)]
 
         ctx = create_mock_context("invalid-session-id")
 
-        with pytest.raises(ToolError, match="No data loaded in session"):
+        with pytest.raises(NoDataLoadedError):
             sort_data(ctx, columns)
 
     async def test_filter_invalid_column(self, transformation_ctx: Context) -> None:
@@ -239,7 +242,7 @@ class TestTransformationServerErrorHandling:
 
         ctx = transformation_ctx
 
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ColumnNotFoundError):
             filter_rows(ctx, conditions)
 
     async def test_sort_invalid_column(self, transformation_ctx: Context) -> None:

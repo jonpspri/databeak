@@ -2,8 +2,8 @@
 
 import pytest
 from fastmcp import Context
-from fastmcp.exceptions import ToolError
 
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
 from databeak.servers.discovery_server import (
     detect_outliers,
     find_cells_with_value,
@@ -127,7 +127,7 @@ class TestDetectOutliers:
     async def test_detect_outliers_non_numeric(self, discovery_ctx: Context) -> None:
         """Test outlier detection with non-numeric columns."""
         ctx = discovery_ctx
-        with pytest.raises(ToolError, match="numeric"):
+        with pytest.raises(InvalidParameterError):
             await detect_outliers(ctx, columns=["name", "category"])
 
     async def test_detect_outliers_no_outliers(self) -> None:
@@ -261,7 +261,7 @@ C,40"""
 
     async def test_groupby_invalid_column(self, grouped_ctx: Context) -> None:
         """Test groupby with invalid column."""
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ColumnNotFoundError):
             await group_by_aggregate(
                 grouped_ctx,
                 group_by=["fake_column"],
@@ -423,7 +423,7 @@ class TestInspectDataAround:
         assert result.surrounding_data.row_count == 0  # No rows in range
 
         # Invalid column should still raise error
-        with pytest.raises(ToolError, match="not found"):
+        with pytest.raises(ColumnNotFoundError):
             await inspect_data_around(
                 discovery_ctx,
                 row=0,
@@ -577,22 +577,22 @@ class TestIntegrationAndEdgeCases:
 
     async def test_session_not_found(self) -> None:
         """Test all functions with invalid session."""
-        invalid_id = "nonexistent-session"
+        invalid_ctx = create_mock_context("nonexistent-session")
 
-        with pytest.raises(ToolError):
-            await detect_outliers(invalid_id)  # type: ignore[arg-type]
+        with pytest.raises(NoDataLoadedError):
+            await detect_outliers(invalid_ctx)
 
-        with pytest.raises(ToolError):
-            await profile_data(invalid_id)  # type: ignore[arg-type]
+        with pytest.raises(NoDataLoadedError):
+            await profile_data(invalid_ctx)
 
-        with pytest.raises(ToolError):
-            await group_by_aggregate(invalid_id, group_by=["col"], aggregations={"val": ["mean"]})  # type: ignore[arg-type]
+        with pytest.raises(NoDataLoadedError):
+            await group_by_aggregate(invalid_ctx, group_by=["col"], aggregations={"val": ["mean"]})
 
-        with pytest.raises(ToolError):
-            await find_cells_with_value(invalid_id, "value")  # type: ignore[arg-type]
+        with pytest.raises(NoDataLoadedError):
+            await find_cells_with_value(invalid_ctx, "value")
 
-        with pytest.raises(ToolError):
-            await inspect_data_around(create_mock_context(invalid_id), 0, "col", 1)
+        with pytest.raises(NoDataLoadedError):
+            await inspect_data_around(invalid_ctx, 0, "col", 1)
 
-        with pytest.raises(ToolError):
-            await get_data_summary(invalid_id)  # type: ignore[arg-type]
+        with pytest.raises(NoDataLoadedError):
+            await get_data_summary(invalid_ctx)

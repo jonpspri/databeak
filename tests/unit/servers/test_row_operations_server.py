@@ -12,7 +12,12 @@ from fastmcp.exceptions import ToolError
 
 # Ensure full module coverage
 import databeak.servers.row_operations_server  # noqa: F401
-from databeak.exceptions import ColumnNotFoundError, InvalidParameterError, NoDataLoadedError
+from databeak.exceptions import (
+    ColumnNotFoundError,
+    InvalidParameterError,
+    NoDataLoadedError,
+    SessionNotFoundError,
+)
 from databeak.models import CellValue
 from databeak.servers.io_server import load_csv_from_content
 from databeak.servers.row_operations_server import (
@@ -112,8 +117,6 @@ class TestGetCellValue:
 
     async def test_get_cell_value_invalid_session(self) -> None:
         """Test error handling for invalid session."""
-        from databeak.exceptions import SessionNotFoundError
-
         ctx = create_mock_context("invalid-session")
         with pytest.raises((ToolError, SessionNotFoundError, NoDataLoadedError)):
             get_cell_value(ctx, 0, "first_name")

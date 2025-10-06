@@ -2,8 +2,8 @@
 
 import pytest
 from fastmcp import Context
-from fastmcp.exceptions import ToolError
 
+from databeak.exceptions import ColumnNotFoundError, InvalidParameterError
 from databeak.servers.column_server import (
     ApplyOperation,
     FillNaOperation,
@@ -151,7 +151,7 @@ class TestUpdateColumnDiscriminatedUnions:
             expression="import os; os.system('ls')",  # Dangerous expression
         )
 
-        with pytest.raises(ToolError, match="Invalid value for parameter"):
+        with pytest.raises(InvalidParameterError):
             await update_column(
                 update_ctx,
                 column="value",
@@ -162,7 +162,7 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test with invalid operation type in dict."""
         operation = {"type": "invalid_op", "value": 123}
 
-        with pytest.raises(ToolError, match="Invalid value for parameter"):
+        with pytest.raises(InvalidParameterError):
             await update_column(
                 update_ctx,
                 column="value",
@@ -187,7 +187,7 @@ class TestUpdateColumnDiscriminatedUnions:
         """Test update_column with non-existent column."""
         operation = FillNaOperation(value=0)
 
-        with pytest.raises(ToolError, match="Column 'nonexistent' not found"):
+        with pytest.raises(ColumnNotFoundError):
             await update_column(
                 update_ctx,
                 column="nonexistent",

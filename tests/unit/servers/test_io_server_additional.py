@@ -7,6 +7,7 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from databeak.core.session import get_session_manager
+from databeak.exceptions import NoDataLoadedError
 from databeak.servers.io_server import (
     export_csv,
     get_session_info,
@@ -36,7 +37,7 @@ class TestSessionManagement:
 
     async def test_get_session_info_invalid(self) -> None:
         """Test getting info for invalid session."""
-        with pytest.raises(ToolError, match="Failed to get session info"):
+        with pytest.raises(NoDataLoadedError):
             await get_session_info(create_mock_context("nonexistent-session-id"))
 
 
@@ -45,12 +46,12 @@ class TestCsvLoadingEdgeCases:
 
     async def test_load_csv_empty_content(self) -> None:
         """Test loading empty CSV content."""
-        with pytest.raises(ToolError, match="CSV"):
+        with pytest.raises(ToolError):
             await load_csv_from_content(create_mock_context(), "")
 
     async def test_load_csv_only_whitespace(self) -> None:
         """Test loading CSV with only whitespace."""
-        with pytest.raises(ToolError, match="CSV"):
+        with pytest.raises(ToolError):
             await load_csv_from_content(create_mock_context(), "   \n  \n  ")
 
     async def test_load_csv_single_column(self) -> None:
@@ -158,7 +159,7 @@ class TestExportFunctionality:
     async def test_export_invalid_session(self) -> None:
         """Test exporting with invalid session."""
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            with pytest.raises(ToolError, match="No data loaded in session"):
+            with pytest.raises(NoDataLoadedError):
                 await export_csv(create_mock_context("nonexistent-session-id"), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)
@@ -170,7 +171,7 @@ class TestExportFunctionality:
         session_manager.get_or_create_session(session_id)
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            with pytest.raises(ToolError, match="No data loaded in session"):
+            with pytest.raises(NoDataLoadedError):
                 await export_csv(create_mock_context(session_id), file_path=tmp.name)
             # Clean up
             Path(tmp.name).unlink(missing_ok=True)

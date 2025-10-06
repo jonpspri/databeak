@@ -5,20 +5,16 @@ This server provides column selection, renaming, addition, removal, and type con
 
 from __future__ import annotations
 
-import logging
 from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
-from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 from databeak.core.session import get_session_data
 from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
-    NoDataLoadedError,
-    SessionNotFoundError,
 )
 from databeak.models import CellValue
 from databeak.models.expression_models import SecureExpression
@@ -27,8 +23,6 @@ from databeak.utils.secure_evaluator import (
     evaluate_string_expression_safely,
     get_secure_expression_evaluator,
 )
-
-logger = logging.getLogger(__name__)
 
 # =============================================================================
 # PYDANTIC MODELS FOR REQUEST PARAMETERS
@@ -183,35 +177,26 @@ async def select_columns(
     Validates column existence and reorders by selection order. Returns selection details with
     before/after column counts.
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
 
-        # Validate columns exist
-        missing_cols = [col for col in columns if col not in df.columns]
-        if missing_cols:
-            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
+    # Validate columns exist
+    missing_cols = [col for col in columns if col not in df.columns]
+    if missing_cols:
+        raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
 
-        # Track counts before modification
-        columns_before = len(df.columns)
+    # Track counts before modification
+    columns_before = len(df.columns)
 
-        session.df = df[columns].copy()
-        # No longer recording operations (simplified MCP architecture)
+    session.df = df[columns].copy()
+    # No longer recording operations (simplified MCP architecture)
 
-        return SelectColumnsResult(
-            selected_columns=columns,
-            columns_before=columns_before,
-            columns_after=len(columns),
-        )
-
-    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        await ctx.error(f"Select columns failed with {type(e).__name__}: {e.message}")
-        raise ToolError(e.message) from e
-    except Exception as e:
-        await ctx.error(f"Unexpected error selecting columns: {e}")
-        msg = f"Failed to select columns: {e}"
-        raise ToolError(msg) from e
+    return SelectColumnsResult(
+        selected_columns=columns,
+        columns_before=columns_before,
+        columns_after=len(columns),
+    )
 
 
 # Implementation: validates old column names exist in mapping keys, checks for naming conflicts
@@ -240,32 +225,23 @@ async def rename_columns(
         })
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
 
-        # Validate columns exist
-        missing_cols = [col for col in mapping if col not in df.columns]
-        if missing_cols:
-            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
+    # Validate columns exist
+    missing_cols = [col for col in mapping if col not in df.columns]
+    if missing_cols:
+        raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
 
-        # Apply renaming
-        session.df = df.rename(columns=mapping)
-        # No longer recording operations (simplified MCP architecture)
+    # Apply renaming
+    session.df = df.rename(columns=mapping)
+    # No longer recording operations (simplified MCP architecture)
 
-        return RenameColumnsResult(
-            renamed=mapping,
-            columns=list(mapping.values()),
-        )
-
-    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.exception("Rename columns failed with %s: %s", type(e).__name__, e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Unexpected error renaming columns: %s", str(e))
-        msg = f"Failed to rename columns: {e}"
-        raise ToolError(msg) from e
+    return RenameColumnsResult(
+        renamed=mapping,
+        columns=list(mapping.values()),
+    )
 
 
 # Implementation: validates column name doesn't exist, supports single value, list, or pandas eval formula
@@ -303,56 +279,47 @@ async def add_column(
         add_column(ctx, "full_name", formula="first_name + ' ' + last_name")
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        if name in df.columns:
-            msg = "name"
-            raise InvalidParameterError(msg, name, f"Column '{name}' already exists")
+    if name in df.columns:
+        msg = "name"
+        raise InvalidParameterError(msg, name, f"Column '{name}' already exists")
 
-        if formula:
-            try:
-                # Convert string to SecureExpression if needed
-                if isinstance(formula, str):
-                    formula = SecureExpression(expression=formula)
+    if formula:
+        try:
+            # Convert string to SecureExpression if needed
+            if isinstance(formula, str):
+                formula = SecureExpression(expression=formula)
 
-                # Use secure evaluator instead of pandas.eval
-                evaluator = get_secure_expression_evaluator()
-                result = evaluator.evaluate_simple_formula(formula.expression, df)
-                df[name] = result
-            except Exception as e:
-                msg = "formula"
-                raise InvalidParameterError(msg, formula, f"Invalid formula: {e}") from e
-        elif isinstance(value, list):
-            if len(value) != len(df):
-                msg = "value"
-                raise InvalidParameterError(
-                    msg,
-                    str(value),
-                    f"List length ({len(value)}) must match row count ({len(df)})",
-                )
-            df[name] = value
-        else:
-            # Single value for all rows
-            df[name] = value
+            # Use secure evaluator instead of pandas.eval
+            evaluator = get_secure_expression_evaluator()
+            result = evaluator.evaluate_simple_formula(formula.expression, df)
+            df[name] = result
+        except Exception as e:
+            msg = "formula"
+            raise InvalidParameterError(msg, formula, f"Invalid formula: {e}") from e
+    elif isinstance(value, list):
+        if len(value) != len(df):
+            msg = "value"
+            raise InvalidParameterError(
+                msg,
+                str(value),
+                f"List length ({len(value)}) must match row count ({len(df)})",
+            )
+        df[name] = value
+    else:
+        # Single value for all rows
+        df[name] = value
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ColumnOperationResult(
-            operation="add",
-            rows_affected=len(df),
-            columns_affected=[name],
-        )
-
-    except (SessionNotFoundError, NoDataLoadedError, InvalidParameterError) as e:
-        logger.exception("Add column failed with %s: %s", type(e).__name__, e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Unexpected error adding column: %s", str(e))
-        msg = f"Failed to add column: {e}"
-        raise ToolError(msg) from e
+    return ColumnOperationResult(
+        operation="add",
+        rows_affected=len(df),
+        columns_affected=[name],
+    )
 
 
 # Implementation: validates columns exist before removal, prevents removing all columns
@@ -380,32 +347,23 @@ async def remove_columns(
         remove_columns(ctx, ["_temp", "_backup", "old_value"])
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
 
-        # Validate columns exist
-        missing_cols = [col for col in columns if col not in df.columns]
-        if missing_cols:
-            raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
+    # Validate columns exist
+    missing_cols = [col for col in columns if col not in df.columns]
+    if missing_cols:
+        raise ColumnNotFoundError(str(missing_cols[0]), df.columns.tolist())
 
-        session.df = df.drop(columns=columns)
-        # No longer recording operations (simplified MCP architecture)
+    session.df = df.drop(columns=columns)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ColumnOperationResult(
-            operation="remove",
-            rows_affected=len(df),
-            columns_affected=columns,
-        )
-
-    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.exception("Remove columns failed with %s: %s", type(e).__name__, e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Unexpected error removing columns: %s", str(e))
-        msg = f"Failed to remove columns: {e}"
-        raise ToolError(msg) from e
+    return ColumnOperationResult(
+        operation="remove",
+        rows_affected=len(df),
+        columns_affected=columns,
+    )
 
 
 # Implementation: validates column exists, maps dtype to pandas types
@@ -443,75 +401,61 @@ async def change_column_type(
         change_column_type(ctx, "is_active", "bool")
 
     """
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
+
+    if column not in df.columns:
+        raise ColumnNotFoundError(column, df.columns.tolist())
+
+    # Convert column type
+
+    # Map string dtype to pandas dtype
+    type_map = {
+        "int": "int64",
+        "float": "float64",
+        "str": "string",
+        "bool": "bool",
+        "datetime": "datetime64[ns]",
+    }
+
+    target_dtype = type_map.get(dtype)
+    if not target_dtype:
+        msg = "dtype"
+        raise InvalidParameterError(msg, dtype, f"Unsupported type: {dtype}")
+
     try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
-
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, df.columns.tolist())
-
-        # Convert column type
-
-        # Map string dtype to pandas dtype
-        type_map = {
-            "int": "int64",
-            "float": "float64",
-            "str": "string",
-            "bool": "bool",
-            "datetime": "datetime64[ns]",
-        }
-
-        target_dtype = type_map.get(dtype)
-        if not target_dtype:
-            msg = "dtype"
-            raise InvalidParameterError(msg, dtype, f"Unsupported type: {dtype}")
-
-        try:
-            if dtype == "datetime":
-                # Special handling for datetime conversion
-                df[column] = pd.to_datetime(df[column], errors=errors)
-            # General type conversion
-            elif errors == "coerce":
-                if dtype in ["int", "float"]:
-                    df[column] = pd.to_numeric(df[column], errors="coerce")
-                else:
-                    df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+        if dtype == "datetime":
+            # Special handling for datetime conversion
+            df[column] = pd.to_datetime(df[column], errors=errors)
+        # General type conversion
+        elif errors == "coerce":
+            if dtype in ["int", "float"]:
+                df[column] = pd.to_numeric(df[column], errors="coerce")
             else:
                 df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
+        else:
+            df[column] = df[column].astype(target_dtype)  # type: ignore[call-overload]
 
-        except (ValueError, TypeError) as e:
-            if errors == "raise":
-                msg = "column"
-                raise InvalidParameterError(
-                    msg,
-                    column,
-                    f"Cannot convert to {dtype}: {e}",
-                ) from e
-            # If errors='coerce', the conversion has already handled invalid values
+    except (ValueError, TypeError) as e:
+        if errors == "raise":
+            msg = "column"
+            raise InvalidParameterError(
+                msg,
+                column,
+                f"Cannot convert to {dtype}: {e}",
+            ) from e
+        # If errors='coerce', the conversion has already handled invalid values
 
-        # Operation completed
+    # Operation completed
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ColumnOperationResult(
-            operation=f"change_type_to_{dtype}",
-            rows_affected=len(df),
-            columns_affected=[column],
-        )
-
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.exception("Change column type failed with %s: %s", type(e).__name__, e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Unexpected error changing column type: %s", str(e))
-        msg = f"Failed to change column type: {e}"
-        raise ToolError(msg) from e
+    return ColumnOperationResult(
+        operation=f"change_type_to_{dtype}",
+        rows_affected=len(df),
+        columns_affected=[column],
+    )
 
 
 async def update_column(
@@ -554,168 +498,146 @@ async def update_column(
         })
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, df.columns.tolist())
+    if column not in df.columns:
+        raise ColumnNotFoundError(column, df.columns.tolist())
 
-        # Track initial state
-        # Update column operation (no longer tracking null count changes)
-        operation_type = "unknown"
+    # Track initial state
+    # Update column operation (no longer tracking null count changes)
+    operation_type = "unknown"
 
-        # Handle discriminated union operations
-        if isinstance(
-            operation,
-            ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation,
-        ):
-            if isinstance(operation, ReplaceOperation):
+    # Handle discriminated union operations
+    if isinstance(
+        operation,
+        ReplaceOperation | MapOperation | ApplyOperation | FillNaOperation,
+    ):
+        if isinstance(operation, ReplaceOperation):
+            operation_type = "replace"
+            df[column] = df[column].replace(operation.pattern, operation.replacement)
+        elif isinstance(operation, MapOperation):
+            operation_type = "map"
+            df[column] = df[column].map(operation.mapping)
+        elif isinstance(operation, ApplyOperation):
+            operation_type = "apply"
+            expr = operation.expression
+
+            # Use unified secure evaluator for both string and mathematical expressions
+            result = _apply_expression_to_column(expr, column, df, "expression")
+            df[column] = result
+        elif isinstance(operation, FillNaOperation):
+            operation_type = "fillna"
+            df[column] = df[column].fillna(operation.value)
+
+    # Handle legacy format or dict input
+    elif isinstance(operation, dict):
+        if "type" in operation:
+            # Parse as discriminated union
+            if operation["type"] == "replace":
+                replace_op = ReplaceOperation(**operation)
                 operation_type = "replace"
-                df[column] = df[column].replace(operation.pattern, operation.replacement)
-            elif isinstance(operation, MapOperation):
+                df[column] = df[column].replace(
+                    replace_op.pattern,
+                    replace_op.replacement,
+                )
+            elif operation["type"] == "map":
+                map_op = MapOperation(**operation)
                 operation_type = "map"
-                df[column] = df[column].map(operation.mapping)
-            elif isinstance(operation, ApplyOperation):
+                df[column] = df[column].map(map_op.mapping)
+            elif operation["type"] == "apply":
+                apply_op = ApplyOperation(**operation)
                 operation_type = "apply"
-                expr = operation.expression
+                expr = apply_op.expression
 
                 # Use unified secure evaluator for both string and mathematical expressions
                 result = _apply_expression_to_column(expr, column, df, "expression")
                 df[column] = result
-            elif isinstance(operation, FillNaOperation):
+            elif operation["type"] == "fillna":
+                fillna_op = FillNaOperation(**operation)
                 operation_type = "fillna"
-                df[column] = df[column].fillna(operation.value)
-
-        # Handle legacy format or dict input
-        elif isinstance(operation, dict):
-            if "type" in operation:
-                # Try to parse as discriminated union
-                try:
-                    if operation["type"] == "replace":
-                        replace_op = ReplaceOperation(**operation)
-                        operation_type = "replace"
-                        df[column] = df[column].replace(
-                            replace_op.pattern,
-                            replace_op.replacement,
-                        )
-                    elif operation["type"] == "map":
-                        map_op = MapOperation(**operation)
-                        operation_type = "map"
-                        df[column] = df[column].map(map_op.mapping)
-                    elif operation["type"] == "apply":
-                        apply_op = ApplyOperation(**operation)
-                        operation_type = "apply"
-                        expr = apply_op.expression
-
-                        # Use unified secure evaluator for both string and mathematical expressions
-                        result = _apply_expression_to_column(expr, column, df, "expression")
-                        df[column] = result
-                    elif operation["type"] == "fillna":
-                        fillna_op = FillNaOperation(**operation)
-                        operation_type = "fillna"
-                        df[column] = df[column].fillna(fillna_op.value)
-                    else:
-                        msg = "type"
-                        raise InvalidParameterError(
-                            msg,
-                            operation["type"],
-                            "Supported types: replace, map, apply, fillna",
-                        )
-                except Exception as e:
-                    msg = "operation"
-                    raise InvalidParameterError(
-                        msg,
-                        str(operation),
-                        f"Invalid operation specification: {e}",
-                    ) from e
+                df[column] = df[column].fillna(fillna_op.value)
             else:
-                # Legacy format with "operation" field
-                update_request = UpdateColumnRequest(**operation)
-                operation_type = update_request.operation
+                msg = "type"
+                raise InvalidParameterError(
+                    msg,
+                    operation["type"],
+                    "Supported types: replace, map, apply, fillna",
+                )
+        else:
+            # Legacy format with "operation" field
+            update_request = UpdateColumnRequest(**operation)
+            operation_type = update_request.operation
 
-                if update_request.operation == "replace":
-                    if update_request.pattern is None or update_request.replacement is None:
-                        msg = "pattern/replacement"
-                        raise InvalidParameterError(
-                            msg,
-                            f"{update_request.pattern}/{update_request.replacement}",
-                            "Both pattern and replacement required for replace operation",
-                        )
-                    df[column] = df[column].replace(
-                        update_request.pattern,
-                        update_request.replacement,
-                    )
-                elif update_request.operation == "map":
-                    if not isinstance(update_request.value, dict):
-                        msg = "value"
-                        raise InvalidParameterError(
-                            msg,
-                            str(update_request.value),
-                            "Dictionary mapping required for map operation",
-                        )
-                    df[column] = df[column].map(update_request.value)
-                elif update_request.operation == "apply":
-                    if update_request.value is None:
-                        msg = "value"
-                        raise InvalidParameterError(
-                            msg,
-                            str(update_request.value),
-                            "Expression required for apply operation",
-                        )
-                    if isinstance(update_request.value, str):
-                        expr = update_request.value
-
-                        # Use unified secure evaluator for both string and mathematical expressions
-                        result = _apply_expression_to_column(expr, column, df, "value")
-                        df[column] = result
-                    else:
-                        df[column] = df[column].apply(update_request.value)
-                elif update_request.operation == "fillna":
-                    if update_request.value is None:
-                        msg = "value"
-                        raise InvalidParameterError(
-                            msg,
-                            str(update_request.value),
-                            "Fill value required for fillna operation",
-                        )
-                    df[column] = df[column].fillna(update_request.value)
-                else:
-                    msg = "operation"
+            if update_request.operation == "replace":
+                if update_request.pattern is None or update_request.replacement is None:
+                    msg = "pattern/replacement"
                     raise InvalidParameterError(
                         msg,
-                        update_request.operation,
-                        "Supported operations: replace, map, apply, fillna",
+                        f"{update_request.pattern}/{update_request.replacement}",
+                        "Both pattern and replacement required for replace operation",
                     )
-        else:
-            # Handle legacy UpdateColumnRequest object
-            update_request = operation
-            operation_type = update_request.operation
-            # ... (same logic as above legacy handling)
+                df[column] = df[column].replace(
+                    update_request.pattern,
+                    update_request.replacement,
+                )
+            elif update_request.operation == "map":
+                if not isinstance(update_request.value, dict):
+                    msg = "value"
+                    raise InvalidParameterError(
+                        msg,
+                        str(update_request.value),
+                        "Dictionary mapping required for map operation",
+                    )
+                df[column] = df[column].map(update_request.value)
+            elif update_request.operation == "apply":
+                if update_request.value is None:
+                    msg = "value"
+                    raise InvalidParameterError(
+                        msg,
+                        str(update_request.value),
+                        "Expression required for apply operation",
+                    )
+                if isinstance(update_request.value, str):
+                    expr = update_request.value
 
-        # Operation completed
+                    # Use unified secure evaluator for both string and mathematical expressions
+                    result = _apply_expression_to_column(expr, column, df, "value")
+                    df[column] = result
+                else:
+                    df[column] = df[column].apply(update_request.value)
+            elif update_request.operation == "fillna":
+                if update_request.value is None:
+                    msg = "value"
+                    raise InvalidParameterError(
+                        msg,
+                        str(update_request.value),
+                        "Fill value required for fillna operation",
+                    )
+                df[column] = df[column].fillna(update_request.value)
+            else:
+                msg = "operation"
+                raise InvalidParameterError(
+                    msg,
+                    update_request.operation,
+                    "Supported operations: replace, map, apply, fillna",
+                )
+    else:
+        # Handle legacy UpdateColumnRequest object
+        update_request = operation
+        operation_type = update_request.operation
+        # ... (same logic as above legacy handling)
 
-        # No longer recording operations (simplified MCP architecture)
+    # Operation completed
 
-        return ColumnOperationResult(
-            operation=f"update_{operation_type}",
-            rows_affected=len(df),
-            columns_affected=[column],
-        )
+    # No longer recording operations (simplified MCP architecture)
 
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.exception("Update column failed with %s: %s", type(e).__name__, e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Unexpected error updating column: %s", str(e))
-        msg = f"Failed to update column: {e}"
-        raise ToolError(msg) from e
+    return ColumnOperationResult(
+        operation=f"update_{operation_type}",
+        rows_affected=len(df),
+        columns_affected=[column],
+    )
 
 
 # =============================================================================

@@ -22,9 +22,6 @@ from databeak.core.settings import get_settings
 # Import session management and data models from the main package
 from databeak.exceptions import (
     ColumnNotFoundError,
-    InvalidParameterError,
-    NoDataLoadedError,
-    SessionNotFoundError,
 )
 
 # Import response models - needed at runtime for FastMCP
@@ -89,87 +86,74 @@ async def get_statistics(
         4. Provides context for outlier detection thresholds
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)  # Only need df, not session
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)  # Only need df, not session
 
-        # Select numeric columns
-        if columns:
-            missing_cols = [col for col in columns if col not in df.columns]
-            if missing_cols:
-                raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
-            numeric_df = df[columns].select_dtypes(include=[np.number])
-            # Return empty results if no numeric columns found when specific columns requested
-            if numeric_df.empty:
-                return StatisticsResult(
-                    statistics={},
-                    column_count=0,
-                    numeric_columns=[],
-                    total_rows=len(df),
-                )
-        else:
-            numeric_df = df.select_dtypes(include=[np.number])
-            # Return empty results if no numeric columns
-            if numeric_df.empty:
-                return StatisticsResult(
-                    statistics={},
-                    column_count=0,
-                    numeric_columns=[],
-                    total_rows=len(df),
-                )
-
-        # Calculate statistics
-        stats_dict = {}
-        for col in numeric_df.columns:
-            col_data = numeric_df[col].dropna()
-
-            # Create StatisticsSummary directly
-            # Calculate statistics, using 0.0 for undefined values
-            col_stats = StatisticsSummary.model_validate(
-                {
-                    "count": int(col_data.count()),
-                    "mean": float(col_data.mean())
-                    if len(col_data) > 0 and not pd.isna(col_data.mean())
-                    else 0.0,
-                    "std": float(col_data.std())
-                    if len(col_data) > 1 and not pd.isna(col_data.std())
-                    else 0.0,
-                    "min": float(col_data.min())
-                    if len(col_data) > 0 and not pd.isna(col_data.min())
-                    else 0.0,
-                    "max": float(col_data.max())
-                    if len(col_data) > 0 and not pd.isna(col_data.max())
-                    else 0.0,
-                    "25%": float(col_data.quantile(0.25)) if len(col_data) > 0 else 0.0,
-                    "50%": float(col_data.quantile(0.50)) if len(col_data) > 0 else 0.0,
-                    "75%": float(col_data.quantile(0.75)) if len(col_data) > 0 else 0.0,
-                },
+    # Select numeric columns
+    if columns:
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
+        numeric_df = df[columns].select_dtypes(include=[np.number])
+        # Return empty results if no numeric columns found when specific columns requested
+        if numeric_df.empty:
+            return StatisticsResult(
+                statistics={},
+                column_count=0,
+                numeric_columns=[],
+                total_rows=len(df),
+            )
+    else:
+        numeric_df = df.select_dtypes(include=[np.number])
+        # Return empty results if no numeric columns
+        if numeric_df.empty:
+            return StatisticsResult(
+                statistics={},
+                column_count=0,
+                numeric_columns=[],
+                total_rows=len(df),
             )
 
-            stats_dict[col] = col_stats
+    # Calculate statistics
+    stats_dict = {}
+    for col in numeric_df.columns:
+        col_data = numeric_df[col].dropna()
 
-        # No longer recording operations (simplified MCP architecture)
-
-        return StatisticsResult(
-            statistics=stats_dict,
-            column_count=len(stats_dict),
-            numeric_columns=list(stats_dict.keys()),
-            total_rows=len(df),
+        # Create StatisticsSummary directly
+        # Calculate statistics, using 0.0 for undefined values
+        col_stats = StatisticsSummary.model_validate(
+            {
+                "count": int(col_data.count()),
+                "mean": float(col_data.mean())
+                if len(col_data) > 0 and not pd.isna(col_data.mean())
+                else 0.0,
+                "std": float(col_data.std())
+                if len(col_data) > 1 and not pd.isna(col_data.std())
+                else 0.0,
+                "min": float(col_data.min())
+                if len(col_data) > 0 and not pd.isna(col_data.min())
+                else 0.0,
+                "max": float(col_data.max())
+                if len(col_data) > 0 and not pd.isna(col_data.max())
+                else 0.0,
+                "25%": float(col_data.quantile(0.25)) if len(col_data) > 0 else 0.0,
+                "50%": float(col_data.quantile(0.50)) if len(col_data) > 0 else 0.0,
+                "75%": float(col_data.quantile(0.75)) if len(col_data) > 0 else 0.0,
+            },
         )
 
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.exception("Statistics calculation failed: %s", e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Error calculating statistics: %s", str(e))
-        msg = f"Error calculating statistics: {e}"
-        raise ToolError(msg) from e
+        stats_dict[col] = col_stats
+
+    # No longer recording operations (simplified MCP architecture)
+
+    return StatisticsResult(
+        statistics=stats_dict,
+        column_count=len(stats_dict),
+        numeric_columns=list(stats_dict.keys()),
+        total_rows=len(df),
+    )
+
 
 
 async def get_column_statistics(
@@ -205,111 +189,103 @@ async def get_column_statistics(
         4. Validation of data transformations
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)  # Only need df, not session
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)  # Only need df, not session
 
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, df.columns.tolist())
+    if column not in df.columns:
+        raise ColumnNotFoundError(column, df.columns.tolist())
 
-        col_data = df[column]
-        dtype = str(col_data.dtype)
-        count = int(col_data.count())
-        unique_count = int(col_data.nunique())
+    col_data = df[column]
+    dtype = str(col_data.dtype)
+    count = int(col_data.count())
+    unique_count = int(col_data.nunique())
 
-        # Helper function to safely convert pandas scalars to float
-        def safe_float(value: Any) -> float:
-            """Safely convert pandas scalar to float."""
-            try:
-                return float(value) if not pd.isna(value) else 0.0
-            except (TypeError, ValueError):
-                return 0.0
+    # Helper function to safely convert pandas scalars to float
+    def safe_float(value: Any) -> float:
+        """Safely convert pandas scalar to float."""
+        try:
+            return float(value) if not pd.isna(value) else 0.0
+        except (TypeError, ValueError):
+            return 0.0
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        # Build StatisticsSummary directly
-        if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
-            # Numeric columns - calculate all statistics
-            col_data_non_null = col_data.dropna()
-            percentile_25 = (
-                float(col_data_non_null.quantile(0.25)) if len(col_data_non_null) > 0 else None
-            )
-            percentile_50 = (
-                float(col_data_non_null.quantile(0.50)) if len(col_data_non_null) > 0 else None
-            )
-            percentile_75 = (
-                float(col_data_non_null.quantile(0.75)) if len(col_data_non_null) > 0 else None
-            )
-
-            stats_summary = StatisticsSummary(
-                count=count,
-                mean=safe_float(col_data.mean()),
-                std=safe_float(col_data.std()),
-                min=safe_float(col_data.min()),
-                percentile_25=percentile_25,
-                percentile_50=percentile_50,
-                percentile_75=percentile_75,
-                max=safe_float(col_data.max()),
-                unique=unique_count,
-            )
-        else:
-            # For non-numeric columns, populate categorical statistics
-            # Calculate most frequent value for categorical columns
-            most_frequent_val: str | None = None
-            most_frequent_count: int | None = None
-            if count > 0:
-                mode_result = col_data.mode()
-                if len(mode_result) > 0:
-                    mode_val = mode_result.iloc[0]
-                    if mode_val is not None and not pd.isna(mode_val):
-                        most_frequent_val = str(mode_val)
-                        most_frequent_count = int(col_data.value_counts().iloc[0])
-
-            stats_summary = StatisticsSummary(
-                count=count,
-                mean=None,
-                std=None,
-                min=None,
-                percentile_25=None,
-                percentile_50=None,
-                percentile_75=None,
-                max=None,
-                unique=unique_count,
-                top=most_frequent_val,
-                freq=most_frequent_count,
-            )
-
-        # Map dtype to expected literal type
-        dtype_map: dict[
-            str,
-            Literal["int64", "float64", "object", "bool", "datetime64", "category"],
-        ] = {
-            "int64": "int64",
-            "float64": "float64",
-            "object": "object",
-            "bool": "bool",
-            "datetime64[ns]": "datetime64",
-            "category": "category",
-        }
-        data_type: Literal["int64", "float64", "object", "bool", "datetime64", "category"] = (
-            dtype_map.get(dtype, "object")
+    # Build StatisticsSummary directly
+    if pd.api.types.is_numeric_dtype(col_data) and not pd.api.types.is_bool_dtype(col_data):
+        # Numeric columns - calculate all statistics
+        col_data_non_null = col_data.dropna()
+        percentile_25 = (
+            float(col_data_non_null.quantile(0.25)) if len(col_data_non_null) > 0 else None
+        )
+        percentile_50 = (
+            float(col_data_non_null.quantile(0.50)) if len(col_data_non_null) > 0 else None
+        )
+        percentile_75 = (
+            float(col_data_non_null.quantile(0.75)) if len(col_data_non_null) > 0 else None
         )
 
-        return ColumnStatisticsResult(
-            column=column,
-            statistics=stats_summary,
-            data_type=data_type,
-            non_null_count=count,
+        stats_summary = StatisticsSummary(
+            count=count,
+            mean=safe_float(col_data.mean()),
+            std=safe_float(col_data.std()),
+            min=safe_float(col_data.min()),
+            percentile_25=percentile_25,
+            percentile_50=percentile_50,
+            percentile_75=percentile_75,
+            max=safe_float(col_data.max()),
+            unique=unique_count,
+        )
+    else:
+        # For non-numeric columns, populate categorical statistics
+        # Calculate most frequent value for categorical columns
+        most_frequent_val: str | None = None
+        most_frequent_count: int | None = None
+        if count > 0:
+            mode_result = col_data.mode()
+            if len(mode_result) > 0:
+                mode_val = mode_result.iloc[0]
+                if mode_val is not None and not pd.isna(mode_val):
+                    most_frequent_val = str(mode_val)
+                    most_frequent_count = int(col_data.value_counts().iloc[0])
+
+        stats_summary = StatisticsSummary(
+            count=count,
+            mean=None,
+            std=None,
+            min=None,
+            percentile_25=None,
+            percentile_50=None,
+            percentile_75=None,
+            max=None,
+            unique=unique_count,
+            top=most_frequent_val,
+            freq=most_frequent_count,
         )
 
-    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        await ctx.error(f"Column statistics failed: {e.message}")
-        raise ToolError(e.message) from e
-    except Exception as e:
-        await ctx.error(f"Error calculating column statistics: {e}")
-        msg = f"Error calculating column statistics: {e}"
-        raise ToolError(msg) from e
+    # Map dtype to expected literal type
+    dtype_map: dict[
+        str,
+        Literal["int64", "float64", "object", "bool", "datetime64", "category"],
+    ] = {
+        "int64": "int64",
+        "float64": "float64",
+        "object": "object",
+        "bool": "bool",
+        "datetime64[ns]": "datetime64",
+        "category": "category",
+    }
+    data_type: Literal["int64", "float64", "object", "bool", "datetime64", "category"] = (
+        dtype_map.get(dtype, "object")
+    )
+
+    return ColumnStatisticsResult(
+        column=column,
+        statistics=stats_summary,
+        data_type=data_type,
+        non_null_count=count,
+    )
+
 
 
 async def get_correlation_matrix(
@@ -360,82 +336,65 @@ async def get_correlation_matrix(
         4. Data validation and quality assessment
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)  # Only need df, not session
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)  # Only need df, not session
 
-        # Select numeric columns
-        if columns:
-            missing_cols = [col for col in columns if col not in df.columns]
-            if missing_cols:
-                raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
-            numeric_df = df[columns].select_dtypes(include=[np.number])
-        else:
-            numeric_df = df.select_dtypes(include=[np.number])
+    # Select numeric columns
+    if columns:
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
+        numeric_df = df[columns].select_dtypes(include=[np.number])
+    else:
+        numeric_df = df.select_dtypes(include=[np.number])
 
-        if numeric_df.empty:
-            msg = "No numeric columns found for correlation analysis"
-            raise ToolError(msg)
+    if numeric_df.empty:
+        msg = "No numeric columns found for correlation analysis"
+        raise ToolError(msg)
 
-        settings = get_settings()
-        if len(numeric_df.columns) < settings.min_statistical_sample_size:
-            msg = "Correlation analysis requires at least two numeric columns"
-            raise ToolError(msg)
+    settings = get_settings()
+    if len(numeric_df.columns) < settings.min_statistical_sample_size:
+        msg = "Correlation analysis requires at least two numeric columns"
+        raise ToolError(msg)
 
-        # Calculate correlation matrix
-        corr_matrix = numeric_df.corr(method=method)
+    # Calculate correlation matrix
+    corr_matrix = numeric_df.corr(method=method)
 
-        # Convert to dict format
-        correlation_dict: dict[str, dict[str, float]] = {}
-        for col1 in corr_matrix.columns:
-            correlation_dict[col1] = {}
-            for col2 in corr_matrix.columns:
-                corr_val = corr_matrix.loc[col1, col2]
-                if not pd.isna(corr_val):
-                    # Ensure we have a numeric value for conversion
-                    correlation_dict[col1][col2] = (
-                        float(corr_val) if isinstance(corr_val, int | float) else 0.0
-                    )
-                else:
-                    correlation_dict[col1][col2] = 0.0
+    # Convert to dict format
+    correlation_dict: dict[str, dict[str, float]] = {}
+    for col1 in corr_matrix.columns:
+        correlation_dict[col1] = {}
+        for col2 in corr_matrix.columns:
+            corr_val = corr_matrix.loc[col1, col2]
+            if not pd.isna(corr_val):
+                # Ensure we have a numeric value for conversion
+                correlation_dict[col1][col2] = (
+                    float(corr_val) if isinstance(corr_val, int | float) else 0.0
+                )
+            else:
+                correlation_dict[col1][col2] = 0.0
 
-        # Filter by minimum correlation if specified
-        if min_correlation is not None:
-            filtered_dict = {}
-            for col1, col_corrs in correlation_dict.items():
-                filtered_col = {
-                    col2: corr_val
-                    for col2, corr_val in col_corrs.items()
-                    if abs(corr_val) >= abs(min_correlation) or col1 == col2
-                }
-                if filtered_col:
-                    filtered_dict[col1] = filtered_col
-            correlation_dict = filtered_dict
+    # Filter by minimum correlation if specified
+    if min_correlation is not None:
+        filtered_dict = {}
+        for col1, col_corrs in correlation_dict.items():
+            filtered_col = {
+                col2: corr_val
+                for col2, corr_val in col_corrs.items()
+                if abs(corr_val) >= abs(min_correlation) or col1 == col2
+            }
+            if filtered_col:
+                filtered_dict[col1] = filtered_col
+        correlation_dict = filtered_dict
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return CorrelationResult(
-            method=method,
-            correlation_matrix=correlation_dict,
-            columns_analyzed=list(numeric_df.columns),
-        )
-
-    except (
-        SessionNotFoundError,
-        NoDataLoadedError,
-        ColumnNotFoundError,
-        InvalidParameterError,
-    ) as e:
-        logger.exception("Correlation calculation failed: %s", e.message)
-        raise ToolError(e.message) from e
-    except ToolError:
-        # Re-raise ToolErrors as-is to preserve the exact error message
-        raise
-    except Exception as e:
-        logger.exception("Error calculating correlation matrix: %s", str(e))
-        msg = f"Error calculating correlation matrix: {e}"
-        raise ToolError(msg) from e
+    return CorrelationResult(
+        method=method,
+        correlation_matrix=correlation_dict,
+        columns_analyzed=list(numeric_df.columns),
+    )
 
 
 async def get_value_counts(
@@ -489,61 +448,52 @@ async def get_value_counts(
         4. Feature engineering insights for categorical variables
 
     """
-    try:
-        # Get session_id from FastMCP context
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)  # Only need df, not session
+    # Get session_id from FastMCP context
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)  # Only need df, not session
 
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, df.columns.tolist())
+    if column not in df.columns:
+        raise ColumnNotFoundError(column, df.columns.tolist())
 
-        # Get value counts
-        # Note: mypy has issues with value_counts overloads when normalize is a bool variable
-        value_counts = df[column].value_counts(
-            normalize=normalize,
-            sort=sort,
-            ascending=ascending,
-            dropna=True,
-        )  # type: ignore[call-overload]
+    # Get value counts
+    # Note: mypy has issues with value_counts overloads when normalize is a bool variable
+    value_counts = df[column].value_counts(
+        normalize=normalize,
+        sort=sort,
+        ascending=ascending,
+        dropna=True,
+    )  # type: ignore[call-overload]
 
-        # Limit to top_n if specified
-        if top_n is not None and top_n > 0:
-            value_counts = value_counts.head(top_n)
+    # Limit to top_n if specified
+    if top_n is not None and top_n > 0:
+        value_counts = value_counts.head(top_n)
 
-        # Convert to dict, handling various data types
-        counts_dict = {}
-        for value, count in value_counts.items():
-            # Handle NaN and None values
-            if pd.isna(value):
-                key = "<null>"
-            elif isinstance(value, str | int | float | bool):
-                key = str(value)
-            else:
-                key = str(value)
+    # Convert to dict, handling various data types
+    counts_dict = {}
+    for value, count in value_counts.items():
+        # Handle NaN and None values
+        if pd.isna(value):
+            key = "<null>"
+        elif isinstance(value, str | int | float | bool):
+            key = str(value)
+        else:
+            key = str(value)
 
-            counts_dict[key] = float(count) if normalize else int(count)
+        counts_dict[key] = float(count) if normalize else int(count)
 
-        # Calculate summary statistics
-        total_count = int(df[column].count())  # Non-null count
-        unique_count = int(df[column].nunique())
+    # Calculate summary statistics
+    total_count = int(df[column].count())  # Non-null count
+    unique_count = int(df[column].nunique())
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ValueCountsResult(
-            column=column,
-            value_counts=counts_dict,
-            total_values=total_count,
-            unique_values=unique_count,
-            normalize=normalize,
-        )
-
-    except (SessionNotFoundError, NoDataLoadedError, ColumnNotFoundError) as e:
-        logger.exception("Value counts calculation failed: %s", e.message)
-        raise ToolError(e.message) from e
-    except Exception as e:
-        logger.exception("Error calculating value counts: %s", str(e))
-        msg = f"Error calculating value counts: {e}"
-        raise ToolError(msg) from e
+    return ValueCountsResult(
+        column=column,
+        value_counts=counts_dict,
+        total_values=total_count,
+        unique_values=unique_count,
+        normalize=normalize,
+    )
 
 
 # ============================================================================

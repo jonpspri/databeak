@@ -90,7 +90,7 @@ class TestExceptionChaining:
         def raise_chained_error() -> None:
             try:
                 msg = "Original error"
-                raise ValueError(msg)
+                raise ValueError(msg) # noqa: TRY301
             except ValueError as e:
                 msg = "DataBeak error"
                 raise DatabeakError(msg) from e
@@ -110,7 +110,7 @@ class TestExceptionChaining:
         def raise_nested_error() -> None:
             try:
                 msg = "missing_col"
-                raise ColumnNotFoundError(msg, ["available_col"])
+                raise ColumnNotFoundError(msg, ["available_col"]) # noqa: TRY301
             except ColumnNotFoundError as col_error:
                 msg = "Operation failed due to column issue"
                 raise OperationError(msg) from col_error

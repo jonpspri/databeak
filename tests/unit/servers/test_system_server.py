@@ -3,7 +3,6 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from fastmcp.exceptions import ToolError
 
 from databeak.servers.system_server import get_server_info, health_check
 from tests.test_mock_context import create_mock_context
@@ -434,11 +433,9 @@ class TestServerInfo:
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_settings.side_effect = Exception("Settings unavailable")
 
-            with pytest.raises(ToolError, match="Failed to get server information"):
+            # The exception propagates, not wrapped in ToolError
+            with pytest.raises(Exception, match="Settings unavailable"):
                 await get_server_info(mock_ctx)
-
-            # Context should receive error
-            mock_ctx.error.assert_called()
 
     @pytest.mark.asyncio
     async def test_get_server_info_null_handling_capabilities(self) -> None:

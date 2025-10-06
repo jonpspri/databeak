@@ -13,7 +13,6 @@ from typing import Annotated
 
 import psutil
 from fastmcp import Context, FastMCP
-from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 # Import version and session management from main package
@@ -195,85 +194,78 @@ async def get_server_info(
     Returns server version, available tools, supported file formats, and resource limits. Use to
     discover what operations are available before planning workflows.
     """
-    try:
-        await ctx.info("Retrieving DataBeak server information")
+    await ctx.info("Retrieving DataBeak server information")
 
-        # Get current configuration settings
-        settings = get_settings()
+    # Get current configuration settings
+    settings = get_settings()
 
-        server_info = ServerInfoResult(
-            name="DataBeak",
-            version=__version__,
-            description="A comprehensive MCP server for CSV file operations and data analysis",
-            capabilities={
-                "data_io": [
-                    "load_csv",
-                    "load_csv_from_url",
-                    "load_csv_from_content",
-                    "export_csv",
-                    "multiple_export_formats",
-                ],
-                "data_manipulation": [
-                    "filter_rows",
-                    "sort_data",
-                    "select_columns",
-                    "rename_columns",
-                    "add_column",
-                    "remove_columns",
-                    "change_column_type",
-                    "fill_missing_values",
-                    "remove_duplicates",
-                    "null_value_support",  # Explicitly mention null support
-                ],
-                "data_analysis": [
-                    "get_statistics",
-                    "correlation_matrix",
-                    "group_by_aggregate",
-                    "value_counts",
-                    "detect_outliers",
-                    "profile_data",
-                ],
-                "data_validation": [
-                    "validate_schema",
-                    "check_data_quality",
-                    "find_anomalies",
-                ],
-                "session_management": [
-                    "multi_session_support",
-                    "session_isolation",
-                    "auto_cleanup",
-                ],
-                "null_handling": [
-                    "json_null_support",
-                    "python_none_support",
-                    "pandas_nan_compatibility",
-                    "null_value_insertion",
-                    "null_value_updates",
-                ],
-            },
-            supported_formats=[
-                "csv",
-                "tsv",
-                "json",
-                "excel",
-                "parquet",
-                "html",
-                "markdown",
+    server_info = ServerInfoResult(
+        name="DataBeak",
+        version=__version__,
+        description="A comprehensive MCP server for CSV file operations and data analysis",
+        capabilities={
+            "data_io": [
+                "load_csv",
+                "load_csv_from_url",
+                "load_csv_from_content",
+                "export_csv",
+                "multiple_export_formats",
             ],
-            max_file_size_mb=settings.max_file_size_mb,
-            session_timeout_minutes=settings.session_timeout // 60,
-        )
+            "data_manipulation": [
+                "filter_rows",
+                "sort_data",
+                "select_columns",
+                "rename_columns",
+                "add_column",
+                "remove_columns",
+                "change_column_type",
+                "fill_missing_values",
+                "remove_duplicates",
+                "null_value_support",  # Explicitly mention null support
+            ],
+            "data_analysis": [
+                "get_statistics",
+                "correlation_matrix",
+                "group_by_aggregate",
+                "value_counts",
+                "detect_outliers",
+                "profile_data",
+            ],
+            "data_validation": [
+                "validate_schema",
+                "check_data_quality",
+                "find_anomalies",
+            ],
+            "session_management": [
+                "multi_session_support",
+                "session_isolation",
+                "auto_cleanup",
+            ],
+            "null_handling": [
+                "json_null_support",
+                "python_none_support",
+                "pandas_nan_compatibility",
+                "null_value_insertion",
+                "null_value_updates",
+            ],
+        },
+        supported_formats=[
+            "csv",
+            "tsv",
+            "json",
+            "excel",
+            "parquet",
+            "html",
+            "markdown",
+        ],
+        max_file_size_mb=settings.max_file_size_mb,
+        session_timeout_minutes=settings.session_timeout // 60,
+    )
 
-        await ctx.info("Server information retrieved successfully")
+    await ctx.info("Server information retrieved successfully")
 
-        return server_info
+    return server_info
 
-    except Exception as e:
-        logger.exception("Failed to get server information: %s", str(e))
-        await ctx.error(f"Failed to get server information: {e}")
-        msg = f"Failed to get server information: {e}"
-
-        raise ToolError(msg) from e
 
 
 # ============================================================================
