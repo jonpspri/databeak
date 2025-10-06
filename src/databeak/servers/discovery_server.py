@@ -273,7 +273,7 @@ async def detect_outliers(
 
     else:
         raise InvalidParameterError(
-            "method", # noqa: EM101
+            "method",  # noqa: EM101
             method,
             "zscore, iqr, or isolation_forest",
         )

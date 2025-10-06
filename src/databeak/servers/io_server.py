@@ -351,9 +351,7 @@ async def load_csv(
                 )
 
         except Exception as detection_error:
-            logger.debug(
-                "Auto-detection failed: %s, trying prioritized fallbacks", detection_error
-            )
+            logger.debug("Auto-detection failed: %s, trying prioritized fallbacks", detection_error)
 
             # Fall back to optimized encoding list
             fallback_encodings = get_encoding_fallbacks(encoding)
@@ -529,9 +527,7 @@ async def load_csv_from_url(
                     logger.warning(
                         "Used fallback encoding %s instead of %s", alt_encoding, encoding
                     )
-                    await ctx.info(
-                        f"Used fallback encoding {alt_encoding} due to encoding error"
-                    )
+                    await ctx.info(f"Used fallback encoding {alt_encoding} due to encoding error")
                     break
                 except UnicodeDecodeError as fallback_error:
                     last_error = fallback_error

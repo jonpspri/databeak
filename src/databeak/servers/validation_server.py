@@ -320,16 +320,9 @@ class ColumnValidationRules(BaseModel):
     @classmethod
     def validate_regex_pattern(cls, v: str | None) -> str | None:
         """Validate that str_matches pattern is a valid regular expression."""
-        if v is None:
-            return v
-
-        try:
+        if v is not None:
             re.compile(v)
-        except re.error as e:
-            msg = f"Invalid regular expression for str_matches: {e}"
-            raise ValueError(msg) from e
-        else:
-            return v
+        return v
 
     @field_validator("str_length", "in_range")
     @classmethod
@@ -599,9 +592,7 @@ def validate_schema(
             )
         if rules.get("in_range") is not None:
             range_dict = rules["in_range"]
-            checks.append(
-                Check.in_range(range_dict["min"], range_dict["max"], ignore_na=ignore_na)
-            )
+            checks.append(Check.in_range(range_dict["min"], range_dict["max"], ignore_na=ignore_na))
         if rules.get("isin") is not None:
             checks.append(Check.isin(rules["isin"], ignore_na=ignore_na))
         if rules.get("notin") is not None:
@@ -1048,7 +1039,6 @@ def check_data_quality(
     )
 
 
-
 def find_anomalies(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     columns: Annotated[
@@ -1113,9 +1103,7 @@ def find_anomalies(
             if len(col_data) > 0:
                 # Z-score method
                 z_scores = np.abs((col_data - col_data.mean()) / col_data.std())
-                z_threshold = 3 * (
-                    1 - sensitivity + 0.5
-                )  # Adjust threshold based on sensitivity
+                z_threshold = 3 * (1 - sensitivity + 0.5)  # Adjust threshold based on sensitivity
                 z_anomalies = col_data.index[z_scores > z_threshold].tolist()
 
                 # IQR method
@@ -1189,9 +1177,9 @@ def find_anomalies(
                         format_anomalies = []
                         if common_pattern:
                             for idx, val in col_data.items():
-                                if (
-                                    common_pattern == "uppercase" and not str(val).isupper()
-                                ) or (common_pattern == "lowercase" and not str(val).islower()):
+                                if (common_pattern == "uppercase" and not str(val).isupper()) or (
+                                    common_pattern == "lowercase" and not str(val).islower()
+                                ):
                                     format_anomalies.append(idx)
 
                         all_pattern_anomalies = list(set(rare_indices + format_anomalies))
@@ -1200,9 +1188,7 @@ def find_anomalies(
                             pattern_anomaly = PatternAnomaly(
                                 anomaly_count=len(all_pattern_anomalies),
                                 anomaly_indices=all_pattern_anomalies[:100],
-                                sample_values=[
-                                    str(v) for v in rare_values.head(10).index.tolist()
-                                ],
+                                sample_values=[str(v) for v in rare_values.head(10).index.tolist()],
                                 expected_patterns=[common_pattern] if common_pattern else [],
                             )
                             pattern_anomalies[col] = pattern_anomaly
@@ -1306,6 +1292,7 @@ def find_anomalies(
         methods_used=[str(m) for m in methods],  # Convert to list[str] for compatibility
         sensitivity=sensitivity,
     )
+
 
 # ============================================================================
 # FASTMCP SERVER SETUP

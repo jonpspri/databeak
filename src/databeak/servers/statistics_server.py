@@ -155,7 +155,6 @@ async def get_statistics(
     )
 
 
-
 async def get_column_statistics(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Name of the column to analyze in detail")],
@@ -285,7 +284,6 @@ async def get_column_statistics(
         data_type=data_type,
         non_null_count=count,
     )
-
 
 
 async def get_correlation_matrix(

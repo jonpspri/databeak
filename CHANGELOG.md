@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2025-10-06
 
 ### Fixed
 
@@ -32,17 +32,28 @@ and this project adheres to
   prevent false positives
 - **Type Aliases**: Migrated `FilterValue` to modern `type` statement syntax
   (PEP 695)
+- **Pydantic Validators**: Simplified validation logic in pydantic_validators.py,
+  removed duplicate type hints, and streamlined field validator implementations
 
 ### Removed
 
 - **Dead Code**: Removed unused `session_service.py` and `statistics_service.py`
   modules with dependency injection abstractions (0% actual usage)
+- **Unused Models**: Removed `DataSchema` and `DataQualityRule` Pydantic models
+  (61 lines) that were only tested but never used in production code
 - **Deprecated Enum**: Removed `OperationType` enum that was marked for cleanup
   and had no active usage
 - **Misleading Documentation**: Removed `docs/docker-deployment.md` that
   referenced deleted Docker files
 - **Example Code**: Removed `examples/dependency_injection_demo.py` that
   referenced deleted modules
+- **Try-Except Wrappers**: Removed 58 unnecessary try-except wrapper blocks from
+  MCP tool functions (TRY301 violations) - FastMCP handles exception
+  transformation automatically
+- **Transformation Service**: Removed unused transformation_service.py module
+  (676 lines, zero production usage)
+- **Dead TypedDicts**: Removed 22 unused TypedDict classes (343 lines, 88.7%
+  reduction in typed_dicts.py)
 
 ## [0.0.4] - 2025-09-30
 
@@ -168,3 +179,4 @@ and this project adheres to
 [0.0.2]: https://github.com/jonpspri/databeak/releases/tag/v0.0.2
 [0.0.3]: https://github.com/jonpspri/databeak/releases/tag/v0.0.3
 [0.0.4]: https://github.com/jonpspri/databeak/releases/tag/v0.0.4
+[0.1.0]: https://github.com/jonpspri/databeak/releases/tag/v0.1.0

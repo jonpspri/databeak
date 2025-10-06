@@ -1,5 +1,7 @@
 """Tests for validation module to improve coverage."""
 
+from re import error as PatternError  # noqa: N812
+
 import pytest
 from fastmcp.exceptions import ToolError
 
@@ -189,14 +191,13 @@ class TestSchemaValidation:
 
     async def test_validate_schema_invalid_regex(self, clean_test_session: str) -> None:
         """Test schema validation with invalid regex pattern."""
-        from pydantic import ValidationError as PydanticValidationError
 
         schema = {
             "email": {"str_matches": "[invalid regex"},  # Invalid regex
         }
 
         # Should fail when creating ValidationSchema due to invalid regex
-        with pytest.raises(PydanticValidationError):
+        with pytest.raises(PatternError):
             ValidationSchema(schema)  # type: ignore[arg-type]
 
     async def test_validate_schema_invalid_session(self) -> None:
