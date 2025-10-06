@@ -32,11 +32,15 @@ and this project adheres to
   prevent false positives
 - **Type Aliases**: Migrated `FilterValue` to modern `type` statement syntax
   (PEP 695)
+- **Pydantic Validators**: Simplified validation logic in pydantic_validators.py,
+  removed duplicate type hints, and streamlined field validator implementations
 
 ### Removed
 
 - **Dead Code**: Removed unused `session_service.py` and `statistics_service.py`
   modules with dependency injection abstractions (0% actual usage)
+- **Unused Models**: Removed `DataSchema` and `DataQualityRule` Pydantic models
+  (61 lines) that were only tested but never used in production code
 - **Deprecated Enum**: Removed `OperationType` enum that was marked for cleanup
   and had no active usage
 - **Misleading Documentation**: Removed `docs/docker-deployment.md` that

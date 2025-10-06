@@ -131,4 +131,3 @@ jobs:
 
       - name: Check MCP Field descriptions
         run: python scripts/check_mcp_field_descriptions.py --quiet
-
