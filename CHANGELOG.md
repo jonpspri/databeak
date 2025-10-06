@@ -12,13 +12,27 @@ and this project adheres to
 
 ### Fixed
 
-- **Version Reporting**: Fixed `_version.py` to correctly report package version (0.1.1) instead of fallback "0.0.0" - now uses `importlib.metadata.version("databeak")` instead of `__name__`
-- **Server Info**: `get_server_info` and `health_check` MCP tools now correctly return actual package version
+- **Version Reporting**: Fixed `_version.py` to correctly report package version
+  (0.1.1) instead of fallback "0.0.0" - now uses
+  `importlib.metadata.version("databeak")` instead of `__name__`
+- **Server Info**: `get_server_info` and `health_check` MCP tools now correctly
+  return actual package version
+
+### Changed
+
+- **Version Management**: Converted from dynamic versioning (via git tags) to
+  static version in `pyproject.toml` for more reliable version control
+- **Test Implementation**: Updated version tests to read from `pyproject.toml`
+  using `tomllib` parser instead of `importlib.metadata` for more direct source
+  of truth
 
 ### Added
 
-- **Unit Tests**: Added `test_get_server_info_returns_actual_version` unit test to validate version reporting
-- **Integration Tests**: Added 5 new integration tests in `test_system_server_integration.py` to verify version propagation through the full MCP client stack
+- **Unit Tests**: Added `test_get_server_info_returns_actual_version` unit test
+  to validate version reporting
+- **Integration Tests**: Added 5 new integration tests in
+  `test_system_server_integration.py` to verify version propagation through the
+  full MCP client stack
 
 ## [0.1.0] - 2025-10-06
 
