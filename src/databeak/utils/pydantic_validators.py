@@ -54,4 +54,3 @@ def parse_json_string_to_list(
         raise TypeError(msg)
 
     return parsed
-
