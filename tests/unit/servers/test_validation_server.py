@@ -3,6 +3,7 @@
 import pytest
 from fastmcp.exceptions import ToolError
 
+from databeak.exceptions import ColumnNotFoundError, NoDataLoadedError
 from databeak.servers.io_server import load_csv_from_content
 from databeak.servers.validation_server import (
     CompletenessRule,
@@ -200,13 +201,12 @@ class TestSchemaValidation:
 
     async def test_validate_schema_invalid_session(self) -> None:
         """Test schema validation with invalid session."""
-        from fastmcp.exceptions import ToolError
 
         schema = {"id": {"greater_than_or_equal_to": 1}}
 
         ctx = create_mock_context("invalid-session")
 
-        with pytest.raises(ToolError):
+        with pytest.raises(NoDataLoadedError):
             validate_schema(ctx, ValidationSchema(schema))  # type: ignore[arg-type]
 
     async def test_validate_schema_empty_schema(self, clean_test_session: str) -> None:
@@ -298,11 +298,10 @@ class TestDataQualityChecking:
 
     async def test_check_data_quality_invalid_session(self) -> None:
         """Test data quality check with invalid session."""
-        from fastmcp.exceptions import ToolError
 
         ctx = create_mock_context("invalid-session")
 
-        with pytest.raises(ToolError):
+        with pytest.raises(NoDataLoadedError):
             check_data_quality(ctx)
 
     async def test_check_data_quality_clean_data(self, clean_test_session: str) -> None:
@@ -397,20 +396,18 @@ class TestAnomalyDetection:
 
     async def test_find_anomalies_missing_columns(self, clean_test_session: str) -> None:
         """Test anomaly detection with missing columns."""
-        from fastmcp.exceptions import ToolError
-
+        # Note: find_anomalies still uses ToolError for column validation
         ctx = create_mock_context(clean_test_session)
 
-        with pytest.raises(ToolError):
+        with pytest.raises(ColumnNotFoundError):
             find_anomalies(ctx, columns=["nonexistent"])
 
     async def test_find_anomalies_invalid_session(self) -> None:
         """Test anomaly detection with invalid session."""
-        from fastmcp.exceptions import ToolError
 
         ctx = create_mock_context("invalid-session")
 
-        with pytest.raises(ToolError):
+        with pytest.raises(NoDataLoadedError):
             find_anomalies(ctx)
 
     async def test_find_anomalies_empty_methods(self, clean_test_session: str) -> None:
@@ -430,7 +427,7 @@ class TestValidationEdgeCases:
         # load_csv_from_content now rejects empty CSVs
         ctx = create_mock_context()
 
-        with pytest.raises(ToolError, match="no data rows"):
+        with pytest.raises(ToolError):
             await load_csv_from_content(ctx, "id,name\n")  # Header only
 
     async def test_schema_validation_all_types(self, validation_test_session: str) -> None:

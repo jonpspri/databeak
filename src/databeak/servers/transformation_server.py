@@ -11,6 +11,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, ConfigDict, Field
 
 from databeak.core.session import get_session_data
+from databeak.exceptions import ColumnNotFoundError
 from databeak.models import CellValue, FilterCondition
 from databeak.models.tool_responses import (
     ColumnOperationResult,
@@ -75,101 +76,94 @@ def filter_rows(
         ], mode="or")
 
     """
-    try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
-        rows_before = len(df)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
+    rows_before = len(df)
 
-        # Initialize mask based on mode: AND starts True, OR starts False
-        mask = pd.Series([mode == "and"] * len(df))
+    # Initialize mask based on mode: AND starts True, OR starts False
+    mask = pd.Series([mode == "and"] * len(df))
 
-        # Convert dict conditions to FilterCondition objects if needed
-        typed_conditions: list[FilterCondition] = []
-        for cond in conditions:
-            if isinstance(cond, dict):
-                # Normalize operator: convert == to = for compatibility
-                normalized_cond = dict(cond)
-                if "operator" in normalized_cond and normalized_cond["operator"] == "==":
-                    normalized_cond["operator"] = "="
-                typed_conditions.append(FilterCondition(**normalized_cond))
-            else:
-                typed_conditions.append(cond)
+    # Convert dict conditions to FilterCondition objects if needed
+    typed_conditions: list[FilterCondition] = []
+    for cond in conditions:
+        if isinstance(cond, dict):
+            # Normalize operator: convert == to = for compatibility
+            normalized_cond = dict(cond)
+            if "operator" in normalized_cond and normalized_cond["operator"] == "==":
+                normalized_cond["operator"] = "="
+            typed_conditions.append(FilterCondition(**normalized_cond))
+        else:
+            typed_conditions.append(cond)
 
-        # Process conditions
-        for condition in typed_conditions:
-            column = condition.column
-            operator = (
-                condition.operator.value
-                if hasattr(condition.operator, "value")
-                else condition.operator
-            )
-            value = condition.value
-
-            if column is None or column not in df.columns:
-                msg = f"Column '{column}' not found in data"
-                raise ToolError(msg)
-
-            col_data = df[column]
-
-            if operator in {"=", "=="}:
-                condition_mask = col_data == value
-            elif operator in {"!=", "not_equals"}:
-                condition_mask = col_data != value
-            elif operator == ">":
-                condition_mask = col_data > value
-            elif operator == "<":
-                condition_mask = col_data < value
-            elif operator == ">=":
-                condition_mask = col_data >= value
-            elif operator == "<=":
-                condition_mask = col_data <= value
-            elif operator == "contains":
-                condition_mask = col_data.astype(str).str.contains(str(value), na=False)
-            elif operator == "not_contains":
-                condition_mask = ~col_data.astype(str).str.contains(str(value), na=False)
-            elif operator == "starts_with":
-                condition_mask = col_data.astype(str).str.startswith(str(value), na=False)
-            elif operator == "ends_with":
-                condition_mask = col_data.astype(str).str.endswith(str(value), na=False)
-            elif operator == "in":
-                condition_mask = col_data.isin(value if isinstance(value, list) else [value])
-            elif operator == "not_in":
-                condition_mask = ~col_data.isin(value if isinstance(value, list) else [value])
-            elif operator == "is_null":
-                condition_mask = col_data.isna()
-            elif operator == "is_not_null":
-                condition_mask = col_data.notna()
-            else:
-                msg = (
-                    f"Invalid operator '{operator}'. Valid operators: "
-                    "==, !=, >, <, >=, <=, contains, not_contains, starts_with, ends_with, "
-                    "in, not_in, is_null, is_not_null"
-                )
-                raise ToolError(
-                    msg,
-                )
-
-            mask = mask & condition_mask if mode == "and" else mask | condition_mask
-
-        # Apply filter
-        session.df = df[mask].reset_index(drop=True)
-        rows_after = len(session.df)
-
-        # No longer needed - conditions are already FilterCondition objects
-
-        # No longer recording operations (simplified MCP architecture)
-
-        return FilterOperationResult(
-            rows_before=rows_before,
-            rows_after=rows_after,
-            rows_filtered=rows_before - rows_after,
-            conditions_applied=len(conditions),
+    # Process conditions
+    for condition in typed_conditions:
+        column = condition.column
+        operator = (
+            condition.operator.value
+            if hasattr(condition.operator, "value")
+            else condition.operator
         )
+        value = condition.value
 
-    except Exception as e:
-        logger.exception("Error filtering rows: %s", str(e))
-        msg = f"Error filtering rows: {e!s}"
-        raise ToolError(msg) from e
+        if column is None or column not in df.columns:
+            raise ColumnNotFoundError(column, df.columns.tolist())
+
+        col_data = df[column]
+
+        if operator in {"=", "=="}:
+            condition_mask = col_data == value
+        elif operator in {"!=", "not_equals"}:
+            condition_mask = col_data != value
+        elif operator == ">":
+            condition_mask = col_data > value
+        elif operator == "<":
+            condition_mask = col_data < value
+        elif operator == ">=":
+            condition_mask = col_data >= value
+        elif operator == "<=":
+            condition_mask = col_data <= value
+        elif operator == "contains":
+            condition_mask = col_data.astype(str).str.contains(str(value), na=False)
+        elif operator == "not_contains":
+            condition_mask = ~col_data.astype(str).str.contains(str(value), na=False)
+        elif operator == "starts_with":
+            condition_mask = col_data.astype(str).str.startswith(str(value), na=False)
+        elif operator == "ends_with":
+            condition_mask = col_data.astype(str).str.endswith(str(value), na=False)
+        elif operator == "in":
+            condition_mask = col_data.isin(value if isinstance(value, list) else [value])
+        elif operator == "not_in":
+            condition_mask = ~col_data.isin(value if isinstance(value, list) else [value])
+        elif operator == "is_null":
+            condition_mask = col_data.isna()
+        elif operator == "is_not_null":
+            condition_mask = col_data.notna()
+        else:
+            msg = (
+                f"Invalid operator '{operator}'. Valid operators: "
+                "==, !=, >, <, >=, <=, contains, not_contains, starts_with, ends_with, "
+                "in, not_in, is_null, is_not_null"
+            )
+            raise ToolError(
+                msg,
+            )
+
+        mask = mask & condition_mask if mode == "and" else mask | condition_mask
+
+    # Apply filter
+    session.df = df[mask].reset_index(drop=True)
+    rows_after = len(session.df)
+
+    # No longer needed - conditions are already FilterCondition objects
+
+    # No longer recording operations (simplified MCP architecture)
+
+    return FilterOperationResult(
+        rows_before=rows_before,
+        rows_after=rows_after,
+        rows_filtered=rows_before - rows_after,
+        conditions_applied=len(conditions),
+    )
 
 
 def sort_data(
@@ -202,49 +196,44 @@ def sort_data(
         ])
 
     """
-    try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
 
-        # Parse columns into names and ascending flags
-        sort_columns: list[str] = []
-        ascending: list[bool] = []
+    # Parse columns into names and ascending flags
+    sort_columns: list[str] = []
+    ascending: list[bool] = []
 
-        for col in columns:
-            if isinstance(col, str):
-                sort_columns.append(col)
-                ascending.append(True)
-            elif isinstance(col, SortColumn):
-                sort_columns.append(col.column)
-                ascending.append(col.ascending)
-            elif isinstance(col, dict) and "column" in col:
-                sort_columns.append(col["column"])
-                ascending.append(col.get("ascending", True))
-            else:
-                msg = f"Invalid column specification: {col}"
-                raise ToolError(msg)
-
-        # Validate all columns exist
-        missing_cols = [col for col in sort_columns if col not in df.columns]
-        if missing_cols:
-            msg = f"Columns not found: {missing_cols}"
+    for col in columns:
+        if isinstance(col, str):
+            sort_columns.append(col)
+            ascending.append(True)
+        elif isinstance(col, SortColumn):
+            sort_columns.append(col.column)
+            ascending.append(col.ascending)
+        elif isinstance(col, dict) and "column" in col:
+            sort_columns.append(col["column"])
+            ascending.append(col.get("ascending", True))
+        else:
+            msg = f"Invalid column specification: {col}"
             raise ToolError(msg)
 
-        # Perform sort
-        session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
+    # Validate all columns exist
+    missing_cols = [col for col in sort_columns if col not in df.columns]
+    if missing_cols:
+        msg = f"Columns not found: {missing_cols}"
+        raise ToolError(msg)
 
-        # No longer recording operations (simplified MCP architecture)
+    # Perform sort
+    session.df = df.sort_values(by=sort_columns, ascending=ascending).reset_index(drop=True)
 
-        return SortDataResult(
-            sorted_by=sort_columns,
-            ascending=ascending,
-            rows_processed=len(df),
-        )
+    # No longer recording operations (simplified MCP architecture)
 
-    except Exception as e:
-        logger.exception("Error sorting data: %s", str(e))
-        msg = f"Error sorting data: {e!s}"
-        raise ToolError(msg) from e
+    return SortDataResult(
+        sorted_by=sort_columns,
+        ascending=ascending,
+        rows_processed=len(df),
+    )
+
 
 
 def remove_duplicates(
@@ -278,40 +267,34 @@ def remove_duplicates(
         remove_duplicates(ctx, subset=["email"], keep="none")
 
     """
-    try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
-        rows_before = len(df)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
+    rows_before = len(df)
 
-        # Validate subset columns if provided
-        if subset:
-            missing_cols = [col for col in subset if col not in df.columns]
-            if missing_cols:
-                msg = f"Columns not found in subset: {missing_cols}"
-                raise ToolError(msg)
+    # Validate subset columns if provided
+    if subset:
+        missing_cols = [col for col in subset if col not in df.columns]
+        if missing_cols:
+            msg = f"Columns not found in subset: {missing_cols}"
+            raise ToolError(msg)
 
-        # Convert keep parameter for pandas
-        keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
+    # Convert keep parameter for pandas
+    keep_param: Literal["first", "last"] | Literal[False] = keep if keep != "none" else False
 
-        # Remove duplicates
-        session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(drop=True)
+    # Remove duplicates
+    session.df = df.drop_duplicates(subset=subset, keep=keep_param).reset_index(drop=True)
 
-        rows_after = len(session.df)
-        rows_removed = rows_before - rows_after
+    rows_after = len(session.df)
+    rows_removed = rows_before - rows_after
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ColumnOperationResult(
-            operation="remove_duplicates",
-            rows_affected=rows_after,
-            columns_affected=subset if subset else df.columns.tolist(),
-            rows_removed=rows_removed,
-        )
-
-    except Exception as e:
-        logger.exception("Error removing duplicates: %s", str(e))
-        msg = f"Error removing duplicates: {e!s}"
-        raise ToolError(msg) from e
+    return ColumnOperationResult(
+        operation="remove_duplicates",
+        rows_affected=rows_after,
+        columns_affected=subset if subset else df.columns.tolist(),
+        rows_removed=rows_removed,
+    )
 
 
 def fill_missing_values(
@@ -348,88 +331,83 @@ def fill_missing_values(
         fill_missing_values(ctx, strategy="mean", columns=["age", "salary"])
 
     """
-    try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
 
-        # Validate and set target columns
-        if columns:
-            missing_cols = [col for col in columns if col not in df.columns]
-            if missing_cols:
-                msg = f"Columns not found: {missing_cols}"
-                raise ToolError(msg)
-            target_cols = columns
-        else:
-            target_cols = df.columns.tolist()
+    # Validate and set target columns
+    if columns:
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            msg = f"Columns not found: {missing_cols}"
+            raise ToolError(msg)
+        target_cols = columns
+    else:
+        target_cols = df.columns.tolist()
 
-        # Count missing values before processing
-        missing_before = df[target_cols].isna().sum().sum()
+    # Count missing values before processing
+    missing_before = df[target_cols].isna().sum().sum()
 
-        # Apply strategy
-        if strategy == "drop":
-            session.df = df.dropna(subset=target_cols)
-        elif strategy == "fill":
-            if value is None:
-                msg = "Value required for 'fill' strategy"
-                raise ToolError(msg)
-            session.df = df.copy()
-            session.df[target_cols] = df[target_cols].fillna(value)
-        elif strategy == "forward":
-            session.df = df.copy()
-            session.df[target_cols] = df[target_cols].ffill()
-        elif strategy == "backward":
-            session.df = df.copy()
-            session.df[target_cols] = df[target_cols].bfill()
-        elif strategy == "mean":
-            session.df = df.copy()
-            for col in target_cols:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    mean_val = df[col].mean()
-                    if not pd.isna(mean_val):
-                        session.df[col] = df[col].fillna(mean_val)
-                else:
-                    logger.warning("Column '%s' is not numeric, skipping mean fill", col)
-        elif strategy == "median":
-            session.df = df.copy()
-            for col in target_cols:
-                if pd.api.types.is_numeric_dtype(df[col]):
-                    median_val = df[col].median()
-                    if not pd.isna(median_val):
-                        session.df[col] = df[col].fillna(median_val)
-                else:
-                    logger.warning("Column '%s' is not numeric, skipping median fill", col)
-        elif strategy == "mode":
-            session.df = df.copy()
-            for col in target_cols:
-                mode_val = df[col].mode()
-                if len(mode_val) > 0:
-                    session.df[col] = df[col].fillna(mode_val[0])
-        else:
-            msg = (
-                f"Invalid strategy '{strategy}'. Valid strategies: "
-                "drop, fill, forward, backward, mean, median, mode"
-            )
-            raise ToolError(
-                msg,
-            )
-
-        rows_after = len(session.df)
-        missing_after = session.df[target_cols].isna().sum().sum()
-        values_filled = missing_before - missing_after
-
-        # No longer recording operations (simplified MCP architecture)
-
-        return ColumnOperationResult(
-            operation="fill_missing_values",
-            rows_affected=rows_after,
-            columns_affected=target_cols,
-            values_filled=int(values_filled),
+    # Apply strategy
+    if strategy == "drop":
+        session.df = df.dropna(subset=target_cols)
+    elif strategy == "fill":
+        if value is None:
+            msg = "Value required for 'fill' strategy"
+            raise ToolError(msg)
+        session.df = df.copy()
+        session.df[target_cols] = df[target_cols].fillna(value)
+    elif strategy == "forward":
+        session.df = df.copy()
+        session.df[target_cols] = df[target_cols].ffill()
+    elif strategy == "backward":
+        session.df = df.copy()
+        session.df[target_cols] = df[target_cols].bfill()
+    elif strategy == "mean":
+        session.df = df.copy()
+        for col in target_cols:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                mean_val = df[col].mean()
+                if not pd.isna(mean_val):
+                    session.df[col] = df[col].fillna(mean_val)
+            else:
+                logger.warning("Column '%s' is not numeric, skipping mean fill", col)
+    elif strategy == "median":
+        session.df = df.copy()
+        for col in target_cols:
+            if pd.api.types.is_numeric_dtype(df[col]):
+                median_val = df[col].median()
+                if not pd.isna(median_val):
+                    session.df[col] = df[col].fillna(median_val)
+            else:
+                logger.warning("Column '%s' is not numeric, skipping median fill", col)
+    elif strategy == "mode":
+        session.df = df.copy()
+        for col in target_cols:
+            mode_val = df[col].mode()
+            if len(mode_val) > 0:
+                session.df[col] = df[col].fillna(mode_val[0])
+    else:
+        msg = (
+            f"Invalid strategy '{strategy}'. Valid strategies: "
+            "drop, fill, forward, backward, mean, median, mode"
+        )
+        raise ToolError(
+            msg,
         )
 
-    except Exception as e:
-        logger.exception("Error filling missing values: %s", str(e))
-        msg = f"Error filling missing values: {e!s}"
-        raise ToolError(msg) from e
+    rows_after = len(session.df)
+    missing_after = session.df[target_cols].isna().sum().sum()
+    values_filled = missing_before - missing_after
+
+    # No longer recording operations (simplified MCP architecture)
+
+    return ColumnOperationResult(
+        operation="fill_missing_values",
+        rows_affected=rows_after,
+        columns_affected=target_cols,
+        values_filled=int(values_filled),
+    )
+
 
 
 # ============================================================================

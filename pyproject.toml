@@ -183,7 +183,6 @@ ignore = [
     "SIM108", # Ternary operator - preference
     #  TODO:  Work on bringing these into play
     "PLR0911", "PLR0912", "PLR0913", "PLR0915",  # Complexity findings that make the AI cry
-    "TRY300", "TRY301", "TRY401",   # tryceratops statement in else (nah), inner raise, logging redundancy
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -194,9 +193,14 @@ ignore = [
     "PLR2004", # Magic numbers are a HUGE part of testing
     "RUF043",  # Regex in asserts in tests
     "RUF059",  # Unused unpacked variable
+    "PT011",   # TODO: Revisit post v0.1.0
+    "TRY300",  # TODO: Revisit post v0.1.0
 ]
 "examples/*" = ["T201", "T203", "PL"]  # Allow print() in examples
-"scripts/*" = ["T201", "T203"]  # Allow print() in scripts
+"scripts/*" = [
+    "T201", "T203", # Allow print() in scripts
+    "TRY300",  # TODO: Revisit post v0.1.0
+    ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "databeak"]

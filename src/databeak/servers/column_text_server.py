@@ -8,13 +8,10 @@ from __future__ import annotations
 
 import logging
 import re
-from collections.abc import Callable
-from functools import wraps
 from typing import Annotated, Any, Literal
 
 import pandas as pd
 from fastmcp import Context, FastMCP
-from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 # Removed: OperationType (no longer tracking operations)
@@ -22,8 +19,6 @@ from databeak.core.session import get_session_data
 from databeak.exceptions import (
     ColumnNotFoundError,
     InvalidParameterError,
-    NoDataLoadedError,
-    SessionNotFoundError,
 )
 from databeak.models.tool_responses import ColumnOperationResult
 
@@ -64,41 +59,11 @@ def _count_column_changes(original: pd.Series, modified: pd.Series) -> int:
     return int(changed_mask.sum())
 
 
-def _handle_text_operation_errors(func: Callable[..., Any]) -> Callable[..., Any]:
-    """Handle common errors in text operations consistently.
-
-    Returns:
-        Decorated function with error handling
-
-    """
-    operation_name = func.__name__
-
-    @wraps(func)
-    async def wrapper(*args: Any, **kwargs: Any) -> Any:
-        try:
-            return await func(*args, **kwargs)
-        except (
-            SessionNotFoundError,
-            NoDataLoadedError,
-            ColumnNotFoundError,
-            InvalidParameterError,
-        ) as e:
-            logger.exception("%s failed: %s", operation_name, e.message)
-            raise ToolError(e.message) from e
-        except Exception as e:
-            logger.exception("Error in %s: %s", operation_name, str(e))
-            msg = f"Error in {operation_name}: {e}"
-            raise ToolError(msg) from e
-
-    return wrapper
-
-
 # =============================================================================
 # TOOL DEFINITIONS (Direct implementations for testing)
 # =============================================================================
 
 
-@_handle_text_operation_errors
 async def replace_in_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to apply pattern replacement in")],
@@ -166,7 +131,6 @@ async def replace_in_column(
     )
 
 
-@_handle_text_operation_errors
 async def extract_from_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to extract patterns from")],
@@ -251,7 +215,6 @@ async def extract_from_column(
     )
 
 
-@_handle_text_operation_errors
 async def split_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to split values in")],
@@ -376,7 +339,6 @@ async def split_column(
     )
 
 
-@_handle_text_operation_errors
 async def transform_column_case(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to transform text case in")],
@@ -442,7 +404,6 @@ async def transform_column_case(
     )
 
 
-@_handle_text_operation_errors
 async def strip_column(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to strip characters from")],
@@ -497,7 +458,6 @@ async def strip_column(
     )
 
 
-@_handle_text_operation_errors
 async def fill_column_nulls(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     column: Annotated[str, Field(description="Column name to fill null values in")],

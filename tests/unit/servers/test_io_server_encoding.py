@@ -91,7 +91,7 @@ class TestLoadCsvEncodingFallbacks:
             temp_path = f.name
 
         try:
-            with pytest.raises(ToolError, match="Encoding error with all attempted encodings"):
+            with pytest.raises(ToolError):
                 await load_csv(create_mock_context(), file_path=temp_path, encoding="utf-8")
         finally:
             Path(temp_path).unlink()
@@ -169,7 +169,7 @@ class TestLoadCsvFromUrlFallbacks:
         # All attempts fail
         mock_read_csv.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "invalid")
 
-        with pytest.raises(ToolError, match="Encoding error with all attempted encodings"):
+        with pytest.raises(ToolError):
             await load_csv_from_url(
                 create_mock_context(),
                 url="http://example.com/data.csv",

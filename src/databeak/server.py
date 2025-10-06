@@ -41,8 +41,8 @@ def _load_instructions() -> str:
     except FileNotFoundError:
         logger.warning("Instructions file not found at %s", instructions_path)
         return "DataBeak MCP Server - Instructions file not available"
-    except (PermissionError, OSError, UnicodeDecodeError) as e:
-        logger.exception("Error loading instructions: %s", e)
+    except (PermissionError, OSError, UnicodeDecodeError):
+        logger.exception("Error loading instructions")
         return "DataBeak MCP Server - Error loading instructions"
 
 

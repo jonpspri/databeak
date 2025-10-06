@@ -12,12 +12,12 @@ import pandas as pd
 # Pandera import for validation - required dependency
 import pandera
 from fastmcp import Context, FastMCP
-from fastmcp.exceptions import ToolError
 from pandera.pandas import Check, Column, DataFrameSchema
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 
 from databeak.core.session import get_session_data
 from databeak.core.settings import get_settings
+from databeak.exceptions import ColumnNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -325,10 +325,11 @@ class ColumnValidationRules(BaseModel):
 
         try:
             re.compile(v)
-            return v
         except re.error as e:
             msg = f"Invalid regular expression for str_matches: {e}"
             raise ValueError(msg) from e
+        else:
+            return v
 
     @field_validator("str_length", "in_range")
     @classmethod
@@ -524,183 +525,177 @@ def validate_schema(
         ValidateSchemaResult with validation status and detailed error information
 
     """
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
+    settings = get_settings()
+    validation_errors: dict[str, list[ValidationError]] = {}
+
+    parsed_schema = schema.root
+
+    # Apply resource management for large datasets
+    logger.info("Validating schema for %d rows, %d columns", len(df), len(df.columns))
+    if len(df) > settings.max_anomaly_sample_size:
+        logger.warning(
+            "Large dataset (%d rows), using sample of %d for validation",
+            len(df),
+            settings.max_anomaly_sample_size,
+        )
+        df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Schema validation")
+
+    # Convert validation_summary to ValidationSummary
+    validation_summary = ValidationSummary(
+        total_columns=len(parsed_schema),
+        valid_columns=0,
+        invalid_columns=0,
+        missing_columns=[],
+        extra_columns=[],
+    )
+
+    # Check for missing and extra columns
+    schema_columns = set(parsed_schema.keys())
+    df_columns = set(df.columns)
+
+    validation_summary.missing_columns = list(schema_columns - df_columns)
+    validation_summary.extra_columns = list(df_columns - schema_columns)
+
+    # Build Pandera schema dynamically from our validation rules
+    pandera_columns = {}
+
+    for col_name, rules_model in parsed_schema.items():
+        if col_name not in df.columns:
+            # Handle missing columns separately
+            validation_errors[col_name] = [
+                ValidationError(
+                    error="column_missing",
+                    message=f"Column '{col_name}' not found in data",
+                ),
+            ]
+            validation_summary.invalid_columns += 1
+            continue
+
+        # Convert ColumnValidationRules to Pandera checks
+        checks = []
+        rules = rules_model.model_dump(exclude_none=True)
+        ignore_na = rules.get("ignore_na", True)
+
+        # Build Pandera checks from validation rules
+        if rules.get("equal_to") is not None:
+            checks.append(Check.equal_to(rules["equal_to"], ignore_na=ignore_na))
+        if rules.get("not_equal_to") is not None:
+            checks.append(Check.not_equal_to(rules["not_equal_to"], ignore_na=ignore_na))
+        if rules.get("greater_than") is not None:
+            checks.append(Check.greater_than(rules["greater_than"], ignore_na=ignore_na))
+        if rules.get("greater_than_or_equal_to") is not None:
+            checks.append(
+                Check.greater_than_or_equal_to(
+                    rules["greater_than_or_equal_to"], ignore_na=ignore_na
+                )
+            )
+        if rules.get("less_than") is not None:
+            checks.append(Check.less_than(rules["less_than"], ignore_na=ignore_na))
+        if rules.get("less_than_or_equal_to") is not None:
+            checks.append(
+                Check.less_than_or_equal_to(rules["less_than_or_equal_to"], ignore_na=ignore_na)
+            )
+        if rules.get("in_range") is not None:
+            range_dict = rules["in_range"]
+            checks.append(
+                Check.in_range(range_dict["min"], range_dict["max"], ignore_na=ignore_na)
+            )
+        if rules.get("isin") is not None:
+            checks.append(Check.isin(rules["isin"], ignore_na=ignore_na))
+        if rules.get("notin") is not None:
+            checks.append(Check.notin(rules["notin"], ignore_na=ignore_na))
+        if rules.get("str_contains") is not None:
+            checks.append(Check.str_contains(rules["str_contains"], ignore_na=ignore_na))
+        if rules.get("str_endswith") is not None:
+            checks.append(Check.str_endswith(rules["str_endswith"], ignore_na=ignore_na))
+        if rules.get("str_startswith") is not None:
+            checks.append(Check.str_startswith(rules["str_startswith"], ignore_na=ignore_na))
+        if rules.get("str_matches") is not None:
+            checks.append(Check.str_matches(rules["str_matches"], ignore_na=ignore_na))
+        if rules.get("str_length") is not None:
+            length_dict = rules["str_length"]
+            min_len = length_dict.get("min")
+            max_len = length_dict.get("max")
+            checks.append(Check.str_length(min_len, max_len, ignore_na=ignore_na))
+
+        # Create Pandera Column with checks
+        pandera_columns[col_name] = Column(
+            nullable=rules.get("nullable", True),
+            unique=rules.get("unique", False),
+            coerce=rules.get("coerce", False),
+            checks=checks,
+            name=col_name,
+        )
+
+    # Create and apply Pandera DataFrameSchema
+    pandera_schema = DataFrameSchema(
+        columns=pandera_columns,
+        strict=False,  # Allow extra columns not in schema
+        name="DataBeak_Validation_Schema",
+    )
+
+    # Validate using Pandera
     try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
-        settings = get_settings()
-        validation_errors: dict[str, list[ValidationError]] = {}
+        pandera_schema.validate(df, lazy=True)
+        # If validation succeeds, update summary
+        validation_summary.valid_columns = len(pandera_columns)
+        validation_summary.invalid_columns = len(validation_errors)  # Only missing columns
 
-        parsed_schema = schema.root
+    except pandera.errors.SchemaErrors as schema_errors:
+        # Process Pandera validation errors
+        for error_data in schema_errors.failure_cases.to_dict("records"):
+            col_name = str(error_data.get("column", "unknown"))
+            check_name = str(error_data.get("check", "unknown"))
+            failure_case = error_data.get("failure_case", "unknown")
 
-        # Apply resource management for large datasets
-        logger.info("Validating schema for %d rows, %d columns", len(df), len(df.columns))
-        if len(df) > settings.max_anomaly_sample_size:
-            logger.warning(
-                "Large dataset (%d rows), using sample of %d for validation",
-                len(df),
-                settings.max_anomaly_sample_size,
-            )
-            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Schema validation")
+            if col_name not in validation_errors:
+                validation_errors[col_name] = []
 
-        # Convert validation_summary to ValidationSummary
-        validation_summary = ValidationSummary(
-            total_columns=len(parsed_schema),
-            valid_columns=0,
-            invalid_columns=0,
-            missing_columns=[],
-            extra_columns=[],
-        )
-
-        # Check for missing and extra columns
-        schema_columns = set(parsed_schema.keys())
-        df_columns = set(df.columns)
-
-        validation_summary.missing_columns = list(schema_columns - df_columns)
-        validation_summary.extra_columns = list(df_columns - schema_columns)
-
-        # Build Pandera schema dynamically from our validation rules
-        pandera_columns = {}
-
-        for col_name, rules_model in parsed_schema.items():
-            if col_name not in df.columns:
-                # Handle missing columns separately
-                validation_errors[col_name] = [
-                    ValidationError(
-                        error="column_missing",
-                        message=f"Column '{col_name}' not found in data",
-                    ),
-                ]
-                validation_summary.invalid_columns += 1
-                continue
-
-            # Convert ColumnValidationRules to Pandera checks
-            checks = []
-            rules = rules_model.model_dump(exclude_none=True)
-            ignore_na = rules.get("ignore_na", True)
-
-            # Build Pandera checks from validation rules
-            if rules.get("equal_to") is not None:
-                checks.append(Check.equal_to(rules["equal_to"], ignore_na=ignore_na))
-            if rules.get("not_equal_to") is not None:
-                checks.append(Check.not_equal_to(rules["not_equal_to"], ignore_na=ignore_na))
-            if rules.get("greater_than") is not None:
-                checks.append(Check.greater_than(rules["greater_than"], ignore_na=ignore_na))
-            if rules.get("greater_than_or_equal_to") is not None:
-                checks.append(
-                    Check.greater_than_or_equal_to(
-                        rules["greater_than_or_equal_to"], ignore_na=ignore_na
-                    )
+            validation_errors[col_name].append(
+                ValidationError(
+                    error=f"pandera_{check_name}",
+                    message=f"Pandera validation failed: {check_name} - {failure_case}",
+                    check_name=check_name,
+                    failure_case=str(failure_case),
                 )
-            if rules.get("less_than") is not None:
-                checks.append(Check.less_than(rules["less_than"], ignore_na=ignore_na))
-            if rules.get("less_than_or_equal_to") is not None:
-                checks.append(
-                    Check.less_than_or_equal_to(rules["less_than_or_equal_to"], ignore_na=ignore_na)
-                )
-            if rules.get("in_range") is not None:
-                range_dict = rules["in_range"]
-                checks.append(
-                    Check.in_range(range_dict["min"], range_dict["max"], ignore_na=ignore_na)
-                )
-            if rules.get("isin") is not None:
-                checks.append(Check.isin(rules["isin"], ignore_na=ignore_na))
-            if rules.get("notin") is not None:
-                checks.append(Check.notin(rules["notin"], ignore_na=ignore_na))
-            if rules.get("str_contains") is not None:
-                checks.append(Check.str_contains(rules["str_contains"], ignore_na=ignore_na))
-            if rules.get("str_endswith") is not None:
-                checks.append(Check.str_endswith(rules["str_endswith"], ignore_na=ignore_na))
-            if rules.get("str_startswith") is not None:
-                checks.append(Check.str_startswith(rules["str_startswith"], ignore_na=ignore_na))
-            if rules.get("str_matches") is not None:
-                checks.append(Check.str_matches(rules["str_matches"], ignore_na=ignore_na))
-            if rules.get("str_length") is not None:
-                length_dict = rules["str_length"]
-                min_len = length_dict.get("min")
-                max_len = length_dict.get("max")
-                checks.append(Check.str_length(min_len, max_len, ignore_na=ignore_na))
-
-            # Create Pandera Column with checks
-            pandera_columns[col_name] = Column(
-                nullable=rules.get("nullable", True),
-                unique=rules.get("unique", False),
-                coerce=rules.get("coerce", False),
-                checks=checks,
-                name=col_name,
             )
 
-        # Create and apply Pandera DataFrameSchema
-        pandera_schema = DataFrameSchema(
-            columns=pandera_columns,
-            strict=False,  # Allow extra columns not in schema
-            name="DataBeak_Validation_Schema",
+        validation_summary.invalid_columns = len(validation_errors)
+        validation_summary.valid_columns = (
+            len(parsed_schema)
+            - validation_summary.invalid_columns
+            - len(validation_summary.missing_columns)
         )
 
-        # Validate using Pandera
-        try:
-            pandera_schema.validate(df, lazy=True)
-            # If validation succeeds, update summary
-            validation_summary.valid_columns = len(pandera_columns)
-            validation_summary.invalid_columns = len(validation_errors)  # Only missing columns
+    is_valid = len(validation_errors) == 0 and len(validation_summary.missing_columns) == 0
 
-        except pandera.errors.SchemaErrors as schema_errors:
-            # Process Pandera validation errors
-            for error_data in schema_errors.failure_cases.to_dict("records"):
-                col_name = str(error_data.get("column", "unknown"))
-                check_name = str(error_data.get("check", "unknown"))
-                failure_case = error_data.get("failure_case", "unknown")
+    # No longer recording operations (simplified MCP architecture)
 
-                if col_name not in validation_errors:
-                    validation_errors[col_name] = []
+    # Flatten all validation errors with resource limits
+    all_errors = []
+    for error_list in validation_errors.values():
+        all_errors.extend(error_list)
 
-                validation_errors[col_name].append(
-                    ValidationError(
-                        error=f"pandera_{check_name}",
-                        message=f"Pandera validation failed: {check_name} - {failure_case}",
-                        check_name=check_name,
-                        failure_case=str(failure_case),
-                    )
-                )
+    # Apply violation limits to prevent resource exhaustion
+    limited_errors, was_truncated = apply_violation_limits(
+        all_errors, settings.max_validation_violations, "Schema validation"
+    )
 
-            validation_summary.invalid_columns = len(validation_errors)
-            validation_summary.valid_columns = (
-                len(parsed_schema)
-                - validation_summary.invalid_columns
-                - len(validation_summary.missing_columns)
-            )
-
-        is_valid = len(validation_errors) == 0 and len(validation_summary.missing_columns) == 0
-
-        # No longer recording operations (simplified MCP architecture)
-
-        # Flatten all validation errors with resource limits
-        all_errors = []
-        for error_list in validation_errors.values():
-            all_errors.extend(error_list)
-
-        # Apply violation limits to prevent resource exhaustion
-        limited_errors, was_truncated = apply_violation_limits(
-            all_errors, settings.max_validation_violations, "Schema validation"
+    if was_truncated:
+        logger.warning(
+            "Validation found %d errors, limited to %d",
+            len(all_errors),
+            settings.max_validation_violations,
         )
 
-        if was_truncated:
-            logger.warning(
-                "Validation found %d errors, limited to %d",
-                len(all_errors),
-                settings.max_validation_violations,
-            )
-
-        return ValidateSchemaResult(
-            valid=is_valid,
-            errors=limited_errors,
-            summary=validation_summary,
-            validation_errors=validation_errors,
-        )
-
-    except Exception as e:
-        logger.exception("Error validating schema: %s", str(e))
-        msg = f"Error validating schema: {e!s}"
-        raise ToolError(msg) from e
+    return ValidateSchemaResult(
+        valid=is_valid,
+        errors=limited_errors,
+        summary=validation_summary,
+        validation_errors=validation_errors,
+    )
 
 
 def check_data_quality(
@@ -716,233 +711,60 @@ def check_data_quality(
         DataQualityResult with comprehensive quality assessment results
 
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
-        settings = get_settings()
-        rule_results: list[QualityRuleResult] = []
-        quality_issues: list[QualityIssue] = []
-        recommendations: list[str] = []
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
+    settings = get_settings()
+    rule_results: list[QualityRuleResult] = []
+    quality_issues: list[QualityIssue] = []
+    recommendations: list[str] = []
 
-        # Apply resource management for large datasets
-        logger.info("Checking data quality for %d rows, %d columns", len(df), len(df.columns))
-        if len(df) > settings.max_anomaly_sample_size:
-            logger.warning(
-                "Large dataset (%d rows), using sample of %d for quality check",
-                len(df),
-                settings.max_anomaly_sample_size,
-            )
-            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Data quality check")
+    # Apply resource management for large datasets
+    logger.info("Checking data quality for %d rows, %d columns", len(df), len(df.columns))
+    if len(df) > settings.max_anomaly_sample_size:
+        logger.warning(
+            "Large dataset (%d rows), using sample of %d for quality check",
+            len(df),
+            settings.max_anomaly_sample_size,
+        )
+        df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Data quality check")
 
-        # Use default rules if none provided
-        if rules is None:
-            rules = [
-                CompletenessRule(threshold=0.95),
-                DuplicatesRule(threshold=0.01),
-                DataTypesRule(),
-                OutliersRule(threshold=0.05),
-                ConsistencyRule(),
-            ]
+    # Use default rules if none provided
+    if rules is None:
+        rules = [
+            CompletenessRule(threshold=0.95),
+            DuplicatesRule(threshold=0.01),
+            DataTypesRule(),
+            OutliersRule(threshold=0.05),
+            ConsistencyRule(),
+        ]
 
-        total_score: float = 0
-        score_count = 0
+    total_score: float = 0
+    score_count = 0
 
-        for rule in rules:
-            if isinstance(rule, CompletenessRule):
-                # Check data completeness
-                threshold = rule.threshold
-                columns = rule.columns if rule.columns is not None else df.columns.tolist()
+    for rule in rules:
+        if isinstance(rule, CompletenessRule):
+            # Check data completeness
+            threshold = rule.threshold
+            columns = rule.columns if rule.columns is not None else df.columns.tolist()
 
-                for col in columns:
-                    if col in df.columns:
-                        completeness = 1 - (df[col].isna().sum() / len(df))
-                        passed = completeness >= threshold
-                        score = completeness * 100
-
-                        # Create issue if failed
-                        rule_issues = []
-                        if not passed:
-                            issue = QualityIssue(
-                                type="incomplete_data",
-                                severity="high"
-                                if completeness < settings.data_completeness_threshold
-                                else "medium",
-                                column=col,
-                                message=f"Column '{col}' is only {round(completeness * 100, 2)}% complete",
-                                affected_rows=int(df[col].isna().sum()),
-                                metric_value=completeness,
-                                threshold=float(threshold),
-                            )
-                            rule_issues.append(issue)
-                            quality_issues.append(issue)
-
-                        # Add rule result
-                        rule_results.append(
-                            QualityRuleResult(
-                                rule_type="completeness",
-                                passed=passed,
-                                score=round(score, 2),
-                                issues=rule_issues,
-                                column=col,
-                            ),
-                        )
-
-                        total_score += score
-                        score_count += 1
-
-            elif isinstance(rule, DuplicatesRule):
-                # Check for duplicate rows
-                threshold = rule.threshold
-                subset = rule.columns
-
-                duplicates = df.duplicated(subset=subset)
-                duplicate_ratio = duplicates.sum() / len(df)
-                passed = duplicate_ratio <= threshold
-                score = (1 - duplicate_ratio) * 100
-
-                # Create issue if failed
-                rule_issues = []
-                if not passed:
-                    issue = QualityIssue(
-                        type="duplicate_rows",
-                        severity="high"
-                        if duplicate_ratio > settings.outlier_detection_threshold
-                        else "medium",
-                        message=f"Found {duplicates.sum()} duplicate rows ({round(duplicate_ratio * 100, 2)}%)",
-                        affected_rows=int(duplicates.sum()),
-                        metric_value=duplicate_ratio,
-                        threshold=float(threshold),
-                    )
-                    rule_issues.append(issue)
-                    quality_issues.append(issue)
-                    recommendations.append(
-                        "Consider removing duplicate rows using the remove_duplicates tool",
-                    )
-
-                # Add rule result
-                rule_results.append(
-                    QualityRuleResult(
-                        rule_type="duplicates",
-                        passed=passed,
-                        score=round(score, 2),
-                        issues=rule_issues,
-                    ),
-                )
-
-                total_score += score
-                score_count += 1
-
-            elif isinstance(rule, UniquenessRule):
-                # Check column uniqueness
-                column = rule.column
-                if column in df.columns:
-                    unique_ratio = df[column].nunique() / len(df)
-                    expected_unique = rule.expected_unique
-
-                    if expected_unique:
-                        passed = unique_ratio >= settings.uniqueness_threshold
-                        score = unique_ratio * 100
-                    else:
-                        passed = True
-                        score = 100.0
-
-                    # Create issue if failed
-                    rule_issues = []
-                    if not passed and expected_unique:
-                        duplicate_count = len(df) - df[column].nunique()
-                        issue = QualityIssue(
-                            type="non_unique_values",
-                            severity="high",
-                            column=str(column),
-                            message=f"Column '{column}' expected to be unique but has duplicates",
-                            affected_rows=duplicate_count,
-                            metric_value=unique_ratio,
-                            threshold=settings.uniqueness_threshold,
-                        )
-                        rule_issues.append(issue)
-                        quality_issues.append(issue)
-
-                    # Add rule result
-                    rule_results.append(
-                        QualityRuleResult(
-                            rule_type="uniqueness",
-                            passed=passed,
-                            score=round(score, 2),
-                            issues=rule_issues,
-                            column=str(column),
-                        ),
-                    )
-
-                    total_score += score
-                    score_count += 1
-
-            elif isinstance(rule, DataTypesRule):
-                # Check data type consistency
-                for col in df.columns:
-                    col_data = df[col].dropna()
-                    if len(col_data) > 0:
-                        # Check for mixed types
-                        types = col_data.apply(lambda x: type(x).__name__).unique()
-                        mixed_types = len(types) > 1
-
-                        # Check for numeric strings
-                        if col_data.dtype == object:
-                            numeric_strings = col_data.astype(str).str.match(r"^-?\d+\.?\d*$").sum()
-                            numeric_ratio = numeric_strings / len(col_data)
-                        else:
-                            numeric_ratio = 0
-
-                        score = 100.0 if not mixed_types else 50.0
-
-                        # Create recommendations for numeric strings
-                        if numeric_ratio > settings.high_quality_threshold:
-                            recommendations.append(
-                                f"Column '{col}' appears to contain numeric data stored as strings. "
-                                f"Consider converting to numeric type using change_column_type tool",
-                            )
-
-                        # Add rule result
-                        rule_results.append(
-                            QualityRuleResult(
-                                rule_type="data_type_consistency",
-                                passed=not mixed_types,
-                                score=score,
-                                issues=[],
-                                column=col,
-                            ),
-                        )
-
-                        total_score += score
-                        score_count += 1
-
-            elif isinstance(rule, OutliersRule):
-                # Check for outliers in numeric columns
-                threshold = rule.threshold
-                numeric_cols = df.select_dtypes(include=[np.number]).columns
-
-                for col in numeric_cols:
-                    q1 = df[col].quantile(0.25)
-                    q3 = df[col].quantile(0.75)
-                    iqr = q3 - q1
-
-                    lower_bound = q1 - 1.5 * iqr
-                    upper_bound = q3 + 1.5 * iqr
-
-                    outliers = ((df[col] < lower_bound) | (df[col] > upper_bound)).sum()
-                    outlier_ratio = outliers / len(df)
-                    passed = outlier_ratio <= threshold
-                    score = (1 - min(outlier_ratio, 1)) * 100
+            for col in columns:
+                if col in df.columns:
+                    completeness = 1 - (df[col].isna().sum() / len(df))
+                    passed = completeness >= threshold
+                    score = completeness * 100
 
                     # Create issue if failed
                     rule_issues = []
                     if not passed:
                         issue = QualityIssue(
-                            type="outliers",
-                            severity="medium",
+                            type="incomplete_data",
+                            severity="high"
+                            if completeness < settings.data_completeness_threshold
+                            else "medium",
                             column=col,
-                            message=f"Column '{col}' has {outliers} outliers ({round(outlier_ratio * 100, 2)}%)",
-                            affected_rows=int(outliers),
-                            metric_value=outlier_ratio,
+                            message=f"Column '{col}' is only {round(completeness * 100, 2)}% complete",
+                            affected_rows=int(df[col].isna().sum()),
+                            metric_value=completeness,
                             threshold=float(threshold),
                         )
                         rule_issues.append(issue)
@@ -951,7 +773,7 @@ def check_data_quality(
                     # Add rule result
                     rule_results.append(
                         QualityRuleResult(
-                            rule_type="outliers",
+                            rule_type="completeness",
                             passed=passed,
                             score=round(score, 2),
                             issues=rule_issues,
@@ -962,101 +784,269 @@ def check_data_quality(
                     total_score += score
                     score_count += 1
 
-            elif isinstance(rule, ConsistencyRule):
-                # Check data consistency
-                columns = rule.columns
+        elif isinstance(rule, DuplicatesRule):
+            # Check for duplicate rows
+            threshold = rule.threshold
+            subset = rule.columns
 
-                # Date consistency check
-                date_cols = df.select_dtypes(include=["datetime64"]).columns
-                if len(date_cols) >= settings.min_statistical_sample_size and not columns:
-                    columns = date_cols.tolist()
+            duplicates = df.duplicated(subset=subset)
+            duplicate_ratio = duplicates.sum() / len(df)
+            passed = duplicate_ratio <= threshold
+            score = (1 - duplicate_ratio) * 100
 
-                if len(columns) >= settings.min_statistical_sample_size:
-                    col1, col2 = str(columns[0]), str(columns[1])
-                    if (
-                        col1 in df.columns
-                        and col2 in df.columns
-                        and pd.api.types.is_datetime64_any_dtype(df[col1])
-                        and pd.api.types.is_datetime64_any_dtype(df[col2])
-                    ):
-                        inconsistent = (df[col1] > df[col2]).sum()
-                        consistency_ratio = 1 - (inconsistent / len(df))
-                        passed = consistency_ratio >= settings.uniqueness_threshold
-                        score = consistency_ratio * 100
+            # Create issue if failed
+            rule_issues = []
+            if not passed:
+                issue = QualityIssue(
+                    type="duplicate_rows",
+                    severity="high"
+                    if duplicate_ratio > settings.outlier_detection_threshold
+                    else "medium",
+                    message=f"Found {duplicates.sum()} duplicate rows ({round(duplicate_ratio * 100, 2)}%)",
+                    affected_rows=int(duplicates.sum()),
+                    metric_value=duplicate_ratio,
+                    threshold=float(threshold),
+                )
+                rule_issues.append(issue)
+                quality_issues.append(issue)
+                recommendations.append(
+                    "Consider removing duplicate rows using the remove_duplicates tool",
+                )
 
-                        # Create issue if failed
-                        rule_issues = []
-                        if not passed:
-                            issue = QualityIssue(
-                                type="data_inconsistency",
-                                severity="high",
-                                message=f"Found {inconsistent} rows where {col1} > {col2}",
-                                affected_rows=int(inconsistent),
-                                metric_value=consistency_ratio,
-                                threshold=settings.uniqueness_threshold,
-                            )
-                            rule_issues.append(issue)
-                            quality_issues.append(issue)
+            # Add rule result
+            rule_results.append(
+                QualityRuleResult(
+                    rule_type="duplicates",
+                    passed=passed,
+                    score=round(score, 2),
+                    issues=rule_issues,
+                ),
+            )
 
-                        # Add rule result
-                        rule_results.append(
-                            QualityRuleResult(
-                                rule_type="consistency",
-                                passed=passed,
-                                score=round(score, 2),
-                                issues=rule_issues,
-                            ),
+            total_score += score
+            score_count += 1
+
+        elif isinstance(rule, UniquenessRule):
+            # Check column uniqueness
+            column = rule.column
+            if column in df.columns:
+                unique_ratio = df[column].nunique() / len(df)
+                expected_unique = rule.expected_unique
+
+                if expected_unique:
+                    passed = unique_ratio >= settings.uniqueness_threshold
+                    score = unique_ratio * 100
+                else:
+                    passed = True
+                    score = 100.0
+
+                # Create issue if failed
+                rule_issues = []
+                if not passed and expected_unique:
+                    duplicate_count = len(df) - df[column].nunique()
+                    issue = QualityIssue(
+                        type="non_unique_values",
+                        severity="high",
+                        column=str(column),
+                        message=f"Column '{column}' expected to be unique but has duplicates",
+                        affected_rows=duplicate_count,
+                        metric_value=unique_ratio,
+                        threshold=settings.uniqueness_threshold,
+                    )
+                    rule_issues.append(issue)
+                    quality_issues.append(issue)
+
+                # Add rule result
+                rule_results.append(
+                    QualityRuleResult(
+                        rule_type="uniqueness",
+                        passed=passed,
+                        score=round(score, 2),
+                        issues=rule_issues,
+                        column=str(column),
+                    ),
+                )
+
+                total_score += score
+                score_count += 1
+
+        elif isinstance(rule, DataTypesRule):
+            # Check data type consistency
+            for col in df.columns:
+                col_data = df[col].dropna()
+                if len(col_data) > 0:
+                    # Check for mixed types
+                    types = col_data.apply(lambda x: type(x).__name__).unique()
+                    mixed_types = len(types) > 1
+
+                    # Check for numeric strings
+                    if col_data.dtype == object:
+                        numeric_strings = col_data.astype(str).str.match(r"^-?\d+\.?\d*$").sum()
+                        numeric_ratio = numeric_strings / len(col_data)
+                    else:
+                        numeric_ratio = 0
+
+                    score = 100.0 if not mixed_types else 50.0
+
+                    # Create recommendations for numeric strings
+                    if numeric_ratio > settings.high_quality_threshold:
+                        recommendations.append(
+                            f"Column '{col}' appears to contain numeric data stored as strings. "
+                            f"Consider converting to numeric type using change_column_type tool",
                         )
 
-                        total_score += score
-                        score_count += 1
+                    # Add rule result
+                    rule_results.append(
+                        QualityRuleResult(
+                            rule_type="data_type_consistency",
+                            passed=not mixed_types,
+                            score=score,
+                            issues=[],
+                            column=col,
+                        ),
+                    )
 
-        # Calculate overall score
-        overall_score = round(total_score / score_count, 2) if score_count > 0 else 100.0
+                    total_score += score
+                    score_count += 1
 
-        # Add general recommendations
-        if not recommendations and overall_score < settings.character_score_threshold:
-            recommendations.append(
-                "Consider running profile_data to get a comprehensive overview of data issues",
-            )
+        elif isinstance(rule, OutliersRule):
+            # Check for outliers in numeric columns
+            threshold = rule.threshold
+            numeric_cols = df.select_dtypes(include=[np.number]).columns
 
-        # Count passed/failed rules
-        passed_rules = sum(1 for rule in rule_results if rule.passed)
-        failed_rules = len(rule_results) - passed_rules
+            for col in numeric_cols:
+                q1 = df[col].quantile(0.25)
+                q3 = df[col].quantile(0.75)
+                iqr = q3 - q1
 
-        # Apply limits to quality issues to prevent resource exhaustion
-        limited_issues, was_truncated = apply_violation_limits(
-            quality_issues, settings.max_validation_violations, "Data quality check"
+                lower_bound = q1 - 1.5 * iqr
+                upper_bound = q3 + 1.5 * iqr
+
+                outliers = ((df[col] < lower_bound) | (df[col] > upper_bound)).sum()
+                outlier_ratio = outliers / len(df)
+                passed = outlier_ratio <= threshold
+                score = (1 - min(outlier_ratio, 1)) * 100
+
+                # Create issue if failed
+                rule_issues = []
+                if not passed:
+                    issue = QualityIssue(
+                        type="outliers",
+                        severity="medium",
+                        column=col,
+                        message=f"Column '{col}' has {outliers} outliers ({round(outlier_ratio * 100, 2)}%)",
+                        affected_rows=int(outliers),
+                        metric_value=outlier_ratio,
+                        threshold=float(threshold),
+                    )
+                    rule_issues.append(issue)
+                    quality_issues.append(issue)
+
+                # Add rule result
+                rule_results.append(
+                    QualityRuleResult(
+                        rule_type="outliers",
+                        passed=passed,
+                        score=round(score, 2),
+                        issues=rule_issues,
+                        column=col,
+                    ),
+                )
+
+                total_score += score
+                score_count += 1
+
+        elif isinstance(rule, ConsistencyRule):
+            # Check data consistency
+            columns = rule.columns
+
+            # Date consistency check
+            date_cols = df.select_dtypes(include=["datetime64"]).columns
+            if len(date_cols) >= settings.min_statistical_sample_size and not columns:
+                columns = date_cols.tolist()
+
+            if len(columns) >= settings.min_statistical_sample_size:
+                col1, col2 = str(columns[0]), str(columns[1])
+                if (
+                    col1 in df.columns
+                    and col2 in df.columns
+                    and pd.api.types.is_datetime64_any_dtype(df[col1])
+                    and pd.api.types.is_datetime64_any_dtype(df[col2])
+                ):
+                    inconsistent = (df[col1] > df[col2]).sum()
+                    consistency_ratio = 1 - (inconsistent / len(df))
+                    passed = consistency_ratio >= settings.uniqueness_threshold
+                    score = consistency_ratio * 100
+
+                    # Create issue if failed
+                    rule_issues = []
+                    if not passed:
+                        issue = QualityIssue(
+                            type="data_inconsistency",
+                            severity="high",
+                            message=f"Found {inconsistent} rows where {col1} > {col2}",
+                            affected_rows=int(inconsistent),
+                            metric_value=consistency_ratio,
+                            threshold=settings.uniqueness_threshold,
+                        )
+                        rule_issues.append(issue)
+                        quality_issues.append(issue)
+
+                    # Add rule result
+                    rule_results.append(
+                        QualityRuleResult(
+                            rule_type="consistency",
+                            passed=passed,
+                            score=round(score, 2),
+                            issues=rule_issues,
+                        ),
+                    )
+
+                    total_score += score
+                    score_count += 1
+
+    # Calculate overall score
+    overall_score = round(total_score / score_count, 2) if score_count > 0 else 100.0
+
+    # Add general recommendations
+    if not recommendations and overall_score < settings.character_score_threshold:
+        recommendations.append(
+            "Consider running profile_data to get a comprehensive overview of data issues",
         )
 
-        if was_truncated:
-            logger.warning(
-                "Quality check found %d issues, limited to %d",
-                len(quality_issues),
-                settings.max_validation_violations,
-            )
+    # Count passed/failed rules
+    passed_rules = sum(1 for rule in rule_results if rule.passed)
+    failed_rules = len(rule_results) - passed_rules
 
-        # Create QualityResults
-        quality_results = QualityResults(
-            overall_score=overall_score,
-            passed_rules=passed_rules,
-            failed_rules=failed_rules,
-            total_issues=len(limited_issues),
-            rule_results=rule_results,
-            issues=limited_issues,
-            recommendations=recommendations,
+    # Apply limits to quality issues to prevent resource exhaustion
+    limited_issues, was_truncated = apply_violation_limits(
+        quality_issues, settings.max_validation_violations, "Data quality check"
+    )
+
+    if was_truncated:
+        logger.warning(
+            "Quality check found %d issues, limited to %d",
+            len(quality_issues),
+            settings.max_validation_violations,
         )
 
-        # No longer recording operations (simplified MCP architecture)
+    # Create QualityResults
+    quality_results = QualityResults(
+        overall_score=overall_score,
+        passed_rules=passed_rules,
+        failed_rules=failed_rules,
+        total_issues=len(limited_issues),
+        rule_results=rule_results,
+        issues=limited_issues,
+        recommendations=recommendations,
+    )
 
-        return DataQualityResult(
-            quality_results=quality_results,
-        )
+    # No longer recording operations (simplified MCP architecture)
 
-    except Exception as e:
-        logger.exception("Error checking data quality: %s", str(e))
-        msg = f"Error checking data quality: {e!s}"
-        raise ToolError(msg) from e
+    return DataQualityResult(
+        quality_results=quality_results,
+    )
+
 
 
 def find_anomalies(
@@ -1080,249 +1070,242 @@ def find_anomalies(
         FindAnomaliesResult with comprehensive anomaly detection results
 
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
-        settings = get_settings()
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
+    settings = get_settings()
 
-        # Apply resource management for large datasets
-        logger.info("Finding anomalies in %d rows, %d columns", len(df), len(df.columns))
-        if len(df) > settings.max_anomaly_sample_size:
-            logger.warning(
-                "Large dataset (%d rows), using sample of %d for anomaly detection",
-                len(df),
-                settings.max_anomaly_sample_size,
-            )
-            df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Anomaly detection")
+    # Apply resource management for large datasets
+    logger.info("Finding anomalies in %d rows, %d columns", len(df), len(df.columns))
+    if len(df) > settings.max_anomaly_sample_size:
+        logger.warning(
+            "Large dataset (%d rows), using sample of %d for anomaly detection",
+            len(df),
+            settings.max_anomaly_sample_size,
+        )
+        df = sample_large_dataset(df, settings.max_anomaly_sample_size, "Anomaly detection")
 
-        if columns:
-            missing_cols = [col for col in columns if col not in df.columns]
-            if missing_cols:
-                msg = f"Columns not found: {missing_cols}"
-                raise ToolError(msg)
-            target_cols = columns
-        else:
-            target_cols = df.columns.tolist()
+    if columns:
+        missing_cols = [col for col in columns if col not in df.columns]
+        if missing_cols:
+            # Raise error for first missing column
+            raise ColumnNotFoundError(missing_cols[0], df.columns.tolist())
+        target_cols = columns
+    else:
+        target_cols = df.columns.tolist()
 
-        if not methods:
-            methods = ["statistical", "pattern", "missing"]
+    if not methods:
+        methods = ["statistical", "pattern", "missing"]
 
-        # Track anomalies using proper data structures
-        total_anomalies = 0
-        affected_rows: set[int] = set()
-        affected_columns: list[str] = []
-        by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly] = {}
-        by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]] = {}
+    # Track anomalies using proper data structures
+    total_anomalies = 0
+    affected_rows: set[int] = set()
+    affected_columns: list[str] = []
+    by_column: dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly] = {}
+    by_method: dict[str, dict[str, StatisticalAnomaly | PatternAnomaly | MissingAnomaly]] = {}
 
-        # Statistical anomalies (outliers)
-        if "statistical" in methods:
-            numeric_cols = df[target_cols].select_dtypes(include=[np.number]).columns
-            statistical_anomalies: dict[str, StatisticalAnomaly] = {}
+    # Statistical anomalies (outliers)
+    if "statistical" in methods:
+        numeric_cols = df[target_cols].select_dtypes(include=[np.number]).columns
+        statistical_anomalies: dict[str, StatisticalAnomaly] = {}
 
-            for col in numeric_cols:
+        for col in numeric_cols:
+            col_data = df[col].dropna()
+            if len(col_data) > 0:
+                # Z-score method
+                z_scores = np.abs((col_data - col_data.mean()) / col_data.std())
+                z_threshold = 3 * (
+                    1 - sensitivity + 0.5
+                )  # Adjust threshold based on sensitivity
+                z_anomalies = col_data.index[z_scores > z_threshold].tolist()
+
+                # IQR method
+                q1 = col_data.quantile(0.25)
+                q3 = col_data.quantile(0.75)
+                iqr = q3 - q1
+                iqr_factor = 1.5 * (2 - sensitivity)  # Adjust factor based on sensitivity
+                lower = q1 - iqr_factor * iqr
+                upper = q3 + iqr_factor * iqr
+                iqr_anomalies = df.index[(df[col] < lower) | (df[col] > upper)].tolist()
+
+                # Combine both methods
+                combined_anomalies = list(set(z_anomalies) | set(iqr_anomalies))
+
+                if combined_anomalies:
+                    statistical_anomaly = StatisticalAnomaly(
+                        anomaly_count=len(combined_anomalies),
+                        anomaly_indices=combined_anomalies[:100],
+                        anomaly_values=[
+                            float(v) for v in df.loc[combined_anomalies[:10], col].tolist()
+                        ],
+                        mean=float(col_data.mean()),
+                        std=float(col_data.std()),
+                        lower_bound=float(lower),
+                        upper_bound=float(upper),
+                    )
+                    statistical_anomalies[col] = statistical_anomaly
+
+                    total_anomalies += len(combined_anomalies)
+                    affected_rows.update(combined_anomalies)
+                    affected_columns.append(col)
+
+        if statistical_anomalies:
+            # Type cast for mypy
+            by_method["statistical"] = dict(statistical_anomalies.items())
+
+    # Pattern anomalies
+    if "pattern" in methods:
+        pattern_anomalies: dict[str, PatternAnomaly] = {}
+
+        for col in target_cols:
+            if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
                 col_data = df[col].dropna()
                 if len(col_data) > 0:
-                    # Z-score method
-                    z_scores = np.abs((col_data - col_data.mean()) / col_data.std())
-                    z_threshold = 3 * (
-                        1 - sensitivity + 0.5
-                    )  # Adjust threshold based on sensitivity
-                    z_anomalies = col_data.index[z_scores > z_threshold].tolist()
+                    # Detect unusual patterns
+                    value_counts = col_data.value_counts()
+                    total_count = len(col_data)
 
-                    # IQR method
-                    q1 = col_data.quantile(0.25)
-                    q3 = col_data.quantile(0.75)
-                    iqr = q3 - q1
-                    iqr_factor = 1.5 * (2 - sensitivity)  # Adjust factor based on sensitivity
-                    lower = q1 - iqr_factor * iqr
-                    upper = q3 + iqr_factor * iqr
-                    iqr_anomalies = df.index[(df[col] < lower) | (df[col] > upper)].tolist()
+                    # Find rare values (appearing less than threshold)
+                    threshold = (1 - sensitivity) * 0.01  # Adjust threshold
+                    rare_values = value_counts[value_counts / total_count < threshold]
 
-                    # Combine both methods
-                    combined_anomalies = list(set(z_anomalies) | set(iqr_anomalies))
+                    if len(rare_values) > 0:
+                        rare_indices = df[df[col].isin(rare_values.index)].index.tolist()
 
-                    if combined_anomalies:
-                        statistical_anomaly = StatisticalAnomaly(
-                            anomaly_count=len(combined_anomalies),
-                            anomaly_indices=combined_anomalies[:100],
-                            anomaly_values=[
-                                float(v) for v in df.loc[combined_anomalies[:10], col].tolist()
-                            ],
-                            mean=float(col_data.mean()),
-                            std=float(col_data.std()),
-                            lower_bound=float(lower),
-                            upper_bound=float(upper),
-                        )
-                        statistical_anomalies[col] = statistical_anomaly
+                        # Check for format anomalies (e.g., different case, special characters)
+                        common_pattern = None
+                        if len(value_counts) > settings.max_category_display:
+                            # Detect common pattern from frequent values
+                            top_values = value_counts.head(10).index
 
-                        total_anomalies += len(combined_anomalies)
-                        affected_rows.update(combined_anomalies)
-                        affected_columns.append(col)
+                            # Check if most values are uppercase/lowercase
+                            upper_count = sum(1 for v in top_values if str(v).isupper())
+                            lower_count = sum(1 for v in top_values if str(v).islower())
 
-            if statistical_anomalies:
-                # Type cast for mypy
-                by_method["statistical"] = dict(statistical_anomalies.items())
+                            if upper_count > settings.min_length_threshold:
+                                common_pattern = "uppercase"
+                            elif lower_count > settings.min_length_threshold:
+                                common_pattern = "lowercase"
 
-        # Pattern anomalies
-        if "pattern" in methods:
-            pattern_anomalies: dict[str, PatternAnomaly] = {}
+                        format_anomalies = []
+                        if common_pattern:
+                            for idx, val in col_data.items():
+                                if (
+                                    common_pattern == "uppercase" and not str(val).isupper()
+                                ) or (common_pattern == "lowercase" and not str(val).islower()):
+                                    format_anomalies.append(idx)
 
-            for col in target_cols:
-                if df[col].dtype == object or pd.api.types.is_string_dtype(df[col]):
-                    col_data = df[col].dropna()
-                    if len(col_data) > 0:
-                        # Detect unusual patterns
-                        value_counts = col_data.value_counts()
-                        total_count = len(col_data)
+                        all_pattern_anomalies = list(set(rare_indices + format_anomalies))
 
-                        # Find rare values (appearing less than threshold)
-                        threshold = (1 - sensitivity) * 0.01  # Adjust threshold
-                        rare_values = value_counts[value_counts / total_count < threshold]
-
-                        if len(rare_values) > 0:
-                            rare_indices = df[df[col].isin(rare_values.index)].index.tolist()
-
-                            # Check for format anomalies (e.g., different case, special characters)
-                            common_pattern = None
-                            if len(value_counts) > settings.max_category_display:
-                                # Detect common pattern from frequent values
-                                top_values = value_counts.head(10).index
-
-                                # Check if most values are uppercase/lowercase
-                                upper_count = sum(1 for v in top_values if str(v).isupper())
-                                lower_count = sum(1 for v in top_values if str(v).islower())
-
-                                if upper_count > settings.min_length_threshold:
-                                    common_pattern = "uppercase"
-                                elif lower_count > settings.min_length_threshold:
-                                    common_pattern = "lowercase"
-
-                            format_anomalies = []
-                            if common_pattern:
-                                for idx, val in col_data.items():
-                                    if (
-                                        common_pattern == "uppercase" and not str(val).isupper()
-                                    ) or (common_pattern == "lowercase" and not str(val).islower()):
-                                        format_anomalies.append(idx)
-
-                            all_pattern_anomalies = list(set(rare_indices + format_anomalies))
-
-                            if all_pattern_anomalies:
-                                pattern_anomaly = PatternAnomaly(
-                                    anomaly_count=len(all_pattern_anomalies),
-                                    anomaly_indices=all_pattern_anomalies[:100],
-                                    sample_values=[
-                                        str(v) for v in rare_values.head(10).index.tolist()
-                                    ],
-                                    expected_patterns=[common_pattern] if common_pattern else [],
-                                )
-                                pattern_anomalies[col] = pattern_anomaly
-
-                                total_anomalies += len(all_pattern_anomalies)
-                                affected_rows.update(all_pattern_anomalies)
-                                if col not in affected_columns:
-                                    affected_columns.append(col)
-
-            if pattern_anomalies:
-                # Type cast for mypy
-                by_method["pattern"] = dict(pattern_anomalies.items())
-
-        # Missing value anomalies
-        if "missing" in methods:
-            missing_anomalies: dict[str, MissingAnomaly] = {}
-
-            for col in target_cols:
-                null_mask = df[col].isna()
-                null_count = null_mask.sum()
-
-                if null_count > 0:
-                    null_ratio = null_count / len(df)
-
-                    # Check for suspicious missing patterns
-                    if 0 < null_ratio < settings.data_completeness_threshold:  # Partially missing
-                        # Check if missing values are clustered
-                        null_indices = df.index[null_mask].tolist()
-
-                        # Check for sequential missing values
-                        sequential_missing: list[list[int]] = []
-                        if len(null_indices) > 1:
-                            for i in range(len(null_indices) - 1):
-                                if null_indices[i + 1] - null_indices[i] == 1 and (
-                                    not sequential_missing
-                                    or null_indices[i] - sequential_missing[-1][-1] == 1
-                                ):
-                                    if sequential_missing:
-                                        sequential_missing[-1].append(null_indices[i + 1])
-                                    else:
-                                        sequential_missing.append(
-                                            [null_indices[i], null_indices[i + 1]],
-                                        )
-
-                        # Flag as anomaly if there are suspicious patterns
-                        is_anomaly = (
-                            len(sequential_missing) > 0
-                            and len(sequential_missing) > len(null_indices) * 0.3
-                        )
-
-                        if is_anomaly or (
-                            null_ratio > settings.outlier_detection_threshold
-                            and null_ratio < settings.correlation_threshold
-                        ):
-                            missing_anomaly = MissingAnomaly(
-                                missing_count=int(null_count),
-                                missing_ratio=round(null_ratio, 4),
-                                missing_indices=null_indices[:100],
-                                sequential_clusters=len(sequential_missing),
-                                pattern="clustered" if sequential_missing else "random",
+                        if all_pattern_anomalies:
+                            pattern_anomaly = PatternAnomaly(
+                                anomaly_count=len(all_pattern_anomalies),
+                                anomaly_indices=all_pattern_anomalies[:100],
+                                sample_values=[
+                                    str(v) for v in rare_values.head(10).index.tolist()
+                                ],
+                                expected_patterns=[common_pattern] if common_pattern else [],
                             )
-                            missing_anomalies[col] = missing_anomaly
+                            pattern_anomalies[col] = pattern_anomaly
 
+                            total_anomalies += len(all_pattern_anomalies)
+                            affected_rows.update(all_pattern_anomalies)
                             if col not in affected_columns:
                                 affected_columns.append(col)
 
-            if missing_anomalies:
-                # Type cast for mypy
-                by_method["missing"] = dict(missing_anomalies.items())
+        if pattern_anomalies:
+            # Type cast for mypy
+            by_method["pattern"] = dict(pattern_anomalies.items())
 
-        # Organize anomalies by column
-        for method_anomalies in by_method.values():
-            for col, col_anomalies in method_anomalies.items():
-                if col not in by_column:
-                    by_column[col] = col_anomalies
-                # Note: For simplicity, we're taking the first anomaly type per column
-                # In practice, you might want to combine multiple anomaly types
+    # Missing value anomalies
+    if "missing" in methods:
+        missing_anomalies: dict[str, MissingAnomaly] = {}
 
-        # Create summary
-        affected_rows_list = list(affected_rows)[:1000]  # Limit for performance
-        unique_affected_columns = list(set(affected_columns))
+        for col in target_cols:
+            null_mask = df[col].isna()
+            null_count = null_mask.sum()
 
-        summary = AnomalySummary(
-            total_anomalies=total_anomalies,
-            affected_rows=len(affected_rows_list),
-            affected_columns=unique_affected_columns,
-        )
+            if null_count > 0:
+                null_ratio = null_count / len(df)
 
-        # Create final results
-        anomaly_results = AnomalyResults(
-            summary=summary,
-            by_column=by_column,
-            by_method=by_method,
-        )
+                # Check for suspicious missing patterns
+                if 0 < null_ratio < settings.data_completeness_threshold:  # Partially missing
+                    # Check if missing values are clustered
+                    null_indices = df.index[null_mask].tolist()
 
-        # No longer recording operations (simplified MCP architecture)
+                    # Check for sequential missing values
+                    sequential_missing: list[list[int]] = []
+                    if len(null_indices) > 1:
+                        for i in range(len(null_indices) - 1):
+                            if null_indices[i + 1] - null_indices[i] == 1 and (
+                                not sequential_missing
+                                or null_indices[i] - sequential_missing[-1][-1] == 1
+                            ):
+                                if sequential_missing:
+                                    sequential_missing[-1].append(null_indices[i + 1])
+                                else:
+                                    sequential_missing.append(
+                                        [null_indices[i], null_indices[i + 1]],
+                                    )
 
-        return FindAnomaliesResult(
-            anomalies=anomaly_results,
-            columns_analyzed=target_cols,
-            methods_used=[str(m) for m in methods],  # Convert to list[str] for compatibility
-            sensitivity=sensitivity,
-        )
+                    # Flag as anomaly if there are suspicious patterns
+                    is_anomaly = (
+                        len(sequential_missing) > 0
+                        and len(sequential_missing) > len(null_indices) * 0.3
+                    )
 
-    except Exception as e:
-        logger.exception("Error finding anomalies: %s", str(e))
-        msg = f"Error finding anomalies: {e!s}"
-        raise ToolError(msg) from e
+                    if is_anomaly or (
+                        null_ratio > settings.outlier_detection_threshold
+                        and null_ratio < settings.correlation_threshold
+                    ):
+                        missing_anomaly = MissingAnomaly(
+                            missing_count=int(null_count),
+                            missing_ratio=round(null_ratio, 4),
+                            missing_indices=null_indices[:100],
+                            sequential_clusters=len(sequential_missing),
+                            pattern="clustered" if sequential_missing else "random",
+                        )
+                        missing_anomalies[col] = missing_anomaly
 
+                        if col not in affected_columns:
+                            affected_columns.append(col)
+
+        if missing_anomalies:
+            # Type cast for mypy
+            by_method["missing"] = dict(missing_anomalies.items())
+
+    # Organize anomalies by column
+    for method_anomalies in by_method.values():
+        for col, col_anomalies in method_anomalies.items():
+            if col not in by_column:
+                by_column[col] = col_anomalies
+            # Note: For simplicity, we're taking the first anomaly type per column
+            # In practice, you might want to combine multiple anomaly types
+
+    # Create summary
+    affected_rows_list = list(affected_rows)[:1000]  # Limit for performance
+    unique_affected_columns = list(set(affected_columns))
+
+    summary = AnomalySummary(
+        total_anomalies=total_anomalies,
+        affected_rows=len(affected_rows_list),
+        affected_columns=unique_affected_columns,
+    )
+
+    # Create final results
+    anomaly_results = AnomalyResults(
+        summary=summary,
+        by_column=by_column,
+        by_method=by_method,
+    )
+
+    # No longer recording operations (simplified MCP architecture)
+
+    return FindAnomaliesResult(
+        anomalies=anomaly_results,
+        columns_analyzed=target_cols,
+        methods_used=[str(m) for m in methods],  # Convert to list[str] for compatibility
+        sensitivity=sensitivity,
+    )
 
 # ============================================================================
 # FASTMCP SERVER SETUP

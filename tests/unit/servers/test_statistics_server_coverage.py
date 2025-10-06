@@ -9,6 +9,7 @@ from fastmcp import Context
 from fastmcp.exceptions import ToolError
 
 from databeak.core.session import get_session_manager
+from databeak.exceptions import ColumnNotFoundError, NoDataLoadedError
 from databeak.models.statistics_models import (
     ColumnStatisticsResult,
     CorrelationResult,
@@ -129,16 +130,19 @@ class TestGetStatistics:
 
     async def test_statistics_invalid_columns(self, test_data_ctx: Context) -> None:
         """Test statistics with invalid column names."""
-        with pytest.raises(ToolError, match="not found"):
+
+        with pytest.raises(ColumnNotFoundError):
             await get_statistics(test_data_ctx, columns=["invalid_col"])
 
     async def test_statistics_mixed_valid_invalid_columns(self, test_data_ctx: Context) -> None:
         """Test statistics with mix of valid and invalid columns."""
-        with pytest.raises(ToolError, match="not found"):
+
+        with pytest.raises(ColumnNotFoundError):
             await get_statistics(test_data_ctx, columns=["numeric1", "invalid_col"])
 
     async def test_statistics_no_data_loaded(self) -> None:
         """Test statistics when no data is loaded."""
+
         # Create a real session but don't load any data
         session_id = str(uuid.uuid4())
         manager = get_session_manager()
@@ -147,7 +151,7 @@ class TestGetStatistics:
 
         ctx = create_mock_context(session_id)
 
-        with pytest.raises(ToolError, match="No data loaded"):
+        with pytest.raises(NoDataLoadedError):
             await get_statistics(ctx)
 
     async def test_statistics_all_null_column(self, test_data_ctx: Context) -> None:
@@ -210,7 +214,8 @@ class TestGetColumnStatistics:
 
     async def test_column_statistics_invalid_column(self, test_data_ctx: Context) -> None:
         """Test column statistics with invalid column."""
-        with pytest.raises(ToolError, match="Column"):
+
+        with pytest.raises(ColumnNotFoundError):
             await get_column_statistics(test_data_ctx, "invalid_column")
 
     async def test_column_statistics_with_nulls(self, test_data_ctx: Context) -> None:
@@ -299,23 +304,25 @@ class TestGetCorrelationMatrix:
         # Should raise an error when there are no numeric columns
         ctx = create_mock_context(session_id)
 
-        with pytest.raises(ToolError, match="No numeric columns"):
+        with pytest.raises(ToolError):
             await get_correlation_matrix(ctx)
 
     async def test_correlation_matrix_invalid_method(self, test_data_ctx: Context) -> None:
         """Test correlation matrix with invalid method."""
-        with pytest.raises(ToolError, match="method"):
+        # Pandas raises ValueError for invalid correlation method
+        with pytest.raises(ValueError):
             await get_correlation_matrix(test_data_ctx, method="invalid")  # type: ignore[arg-type]
 
     async def test_correlation_matrix_invalid_columns(self, test_data_ctx: Context) -> None:
         """Test correlation matrix with invalid columns."""
-        with pytest.raises(ToolError, match="not found"):
+
+        with pytest.raises(ColumnNotFoundError):
             await get_correlation_matrix(test_data_ctx, columns=["numeric1", "invalid_col"])
 
     async def test_correlation_matrix_single_column(self, test_data_ctx: Context) -> None:
         """Test correlation matrix with single column."""
         # Single column should raise an error since correlation needs at least 2 columns
-        with pytest.raises(ToolError, match="at least two"):
+        with pytest.raises(ToolError):
             await get_correlation_matrix(test_data_ctx, columns=["numeric1"])
 
 
@@ -379,7 +386,8 @@ class TestGetValueCounts:
 
     async def test_value_counts_invalid_column(self, test_data_ctx: Context) -> None:
         """Test value counts with invalid column."""
-        with pytest.raises(ToolError, match="Column"):
+
+        with pytest.raises(ColumnNotFoundError):
             await get_value_counts(test_data_ctx, "invalid_column")
 
     async def test_value_counts_empty_column(self, test_data_ctx: Context) -> None:

@@ -19,11 +19,13 @@ def parse_json_string_to_dict(
             if not isinstance(parsed, dict):
                 msg = "JSON string must parse to dict"
                 raise TypeError(msg)
-            return parsed
         except json.JSONDecodeError as e:
-            msg = f"Invalid JSON string: {e}"
+            msg = "Invalid JSON string"
             raise ValueError(msg) from e
-    return v
+        else:
+            return parsed
+    else:
+        return v
 
 
 # Implementation: JSON string to dict or list parsing with type validation
@@ -37,11 +39,13 @@ def parse_json_string_to_dict_or_list(  # Any justified: JSON arbitrary structur
             if not isinstance(parsed, dict | list):
                 msg = "JSON string must parse to dict or list"
                 raise TypeError(msg)
-            return parsed
         except json.JSONDecodeError as e:
-            msg = f"Invalid JSON string: {e}"
+            msg = "Invalid JSON string"
             raise ValueError(msg) from e
-    return v
+        else:
+            return parsed
+    else:
+        return v
 
 
 # Implementation: JSON string to list parsing with type validation
@@ -55,8 +59,10 @@ def parse_json_string_to_list(
             if not isinstance(parsed, list):
                 msg = "JSON string must parse to list"
                 raise TypeError(msg)
-            return parsed
         except json.JSONDecodeError as e:
-            msg = f"Invalid JSON string: {e}"
+            msg = "Invalid JSON string"
             raise ValueError(msg) from e
-    return v
+        else:
+            return parsed
+    else:
+        return v

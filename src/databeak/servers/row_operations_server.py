@@ -145,54 +145,46 @@ def get_cell_value(
     Supports column name or index targeting. Returns value with coordinates and data type
     information.
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+    # Validate row index
+    if row_index < 0 or row_index >= len(df):
+        msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
+
+    # Handle column specification
+    if isinstance(column, int):
+        # Column index
+        if column < 0 or column >= len(df.columns):
+            msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
             raise ToolError(msg)
+        column_name = df.columns[column]
+    else:
+        # Column name
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, list(df.columns))
+        column_name = column
 
-        # Handle column specification
-        if isinstance(column, int):
-            # Column index
-            if column < 0 or column >= len(df.columns):
-                msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
-                raise ToolError(msg)
-            column_name = df.columns[column]
-        else:
-            # Column name
-            if column not in df.columns:
-                raise ColumnNotFoundError(column, list(df.columns))
-            column_name = column
+    # Get the cell value
+    value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
 
-        # Get the cell value
-        value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
+    # Handle pandas/numpy types for JSON serialization
+    if pd.isna(value):
+        value = None
+    elif hasattr(value, "item"):  # numpy scalar
+        value = value.item()  # type: ignore[assignment]
 
-        # Handle pandas/numpy types for JSON serialization
-        if pd.isna(value):
-            value = None
-        elif hasattr(value, "item"):  # numpy scalar
-            value = value.item()  # type: ignore[assignment]
+    # Get column data type
+    data_type = str(df[column_name].dtype)
 
-        # Get column data type
-        data_type = str(df[column_name].dtype)
+    # No longer recording operations (simplified MCP architecture)
 
-        # No longer recording operations (simplified MCP architecture)
-
-        return CellValueResult(
-            value=value,
-            coordinates={"row": row_index, "column": column_name},
-            data_type=data_type,
-        )
-
-    except (ColumnNotFoundError, ToolError):
-        raise
-    except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.exception("Error getting cell value: %s", str(e))
-        msg = f"Error getting cell value: {e!s}"
-        raise ToolError(msg) from e
+    return CellValueResult(
+        value=value,
+        coordinates={"row": row_index, "column": column_name},
+        data_type=data_type,
+    )
 
 
 # Implementation: validates coordinates, tracks old/new values for audit
@@ -215,85 +207,77 @@ def set_cell_value(
     Supports column name or index, tracks old and new values. Returns operation result with
     coordinates and data type.
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+    # Validate row index
+    if row_index < 0 or row_index >= len(df):
+        msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
+
+    # Handle column specification
+    if isinstance(column, int):
+        # Column index
+        if column < 0 or column >= len(df.columns):
+            msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
             raise ToolError(msg)
+        column_name = df.columns[column]
+    else:
+        # Column name
+        if column not in df.columns:
+            raise ColumnNotFoundError(column, list(df.columns))
+        column_name = column
 
-        # Handle column specification
-        if isinstance(column, int):
-            # Column index
-            if column < 0 or column >= len(df.columns):
-                msg = f"Column index {column} out of range (0-{len(df.columns) - 1})"
-                raise ToolError(msg)
-            column_name = df.columns[column]
-        else:
-            # Column name
-            if column not in df.columns:
-                raise ColumnNotFoundError(column, list(df.columns))
-            column_name = column
+    # Get the old value for tracking
+    old_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
+    if pd.isna(old_value):
+        old_value = None
+    elif hasattr(old_value, "item"):  # numpy scalar
+        old_value = old_value.item()  # type: ignore[assignment]
 
-        # Get the old value for tracking
-        old_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
-        if pd.isna(old_value):
-            old_value = None
-        elif hasattr(old_value, "item"):  # numpy scalar
-            old_value = old_value.item()  # type: ignore[assignment]
+    # Set the new value with explicit type conversion to avoid dtype compatibility warnings
+    col_idx = df.columns.get_loc(column_name)
+    current_dtype = df[column_name].dtype  # Access dtype through column name instead
 
-        # Set the new value with explicit type conversion to avoid dtype compatibility warnings
-        col_idx = df.columns.get_loc(column_name)
-        current_dtype = df[column_name].dtype  # Access dtype through column name instead
-
-        # Convert value to match column dtype if possible
-        converted_value: CellValue
-        try:
-            if pd.api.types.is_numeric_dtype(current_dtype) and isinstance(value, str):
-                numeric_result = pd.to_numeric(value, errors="coerce")
-                # Convert pandas numeric to Python type for CellValue compatibility
-                if pd.isna(numeric_result):
-                    converted_value = None
-                else:
-                    converted_value = (
-                        float(numeric_result)
-                        if isinstance(numeric_result, (int, float))
-                        else numeric_result.item()
-                    )
+    # Convert value to match column dtype if possible
+    converted_value: CellValue
+    try:
+        if pd.api.types.is_numeric_dtype(current_dtype) and isinstance(value, str):
+            numeric_result = pd.to_numeric(value, errors="coerce")
+            # Convert pandas numeric to Python type for CellValue compatibility
+            if pd.isna(numeric_result):
+                converted_value = None
             else:
-                converted_value = value
-        except (ValueError, TypeError):
+                converted_value = (
+                    float(numeric_result)
+                    if isinstance(numeric_result, (int, float))
+                    else numeric_result.item()
+                )
+        else:
             converted_value = value
+    except (ValueError, TypeError):
+        converted_value = value
 
-        df.iloc[row_index, col_idx] = converted_value  # type: ignore[index]
+    df.iloc[row_index, col_idx] = converted_value  # type: ignore[index]
 
-        # Get the new value for tracking (after pandas type conversion)
-        new_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
-        if pd.isna(new_value):
-            new_value = None
-        elif hasattr(new_value, "item"):  # numpy scalar
-            new_value = new_value.item()  # type: ignore[assignment]
+    # Get the new value for tracking (after pandas type conversion)
+    new_value = df.iloc[row_index, df.columns.get_loc(column_name)]  # type: ignore[index]
+    if pd.isna(new_value):
+        new_value = None
+    elif hasattr(new_value, "item"):  # numpy scalar
+        new_value = new_value.item()  # type: ignore[assignment]
 
-        # Get column data type
-        data_type = str(df[column_name].dtype)
+    # Get column data type
+    data_type = str(df[column_name].dtype)
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return SetCellResult(
-            coordinates={"row": row_index, "column": column_name},
-            old_value=old_value,
-            new_value=new_value,
-            data_type=data_type,
-        )
-
-    except (ColumnNotFoundError, ToolError):
-        raise
-    except (ValueError, TypeError, KeyError, IndexError) as e:
-        logger.exception("Error setting cell value: %s", str(e))
-        msg = f"Error setting cell value: {e!s}"
-        raise ToolError(msg) from e
+    return SetCellResult(
+        coordinates={"row": row_index, "column": column_name},
+        old_value=old_value,
+        new_value=new_value,
+        data_type=data_type,
+    )
 
 
 # Implementation: validates row bounds, optional column filtering
@@ -312,49 +296,41 @@ def get_row_data(
     Returns complete row data or filtered by column list. Converts pandas types for JSON
     serialization.
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
-            raise ToolError(msg)
+    # Validate row index
+    if row_index < 0 or row_index >= len(df):
+        msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
 
-        # Handle column filtering
-        if columns is None:
-            selected_columns = list(df.columns)
-            row_data = df.iloc[row_index].to_dict()
-        else:
-            # Validate all columns exist
-            missing_columns = [col for col in columns if col not in df.columns]
-            if missing_columns:
-                raise ColumnNotFoundError(missing_columns[0], list(df.columns))
+    # Handle column filtering
+    if columns is None:
+        selected_columns = list(df.columns)
+        row_data = df.iloc[row_index].to_dict()
+    else:
+        # Validate all columns exist
+        missing_columns = [col for col in columns if col not in df.columns]
+        if missing_columns:
+            raise ColumnNotFoundError(missing_columns[0], list(df.columns))
 
-            selected_columns = columns
-            row_data = df.iloc[row_index][columns].to_dict()
+        selected_columns = columns
+        row_data = df.iloc[row_index][columns].to_dict()
 
-        # Handle pandas/numpy types for JSON serialization
-        for key, value in row_data.items():
-            if pd.isna(value):
-                row_data[key] = None
-            elif hasattr(value, "item"):  # numpy scalar
-                row_data[key] = value.item()
+    # Handle pandas/numpy types for JSON serialization
+    for key, value in row_data.items():
+        if pd.isna(value):
+            row_data[key] = None
+        elif hasattr(value, "item"):  # numpy scalar
+            row_data[key] = value.item()
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return RowDataResult(
-            row_index=row_index,
-            data=row_data,
-            columns=selected_columns,
-        )
-
-    except (ColumnNotFoundError, ToolError):
-        raise
-    except Exception as e:
-        logger.exception("Error getting row data: %s", str(e))
-        msg = f"Error getting row data: {e!s}"
-        raise ToolError(msg) from e
+    return RowDataResult(
+        row_index=row_index,
+        data=row_data,
+        columns=selected_columns,
+    )
 
 
 # Implementation: validates column exists and row range bounds
@@ -376,64 +352,56 @@ def get_column_data(
 
     Supports row range filtering for focused analysis. Returns column values with range metadata.
     """
-    try:
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        # Validate column exists
-        if column not in df.columns:
-            raise ColumnNotFoundError(column, list(df.columns))
+    # Validate column exists
+    if column not in df.columns:
+        raise ColumnNotFoundError(column, list(df.columns))
 
-        # Validate and set row range
-        if start_row is not None and start_row < 0:
-            msg = "start_row"
-            raise InvalidParameterError(msg, start_row, "must be non-negative")
-        if end_row is not None and end_row < 0:
-            msg = "end_row"
-            raise InvalidParameterError(msg, end_row, "must be non-negative")
-        if start_row is not None and start_row >= len(df):
-            msg = f"start_row {start_row} out of range (0-{len(df) - 1})"
-            raise ToolError(msg)
-        if end_row is not None and end_row > len(df):
-            msg = f"end_row {end_row} out of range (0-{len(df)})"
-            raise ToolError(msg)
-        if start_row is not None and end_row is not None and start_row >= end_row:
-            msg = "start_row"
-            raise InvalidParameterError(msg, start_row, "must be less than end_row")
+    # Validate and set row range
+    if start_row is not None and start_row < 0:
+        msg = "start_row"
+        raise InvalidParameterError(msg, start_row, "must be non-negative")
+    if end_row is not None and end_row < 0:
+        msg = "end_row"
+        raise InvalidParameterError(msg, end_row, "must be non-negative")
+    if start_row is not None and start_row >= len(df):
+        msg = f"start_row {start_row} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
+    if end_row is not None and end_row > len(df):
+        msg = f"end_row {end_row} out of range (0-{len(df)})"
+        raise ToolError(msg)
+    if start_row is not None and end_row is not None and start_row >= end_row:
+        msg = "start_row"
+        raise InvalidParameterError(msg, start_row, "must be less than end_row")
 
-        # Apply row range slicing
-        if start_row is None and end_row is None:
-            column_data = df[column]
-            start_row = 0
-            end_row = len(df) - 1
-        elif start_row is None:
-            column_data = df[column][:end_row]
-            start_row = 0
-        elif end_row is None:
-            column_data = df[column][start_row:]
-            end_row = len(df) - 1
-        else:
-            column_data = df[column][start_row:end_row]
+    # Apply row range slicing
+    if start_row is None and end_row is None:
+        column_data = df[column]
+        start_row = 0
+        end_row = len(df) - 1
+    elif start_row is None:
+        column_data = df[column][:end_row]
+        start_row = 0
+    elif end_row is None:
+        column_data = df[column][start_row:]
+        end_row = len(df) - 1
+    else:
+        column_data = df[column][start_row:end_row]
 
-        # Convert to list and handle pandas/numpy types
-        values = convert_pandas_na_list(column_data.tolist())
+    # Convert to list and handle pandas/numpy types
+    values = convert_pandas_na_list(column_data.tolist())
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return ColumnDataResult(
-            column=column,
-            values=values,
-            total_values=len(values),
-            start_row=start_row,
-            end_row=end_row,
-        )
-
-    except (ColumnNotFoundError, InvalidParameterError, ToolError):
-        raise
-    except Exception as e:
-        logger.exception("Error getting column data: %s", str(e))
-        msg = f"Error getting column data: {e!s}"
-        raise ToolError(msg) from e
+    return ColumnDataResult(
+        column=column,
+        values=values,
+        total_values=len(values),
+        start_row=start_row,
+        end_row=end_row,
+    )
 
 
 # Implementation: supports dict, list, and JSON string data formats
@@ -455,92 +423,84 @@ def insert_row(
     Supports dict, list, and JSON string input with null value handling. Returns insertion result
     with before/after statistics.
     """
-    try:
-        # Handle Claude Code's JSON string serialization
-        if isinstance(data, str):
-            try:
-                data = parse_json_string_to_dict(data)
-            except ValueError as e:
-                msg = f"Invalid JSON string in data parameter: {e}"
-                raise ToolError(msg) from e
+    # Handle Claude Code's JSON string serialization
+    if isinstance(data, str):
+        try:
+            data = parse_json_string_to_dict(data)
+        except ValueError as e:
+            msg = f"Invalid JSON string in data parameter: {e}"
+            raise ToolError(msg) from e
 
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
-        rows_before = len(df)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
+    rows_before = len(df)
 
-        # Handle special case: append at end
-        if row_index == -1:
-            row_index = len(df)
+    # Handle special case: append at end
+    if row_index == -1:
+        row_index = len(df)
 
-        # Validate row index for insertion (0 to N is valid for insertion)
-        if row_index < 0 or row_index > len(df):
-            msg = f"Row index {row_index} out of range for insertion (0-{len(df)})"
-            raise ToolError(msg)
+    # Validate row index for insertion (0 to N is valid for insertion)
+    if row_index < 0 or row_index > len(df):
+        msg = f"Row index {row_index} out of range for insertion (0-{len(df)})"
+        raise ToolError(msg)
 
-        # Process data based on type
-        if isinstance(data, dict):
-            # Dictionary format - fill missing columns with None
-            row_data = {}
-            for col in df.columns:
-                row_data[col] = data.get(col, None)
-        elif isinstance(data, list):
-            # List format - must match column count
-            try:
-                row_data = dict(zip(df.columns, data, strict=True))
-            except ValueError as e:
-                msg = f"List data length ({len(data)}) must match column count ({len(df.columns)})"
-                raise ToolError(
-                    msg,
-                ) from e
+    # Process data based on type
+    if isinstance(data, dict):
+        # Dictionary format - fill missing columns with None
+        row_data = {}
+        for col in df.columns:
+            row_data[col] = data.get(col, None)
+    elif isinstance(data, list):
+        # List format - must match column count
+        try:
+            row_data = dict(zip(df.columns, data, strict=True))
+        except ValueError as e:
+            msg = f"List data length ({len(data)}) must match column count ({len(df.columns)})"
+            raise ToolError(
+                msg,
+            ) from e
+    else:
+        msg = f"Unsupported data type: {type(data)}. Use dict, list, or JSON string"
+        raise ToolError(msg)
+
+    # Create new row as DataFrame
+    new_row = pd.DataFrame([row_data])
+
+    # Insert the row
+    if row_index == 0:
+        # Insert at beginning
+        df_new = pd.concat([new_row, df], ignore_index=True)
+    elif row_index >= len(df):
+        # Append at end
+        df_new = pd.concat([df, new_row], ignore_index=True)
+    else:
+        # Insert in middle
+        df_before = df.iloc[:row_index]
+        df_after = df.iloc[row_index:]
+        df_new = pd.concat([df_before, new_row, df_after], ignore_index=True)
+
+    # Update session data
+    session.df = df_new
+
+    # Prepare inserted data for response (handle pandas types)
+    data_inserted: dict[str, CellValue] = {}
+    for key, value in row_data.items():
+        if pd.isna(value):
+            data_inserted[key] = None
+        elif hasattr(value, "item"):  # numpy scalar
+            data_inserted[key] = value.item()
         else:
-            msg = f"Unsupported data type: {type(data)}. Use dict, list, or JSON string"
-            raise ToolError(msg)
+            data_inserted[key] = value
 
-        # Create new row as DataFrame
-        new_row = pd.DataFrame([row_data])
+    # No longer recording operations (simplified MCP architecture)
 
-        # Insert the row
-        if row_index == 0:
-            # Insert at beginning
-            df_new = pd.concat([new_row, df], ignore_index=True)
-        elif row_index >= len(df):
-            # Append at end
-            df_new = pd.concat([df, new_row], ignore_index=True)
-        else:
-            # Insert in middle
-            df_before = df.iloc[:row_index]
-            df_after = df.iloc[row_index:]
-            df_new = pd.concat([df_before, new_row, df_after], ignore_index=True)
-
-        # Update session data
-        session.df = df_new
-
-        # Prepare inserted data for response (handle pandas types)
-        data_inserted: dict[str, CellValue] = {}
-        for key, value in row_data.items():
-            if pd.isna(value):
-                data_inserted[key] = None
-            elif hasattr(value, "item"):  # numpy scalar
-                data_inserted[key] = value.item()
-            else:
-                data_inserted[key] = value
-
-        # No longer recording operations (simplified MCP architecture)
-
-        return InsertRowResult(
-            row_index=row_index,
-            rows_before=rows_before,
-            rows_after=len(df_new),
-            data_inserted=data_inserted,
-            columns=list(df_new.columns),
-        )
-
-    except ToolError:
-        raise
-    except Exception as e:
-        logger.exception("Error inserting row: %s", str(e))
-        msg = f"Error inserting row: {e!s}"
-        raise ToolError(msg) from e
+    return InsertRowResult(
+        row_index=row_index,
+        rows_before=rows_before,
+        rows_after=len(df_new),
+        data_inserted=data_inserted,
+        columns=list(df_new.columns),
+    )
 
 
 # Implementation: validates row_index bounds, captures deleted data for undo
@@ -555,47 +515,39 @@ def delete_row(
     Captures deleted data for undo operations. Returns operation result with before/after
     statistics.
     """
-    try:
-        session_id = ctx.session_id
-        session, df = get_session_data(session_id)
-        rows_before = len(df)
+    session_id = ctx.session_id
+    session, df = get_session_data(session_id)
+    rows_before = len(df)
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
-            raise ToolError(msg)
+    # Validate row index
+    if row_index < 0 or row_index >= len(df):
+        msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
 
-        # Get the data that will be deleted for tracking
-        deleted_data = df.iloc[row_index].to_dict()
+    # Get the data that will be deleted for tracking
+    deleted_data = df.iloc[row_index].to_dict()
 
-        # Handle pandas/numpy types for JSON serialization
-        for key, value in deleted_data.items():
-            if pd.isna(value):
-                deleted_data[key] = None
-            elif hasattr(value, "item"):  # numpy scalar
-                deleted_data[key] = value.item()
+    # Handle pandas/numpy types for JSON serialization
+    for key, value in deleted_data.items():
+        if pd.isna(value):
+            deleted_data[key] = None
+        elif hasattr(value, "item"):  # numpy scalar
+            deleted_data[key] = value.item()
 
-        # Delete the row
-        df_new = df.drop(df.index[row_index]).reset_index(drop=True)
+    # Delete the row
+    df_new = df.drop(df.index[row_index]).reset_index(drop=True)
 
-        # Update session data
-        session.df = df_new
+    # Update session data
+    session.df = df_new
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return DeleteRowResult(
-            row_index=row_index,
-            rows_before=rows_before,
-            rows_after=len(df_new),
-            deleted_data=deleted_data,
-        )
-
-    except ToolError:
-        raise
-    except Exception as e:
-        logger.exception("Error deleting row: %s", str(e))
-        msg = f"Error deleting row: {e!s}"
-        raise ToolError(msg) from e
+    return DeleteRowResult(
+        row_index=row_index,
+        rows_before=rows_before,
+        rows_after=len(df_new),
+        deleted_data=deleted_data,
+    )
 
 
 # Implementation: validates row bounds, supports dict and JSON string data
@@ -614,77 +566,69 @@ def update_row(
     Supports partial column updates with change tracking. Returns old/new values for updated
     columns.
     """
-    try:
-        # Handle Claude Code's JSON string serialization
-        if isinstance(data, str):
-            try:
-                data = parse_json_string_to_dict(data)
-            except ValueError as e:
-                msg = f"Invalid JSON string in data parameter: {e}"
-                raise ToolError(msg) from e
+    # Handle Claude Code's JSON string serialization
+    if isinstance(data, str):
+        try:
+            data = parse_json_string_to_dict(data)
+        except ValueError as e:
+            msg = f"Invalid JSON string in data parameter: {e}"
+            raise ToolError(msg) from e
 
-        if not isinstance(data, dict):
-            msg = "Update data must be a dictionary or JSON string"
-            raise ToolError(msg)
+    if not isinstance(data, dict):
+        msg = "Update data must be a dictionary or JSON string"
+        raise ToolError(msg)
 
-        session_id = ctx.session_id
-        _session, df = get_session_data(session_id)
+    session_id = ctx.session_id
+    _session, df = get_session_data(session_id)
 
-        # Validate row index
-        if row_index < 0 or row_index >= len(df):
-            msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
-            raise ToolError(msg)
+    # Validate row index
+    if row_index < 0 or row_index >= len(df):
+        msg = f"Row index {row_index} out of range (0-{len(df) - 1})"
+        raise ToolError(msg)
 
-        # Validate all columns exist
-        missing_columns = [col for col in data if col not in df.columns]
-        if missing_columns:
-            raise ColumnNotFoundError(missing_columns[0], list(df.columns))
+    # Validate all columns exist
+    missing_columns = [col for col in data if col not in df.columns]
+    if missing_columns:
+        raise ColumnNotFoundError(missing_columns[0], list(df.columns))
 
-        # Track changes
-        columns_updated = []
-        old_values = {}
-        new_values = {}
+    # Track changes
+    columns_updated = []
+    old_values = {}
+    new_values = {}
 
-        # Update each column
-        for column, new_value in data.items():
-            # Get old value
-            old_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
-            if pd.isna(old_value):
-                old_value = None
-            elif hasattr(old_value, "item"):  # numpy scalar
-                old_value = old_value.item()  # type: ignore[assignment]
+    # Update each column
+    for column, new_value in data.items():
+        # Get old value
+        old_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
+        if pd.isna(old_value):
+            old_value = None
+        elif hasattr(old_value, "item"):  # numpy scalar
+            old_value = old_value.item()  # type: ignore[assignment]
 
-            # Set new value
-            df.iloc[row_index, df.columns.get_loc(column)] = new_value  # type: ignore[index]
+        # Set new value
+        df.iloc[row_index, df.columns.get_loc(column)] = new_value  # type: ignore[index]
 
-            # Get new value (after pandas type conversion)
-            updated_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
-            if pd.isna(updated_value):
-                updated_value = None
-            elif hasattr(updated_value, "item"):  # numpy scalar
-                updated_value = updated_value.item()  # type: ignore[assignment]
+        # Get new value (after pandas type conversion)
+        updated_value = df.iloc[row_index, df.columns.get_loc(column)]  # type: ignore[index]
+        if pd.isna(updated_value):
+            updated_value = None
+        elif hasattr(updated_value, "item"):  # numpy scalar
+            updated_value = updated_value.item()  # type: ignore[assignment]
 
-            # Track the change
-            columns_updated.append(column)
-            old_values[column] = old_value
-            new_values[column] = updated_value
+        # Track the change
+        columns_updated.append(column)
+        old_values[column] = old_value
+        new_values[column] = updated_value
 
-        # No longer recording operations (simplified MCP architecture)
+    # No longer recording operations (simplified MCP architecture)
 
-        return UpdateRowResult(
-            row_index=row_index,
-            columns_updated=columns_updated,
-            old_values=old_values,
-            new_values=new_values,
-            changes_made=len(columns_updated),
-        )
-
-    except (ColumnNotFoundError, ToolError):
-        raise
-    except Exception as e:
-        logger.exception("Error updating row: %s", str(e))
-        msg = f"Error updating row: {e!s}"
-        raise ToolError(msg) from e
+    return UpdateRowResult(
+        row_index=row_index,
+        columns_updated=columns_updated,
+        old_values=old_values,
+        new_values=new_values,
+        changes_made=len(columns_updated),
+    )
 
 
 # ============================================================================

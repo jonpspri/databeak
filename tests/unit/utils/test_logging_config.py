@@ -134,7 +134,7 @@ class TestStructuredFormatter:
 
         try:
             msg = "Test exception"
-            raise ValueError(msg)
+            raise ValueError(msg) # noqa: TRY301
         except ValueError:
             import sys
 
