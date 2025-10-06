@@ -517,6 +517,33 @@ class TestServerInfo:
                 assert isinstance(caps, list)
                 assert all(isinstance(cap, str) for cap in caps)
 
+    @pytest.mark.asyncio
+    async def test_get_server_info_returns_actual_version(self) -> None:
+        """Test server info returns actual package version, not fallback 0.0.0."""
+        import tomllib
+        from pathlib import Path
+
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 500
+            mock_config.session_timeout = 3600
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info(create_mock_context())
+
+            # Get the version from pyproject.toml
+            pyproject_path = Path(__file__).parent.parent.parent.parent / "pyproject.toml"
+            with pyproject_path.open("rb") as f:
+                pyproject_data = tomllib.load(f)
+            expected_version = pyproject_data["project"]["version"]
+
+            # Verify version matches pyproject.toml version
+            assert result.version == expected_version
+            # Verify it's not the fallback version
+            assert result.version != "0.0.0"
+            # Verify version format (should be semantic versioning)
+            assert "." in result.version
+
 
 class TestSystemServerIntegration:
     """Test system server integration and patterns."""

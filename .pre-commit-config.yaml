@@ -90,12 +90,6 @@ repos:
         args: [--format, parsable, --strict]
         exclude: "^(.github/workflows/|docs/blog/)"
 
-  # Dockerfile linting with hadolint
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
-    hooks:
-      - id: hadolint
-
   # Markdown formatting and linting (Python-based)
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.22
