@@ -517,6 +517,29 @@ class TestServerInfo:
                 assert isinstance(caps, list)
                 assert all(isinstance(cap, str) for cap in caps)
 
+    @pytest.mark.asyncio
+    async def test_get_server_info_returns_actual_version(self) -> None:
+        """Test server info returns actual package version, not fallback 0.0.0."""
+        import importlib.metadata
+
+        with patch("databeak.servers.system_server.get_settings") as mock_settings:
+            mock_config = Mock()
+            mock_config.max_file_size_mb = 500
+            mock_config.session_timeout = 3600
+            mock_settings.return_value = mock_config
+
+            result = await get_server_info(create_mock_context())
+
+            # Get the actual package version
+            expected_version = importlib.metadata.version("databeak")
+
+            # Verify version matches package version
+            assert result.version == expected_version
+            # Verify it's not the fallback version
+            assert result.version != "0.0.0"
+            # Verify version format (should be semantic versioning)
+            assert "." in result.version
+
 
 class TestSystemServerIntegration:
     """Test system server integration and patterns."""

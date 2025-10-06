@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-10-06
+
+### Fixed
+
+- **Version Reporting**: Fixed `_version.py` to correctly report package version (0.1.1) instead of fallback "0.0.0" - now uses `importlib.metadata.version("databeak")` instead of `__name__`
+- **Server Info**: `get_server_info` and `health_check` MCP tools now correctly return actual package version
+
+### Added
+
+- **Unit Tests**: Added `test_get_server_info_returns_actual_version` unit test to validate version reporting
+- **Integration Tests**: Added 5 new integration tests in `test_system_server_integration.py` to verify version propagation through the full MCP client stack
+
 ## [0.1.0] - 2025-10-06
 
 ### Fixed
@@ -32,8 +44,9 @@ and this project adheres to
   prevent false positives
 - **Type Aliases**: Migrated `FilterValue` to modern `type` statement syntax
   (PEP 695)
-- **Pydantic Validators**: Simplified validation logic in pydantic_validators.py,
-  removed duplicate type hints, and streamlined field validator implementations
+- **Pydantic Validators**: Simplified validation logic in
+  pydantic_validators.py, removed duplicate type hints, and streamlined field
+  validator implementations
 
 ### Removed
 
@@ -180,3 +193,4 @@ and this project adheres to
 [0.0.3]: https://github.com/jonpspri/databeak/releases/tag/v0.0.3
 [0.0.4]: https://github.com/jonpspri/databeak/releases/tag/v0.0.4
 [0.1.0]: https://github.com/jonpspri/databeak/releases/tag/v0.1.0
+[0.1.1]: https://github.com/jonpspri/databeak/releases/tag/v0.1.1
