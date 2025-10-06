@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.26.0", "uv-dynamic-versioning"]
+requires = ["hatchling>=1.26.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -115,12 +115,6 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/databeak"]
-
-[tool.hatch.version]
-source = "uv-dynamic-versioning"
-
-[tool.uv-dynamic-versioning]
-fallback-version = "0.0.0"
 
 [tool.ruff]
 line-length = 100
