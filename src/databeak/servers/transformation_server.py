@@ -99,9 +99,7 @@ def filter_rows(
     for condition in typed_conditions:
         column = condition.column
         operator = (
-            condition.operator.value
-            if hasattr(condition.operator, "value")
-            else condition.operator
+            condition.operator.value if hasattr(condition.operator, "value") else condition.operator
         )
         value = condition.value
 
@@ -233,7 +231,6 @@ def sort_data(
         ascending=ascending,
         rows_processed=len(df),
     )
-
 
 
 def remove_duplicates(
@@ -407,7 +404,6 @@ def fill_missing_values(
         columns_affected=target_cols,
         values_filled=int(values_filled),
     )
-
 
 
 # ============================================================================

@@ -16,7 +16,7 @@ enforcement. This document outlines our quality metrics, tools, and processes.
 - ✅ **100% MyPy compliance** - Complete type safety with minimal Any usage
 - ✅ **Perfect MCP documentation** - All tools have Field descriptions, zero Args
   sections
-- ✅ **High test coverage** - 940+ unit tests + 43 integration tests, 87%
+- ✅ **High test coverage** - 880+ unit tests + 43 integration tests, 88%+
   coverage
 - ✅ **Clean architecture** - Stateless MCP design, eliminated 4,600+ lines of
   complexity
@@ -29,7 +29,7 @@ enforcement. This document outlines our quality metrics, tools, and processes.
 | -------------- | -------------------- | -------------------------------------- |
 | **Ruff**       | Linting & formatting | 46 rules enabled, 100-char line length |
 | **MyPy**       | Static type checking | Strict mode, pandas-stubs integration  |
-| **Pytest**     | Unit testing         | 940+ tests, 80% coverage minimum       |
+| **Pytest**     | Unit testing         | 880+ tests, 80% coverage minimum       |
 | **Pre-commit** | Quality gates        | Automated enforcement on commits       |
 
 #### MCP Documentation Tools
@@ -100,7 +100,7 @@ scripts/check_mcp_field_descriptions.py src/databeak/servers/validation_server.p
 
 #### Testing Standards
 
-- **Unit test focus** - 960+ fast, isolated tests
+- **Unit test focus** - 880+ fast, isolated tests
 - **80% coverage minimum** - Configured in pyproject.toml
 - **Async test support** - Full FastMCP Context integration
 - **Session-based patterns** - Tests mirror real MCP usage
@@ -157,7 +157,7 @@ Quality checks designed for automated pipelines:
 - **0 ruff violations** (down from 200+ during development)
 - **0 MyPy errors** (maintained throughout architectural changes)
 - **0 Args violations** (49 removed during MCP compliance)
-- **960+ tests passing** (95%+ pass rate maintained)
+- **880+ tests passing** (95%+ pass rate maintained)
 - **3,340+ lines eliminated** (architectural simplification)
 
 #### Continuous Improvement

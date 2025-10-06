@@ -119,7 +119,7 @@ class TestGetStatistics:
 
     def test_get_statistics_invalid_session(self):
         """Test statistics with invalid session."""
-        with pytest.raises(ToolError, match="Session not found"):
+        with pytest.raises(SessionNotFoundError):
             get_statistics("invalid-id")
 ```
 

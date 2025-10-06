@@ -45,8 +45,7 @@ src/databeak/
 │   ├── row_operations_server.py # Row-level operations
 │   └── system_server.py        # Health & system info
 ├── services/                 # Backend operation implementations
-│   ├── data_operations.py      # Data preview and transformation utilities
-│   └── transformation_service.py # Transformation logic
+│   └── data_operations.py      # Data preview and transformation utilities
 ├── utils/                    # Utility functions
 │   ├── validators.py           # Input validation
 │   ├── secure_evaluator.py     # Safe expression evaluation
@@ -89,7 +88,7 @@ src/databeak/
 - **Zero static analysis violations** - Clean ruff compliance across all
   categories
 - **Strong type safety** - 100% mypy compliance with minimal Any usage
-- **High test coverage** - 940+ unit tests + 43 integration tests with 87%
+- **High test coverage** - 880+ unit tests + 43 integration tests with 88%+
   coverage
 - **Server composition pattern** - Modular FastMCP servers for different domains
 - **Context-based logging** - MCP-integrated logging for better traceability
