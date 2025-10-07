@@ -9,6 +9,8 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 
+from databeak._version import __version__
+
 # This module will tweak the JSON schema validator to accept relaxed types
 from databeak.core.json_schema_validate import initialize_relaxed_validation
 
@@ -50,7 +52,7 @@ def _load_instructions() -> str:
 initialize_relaxed_validation()
 
 # Initialize FastMCP server
-mcp = FastMCP("DataBeak", instructions=_load_instructions())
+mcp = FastMCP("DataBeak", instructions=_load_instructions(), version=__version__)
 
 # All tools have been migrated to specialized servers
 # No direct tool registration needed - using server composition pattern

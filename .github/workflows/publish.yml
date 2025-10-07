@@ -15,6 +15,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '>1.21'
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -32,6 +35,16 @@ jobs:
 
       - name: Check package
         run: uv run twine check dist/*
+
+      - name: Install mcp tool for packaged version testing
+        run: |
+          GOBIN=$HOME/.local/bin go install \
+            github.com/f/mcptools/cmd/mcptools@v0.7.1
+          ln -s $HOME/.local/bin/mcptools $HOME/.local/bin/mcpt
+
+      - name: Test packaged version
+        run: |
+          bash tests/packaging/test_packaged_version.sh
 
       - name: Publish to Test PyPI
         if: github.event_name == 'workflow_dispatch'
