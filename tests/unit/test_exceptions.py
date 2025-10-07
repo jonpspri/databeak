@@ -5,7 +5,15 @@ import pytest
 from databeak.exceptions import (
     ColumnNotFoundError,
     DatabeakError,
+    DataBeakFileNotFoundError,
+    FileFormatError,
+    FilePermissionError,
+    InvalidOperationError,
+    InvalidParameterError,
+    InvalidRowIndexError,
+    MissingParameterError,
     OperationError,
+    SessionExpiredError,
     SessionNotFoundError,
 )
 
@@ -30,6 +38,26 @@ class TestDatabeakError:
         assert error.message == "Error"
         assert error.error_code == "TEST_ERROR"
         assert error.details == {"key": "value"}
+
+    def test_error_to_dict(self) -> None:
+        """Test error serialization to dictionary."""
+        error = DatabeakError("Error message", error_code="TEST_CODE", details={"key": "value"})
+        error_dict = error.to_dict()
+
+        assert error_dict["type"] == "DatabeakError"
+        assert error_dict["message"] == "Error message"
+        assert error_dict["error_code"] == "TEST_CODE"
+        assert error_dict["details"] == {"key": "value"}
+
+    def test_error_to_dict_without_code(self) -> None:
+        """Test error serialization without error code."""
+        error = DatabeakError("Simple error")
+        error_dict = error.to_dict()
+
+        assert error_dict["type"] == "DatabeakError"
+        assert error_dict["message"] == "Simple error"
+        assert error_dict["error_code"] is None
+        assert error_dict["details"] == {}
 
 
 class TestSessionNotFoundError:
@@ -122,6 +150,114 @@ class TestExceptionChaining:
         op_error = exc_info.value
         assert isinstance(op_error.__cause__, ColumnNotFoundError)
         assert "missing_col" in str(op_error.__cause__)
+
+
+class TestSessionExpiredError:
+    """Test SessionExpiredError class."""
+
+    def test_session_expired_basic(self) -> None:
+        """Test basic session expired error."""
+        error = SessionExpiredError("session_456")
+        assert "session_456" in str(error)
+        assert "expired" in str(error).lower()
+        assert error.error_code == "SESSION_EXPIRED"
+        assert error.details["session_id"] == "session_456"
+
+
+class TestInvalidRowIndexError:
+    """Test InvalidRowIndexError class."""
+
+    def test_invalid_row_index_basic(self) -> None:
+        """Test basic invalid row index error."""
+        error = InvalidRowIndexError(100, 50)
+        assert "100" in str(error)
+        assert error.error_code == "INVALID_ROW_INDEX"
+        assert error.details["row_index"] == 100
+        assert error.details["max_index"] == 50
+
+    def test_invalid_row_index_without_max(self) -> None:
+        """Test invalid row index error without max index."""
+        error = InvalidRowIndexError(100)
+        assert "100" in str(error)
+        assert error.details["row_index"] == 100
+        assert error.details["max_index"] is None
+
+
+class TestFileErrors:
+    """Test file-related error classes."""
+
+    def test_file_not_found_error(self) -> None:
+        """Test DataBeakFileNotFoundError."""
+        error = DataBeakFileNotFoundError("/path/to/missing.csv")
+        assert "/path/to/missing.csv" in str(error)
+        assert error.error_code == "FILE_NOT_FOUND"
+        assert error.details["file_path"] == "/path/to/missing.csv"
+
+    def test_file_permission_error(self) -> None:
+        """Test FilePermissionError."""
+        error = FilePermissionError("/path/to/file.csv", "read")
+        assert "/path/to/file.csv" in str(error)
+        assert "read" in str(error)
+        assert error.error_code == "FILE_PERMISSION_ERROR"
+        assert error.details["file_path"] == "/path/to/file.csv"
+        assert error.details["operation"] == "read"
+
+    def test_file_format_error(self) -> None:
+        """Test FileFormatError."""
+        error = FileFormatError("/path/to/file.txt", "CSV")
+        assert "/path/to/file.txt" in str(error)
+        assert error.error_code == "FILE_FORMAT_ERROR"
+        assert error.details["file_path"] == "/path/to/file.txt"
+        assert error.details["expected_format"] == "CSV"
+
+    def test_file_format_error_without_expected(self) -> None:
+        """Test FileFormatError without expected format."""
+        error = FileFormatError("/path/to/file.txt")
+        assert "/path/to/file.txt" in str(error)
+        assert error.details["expected_format"] is None
+
+
+class TestOperationErrors:
+    """Test operation-related error classes."""
+
+    def test_invalid_operation_error(self) -> None:
+        """Test InvalidOperationError."""
+        error = InvalidOperationError("sort", "no data loaded")
+        assert "sort" in str(error)
+        assert "no data loaded" in str(error)
+        assert error.error_code == "INVALID_OPERATION"
+        assert error.details["operation"] == "sort"
+        assert error.details["reason"] == "no data loaded"
+
+
+class TestParameterErrors:
+    """Test parameter-related error classes."""
+
+    def test_invalid_parameter_error(self) -> None:
+        """Test InvalidParameterError."""
+        error = InvalidParameterError("column_name", "invalid$name", "alphanumeric characters")
+        assert "column_name" in str(error)
+        assert "invalid$name" in str(error)
+        assert error.error_code == "INVALID_PARAMETER"
+        assert error.details["parameter"] == "column_name"
+        assert error.details["value"] == "invalid$name"
+        assert error.details["expected"] == "alphanumeric characters"
+
+    def test_invalid_parameter_error_without_expected(self) -> None:
+        """Test InvalidParameterError without expected description."""
+        error = InvalidParameterError("limit", -5)
+        assert "limit" in str(error)
+        assert error.details["parameter"] == "limit"
+        assert error.details["value"] == "-5"
+        assert error.details["expected"] is None
+
+    def test_missing_parameter_error(self) -> None:
+        """Test MissingParameterError."""
+        error = MissingParameterError("session_id")
+        assert "session_id" in str(error)
+        assert "missing" in str(error).lower()
+        assert error.error_code == "MISSING_PARAMETER"
+        assert error.details["parameter"] == "session_id"
 
 
 class TestErrorMessageFormatting:

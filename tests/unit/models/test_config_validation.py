@@ -28,13 +28,12 @@ class TestVersionLoading:
         assert __version__ == VERSION
         assert isinstance(__version__, str)
 
-    def test_version_fallback_mechanism(self) -> None:
-        """Test that version fallback mechanism is in place."""
+    def test_version_is_valid_string(self) -> None:
+        """Test that version is a valid string."""
         from databeak._version import __version__
 
-        # Version should be either from metadata or fallback
         assert __version__ is not None
-        # Should be either real version or dev fallback
+        assert isinstance(__version__, str)
         assert __version__ != ""
 
 
