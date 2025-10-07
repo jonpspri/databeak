@@ -8,6 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-10-07
+
+### Added
+
+- **Release Infrastructure**: Added `tests/packaging/test_packaged_version.sh`
+  script to validate version consistency between `pyproject.toml` and installed
+  package before deployment
+- **CI/CD Integration**: Updated `.github/workflows/publish.yml` to run
+  packaging validation tests before PyPI publication
+- **Developer Tooling**: Added `.claude/commands/release-prep.md` slash command
+  for streamlined release management workflow
+- **Test Coverage**: Added 26 new unit tests covering:
+  - All exception class constructors and serialization (`to_dict()` method)
+  - Data session error paths (validation methods, stats generation)
+  - Version string format validation
+
+### Changed
+
+- **Version Handling**: Simplified `_version.py` by removing
+  `PackageNotFoundError` fallback logic (package metadata always available in
+  deployment environments)
+- **Test Coverage**: Improved overall coverage from 88.61% to 89.05%
+  - `_version.py`: 71.43% → 100%
+  - `exceptions.py`: 83.67% → 100%
+  - `data_session.py`: 81.25% → 100%
+
+### Fixed
+
+- **Version Validation**: Packaging test now validates three-part semver format
+  (MAJOR.MINOR.PATCH) with regex pattern matching
+
 ## [0.1.1] - 2025-10-06
 
 ### Fixed
