@@ -19,7 +19,6 @@ async def test_direct_client_tool_listing(databeak_client: Client[FastMCPTranspo
     # Verify some key tools are present
     assert "get_session_info" in tool_names
     assert "load_csv_from_content" in tool_names
-    assert "export_csv" in tool_names
 
 
 @pytest.mark.asyncio

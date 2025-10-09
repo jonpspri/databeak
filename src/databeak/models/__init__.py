@@ -1,4 +1,4 @@
-"""Data models for CSV Editor MCP Server."""
+"""Data models for DataBeak MCP Server."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ from .data_models import (  # noqa: E402
     DataPreview,
     DataStatistics,
     DataType,
-    ExportFormat,
     FilterCondition,
     LogicalOperator,
     OperationResult,
@@ -28,7 +27,6 @@ __all__ = [
     "DataPreview",
     "DataStatistics",
     "DataType",
-    "ExportFormat",
     "FilterCondition",
     "LogicalOperator",
     "OperationResult",

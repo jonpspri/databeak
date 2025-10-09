@@ -18,7 +18,6 @@ async def test_list_tools(databeak_client: Client[FastMCPTransport]) -> None:
     tool_names = [tool.name for tool in tools]
     assert "get_session_info" in tool_names
     assert "load_csv_from_content" in tool_names
-    assert "export_csv" in tool_names
 
 
 @pytest.mark.asyncio
@@ -33,7 +32,7 @@ async def test_get_session_info(databeak_client: Client[FastMCPTransport]) -> No
 
 @pytest.mark.asyncio
 async def test_load_csv_workflow(databeak_client: Client[FastMCPTransport]) -> None:
-    """Test a complete workflow: load CSV data, check session info, export."""
+    """Test a complete workflow: load CSV data and check session info."""
     # Step 1: Load some CSV data
     csv_content = "name,age,city\nAlice,30,New York\nBob,25,Boston\nCharlie,35,Chicago"
 
@@ -50,19 +49,6 @@ async def test_load_csv_workflow(databeak_client: Client[FastMCPTransport]) -> N
     # The info should contain data about rows and columns in JSON format
     assert "row_count" in info_text or "3" in info_text
     assert "column_count" in info_text or "3" in info_text
-
-    # Step 3: Export the data back
-    export_result = await databeak_client.call_tool(
-        "export_csv", {"file_path": "/tmp/test_export.csv", "index": False}
-    )
-
-    assert export_result.is_error is False
-    assert isinstance(export_result.content[0], TextContent)
-    exported_content = export_result.content[0].text
-    # The export result contains status information about the export
-    assert "success" in exported_content
-    assert "rows_exported" in exported_content
-    assert "3" in exported_content  # Should indicate 3 rows were exported
 
 
 @pytest.mark.asyncio

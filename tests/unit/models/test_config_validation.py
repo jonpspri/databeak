@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.metadata
 from pathlib import Path
 
-from databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DatabeakSettings
 
 
 class TestVersionLoading:
@@ -38,11 +38,11 @@ class TestVersionLoading:
 
 
 class TestEnvironmentVariableConfiguration:
-    """Test environment variable configuration matches DataBeakSettings."""
+    """Test environment variable configuration matches DatabeakSettings."""
 
     def test_databeak_settings_has_correct_prefix(self) -> None:
-        """Test that DataBeakSettings uses DATABEAK_ prefix."""
-        settings = DataBeakSettings()
+        """Test that DatabeakSettings uses DATABEAK_ prefix."""
+        settings = DatabeakSettings()
         config = settings.model_config
 
         assert "env_prefix" in config
@@ -51,14 +51,13 @@ class TestEnvironmentVariableConfiguration:
 
     def test_environment_variables_mapping(self) -> None:
         """Test that documented environment variables map to settings fields."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
         # Verify all documented environment variables have corresponding fields
         documented_vars = {
-            "DATABEAK_MAX_FILE_SIZE_MB": "max_file_size_mb",
-            # "csv_history_dir" removed - history functionality eliminated
+            "DATABEAK_MAX_DOWNLOAD_SIZE_MB": "max_download_size_mb",
             "DATABEAK_SESSION_TIMEOUT": "session_timeout",
-            "DATABEAK_CHUNK_SIZE": "chunk_size",
+            "DATABEAK_URL_TIMEOUT_SECONDS": "url_timeout_seconds",
         }
 
         for env_var, field_name in documented_vars.items():
@@ -67,31 +66,27 @@ class TestEnvironmentVariableConfiguration:
 
     def test_settings_default_values(self) -> None:
         """Test that settings have sensible defaults."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
-        assert settings.max_file_size_mb == 1024
-        # csv_history_dir and auto_save removed - functionality eliminated
+        assert settings.max_download_size_mb == 100
         assert settings.session_timeout == 3600
-        assert settings.chunk_size == 10000
+        assert settings.url_timeout_seconds == 30
         assert settings.max_anomaly_sample_size == 10000
 
     def test_environment_variable_override(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         """Test that environment variables properly override defaults."""
-        # History functionality removed, so no temp directory needed
         # Set test environment variables
-        monkeypatch.setenv("DATABEAK_MAX_FILE_SIZE_MB", "2048")
-        # csv_history_dir removed - history functionality eliminated
+        monkeypatch.setenv("DATABEAK_MAX_DOWNLOAD_SIZE_MB", "200")
         monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
-        monkeypatch.setenv("DATABEAK_CHUNK_SIZE", "5000")
+        monkeypatch.setenv("DATABEAK_URL_TIMEOUT_SECONDS", "60")
         monkeypatch.setenv("DATABEAK_MAX_ANOMALY_SAMPLE_SIZE", "5000")
 
         # Create new settings instance to pick up env vars
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
-        assert settings.max_file_size_mb == 2048
-        # csv_history_dir removed - history functionality eliminated
+        assert settings.max_download_size_mb == 200
         assert settings.session_timeout == 7200
-        assert settings.chunk_size == 5000
+        assert settings.url_timeout_seconds == 60
         assert settings.max_anomaly_sample_size == 5000
 
 

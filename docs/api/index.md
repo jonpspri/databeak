@@ -13,12 +13,10 @@ comprehensive error handling.
 
 ### 📁 I/O Operations
 
-Tools for loading and exporting CSV data in various formats:
+Tools for loading CSV data from web sources:
 
-- **`load_csv`** - Load CSV from file path
 - **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL
 - **`load_csv_from_content`** - Load CSV from string content
-- **`export_csv`** - Export to CSV, JSON, Excel, Parquet, HTML, Markdown
 - **`get_session_info`** - Get current session details and statistics
 - **`list_sessions`** - List all active sessions
 - **`close_session`** - Close and cleanup a session
@@ -60,14 +58,11 @@ Tools for schema validation and quality checking:
 
 ### 🔄 Session Management
 
-Tools for managing data sessions and workflow:
+Tools for managing data sessions:
 
-- **`configure_auto_save`** - Set up automatic saving strategies
-- **`get_auto_save_status`** - Check current auto-save configuration
-- **`undo`** - Undo the last operation
-- **`redo`** - Redo previously undone operation
-- **`get_history`** - View operation history
-- **`restore_to_operation`** - Restore to specific point in history
+- **`list_sessions`** - List all active sessions
+- **`close_session`** - Close and cleanup a session
+- **`get_session_info`** - Get session metadata and statistics
 
 ### ⚙️ System Tools
 
@@ -129,15 +124,20 @@ Filter operations support complex conditions:
 
 ### Environment Configuration
 
-All tools respect these environment variables:
+All tools respect these environment variables (all use `DATABEAK_` prefix):
 
-| Variable                    | Default | Purpose                   |
-| --------------------------- | ------- | ------------------------- |
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
-| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
-| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
-| `DATABEAK_CHUNK_SIZE`       | 10000   | Processing chunk size     |
-| `DATABEAK_AUTO_SAVE`        | true    | Enable auto-save          |
+| Variable                              | Default   | Purpose                          |
+| ------------------------------------- | --------- | -------------------------------- |
+| `DATABEAK_SESSION_TIMEOUT`            | 3600      | Session timeout (seconds)        |
+| `DATABEAK_MAX_DOWNLOAD_SIZE_MB`       | 100       | Maximum URL download size (MB)   |
+| `DATABEAK_MAX_MEMORY_USAGE_MB`        | 1000      | Max DataFrame memory (MB)        |
+| `DATABEAK_MAX_ROWS`                   | 1,000,000 | Max DataFrame rows               |
+| `DATABEAK_URL_TIMEOUT_SECONDS`        | 30        | URL download timeout (seconds)   |
+| `DATABEAK_HEALTH_MEMORY_THRESHOLD_MB` | 2048      | Health monitoring threshold (MB) |
+
+See
+[DatabeakSettings](https://github.com/jonpspri/databeak/blob/main/src/databeak/core/settings.py)
+for all configuration options.
 
 ## Advanced Features
 

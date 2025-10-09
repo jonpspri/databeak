@@ -14,6 +14,7 @@ from databeak._version import __version__
 
 # This module will tweak the JSON schema validator to accept relaxed types
 from databeak.core.json_schema_validate import initialize_relaxed_validation
+from databeak.core.settings import DatabeakSettings
 
 # Local imports
 from databeak.servers.column_server import column_server
@@ -93,7 +94,7 @@ Consider:
 # ============================================================================
 
 
-@smithery.server()
+@smithery.server(config_schema=DatabeakSettings)
 def create_server() -> FastMCP:
     """Create and return the FastMCP server instance."""
     # Initialize FastMCP server

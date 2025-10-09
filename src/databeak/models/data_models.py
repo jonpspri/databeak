@@ -71,18 +71,6 @@ class AggregateFunction(str, Enum):
     LAST = "last"
 
 
-class ExportFormat(str, Enum):
-    """Supported export formats."""
-
-    CSV = "csv"
-    TSV = "tsv"
-    JSON = "json"
-    EXCEL = "excel"
-    PARQUET = "parquet"
-    HTML = "html"
-    MARKDOWN = "markdown"
-
-
 class FilterCondition(BaseModel):
     """A single filter condition."""
 

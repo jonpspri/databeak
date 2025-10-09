@@ -191,15 +191,6 @@ wheels = [
 ]
 
 [[package]]
-name = "chardet"
-version = "5.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f3/0d/f7b6ab21ec75897ed80c17d79b15951a719226b9fababf1e40ea74d69079/chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7", size = 2069618, upload-time = "2023-08-01T19:23:02.662Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/6f/f5fbc992a329ee4e0f288c1fe0e2ad9485ed064cac731ed2fe47dcc38cbf/chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970", size = 199385, upload-time = "2023-08-01T19:23:00.661Z" },
-]
-
-[[package]]
 name = "charset-normalizer"
 version = "3.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -426,7 +417,6 @@ version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
-    { name = "chardet" },
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "httpx" },
@@ -469,7 +459,6 @@ dev = [
     { name = "twine" },
     { name = "ty" },
     { name = "types-aiofiles" },
-    { name = "types-chardet" },
     { name = "types-jsonschema" },
     { name = "types-psutil" },
     { name = "types-pytz" },
@@ -479,7 +468,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "chardet", specifier = ">=5.2.0" },
     { name = "fastapi", specifier = ">=0.117.1" },
     { name = "fastmcp", specifier = ">=2.12.4" },
     { name = "httpx", specifier = ">=0.27.0" },
@@ -522,7 +510,6 @@ dev = [
     { name = "twine", specifier = ">=6.1.0" },
     { name = "ty", specifier = ">=0.0.1a21" },
     { name = "types-aiofiles", specifier = ">=24.1.0.20250822" },
-    { name = "types-chardet", specifier = ">=5.0.4.6" },
     { name = "types-jsonschema", specifier = ">=4.25.1.20250822" },
     { name = "types-psutil", specifier = ">=7.0.0.20250822" },
     { name = "types-pytz", specifier = ">=2025.2.0.20250809" },
@@ -2577,15 +2564,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/19/48/c64471adac9206cc844afb33ed311ac5a65d2f59df3d861e0f2d0cad7414/types_aiofiles-24.1.0.20250822.tar.gz", hash = "sha256:9ab90d8e0c307fe97a7cf09338301e3f01a163e39f3b529ace82466355c84a7b", size = 14484, upload-time = "2025-08-22T03:02:23.039Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bc/8e/5e6d2215e1d8f7c2a94c6e9d0059ae8109ce0f5681956d11bb0a228cef04/types_aiofiles-24.1.0.20250822-py3-none-any.whl", hash = "sha256:0ec8f8909e1a85a5a79aed0573af7901f53120dd2a29771dd0b3ef48e12328b0", size = 14322, upload-time = "2025-08-22T03:02:21.918Z" },
-]
-
-[[package]]
-name = "types-chardet"
-version = "5.0.4.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/dd/47/932d35ac07203e936e69102dc9570e83606d386bacb60696f0c403224e86/types-chardet-5.0.4.6.tar.gz", hash = "sha256:caf4c74cd13ccfd8b3313c314aba943b159de562a2573ed03137402b2bb37818", size = 4592, upload-time = "2023-05-10T15:22:21.325Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/35/2a06c5c892eb1a0a4f4f74a6aff1ade05da82444af0190cf731761f2c46c/types_chardet-5.0.4.6-py3-none-any.whl", hash = "sha256:ea832d87e798abf1e4dfc73767807c2b7fee35d0003ae90348aea4ae00fb004d", size = 5853, upload-time = "2023-05-10T15:22:19.797Z" },
 ]
 
 [[package]]

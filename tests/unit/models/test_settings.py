@@ -3,71 +3,67 @@
 import os
 from unittest.mock import patch
 
-from databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DatabeakSettings
 
 
-class TestDataBeakSettings:
+class TestDatabeakSettings:
     """Test DataBeak settings configuration."""
 
     def test_default_settings(self) -> None:
         """Test default settings configuration."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
         # History functionality removed - test other defaults
-        assert settings.max_file_size_mb == 1024
+        assert settings.max_download_size_mb == 100
         assert settings.session_timeout == 3600
-        assert settings.chunk_size == 10000
         assert settings.max_anomaly_sample_size == 10000
 
     def test_settings_with_custom_values(self) -> None:
         """Test settings with custom values."""
-        settings = DataBeakSettings(max_file_size_mb=2048, session_timeout=7200, chunk_size=5000)
-        assert settings.max_file_size_mb == 2048
+        settings = DatabeakSettings(max_download_size_mb=200, session_timeout=7200)
+        assert settings.max_download_size_mb == 200
         assert settings.session_timeout == 7200
-        assert settings.chunk_size == 5000
 
     def test_environment_variable_override(self) -> None:
         """Test that environment variables override defaults."""
         with patch.dict(
             os.environ,
             {
-                "DATABEAK_MAX_FILE_SIZE_MB": "4096",
+                "DATABEAK_MAX_DOWNLOAD_SIZE_MB": "200",
                 "DATABEAK_SESSION_TIMEOUT": "14400",
-                "DATABEAK_CHUNK_SIZE": "20000",
             },
         ):
-            settings = DataBeakSettings()
-            assert settings.max_file_size_mb == 4096
+            settings = DatabeakSettings()
+            assert settings.max_download_size_mb == 200
             assert settings.session_timeout == 14400
-            assert settings.chunk_size == 20000
 
     def test_case_insensitive_env_var(self) -> None:
         """Test that environment variables are case insensitive."""
-        with patch.dict(os.environ, {"DATABEAK_MAX_FILE_SIZE_MB": "512"}):
-            settings = DataBeakSettings()
-            assert settings.max_file_size_mb == 512
+        with patch.dict(os.environ, {"DATABEAK_MAX_DOWNLOAD_SIZE_MB": "512"}):
+            settings = DatabeakSettings()
+            assert settings.max_download_size_mb == 512
 
 
-class TestDataBeakSettingsIntegration:
+class TestDatabeakSettingsIntegration:
     """Test DataBeak settings integration with sessions."""
 
     def test_settings_are_configurable(self) -> None:
         """Test that settings can be configured multiple ways."""
         # Test 1: Direct instantiation
-        settings1 = DataBeakSettings(max_file_size_mb=512)
-        assert settings1.max_file_size_mb == 512
+        settings1 = DatabeakSettings(max_download_size_mb=512)
+        assert settings1.max_download_size_mb == 512
 
         # Test 2: Environment variable
-        with patch.dict(os.environ, {"DATABEAK_MAX_FILE_SIZE_MB": "2048"}):
-            settings2 = DataBeakSettings()
-            assert settings2.max_file_size_mb == 2048
+        with patch.dict(os.environ, {"DATABEAK_MAX_DOWNLOAD_SIZE_MB": "2048"}):
+            settings2 = DatabeakSettings()
+            assert settings2.max_download_size_mb == 2048
 
         # Test 3: Default
         with patch.dict(os.environ, {}, clear=True):
             # Clear any existing env vars
-            if "DATABEAK_MAX_FILE_SIZE_MB" in os.environ:
-                del os.environ["DATABEAK_MAX_FILE_SIZE_MB"]
-            settings3 = DataBeakSettings()
-            assert settings3.max_file_size_mb == 1024
+            if "DATABEAK_MAX_DOWNLOAD_SIZE_MB" in os.environ:
+                del os.environ["DATABEAK_MAX_DOWNLOAD_SIZE_MB"]
+            settings3 = DatabeakSettings()
+            assert settings3.max_download_size_mb == 100
 
 
 class TestSettingsDocumentation:
@@ -75,25 +71,23 @@ class TestSettingsDocumentation:
 
     def test_env_prefix_documentation(self) -> None:
         """Test that DATABEAK_ prefix works as documented."""
-        with patch.dict(os.environ, {"DATABEAK_CHUNK_SIZE": "15000"}):
-            settings = DataBeakSettings()
-            assert settings.chunk_size == 15000
+        with patch.dict(os.environ, {"DATABEAK_URL_TIMEOUT_SECONDS": "60"}):
+            settings = DatabeakSettings()
+            assert settings.url_timeout_seconds == 60
 
     def test_default_values_documentation(self) -> None:
         """Test that default values match documentation."""
         # Clear environment and test default values
         with patch.dict(os.environ, {}, clear=True):
             for var in [
-                "DATABEAK_MAX_FILE_SIZE_MB",
+                "DATABEAK_MAX_DOWNLOAD_SIZE_MB",
                 "DATABEAK_SESSION_TIMEOUT",
-                "DATABEAK_CHUNK_SIZE",
             ]:
                 if var in os.environ:
                     del os.environ[var]
 
-            settings = DataBeakSettings()
-            assert settings.max_file_size_mb == 1024, "Default file size limit should be 1024 MB"
+            settings = DatabeakSettings()
+            assert settings.max_download_size_mb == 100, "Default URL size limit should be 100 MB"
             assert settings.session_timeout == 3600, (
                 "Default session timeout should be 3600 seconds"
             )
-            assert settings.chunk_size == 10000, "Default chunk size should be 10000"

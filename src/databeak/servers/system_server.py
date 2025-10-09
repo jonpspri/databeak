@@ -18,7 +18,7 @@ from pydantic import Field
 # Import version and session management from main package
 from databeak._version import __version__
 from databeak.core.session import get_session_manager
-from databeak.core.settings import DataBeakSettings, get_settings
+from databeak.core.settings import DatabeakSettings, get_settings
 from databeak.models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # MEMORY MONITORING CONSTANTS AND UTILITIES
 # ============================================================================
 
-# Memory monitoring will use configurable thresholds from DataBeakSettings
+# Memory monitoring will use configurable thresholds from DatabeakSettings
 
 
 def get_memory_usage() -> float:
@@ -50,7 +50,7 @@ def get_memory_usage() -> float:
 
 
 def get_memory_status(
-    current_mb: float, threshold_mb: float, settings: DataBeakSettings | None = None
+    current_mb: float, threshold_mb: float, settings: DatabeakSettings | None = None
 ) -> str:
     """Determine memory status based on configurable thresholds.
 
@@ -97,8 +97,8 @@ async def health_check(
 
         # Get memory information
         current_memory_mb = get_memory_usage()
-        memory_threshold_mb = float(settings.memory_threshold_mb)
-        memory_status = get_memory_status(current_memory_mb, memory_threshold_mb)
+        health_threshold_mb = float(settings.health_memory_threshold_mb)
+        memory_status = get_memory_status(current_memory_mb, health_threshold_mb)
 
         # Determine overall health status
         status = "healthy"
@@ -116,13 +116,13 @@ async def health_check(
         if memory_status == "critical":
             status = "unhealthy"
             await ctx.error(
-                f"Critical memory usage: {current_memory_mb:.1f}MB / {memory_threshold_mb:.1f}MB"
+                f"Critical memory usage: {current_memory_mb:.1f}MB / {health_threshold_mb:.1f}MB"
             )
         elif memory_status == "warning":
             if status == "healthy":
                 status = "degraded"
             await ctx.warning(
-                f"High memory usage: {current_memory_mb:.1f}MB / {memory_threshold_mb:.1f}MB"
+                f"High memory usage: {current_memory_mb:.1f}MB / {health_threshold_mb:.1f}MB"
             )
 
         await ctx.info(
@@ -137,7 +137,7 @@ async def health_check(
             max_sessions=session_manager.max_sessions,
             session_ttl_minutes=session_manager.ttl_minutes,
             memory_usage_mb=current_memory_mb,
-            memory_threshold_mb=memory_threshold_mb,
+            memory_threshold_mb=health_threshold_mb,
             memory_status=memory_status,
             history_operations_total=0,  # History operations tracking removed
             history_limit_per_session=0,  # History operations tracking removed
@@ -205,11 +205,8 @@ async def get_server_info(
         description="A comprehensive MCP server for CSV file operations and data analysis",
         capabilities={
             "data_io": [
-                "load_csv",
                 "load_csv_from_url",
                 "load_csv_from_content",
-                "export_csv",
-                "multiple_export_formats",
             ],
             "data_manipulation": [
                 "filter_rows",
@@ -249,16 +246,7 @@ async def get_server_info(
                 "null_value_updates",
             ],
         },
-        supported_formats=[
-            "csv",
-            "tsv",
-            "json",
-            "excel",
-            "parquet",
-            "html",
-            "markdown",
-        ],
-        max_file_size_mb=settings.max_file_size_mb,
+        max_download_size_mb=settings.max_download_size_mb,
         session_timeout_minutes=settings.session_timeout // 60,
     )
 
