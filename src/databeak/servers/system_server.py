@@ -97,8 +97,8 @@ async def health_check(
 
         # Get memory information
         current_memory_mb = get_memory_usage()
-        memory_threshold_mb = float(settings.memory_threshold_mb)
-        memory_status = get_memory_status(current_memory_mb, memory_threshold_mb)
+        health_threshold_mb = float(settings.health_memory_threshold_mb)
+        memory_status = get_memory_status(current_memory_mb, health_threshold_mb)
 
         # Determine overall health status
         status = "healthy"
@@ -116,13 +116,13 @@ async def health_check(
         if memory_status == "critical":
             status = "unhealthy"
             await ctx.error(
-                f"Critical memory usage: {current_memory_mb:.1f}MB / {memory_threshold_mb:.1f}MB"
+                f"Critical memory usage: {current_memory_mb:.1f}MB / {health_threshold_mb:.1f}MB"
             )
         elif memory_status == "warning":
             if status == "healthy":
                 status = "degraded"
             await ctx.warning(
-                f"High memory usage: {current_memory_mb:.1f}MB / {memory_threshold_mb:.1f}MB"
+                f"High memory usage: {current_memory_mb:.1f}MB / {health_threshold_mb:.1f}MB"
             )
 
         await ctx.info(
@@ -137,7 +137,7 @@ async def health_check(
             max_sessions=session_manager.max_sessions,
             session_ttl_minutes=session_manager.ttl_minutes,
             memory_usage_mb=current_memory_mb,
-            memory_threshold_mb=memory_threshold_mb,
+            memory_threshold_mb=health_threshold_mb,
             memory_status=memory_status,
             history_operations_total=0,  # History operations tracking removed
             history_limit_per_session=0,  # History operations tracking removed
@@ -246,7 +246,7 @@ async def get_server_info(
                 "null_value_updates",
             ],
         },
-        max_file_size_mb=settings.max_file_size_mb,
+        max_file_size_mb=settings.max_url_size_mb,  # Report URL size limit instead
         session_timeout_minutes=settings.session_timeout // 60,
     )
 

@@ -9,48 +9,71 @@ from pydantic_settings import BaseSettings
 
 
 class DataBeakSettings(BaseSettings):
-    """Configuration settings for session management."""
+    """Configuration settings for DataBeak operations.
 
-    max_file_size_mb: int = Field(default=1024, description="Maximum file size limit in megabytes")
+    Settings are organized into categories:
+
+    Session Management:
+    - session_timeout: How long sessions stay alive
+    - session_capacity_warning_threshold: When to warn about session capacity
+
+    Health Monitoring (for health_check tool):
+    - health_memory_threshold_mb: Total server memory limit for health status
+    - memory_warning_threshold: Ratio that triggers "degraded" status (75%)
+    - memory_critical_threshold: Ratio that triggers "unhealthy" status (90%)
+
+    Data Loading Limits (enforced during load_csv_from_url/load_csv_from_content):
+    - max_memory_usage_mb: Hard limit for individual DataFrame memory
+    - max_rows: Hard limit for DataFrame row count
+    - url_timeout_seconds: Network timeout for URL downloads
+    - max_url_size_mb: Maximum download size from URLs
+
+    Data Validation:
+    - Various thresholds for quality checks and anomaly detection
+    """
+
+    # Session management
     session_timeout: int = Field(default=3600, description="Session timeout in seconds")
-    chunk_size: int = Field(
-        default=10000,
-        description="Default chunk size for processing large datasets",
-    )
-    memory_threshold_mb: int = Field(
-        default=2048, description="Memory usage threshold in MB for health monitoring"
-    )
-    memory_warning_threshold: float = Field(
-        default=0.75, description="Memory usage ratio that triggers warning status (0.0-1.0)"
-    )
-    memory_critical_threshold: float = Field(
-        default=0.90, description="Memory usage ratio that triggers critical status (0.0-1.0)"
-    )
     session_capacity_warning_threshold: float = Field(
         default=0.90, description="Session capacity ratio that triggers warning (0.0-1.0)"
     )
+
+    # Health monitoring thresholds (used by health_check for server status)
+    health_memory_threshold_mb: int = Field(
+        default=2048,
+        description="Total server memory threshold in MB for health status monitoring (not a hard limit)",
+    )
+    memory_warning_threshold: float = Field(
+        default=0.75,
+        description="Memory usage ratio that triggers 'degraded' health status (0.0-1.0)",
+    )
+    memory_critical_threshold: float = Field(
+        default=0.90,
+        description="Memory usage ratio that triggers 'unhealthy' health status (0.0-1.0)",
+    )
+
+    # Data loading limits (hard limits enforced during CSV loading operations)
+    max_memory_usage_mb: int = Field(
+        default=1000,
+        description="Maximum memory in MB for individual DataFrames (hard limit, loading fails if exceeded)",
+    )
+    max_rows: int = Field(
+        default=1_000_000,
+        description="Maximum rows per DataFrame (hard limit, loading fails if exceeded)",
+    )
+    url_timeout_seconds: int = Field(
+        default=30, description="Network timeout for URL downloads in seconds"
+    )
+    max_url_size_mb: int = Field(
+        default=100, description="Maximum download size for URLs in MB (hard limit)"
+    )
+
+    # Data validation and analysis
     max_validation_violations: int = Field(
         default=1000, description="Maximum number of validation violations to report"
     )
     max_anomaly_sample_size: int = Field(
         default=10000, description="Maximum sample size for anomaly detection operations"
-    )
-
-    # URL loading configuration
-    url_timeout_seconds: int = Field(default=30, description="Timeout for URL downloads in seconds")
-    max_url_size_mb: int = Field(default=100, description="Maximum download size for URLs in MB")
-
-    # DataFrame size limits
-    max_memory_usage_mb: int = Field(
-        default=1000, description="Maximum memory usage in MB for DataFrames"
-    )
-    max_rows: int = Field(
-        default=1_000_000, description="Maximum number of rows to prevent memory issues"
-    )
-
-    # Encoding detection thresholds
-    encoding_confidence_threshold: float = Field(
-        default=0.7, description="Minimum confidence threshold for encoding detection"
     )
 
     # Data validation thresholds

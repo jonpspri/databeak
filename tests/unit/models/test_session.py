@@ -22,9 +22,7 @@ class TestDataBeakSettings:
         """Test default settings initialization."""
         settings = DataBeakSettings()
         assert settings.session_timeout == 3600
-        # csv_history_dir removed - history functionality eliminated
-        assert settings.max_file_size_mb == 1024
-        assert settings.memory_threshold_mb == 2048
+        assert settings.health_memory_threshold_mb == 2048
         assert settings.max_anomaly_sample_size == 10000  # Anomaly detection sample size
 
 
@@ -265,8 +263,8 @@ class TestMemoryConfiguration:
 
     def test_memory_threshold_configuration(self) -> None:
         """Test that memory threshold is configurable via settings."""
-        settings = DataBeakSettings(memory_threshold_mb=4096)
-        assert settings.memory_threshold_mb == 4096
+        settings = DataBeakSettings(health_memory_threshold_mb=4096)
+        assert settings.health_memory_threshold_mb == 4096
 
     @pytest.mark.asyncio
     async def test_environment_variable_configuration(self) -> None:
@@ -274,19 +272,19 @@ class TestMemoryConfiguration:
         import os
 
         # Set environment variables
-        old_memory = os.environ.get("DATABEAK_MEMORY_THRESHOLD_MB")
+        old_memory = os.environ.get("DATABEAK_HEALTH_MEMORY_THRESHOLD_MB")
 
         try:
-            os.environ["DATABEAK_MEMORY_THRESHOLD_MB"] = "4096"
+            os.environ["DATABEAK_HEALTH_MEMORY_THRESHOLD_MB"] = "4096"
 
             # Create new settings instance to pick up env vars
             settings = DataBeakSettings()
 
-            assert settings.memory_threshold_mb == 4096
+            assert settings.health_memory_threshold_mb == 4096
 
         finally:
             # Clean up environment variables
             if old_memory is not None:
-                os.environ["DATABEAK_MEMORY_THRESHOLD_MB"] = old_memory
+                os.environ["DATABEAK_HEALTH_MEMORY_THRESHOLD_MB"] = old_memory
             else:
-                os.environ.pop("DATABEAK_MEMORY_THRESHOLD_MB", None)
+                os.environ.pop("DATABEAK_HEALTH_MEMORY_THRESHOLD_MB", None)
