@@ -383,7 +383,6 @@ dev = [
     "twine>=6.1.0",
     "ty>=0.0.1a21",
     "types-aiofiles>=24.1.0.20250822",
-    "types-chardet>=5.0.4.6",
     "types-jsonschema>=4.25.1.20250822",
     "types-psutil>=7.0.0.20250822",
     "types-pytz>=2025.2.0.20250809",

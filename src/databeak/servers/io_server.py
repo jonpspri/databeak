@@ -21,6 +21,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import BaseModel, Discriminator, Field, NonNegativeInt
 
 from databeak.core.session import get_session_manager, get_session_only
+from databeak.core.settings import get_settings
 
 # Import session management and data models from the main package
 from databeak.models import DataPreview
@@ -94,11 +95,11 @@ def resolve_header_param(config: HeaderConfig) -> int | None | Literal["infer"]:
     return config.get_pandas_param()
 
 
-# Configuration constants
-MAX_MEMORY_USAGE_MB = 1000  # Maximum memory usage in MB for DataFrames
-MAX_ROWS = 1_000_000  # Maximum number of rows to prevent memory issues
-URL_TIMEOUT_SECONDS = 30  # Timeout for URL downloads
-MAX_URL_SIZE_MB = 100  # Maximum download size for URLs
+# Note: All configuration constants moved to DataBeakSettings for configurability
+# - max_memory_usage_mb: Maximum memory usage in MB for DataFrames
+# - max_rows: Maximum number of rows to prevent memory issues
+# - url_timeout_seconds: Timeout for URL downloads
+# - max_url_size_mb: Maximum download size for URLs
 
 # ============================================================================
 # PYDANTIC MODELS FOR I/O OPERATIONS
@@ -183,20 +184,22 @@ def validate_dataframe_size(df: pd.DataFrame) -> None:
         ToolError: If DataFrame exceeds size limits
 
     """
-    if len(df) > MAX_ROWS:
-        msg = f"File too large: {len(df):,} rows exceeds limit of {MAX_ROWS:,} rows"
+    settings = get_settings()
+
+    if len(df) > settings.max_rows:
+        msg = f"File too large: {len(df):,} rows exceeds limit of {settings.max_rows:,} rows"
         raise ToolError(msg)
 
     memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
-    if memory_usage_mb > MAX_MEMORY_USAGE_MB:
-        msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {MAX_MEMORY_USAGE_MB} MB"
+    if memory_usage_mb > settings.max_memory_usage_mb:
+        msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {settings.max_memory_usage_mb} MB"
         raise ToolError(msg)
 
 
 # Implementation: HTTP/HTTPS download with security validation and timeouts
 # Blocks private networks, validates content-type, enforces size limits
 # Uses same encoding fallback strategy as file loading
-# Timeout: URL_TIMEOUT_SECONDS, Max download: MAX_URL_SIZE_MB
+# Configurable via DataBeakSettings: url_timeout_seconds, max_url_size_mb
 async def load_csv_from_url(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     url: Annotated[str, Field(description="URL of the CSV file to download and load")],
@@ -218,6 +221,7 @@ async def load_csv_from_url(
     """
     # Get session_id from FastMCP context
     session_id = ctx.session_id
+    settings = get_settings()
 
     # Handle default header configuration
     if header_config is None:
@@ -239,9 +243,9 @@ async def load_csv_from_url(
         await ctx.info("Verifying URL and downloading content...")
 
         # Set socket timeout for all operations
-        socket.setdefaulttimeout(URL_TIMEOUT_SECONDS)
+        socket.setdefaulttimeout(settings.url_timeout_seconds)
 
-        with urlopen(url, timeout=URL_TIMEOUT_SECONDS) as response:  # nosec B310  # noqa: S310, ASYNC210
+        with urlopen(url, timeout=settings.url_timeout_seconds) as response:  # nosec B310  # noqa: S310, ASYNC210
             # Verify content-type
             content_type = response.headers.get("Content-Type", "").lower()
             content_length = response.headers.get("Content-Length")
@@ -262,8 +266,8 @@ async def load_csv_from_url(
             # Check content length
             if content_length:
                 size_mb = int(content_length) / (1024 * 1024)
-                if size_mb > MAX_URL_SIZE_MB:
-                    msg = f"Download too large: {size_mb:.1f} MB exceeds limit of {MAX_URL_SIZE_MB} MB"
+                if size_mb > settings.max_url_size_mb:
+                    msg = f"Download too large: {size_mb:.1f} MB exceeds limit of {settings.max_url_size_mb} MB"
 
                     raise ToolError(msg)
 

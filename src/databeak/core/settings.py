@@ -36,6 +36,18 @@ class DataBeakSettings(BaseSettings):
         default=10000, description="Maximum sample size for anomaly detection operations"
     )
 
+    # URL loading configuration
+    url_timeout_seconds: int = Field(default=30, description="Timeout for URL downloads in seconds")
+    max_url_size_mb: int = Field(default=100, description="Maximum download size for URLs in MB")
+
+    # DataFrame size limits
+    max_memory_usage_mb: int = Field(
+        default=1000, description="Maximum memory usage in MB for DataFrames"
+    )
+    max_rows: int = Field(
+        default=1_000_000, description="Maximum number of rows to prevent memory issues"
+    )
+
     # Encoding detection thresholds
     encoding_confidence_threshold: float = Field(
         default=0.7, description="Minimum confidence threshold for encoding detection"
