@@ -78,6 +78,7 @@ repos:
           - simpleeval>=1.0.3
           - fastmcp>=0.1.0
           - pandera>=0.22.0
+          - smithery>=0.4.2
           - .
         args: ['--config-file', 'pyproject.toml']
         pass_filenames: true

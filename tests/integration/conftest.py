@@ -71,8 +71,12 @@ async def databeak_client() -> AsyncGenerator[Client[FastMCPTransport], None]:
             result = await databeak_client.call_tool("get_session_info", {})
             assert result.is_error is False
     """
-    # Import the server instance
-    from databeak.server import mcp
+    # Create the server instance
+    from databeak.server import create_server
+
+    smithery_server = create_server()
+    # Extract the underlying FastMCP instance from the Smithery wrapper
+    mcp = smithery_server._fastmcp
 
     # Create FastMCP Client with direct server connection
     async with Client(mcp) as client:

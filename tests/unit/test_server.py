@@ -87,10 +87,10 @@ class TestMainFunction:
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_stdio_transport(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -110,6 +110,10 @@ class TestMainFunction:
 
         mock_set_id.return_value = "server-123"
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         # Verify argument parser setup (lines 227-241)
@@ -125,16 +129,17 @@ class TestMainFunction:
         assert "Starting DataBeak" in log_call[0][0]
 
         # Verify stdio transport execution (lines 261-262)
-        mock_mcp.run.assert_called_once_with(transport="stdio")
+        mock_create_server.assert_called_once()
+        mock_mcp_instance.run.assert_called_once_with(transport="stdio")
 
     @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_http_transport(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -154,20 +159,25 @@ class TestMainFunction:
 
         mock_set_id.return_value = "server-456"
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         mock_setup_logging.assert_called_once_with("DEBUG")
         # Verify non-stdio transport execution (line 264)
-        mock_mcp.run.assert_called_once_with(transport="http", host="localhost", port=8080)
+        mock_create_server.assert_called_once()
+        mock_mcp_instance.run.assert_called_once_with(transport="http", host="localhost", port=8080)
 
     @patch("databeak.server.ArgumentParser")
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_sse_transport(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -185,11 +195,16 @@ class TestMainFunction:
         mock_parser_instance.parse_args.return_value = mock_args
         mock_parser.return_value = mock_parser_instance
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         mock_setup_logging.assert_called_once_with("WARNING")
         # Verify non-stdio transport execution (line 264)
-        mock_mcp.run.assert_called_once_with(transport="sse", host="0.0.0.0", port=9000)
+        mock_create_server.assert_called_once()
+        mock_mcp_instance.run.assert_called_once_with(transport="sse", host="0.0.0.0", port=9000)
 
     @pytest.mark.parametrize(
         ("transport", "expected_run_args"),
@@ -203,10 +218,10 @@ class TestMainFunction:
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_transport_variations(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -228,16 +243,21 @@ class TestMainFunction:
 
         mock_set_id.return_value = f"server-{transport}"
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         # Verify logging was called (implementation details not tested)
         mock_logger.info.assert_called_once()
 
         # Verify correct mcp.run() call based on transport
+        mock_create_server.assert_called_once()
         if transport == "stdio":
-            mock_mcp.run.assert_called_once_with(transport="stdio")
+            mock_mcp_instance.run.assert_called_once_with(transport="stdio")
         else:
-            mock_mcp.run.assert_called_once_with(**expected_run_args)
+            mock_mcp_instance.run.assert_called_once_with(**expected_run_args)
 
     @patch("databeak.server.ArgumentParser")
     def test_main_argument_parser_configuration(self, mock_parser: MagicMock) -> None:
@@ -257,7 +277,7 @@ class TestMainFunction:
             patch("databeak.server.setup_structured_logging"),
             patch("databeak.server.set_correlation_id"),
             patch("databeak.server.logger"),
-            patch("databeak.server.mcp"),
+            patch("databeak.server.create_server"),
         ):
             main()
 
@@ -284,10 +304,10 @@ class TestMainFunction:
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_logging_levels(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -308,6 +328,10 @@ class TestMainFunction:
 
         mock_set_id.return_value = "test-server"
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         # Verify logging is set up with the correct level
@@ -317,10 +341,10 @@ class TestMainFunction:
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_correlation_id_logging(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -341,6 +365,10 @@ class TestMainFunction:
         test_correlation_id = "test-correlation-123"
         mock_set_id.return_value = test_correlation_id
 
+        # Setup mock MCP instance
+        mock_mcp_instance = MagicMock()
+        mock_create_server.return_value = mock_mcp_instance
+
         main()
 
         # Verify correlation ID was set and used in logging
@@ -353,10 +381,10 @@ class TestMainFunction:
     @patch("databeak.server.setup_structured_logging")
     @patch("databeak.server.set_correlation_id")
     @patch("databeak.server.logger")
-    @patch("databeak.server.mcp")
+    @patch("databeak.server.create_server")
     def test_main_conditional_logging_params(
         self,
-        mock_mcp: MagicMock,
+        mock_create_server: MagicMock,
         mock_logger: MagicMock,
         mock_set_id: MagicMock,
         mock_setup_logging: MagicMock,
@@ -374,6 +402,7 @@ class TestMainFunction:
         for transport, host, port in test_cases:
             # Reset mocks
             mock_logger.reset_mock()
+            mock_create_server.reset_mock()
 
             mock_args = MagicMock()
             mock_args.transport = transport
@@ -384,6 +413,10 @@ class TestMainFunction:
             mock_parser_instance.parse_args.return_value = mock_args
             mock_parser.return_value = mock_parser_instance
 
+            # Setup mock MCP instance
+            mock_mcp_instance = MagicMock()
+            mock_create_server.return_value = mock_mcp_instance
+
             main()
 
             # Verify logging was called (implementation details not tested)
@@ -393,13 +426,16 @@ class TestMainFunction:
 class TestServerInitialization:
     """Tests for server initialization and configuration."""
 
-    def test_mcp_server_instance(self) -> None:
-        """Test that MCP server is properly initialized."""
-        from databeak.server import mcp
+    def test_create_server_function(self) -> None:
+        """Test that create_server function exists and returns MCP instance."""
+        from databeak.server import create_server
 
-        assert mcp is not None
-        assert hasattr(mcp, "mount")
-        assert hasattr(mcp, "run")
+        # Create server instance
+        mcp_instance = create_server()
+
+        assert mcp_instance is not None
+        assert hasattr(mcp_instance, "mount")
+        assert hasattr(mcp_instance, "run")
 
     def test_server_imports(self) -> None:
         """Test that all server imports are available."""
@@ -408,7 +444,7 @@ class TestServerInitialization:
         # Verify key functions exist
         assert hasattr(server, "_load_instructions")
         assert hasattr(server, "main")
-        assert hasattr(server, "mcp")
+        assert hasattr(server, "create_server")
 
     def test_server_mounting_imports(self) -> None:
         """Test that all server modules are imported for mounting."""

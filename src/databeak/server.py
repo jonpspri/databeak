@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from fastmcp import FastMCP
+from smithery.decorators import smithery
 
 from databeak._version import __version__
 
@@ -51,22 +52,8 @@ def _load_instructions() -> str:
 # Initialize relaxed JSON schema validation before creating server
 initialize_relaxed_validation()
 
-# Initialize FastMCP server
-mcp = FastMCP("DataBeak", instructions=_load_instructions(), version=__version__)
-
 # All tools have been migrated to specialized servers
 # No direct tool registration needed - using server composition pattern
-
-# Mount specialized servers
-mcp.mount(system_server)
-mcp.mount(io_server)
-mcp.mount(row_operations_server)
-mcp.mount(statistics_server)
-mcp.mount(discovery_server)
-mcp.mount(validation_server)
-mcp.mount(transformation_server)
-mcp.mount(column_server)
-mcp.mount(column_text_server)
 
 
 # ============================================================================
@@ -74,7 +61,6 @@ mcp.mount(column_text_server)
 # ============================================================================
 
 
-@mcp.prompt
 def analyze_csv_prompt(session_id: str, analysis_type: str = "summary") -> str:
     """Generate a prompt to analyze CSV data."""
     return f"""Please analyze the CSV data in session {session_id}.
@@ -89,7 +75,6 @@ Provide insights about:
 """
 
 
-@mcp.prompt
 def data_cleaning_prompt(session_id: str) -> str:
     """Generate a prompt for data cleaning suggestions."""
     return f"""Review the data in session {session_id} and suggest cleaning operations.
@@ -106,6 +91,27 @@ Consider:
 # ============================================================================
 # MAIN ENTRY POINT
 # ============================================================================
+
+
+@smithery.server()
+def create_server() -> FastMCP:
+    """Create and return the FastMCP server instance."""
+    # Initialize FastMCP server
+    mcp = FastMCP("DataBeak", instructions=_load_instructions(), version=__version__)
+    # Mount specialized servers
+    mcp.mount(system_server)
+    mcp.mount(io_server)
+    mcp.mount(row_operations_server)
+    mcp.mount(statistics_server)
+    mcp.mount(discovery_server)
+    mcp.mount(validation_server)
+    mcp.mount(transformation_server)
+    mcp.mount(column_server)
+    mcp.mount(column_text_server)
+
+    mcp.prompt()(analyze_csv_prompt)
+    mcp.prompt()(data_cleaning_prompt)
+    return mcp
 
 
 def main() -> None:
@@ -152,7 +158,7 @@ def main() -> None:
         run_args["port"] = args.port
 
     # Run the server
-    mcp.run(**run_args)  # type: ignore[arg-type]
+    create_server().run(**run_args)
 
 
 if __name__ == "__main__":
