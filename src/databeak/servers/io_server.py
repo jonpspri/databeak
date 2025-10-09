@@ -8,13 +8,11 @@ management capabilities with robust error handling and AI-optimized documentatio
 from __future__ import annotations
 
 import logging
-import socket
 from abc import ABC, abstractmethod
 from io import StringIO
 from typing import Annotated, Literal
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen
 
+import httpx
 import pandas as pd
 from fastmcp import Context, FastMCP
 from fastmcp.exceptions import ToolError
@@ -242,13 +240,15 @@ async def load_csv_from_url(
         # Pre-download validation with timeout and content-type checking
         await ctx.info("Verifying URL and downloading content...")
 
-        # Set socket timeout for all operations
-        socket.setdefaulttimeout(settings.url_timeout_seconds)
+        # Use async HTTP client for non-blocking download
+        async with httpx.AsyncClient(timeout=settings.url_timeout_seconds) as client:
+            # HEAD request first to check content-type and size
+            head_response = await client.head(url, follow_redirects=True)
+            head_response.raise_for_status()
 
-        with urlopen(url, timeout=settings.url_timeout_seconds) as response:  # nosec B310  # noqa: S310, ASYNC210
             # Verify content-type
-            content_type = response.headers.get("Content-Type", "").lower()
-            content_length = response.headers.get("Content-Length")
+            content_type = head_response.headers.get("content-type", "").lower()
+            content_length = head_response.headers.get("content-length")
 
             # Check content type
             valid_content_types = [
@@ -274,61 +274,32 @@ async def load_csv_from_url(
             await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
             await ctx.report_progress(0.3)
 
-        # Download and parse CSV using pandas with timeout
+            # Download CSV content
+            response = await client.get(url, follow_redirects=True)
+            response.raise_for_status()
+            csv_content = response.text
+
+        # Parse CSV from downloaded content
         df = pd.read_csv(
-            url,
+            StringIO(csv_content),
             encoding=encoding,
             delimiter=delimiter,
             header=resolve_header_param(header_config),
         )
         validate_dataframe_size(df)
 
-    except (TimeoutError, URLError, HTTPError) as e:
+    except (httpx.TimeoutException, httpx.HTTPError, httpx.RequestError) as e:
         logger.exception("Network error downloading URL")
         await ctx.error(f"Network error: {e}")
         msg = f"Network error: {e}"
 
         raise ToolError(msg) from e
     except UnicodeDecodeError as e:
-        # Use optimized encoding fallbacks for URL downloads
-        df = None
-        last_error = e
-
-        await ctx.info("URL encoding error, trying optimized fallbacks...")
-
-        # Use the same optimized fallback strategy
-        fallback_encodings = get_encoding_fallbacks(encoding)
-
-        for alt_encoding in fallback_encodings:
-            if alt_encoding != encoding:  # Skip the original encoding we already tried
-                try:
-                    df = pd.read_csv(
-                        url,
-                        encoding=alt_encoding,
-                        delimiter=delimiter,
-                        header=resolve_header_param(header_config),
-                    )
-                    validate_dataframe_size(df)
-
-                    logger.warning(
-                        "Used fallback encoding %s instead of %s", alt_encoding, encoding
-                    )
-                    await ctx.info(f"Used fallback encoding {alt_encoding} due to encoding error")
-                    break
-                except UnicodeDecodeError as fallback_error:
-                    last_error = fallback_error
-                    continue
-                except Exception as other_error:
-                    logger.debug("Failed with encoding %s: %s", alt_encoding, other_error)
-                    continue
-        else:
-            msg = f"Encoding error with all attempted encodings: {last_error}. Try specifying a different encoding."
-            raise ToolError(msg) from last_error
-
-        if df is None:
-            msg = f"Failed to download CSV with any encoding: {last_error}"
-
-            raise ToolError(msg) from last_error
+        # CSV parsing succeeded but encoding specified doesn't match content
+        # This shouldn't happen with httpx.response.text (auto-detects encoding)
+        # but keeping fallback for edge cases
+        msg = f"Encoding error: {e}. The downloaded content encoding doesn't match '{encoding}'."
+        raise ToolError(msg) from e
 
     await ctx.report_progress(0.8)
 
