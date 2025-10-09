@@ -403,7 +403,6 @@ class TestServerInfoResult:
             version="1.0.0",
             description="CSV manipulation server",
             capabilities={"analytics": ["statistics", "correlation"]},
-            supported_formats=["csv", "json", "excel"],
             max_file_size_mb=100,
             session_timeout_minutes=30,
         )

@@ -373,21 +373,6 @@ class TestServerInfo:
                 assert cap in data_io_caps
 
     @pytest.mark.asyncio
-    async def test_get_server_info_supported_formats(self) -> None:
-        """Test server info supported formats (empty for web-only hosting)."""
-        with patch("databeak.servers.system_server.get_settings") as mock_settings:
-            mock_config = Mock()
-            mock_config.max_file_size_mb = 300
-            mock_config.session_timeout = 1200
-            mock_settings.return_value = mock_config
-
-            result = await get_server_info(create_mock_context())
-
-            # Verify supported_formats is empty list (no file export capability)
-            assert isinstance(result.supported_formats, list)
-            assert len(result.supported_formats) == 0
-
-    @pytest.mark.asyncio
     async def test_get_server_info_with_context(self) -> None:
         """Test server info with FastMCP context logging."""
         from unittest.mock import AsyncMock
@@ -491,7 +476,6 @@ class TestServerInfo:
             assert "name" in result_dict
             assert "version" in result_dict
             assert "capabilities" in result_dict
-            assert "supported_formats" in result_dict
             assert "max_file_size_mb" in result_dict
             assert "session_timeout_minutes" in result_dict
 

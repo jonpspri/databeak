@@ -42,7 +42,6 @@ class TestSystemServerIntegration:
         assert "DataBeak" in content
         assert "version" in content
         assert "capabilities" in content
-        assert "supported_formats" in content
 
     @pytest.mark.asyncio
     async def test_get_server_info_returns_actual_version_via_client(

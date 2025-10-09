@@ -60,7 +60,6 @@ dependencies = [
     "pytz>=2024.2",
     "pydantic-settings>=2.10.1",
     "psutil>=7.0.0",
-    "chardet>=5.2.0",
     "scipy>=1.16.1",
     "simpleeval>=1.0.3",
     "pandera>=0.26.1",
