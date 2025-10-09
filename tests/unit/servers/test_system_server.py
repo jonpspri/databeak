@@ -309,7 +309,7 @@ class TestServerInfo:
         """Test server info returns proper structure with all required fields."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 500
+            mock_config.max_download_size_mb = 500
             mock_config.session_timeout = 3600  # 1 hour in seconds
             mock_settings.return_value = mock_config
 
@@ -323,7 +323,7 @@ class TestServerInfo:
             assert "comprehensive MCP server" in result.description
 
             # Verify configuration
-            assert result.max_file_size_mb == 500  # Actually reports max_url_size_mb
+            assert result.max_download_size_mb == 500
             assert result.session_timeout_minutes == 60  # Converted from seconds
 
     @pytest.mark.asyncio
@@ -331,7 +331,7 @@ class TestServerInfo:
         """Test server info includes all expected capability categories."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 100
+            mock_config.max_download_size_mb = 100
             mock_config.session_timeout = 1800
             mock_settings.return_value = mock_config
 
@@ -357,7 +357,7 @@ class TestServerInfo:
         """Test server info includes expected data I/O capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 200
+            mock_config.max_download_size_mb = 200
             mock_config.session_timeout = 7200
             mock_settings.return_value = mock_config
 
@@ -381,7 +381,7 @@ class TestServerInfo:
 
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 150
+            mock_config.max_download_size_mb = 150
             mock_config.session_timeout = 2400
             mock_settings.return_value = mock_config
 
@@ -411,7 +411,7 @@ class TestServerInfo:
         """Test server info includes comprehensive null handling capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 400
+            mock_config.max_download_size_mb = 400
             mock_config.session_timeout = 5400
             mock_settings.return_value = mock_config
 
@@ -434,7 +434,7 @@ class TestServerInfo:
         """Test server info includes expected data manipulation capabilities."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 250
+            mock_config.max_download_size_mb = 250
             mock_config.session_timeout = 3000
             mock_settings.return_value = mock_config
 
@@ -462,7 +462,7 @@ class TestServerInfo:
         """Test server info response validates as proper Pydantic model."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 600
+            mock_config.max_download_size_mb = 600
             mock_config.session_timeout = 7200
             mock_settings.return_value = mock_config
 
@@ -476,7 +476,7 @@ class TestServerInfo:
             assert "name" in result_dict
             assert "version" in result_dict
             assert "capabilities" in result_dict
-            assert "max_file_size_mb" in result_dict
+            assert "max_download_size_mb" in result_dict
             assert "session_timeout_minutes" in result_dict
 
             # Verify capabilities is a dict of lists
@@ -493,7 +493,7 @@ class TestServerInfo:
 
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
-            mock_config.max_url_size_mb = 500
+            mock_config.max_download_size_mb = 500
             mock_config.session_timeout = 3600
             mock_settings.return_value = mock_config
 

@@ -246,7 +246,7 @@ async def get_server_info(
                 "null_value_updates",
             ],
         },
-        max_file_size_mb=settings.max_url_size_mb,  # Report URL size limit instead
+        max_download_size_mb=settings.max_download_size_mb,
         session_timeout_minutes=settings.session_timeout // 60,
     )
 

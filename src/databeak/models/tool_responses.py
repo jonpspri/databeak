@@ -82,7 +82,7 @@ class ServerInfoResult(BaseToolResponse):
     capabilities: dict[str, list[str]] = Field(
         description="Available operations organized by category",
     )
-    max_file_size_mb: int = Field(description="Maximum file size limit in MB")
+    max_download_size_mb: int = Field(description="Maximum download size from URLs in MB")
     session_timeout_minutes: int = Field(description="Default session timeout in minutes")
 
 

@@ -99,7 +99,7 @@ def resolve_header_param(config: HeaderConfig) -> int | None | Literal["infer"]:
 # - max_memory_usage_mb: Maximum memory usage in MB for DataFrames
 # - max_rows: Maximum number of rows to prevent memory issues
 # - url_timeout_seconds: Timeout for URL downloads
-# - max_url_size_mb: Maximum download size for URLs
+# - max_download_size_mb: Maximum download size from URLs
 
 # ============================================================================
 # PYDANTIC MODELS FOR I/O OPERATIONS
@@ -199,7 +199,7 @@ def validate_dataframe_size(df: pd.DataFrame) -> None:
 # Implementation: HTTP/HTTPS download with security validation and timeouts
 # Blocks private networks, validates content-type, enforces size limits
 # Uses same encoding fallback strategy as file loading
-# Configurable via DataBeakSettings: url_timeout_seconds, max_url_size_mb
+# Configurable via DataBeakSettings: url_timeout_seconds, max_download_size_mb
 async def load_csv_from_url(
     ctx: Annotated[Context, Field(description="FastMCP context for session access")],
     url: Annotated[str, Field(description="URL of the CSV file to download and load")],
@@ -265,9 +265,9 @@ async def load_csv_from_url(
 
             # Check content length
             if content_length:
-                size_mb = int(content_length) / (1024 * 1024)
-                if size_mb > settings.max_url_size_mb:
-                    msg = f"Download too large: {size_mb:.1f} MB exceeds limit of {settings.max_url_size_mb} MB"
+                download_size_mb = int(content_length) / (1024 * 1024)
+                if download_size_mb > settings.max_download_size_mb:
+                    msg = f"Download too large: {download_size_mb:.1f} MB exceeds limit of {settings.max_download_size_mb} MB"
 
                     raise ToolError(msg)
 

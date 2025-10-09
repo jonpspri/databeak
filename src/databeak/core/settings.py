@@ -26,7 +26,7 @@ class DataBeakSettings(BaseSettings):
     - max_memory_usage_mb: Hard limit for individual DataFrame memory
     - max_rows: Hard limit for DataFrame row count
     - url_timeout_seconds: Network timeout for URL downloads
-    - max_url_size_mb: Maximum download size from URLs
+    - max_download_size_mb: Maximum download size from URLs
 
     Data Validation:
     - Various thresholds for quality checks and anomaly detection
@@ -64,7 +64,7 @@ class DataBeakSettings(BaseSettings):
     url_timeout_seconds: int = Field(
         default=30, description="Network timeout for URL downloads in seconds"
     )
-    max_url_size_mb: int = Field(
+    max_download_size_mb: int = Field(
         default=100, description="Maximum download size for URLs in MB (hard limit)"
     )
 

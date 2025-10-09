@@ -55,7 +55,7 @@ class TestEnvironmentVariableConfiguration:
 
         # Verify all documented environment variables have corresponding fields
         documented_vars = {
-            "DATABEAK_MAX_URL_SIZE_MB": "max_url_size_mb",
+            "DATABEAK_MAX_DOWNLOAD_SIZE_MB": "max_download_size_mb",
             "DATABEAK_SESSION_TIMEOUT": "session_timeout",
             "DATABEAK_URL_TIMEOUT_SECONDS": "url_timeout_seconds",
         }
@@ -68,7 +68,7 @@ class TestEnvironmentVariableConfiguration:
         """Test that settings have sensible defaults."""
         settings = DataBeakSettings()
 
-        assert settings.max_url_size_mb == 100
+        assert settings.max_download_size_mb == 100
         assert settings.session_timeout == 3600
         assert settings.url_timeout_seconds == 30
         assert settings.max_anomaly_sample_size == 10000
@@ -76,7 +76,7 @@ class TestEnvironmentVariableConfiguration:
     def test_environment_variable_override(self, monkeypatch) -> None:  # type: ignore[no-untyped-def]
         """Test that environment variables properly override defaults."""
         # Set test environment variables
-        monkeypatch.setenv("DATABEAK_MAX_URL_SIZE_MB", "200")
+        monkeypatch.setenv("DATABEAK_MAX_DOWNLOAD_SIZE_MB", "200")
         monkeypatch.setenv("DATABEAK_SESSION_TIMEOUT", "7200")
         monkeypatch.setenv("DATABEAK_URL_TIMEOUT_SECONDS", "60")
         monkeypatch.setenv("DATABEAK_MAX_ANOMALY_SAMPLE_SIZE", "5000")
@@ -84,7 +84,7 @@ class TestEnvironmentVariableConfiguration:
         # Create new settings instance to pick up env vars
         settings = DataBeakSettings()
 
-        assert settings.max_url_size_mb == 200
+        assert settings.max_download_size_mb == 200
         assert settings.session_timeout == 7200
         assert settings.url_timeout_seconds == 60
         assert settings.max_anomaly_sample_size == 5000
