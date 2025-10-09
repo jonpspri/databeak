@@ -185,13 +185,40 @@ def validate_dataframe_size(df: pd.DataFrame) -> None:
     settings = get_settings()
 
     if len(df) > settings.max_rows:
-        msg = f"File too large: {len(df):,} rows exceeds limit of {settings.max_rows:,} rows"
+        msg = f"Data too large: {len(df):,} rows exceeds limit of {settings.max_rows:,} rows"
         raise ToolError(msg)
 
     memory_usage_mb = df.memory_usage(deep=True).sum() / (1024 * 1024)
     if memory_usage_mb > settings.max_memory_usage_mb:
-        msg = f"File too large: {memory_usage_mb:.1f} MB exceeds memory limit of {settings.max_memory_usage_mb} MB"
+        msg = f"Data too large: {memory_usage_mb:.1f} MB exceeds memory limit of {settings.max_memory_usage_mb} MB"
         raise ToolError(msg)
+
+
+def create_load_result(df: pd.DataFrame) -> LoadResult:
+    """Create LoadResult from a DataFrame.
+
+    Args:
+        df: Loaded DataFrame
+
+    Returns:
+        LoadResult with data preview and metadata
+
+    """
+    # Create data preview with indices
+    preview_data = create_data_preview_with_indices(df, 5)
+    data_preview = DataPreview(
+        rows=preview_data["records"],
+        row_count=preview_data["total_rows"],
+        column_count=preview_data["total_columns"],
+        truncated=preview_data["preview_rows"] < preview_data["total_rows"],
+    )
+
+    return LoadResult(
+        rows_affected=len(df),
+        columns_affected=[str(col) for col in df.columns],
+        data=data_preview,
+        memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
+    )
 
 
 # Implementation: HTTP/HTTPS download with security validation and timeouts
@@ -274,10 +301,24 @@ async def load_csv_from_url(
             await ctx.info(f"Download validated. Content-type: {content_type or 'unknown'}")
             await ctx.report_progress(0.3)
 
-            # Download CSV content
-            response = await client.get(url, follow_redirects=True)
-            response.raise_for_status()
-            csv_content = response.text
+            # Download CSV content with size enforcement
+            max_bytes = settings.max_download_size_mb * 1024 * 1024
+            downloaded_bytes = 0
+            chunks = []
+
+            async with client.stream("GET", url, follow_redirects=True) as response:
+                response.raise_for_status()
+
+                async for chunk in response.aiter_bytes(chunk_size=8192):
+                    downloaded_bytes += len(chunk)
+                    if downloaded_bytes > max_bytes:
+                        msg = f"Download exceeded size limit of {settings.max_download_size_mb} MB during transfer"
+                        raise ToolError(msg)
+                    chunks.append(chunk)
+
+            # Decode downloaded content
+            csv_bytes = b"".join(chunks)
+            csv_content = csv_bytes.decode("utf-8", errors="replace")
 
         # Parse CSV from downloaded content
         df = pd.read_csv(
@@ -316,21 +357,7 @@ async def load_csv_from_url(
     await ctx.report_progress(1.0)
     await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from URL")
 
-    # Create data preview with indices
-    preview_data = create_data_preview_with_indices(df, 5)
-    data_preview = DataPreview(
-        rows=preview_data["records"],
-        row_count=preview_data["total_rows"],
-        column_count=preview_data["total_columns"],
-        truncated=preview_data["preview_rows"] < preview_data["total_rows"],
-    )
-
-    return LoadResult(
-        rows_affected=len(df),
-        columns_affected=[str(col) for col in df.columns],
-        data=data_preview,
-        memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
-    )
+    return create_load_result(df)
 
 
 # Implementation: parses CSV from string using StringIO with pandas read_csv
@@ -385,6 +412,9 @@ async def load_csv_from_content(
         msg = "Parsed CSV contains no data rows"
         raise ToolError(msg)
 
+    # Validate DataFrame size against limits
+    validate_dataframe_size(df)
+
     # Get or create session
     session_manager = get_session_manager()
     session = session_manager.get_or_create_session(session_id)
@@ -392,21 +422,7 @@ async def load_csv_from_content(
 
     await ctx.info(f"Loaded {len(df)} rows and {len(df.columns)} columns from content")
 
-    # Create data preview with indices
-    preview_data = create_data_preview_with_indices(df, 5)
-    data_preview = DataPreview(
-        rows=preview_data["records"],
-        row_count=preview_data["total_rows"],
-        column_count=preview_data["total_columns"],
-        truncated=preview_data["preview_rows"] < preview_data["total_rows"],
-    )
-
-    return LoadResult(
-        rows_affected=len(df),
-        columns_affected=[str(col) for col in df.columns],
-        data=data_preview,
-        memory_usage_mb=df.memory_usage(deep=True).sum() / (1024 * 1024),
-    )
+    return create_load_result(df)
 
 
 # Implementation: retrieves session metadata from session manager
