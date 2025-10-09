@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib.metadata
 from pathlib import Path
 
-from databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DatabeakSettings
 
 
 class TestVersionLoading:
@@ -38,11 +38,11 @@ class TestVersionLoading:
 
 
 class TestEnvironmentVariableConfiguration:
-    """Test environment variable configuration matches DataBeakSettings."""
+    """Test environment variable configuration matches DatabeakSettings."""
 
     def test_databeak_settings_has_correct_prefix(self) -> None:
-        """Test that DataBeakSettings uses DATABEAK_ prefix."""
-        settings = DataBeakSettings()
+        """Test that DatabeakSettings uses DATABEAK_ prefix."""
+        settings = DatabeakSettings()
         config = settings.model_config
 
         assert "env_prefix" in config
@@ -51,7 +51,7 @@ class TestEnvironmentVariableConfiguration:
 
     def test_environment_variables_mapping(self) -> None:
         """Test that documented environment variables map to settings fields."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
         # Verify all documented environment variables have corresponding fields
         documented_vars = {
@@ -66,7 +66,7 @@ class TestEnvironmentVariableConfiguration:
 
     def test_settings_default_values(self) -> None:
         """Test that settings have sensible defaults."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
         assert settings.max_download_size_mb == 100
         assert settings.session_timeout == 3600
@@ -82,7 +82,7 @@ class TestEnvironmentVariableConfiguration:
         monkeypatch.setenv("DATABEAK_MAX_ANOMALY_SAMPLE_SIZE", "5000")
 
         # Create new settings instance to pick up env vars
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
 
         assert settings.max_download_size_mb == 200
         assert settings.session_timeout == 7200

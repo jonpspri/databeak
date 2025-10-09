@@ -18,7 +18,7 @@ from pydantic import Field
 # Import version and session management from main package
 from databeak._version import __version__
 from databeak.core.session import get_session_manager
-from databeak.core.settings import DataBeakSettings, get_settings
+from databeak.core.settings import DatabeakSettings, get_settings
 from databeak.models.tool_responses import HealthResult, ServerInfoResult
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 # MEMORY MONITORING CONSTANTS AND UTILITIES
 # ============================================================================
 
-# Memory monitoring will use configurable thresholds from DataBeakSettings
+# Memory monitoring will use configurable thresholds from DatabeakSettings
 
 
 def get_memory_usage() -> float:
@@ -50,7 +50,7 @@ def get_memory_usage() -> float:
 
 
 def get_memory_status(
-    current_mb: float, threshold_mb: float, settings: DataBeakSettings | None = None
+    current_mb: float, threshold_mb: float, settings: DatabeakSettings | None = None
 ) -> str:
     """Determine memory status based on configurable thresholds.
 

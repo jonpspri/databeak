@@ -8,7 +8,7 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
-class DataBeakSettings(BaseSettings):
+class DatabeakSettings(BaseSettings):
     """Configuration settings for DataBeak operations.
 
     Settings are organized into categories:
@@ -113,16 +113,16 @@ class DataBeakSettings(BaseSettings):
     model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
 
 
-_settings: DataBeakSettings | None = None
+_settings: DatabeakSettings | None = None
 _lock = threading.Lock()
 
 
-def create_settings() -> DataBeakSettings:
+def create_settings() -> DatabeakSettings:
     """Create a new DataBeak settings instance."""
-    return DataBeakSettings()
+    return DatabeakSettings()
 
 
-def get_settings() -> DataBeakSettings:
+def get_settings() -> DatabeakSettings:
     """Create or get the global DataBeak settings instance."""
     global _settings  # noqa: PLW0603
     if _settings is None:

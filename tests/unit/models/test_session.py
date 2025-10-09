@@ -12,15 +12,15 @@ from databeak.core.session import (
     SessionManager,
     get_session_manager,
 )
-from databeak.core.settings import DataBeakSettings
+from databeak.core.settings import DatabeakSettings
 
 
-class TestDataBeakSettings:
-    """Tests for DataBeakSettings configuration."""
+class TestDatabeakSettings:
+    """Tests for DatabeakSettings configuration."""
 
     def test_default_settings(self) -> None:
         """Test default settings initialization."""
-        settings = DataBeakSettings()
+        settings = DatabeakSettings()
         assert settings.session_timeout == 3600
         assert settings.health_memory_threshold_mb == 2048
         assert settings.max_anomaly_sample_size == 10000  # Anomaly detection sample size
@@ -263,7 +263,7 @@ class TestMemoryConfiguration:
 
     def test_memory_threshold_configuration(self) -> None:
         """Test that memory threshold is configurable via settings."""
-        settings = DataBeakSettings(health_memory_threshold_mb=4096)
+        settings = DatabeakSettings(health_memory_threshold_mb=4096)
         assert settings.health_memory_threshold_mb == 4096
 
     @pytest.mark.asyncio
@@ -278,7 +278,7 @@ class TestMemoryConfiguration:
             os.environ["DATABEAK_HEALTH_MEMORY_THRESHOLD_MB"] = "4096"
 
             # Create new settings instance to pick up env vars
-            settings = DataBeakSettings()
+            settings = DatabeakSettings()
 
             assert settings.health_memory_threshold_mb == 4096
 
