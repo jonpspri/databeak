@@ -1,8 +1,8 @@
 """Standalone I/O server for DataBeak using FastMCP server composition.
 
 This module provides a complete I/O server implementation following DataBeak's modular server
-architecture pattern. It includes comprehensive CSV loading, export, and session management
-capabilities with robust error handling and AI-optimized documentation.
+architecture pattern. It includes comprehensive CSV loading from web sources and session
+management capabilities with robust error handling and AI-optimized documentation.
 """
 
 from __future__ import annotations
@@ -472,7 +472,7 @@ async def get_session_info(
 # Create I/O server
 io_server = FastMCP(
     "DataBeak-IO",
-    instructions="I/O operations server for DataBeak with comprehensive CSV loading and export capabilities",
+    instructions="I/O operations server for DataBeak with comprehensive CSV loading from web sources (URLs and string content)",
 )
 
 

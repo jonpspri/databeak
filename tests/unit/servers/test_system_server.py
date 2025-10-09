@@ -365,11 +365,8 @@ class TestServerInfo:
 
             data_io_caps = result.capabilities["data_io"]
             expected_io_caps = [
-                "load_csv",
                 "load_csv_from_url",
                 "load_csv_from_content",
-                "export_csv",
-                "multiple_export_formats",
             ]
 
             for cap in expected_io_caps:
@@ -377,7 +374,7 @@ class TestServerInfo:
 
     @pytest.mark.asyncio
     async def test_get_server_info_supported_formats(self) -> None:
-        """Test server info includes expected supported formats."""
+        """Test server info supported formats (empty for web-only hosting)."""
         with patch("databeak.servers.system_server.get_settings") as mock_settings:
             mock_config = Mock()
             mock_config.max_file_size_mb = 300
@@ -386,22 +383,9 @@ class TestServerInfo:
 
             result = await get_server_info(create_mock_context())
 
-            expected_formats = [
-                "csv",
-                "tsv",
-                "json",
-                "excel",
-                "parquet",
-                "html",
-                "markdown",
-            ]
-
-            for fmt in expected_formats:
-                assert fmt in result.supported_formats
-
-            # Verify it's a proper list
+            # Verify supported_formats is empty list (no file export capability)
             assert isinstance(result.supported_formats, list)
-            assert len(result.supported_formats) == len(expected_formats)
+            assert len(result.supported_formats) == 0
 
     @pytest.mark.asyncio
     async def test_get_server_info_with_context(self) -> None:

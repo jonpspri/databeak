@@ -205,11 +205,8 @@ async def get_server_info(
         description="A comprehensive MCP server for CSV file operations and data analysis",
         capabilities={
             "data_io": [
-                "load_csv",
                 "load_csv_from_url",
                 "load_csv_from_content",
-                "export_csv",
-                "multiple_export_formats",
             ],
             "data_manipulation": [
                 "filter_rows",
@@ -249,15 +246,7 @@ async def get_server_info(
                 "null_value_updates",
             ],
         },
-        supported_formats=[
-            "csv",
-            "tsv",
-            "json",
-            "excel",
-            "parquet",
-            "html",
-            "markdown",
-        ],
+        supported_formats=[],
         max_file_size_mb=settings.max_file_size_mb,
         session_timeout_minutes=settings.session_timeout // 60,
     )

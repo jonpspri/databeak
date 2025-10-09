@@ -13,12 +13,12 @@ comprehensive error handling.
 **Modular Architecture**: Tools are organized into logical categories:
 
 - **System**: Health checks and server information
-- **I/O**: Loading and exporting data with format flexibility
+- **I/O**: Loading data from web sources (URLs, string content)
 - **Data**: Filtering, sorting, transformations, and column operations
 - **Row**: Precise row-level and cell-level access and manipulation
 - **Analytics**: Statistical analysis and data profiling
 - **Validation**: Data quality checks and schema validation
-- **System**: Session management and health monitoring
+- **Session**: Session management and health monitoring
 
 ## 📐 Coordinate System (Critical for AI Success)
 
@@ -70,11 +70,11 @@ sort_data(session_id, ["name"])  # Sort by column
 insert_row(session_id, -1, {"name": "Alice", "email": null})  # Add with nulls
 ```
 
-### Step 3: Analyze and Export
+### Step 3: Analyze Results
 
 ```python
 get_statistics(session_id, ["age"])  # Statistical analysis
-export_csv(session_id, "results.csv")  # Save processed data
+# Note: DataBeak processes data in memory for web-based hosting security
 ```
 
 ## Enhanced Resource Endpoints

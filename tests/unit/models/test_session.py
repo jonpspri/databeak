@@ -2,7 +2,6 @@
 
 import uuid
 from datetime import UTC
-from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pandas as pd
@@ -14,7 +13,6 @@ from databeak.core.session import (
     get_session_manager,
 )
 from databeak.core.settings import DataBeakSettings
-from databeak.models.data_models import ExportFormat
 
 
 class TestDataBeakSettings:
@@ -75,118 +73,6 @@ class TestDatabeakSession:
         # Clear data
         del session.df
         assert not session.has_data()
-
-    @pytest.mark.asyncio
-    async def test_save_callback_csv_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with CSV format (lines 199-227)."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.csv")
-        result = await session._save_callback(file_path, ExportFormat.CSV, "utf-8")
-
-        assert result["success"] is True
-        assert result["file_path"] == file_path
-        assert result["rows"] == 2
-        assert result["columns"] == 2
-        assert Path(file_path).exists()
-
-    @pytest.mark.asyncio
-    async def test_save_callback_tsv_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with TSV format."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.tsv")
-        result = await session._save_callback(file_path, ExportFormat.TSV, "utf-8")
-
-        assert result["success"] is True
-        assert Path(file_path).exists()
-
-        # Verify TSV format (tab-separated)
-        content = Path(file_path).read_text()
-        assert "\t" in content
-
-    @pytest.mark.asyncio
-    async def test_save_callback_json_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with JSON format."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.json")
-        result = await session._save_callback(file_path, ExportFormat.JSON, "utf-8")
-
-        assert result["success"] is True
-        assert Path(file_path).exists()
-
-    @pytest.mark.asyncio
-    async def test_save_callback_excel_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with Excel format."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.xlsx")
-        result = await session._save_callback(file_path, ExportFormat.EXCEL, "utf-8")
-
-        assert result["success"] is True
-        assert Path(file_path).exists()
-
-    @pytest.mark.asyncio
-    async def test_save_callback_parquet_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with Parquet format."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.parquet")
-        result = await session._save_callback(file_path, ExportFormat.PARQUET, "utf-8")
-
-        assert result["success"] is True
-        assert Path(file_path).exists()
-
-    @pytest.mark.asyncio
-    async def test_save_callback_unsupported_format(self, tmp_path: Path) -> None:
-        """Test _save_callback with unsupported format."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        file_path = str(tmp_path / "test.unknown")
-        # Use a string that's not in ExportFormat enum
-        result = await session._save_callback(file_path, "UNKNOWN", "utf-8")  # type: ignore[arg-type]
-
-        assert result["success"] is False
-        assert "Unsupported format" in result["error"]
-
-    @pytest.mark.asyncio
-    async def test_save_callback_no_data(self, tmp_path: Path) -> None:
-        """Test _save_callback when no data is loaded."""
-        session = DatabeakSession()
-        # Don't load any data
-
-        file_path = str(tmp_path / "test.csv")
-        result = await session._save_callback(file_path, ExportFormat.CSV, "utf-8")
-
-        assert result["success"] is False
-        assert "No data to save" in result["error"]
-
-    @pytest.mark.asyncio
-    async def test_save_callback_exception_handling(self, tmp_path: Path) -> None:
-        """Test _save_callback exception handling."""
-        session = DatabeakSession()
-        df = pd.DataFrame({"name": ["Alice", "Bob"], "age": [25, 30]})
-        session.df = df
-
-        # Use invalid path to trigger exception
-        invalid_path = "/invalid/path/that/does/not/exist/test.csv"
-        result = await session._save_callback(invalid_path, ExportFormat.CSV, "utf-8")
-
-        assert result["success"] is False
-        assert "error" in result
 
 
 class TestSessionManager:

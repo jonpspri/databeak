@@ -5,12 +5,11 @@ from __future__ import annotations
 import logging
 import threading
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from databeak.exceptions import NoDataLoadedError, SessionExpiredError
-from databeak.models.data_models import ExportFormat, SessionInfo
+from databeak.models.data_models import SessionInfo
 from databeak.models.data_session import DataSession
 
 if TYPE_CHECKING:
@@ -145,43 +144,6 @@ class DatabeakSession:
             operations_count=0,  # No longer tracking operations (simplified architecture)
             file_path=data_info["file_path"],
         )
-
-    async def _save_callback(
-        self,
-        file_path: str,
-        export_format: ExportFormat,
-        encoding: str,
-    ) -> dict[str, Any]:
-        """Handle auto-save operations."""
-        try:
-            if self._data_session.df is None:
-                return {"success": False, "error": "No data to save"}
-
-            # Handle different export formats
-            path_obj = Path(file_path)
-            path_obj.parent.mkdir(parents=True, exist_ok=True)
-
-            if export_format == ExportFormat.CSV:
-                self._data_session.df.to_csv(path_obj, index=False, encoding=encoding)
-            elif export_format == ExportFormat.TSV:
-                self._data_session.df.to_csv(path_obj, sep="\t", index=False, encoding=encoding)
-            elif export_format == ExportFormat.JSON:
-                self._data_session.df.to_json(path_obj, orient="records", indent=2)
-            elif export_format == ExportFormat.EXCEL:
-                self._data_session.df.to_excel(path_obj, index=False)
-            elif export_format == ExportFormat.PARQUET:
-                self._data_session.df.to_parquet(path_obj, index=False)
-            else:
-                return {"success": False, "error": f"Unsupported format: {export_format}"}
-
-            return {
-                "success": True,
-                "file_path": str(path_obj),
-                "rows": len(self._data_session.df),
-                "columns": len(self._data_session.df.columns),
-            }
-        except (OSError, PermissionError, ValueError, TypeError, UnicodeError) as e:
-            return {"success": False, "error": str(e)}
 
     async def clear(self) -> None:
         """Clear session data to free memory."""
