@@ -14,14 +14,16 @@ Model Context Protocol (MCP).
 
 ## Features
 
-- 🔄 **Complete Data Operations** - Load, transform, analyze, and export CSV data
+- 🔄 **Complete Data Operations** - Load, transform, and analyze CSV data from
+  URLs and string content
 - 📊 **Advanced Analytics** - Statistics, correlations, outlier detection, data
   profiling
 - ✅ **Data Validation** - Schema validation, quality scoring, anomaly detection
 - 🎯 **Stateless Design** - Clean MCP architecture with external context
   management
-- ⚡ **High Performance** - Handles large datasets with streaming and chunking
+- ⚡ **High Performance** - Async I/O, streaming downloads, chunked processing
 - 🔒 **Session Management** - Multi-user support with isolated sessions
+- 🛡️ **Web-Safe** - No file system access; designed for secure web hosting
 - 🌟 **Code Quality** - Zero ruff violations, 100% mypy compliance, perfect MCP
   documentation standards, comprehensive test coverage
 
@@ -71,8 +73,9 @@ uv run databeak --transport http --host 0.0.0.0 --port 8000
 Once configured, ask your AI assistant:
 
 ```text
-"Load a CSV file and show me basic statistics"
-"Remove duplicate rows and export as Excel"
+"Load this CSV data: name,price\nWidget,10.99\nGadget,25.50"
+"Load CSV from URL: https://example.com/data.csv"
+"Remove duplicate rows and show me the statistics"
 "Find outliers in the price column"
 ```
 
@@ -91,34 +94,47 @@ Once configured, ask your AI assistant:
 
 ## Environment Variables
 
-| Variable                    | Default | Description               |
-| --------------------------- | ------- | ------------------------- |
-| `DATABEAK_MAX_FILE_SIZE_MB` | 1024    | Maximum file size         |
-| `DATABEAK_CSV_HISTORY_DIR`  | "."     | History storage location  |
-| `DATABEAK_SESSION_TIMEOUT`  | 3600    | Session timeout (seconds) |
+Configure DataBeak behavior with environment variables (all use `DATABEAK_`
+prefix):
+
+| Variable                              | Default   | Description                        |
+| ------------------------------------- | --------- | ---------------------------------- |
+| `DATABEAK_SESSION_TIMEOUT`            | 3600      | Session timeout (seconds)          |
+| `DATABEAK_MAX_DOWNLOAD_SIZE_MB`       | 100       | Maximum URL download size (MB)     |
+| `DATABEAK_MAX_MEMORY_USAGE_MB`        | 1000      | Max DataFrame memory (MB)          |
+| `DATABEAK_MAX_ROWS`                   | 1,000,000 | Max DataFrame rows                 |
+| `DATABEAK_URL_TIMEOUT_SECONDS`        | 30        | URL download timeout               |
+| `DATABEAK_HEALTH_MEMORY_THRESHOLD_MB` | 2048      | Health monitoring memory threshold |
+
+See [settings.py](src/databeak/core/settings.py) for complete configuration
+options.
 
 ## Known Limitations
 
 DataBeak is designed for interactive CSV processing with AI assistants. Be aware
 of these constraints:
 
-- **File Size**: Maximum 1024MB per file (configurable via
-  `DATABEAK_MAX_FILE_SIZE_MB`)
+- **Data Loading**: URLs and string content only (no local file system access
+  for web hosting security)
+- **Download Size**: Maximum 100MB per URL download (configurable via
+  `DATABEAK_MAX_DOWNLOAD_SIZE_MB`)
+- **DataFrame Size**: Maximum 1GB memory and 1M rows per DataFrame
+  (configurable)
 - **Session Management**: Maximum 100 concurrent sessions, 1-hour timeout
   (configurable)
 - **Memory**: Large datasets may require significant memory; monitor with
-  `system_info` tool
+  `health_check` tool
 - **CSV Dialects**: Assumes standard CSV format; complex dialects may require
   pre-processing
-- **Concurrency**: Single-threaded processing per session; parallel sessions
+- **Concurrency**: Async I/O for concurrent URL downloads; parallel sessions
   supported
 - **Data Types**: Automatic type inference; complex types may need explicit
   conversion
 - **URL Loading**: HTTPS only; blocks private networks (127.0.0.1, 192.168.x.x,
   10.x.x.x) for security
 
-For production deployments with larger datasets, consider adjusting environment
-variables and monitoring resource usage.
+For production deployments with larger datasets, adjust environment variables
+and monitor resource usage with `health_check` and `get_server_info` tools.
 
 ## Contributing
 

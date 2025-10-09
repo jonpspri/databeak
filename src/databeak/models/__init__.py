@@ -1,4 +1,4 @@
-"""Data models for CSV Editor MCP Server."""
+"""Data models for DataBeak MCP Server."""
 
 from __future__ import annotations
 
