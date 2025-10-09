@@ -13,12 +13,10 @@ comprehensive error handling.
 
 ### 📁 I/O Operations
 
-Tools for loading and exporting CSV data in various formats:
+Tools for loading CSV data from web sources:
 
-- **`load_csv`** - Load CSV from file path
 - **`load_csv_from_url`** - Load CSV from HTTP/HTTPS URL
 - **`load_csv_from_content`** - Load CSV from string content
-- **`export_csv`** - Export to CSV, JSON, Excel, Parquet, HTML, Markdown
 - **`get_session_info`** - Get current session details and statistics
 - **`list_sessions`** - List all active sessions
 - **`close_session`** - Close and cleanup a session

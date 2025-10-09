@@ -7,9 +7,7 @@ Pydantic models used in DataBeak's MCP tool responses.
 from __future__ import annotations
 
 import json
-import tempfile
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -53,7 +51,6 @@ from databeak.servers.discovery_server import (
 
 # Import IO server models that moved to modular architecture
 from databeak.servers.io_server import (
-    ExportResult,
     LoadResult,
     SessionInfoResult,
 )
@@ -518,44 +515,6 @@ class TestSessionInfoResult:
         )
         assert result.row_count is None
         assert result.column_count is None
-
-
-class TestExportResult:
-    """Test ExportResult model."""
-
-    def test_valid_creation(self) -> None:
-        """Test valid ExportResult creation."""
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            result = ExportResult(
-                file_path=tmp.name,
-                format="csv",
-                rows_exported=100,
-                file_size_mb=0.5,
-            )
-            assert result.format == "csv"
-            assert result.rows_exported == 100
-            # Clean up
-            Path(tmp.name).unlink()
-
-    def test_literal_format_validation(self) -> None:
-        """Test format field validates against literal values."""
-        valid_formats = ["csv", "tsv", "json", "excel", "parquet", "html", "markdown"]
-        with tempfile.NamedTemporaryFile() as tmp:
-            for fmt in valid_formats:
-                result = ExportResult(
-                    file_path=tmp.name,
-                    format=fmt,
-                    rows_exported=10,
-                )
-                assert result.format == fmt
-
-            # Test invalid format
-            with pytest.raises(ValidationError):
-                ExportResult(
-                    file_path=tmp.name,
-                    format="invalid_format",
-                    rows_exported=10,
-                )
 
 
 # =============================================================================
