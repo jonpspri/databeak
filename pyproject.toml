@@ -67,6 +67,7 @@ dependencies = [
     "fastapi>=0.117.1",
     "uvicorn>=0.36.0",
     "fastmcp>=2.12.4",
+    "smithery>=0.4.2",
 ]
 
 
@@ -255,6 +256,7 @@ module = [
     "fastparquet",
     "pytest",
     "simpleeval",
+    "smithery",
 ]
 ignore_missing_imports = true
 
@@ -356,6 +358,9 @@ site_description = "Comprehensive CSV manipulation and analysis via Model Contex
 site_author = "Santosh Ray"
 repo_url = "https://github.com/jonpspri/databeak"
 repo_name = "databeak"
+
+[tool.smithery]
+server = "databeak.server:create_server"
 
 [dependency-groups]
 dev = [

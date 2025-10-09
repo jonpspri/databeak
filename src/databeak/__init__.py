@@ -3,6 +3,6 @@
 __author__ = "Jonathan Springer"
 
 from ._version import __version__
-from .server import main, mcp
+from .server import main
 
-__all__ = ["__version__", "main", "mcp"]
+__all__ = ["__version__", "main"]
