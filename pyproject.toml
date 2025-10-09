@@ -360,7 +360,7 @@ repo_url = "https://github.com/jonpspri/databeak"
 repo_name = "databeak"
 
 [tool.smithery]
-server = "databeak.server:smithery_server"
+server = "databeak.server:create_server"
 
 [dependency-groups]
 dev = [
