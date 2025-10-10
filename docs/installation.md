@@ -21,8 +21,8 @@ and client configuration.
 The fastest way to install and run DataBeak:
 
 ```bash
-# Install and run directly from GitHub
-uvx --from git+https://github.com/jonpspri/databeak.git databeak
+# Install and run from PyPI
+uvx databeak
 ```
 
 ### Using uv
@@ -47,8 +47,8 @@ uv run databeak
 ### Using pip
 
 ```bash
-# Install directly from GitHub
-pip install git+https://github.com/jonpspri/databeak.git
+# Install from PyPI
+pip install databeak
 
 # Run the server
 databeak
@@ -68,15 +68,10 @@ Settings):
   "mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ],
+      "args": ["databeak"],
       "env": {
-        "DATABEAK_MAX_FILE_SIZE_MB": "2048",
-        "DATABEAK_SESSION_TIMEOUT": "7200",
-        "DATABEAK_CHUNK_SIZE": "20000"
+        "DATABEAK_MAX_DOWNLOAD_SIZE_MB": "200",
+        "DATABEAK_SESSION_TIMEOUT": "7200"
       }
     }
   }
@@ -92,11 +87,7 @@ Edit `~/.continue/config.json`:
   "mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ]
+      "args": ["databeak"]
     }
   }
 }
@@ -111,11 +102,7 @@ Add to VS Code settings (`settings.json`):
   "cline.mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ]
+      "args": ["databeak"]
     }
   }
 }
@@ -130,11 +117,7 @@ Edit `~/.windsurf/mcp_servers.json`:
   "mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ]
+      "args": ["databeak"]
     }
   }
 }
@@ -149,11 +132,7 @@ Edit `~/.config/zed/settings.json`:
   "experimental.mcp_servers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ]
+      "args": ["databeak"]
     }
   }
 }
@@ -162,6 +141,8 @@ Edit `~/.config/zed/settings.json`:
 ## Environment Variables
 
 Configure DataBeak behavior with these environment variables:
+
+### Core Configuration
 
 | Variable                                      | Default | Description                              |
 | --------------------------------------------- | ------- | ---------------------------------------- |
@@ -174,6 +155,36 @@ Configure DataBeak behavior with these environment variables:
 | `DATABEAK_SESSION_CAPACITY_WARNING_THRESHOLD` | 0.90    | Session capacity warning ratio (0-1)     |
 | `DATABEAK_MAX_VALIDATION_VIOLATIONS`          | 1000    | Max validation violations to report      |
 | `DATABEAK_MAX_ANOMALY_SAMPLE_SIZE`            | 10000   | Max sample size for anomaly detection    |
+
+### HTTP Mode Configuration
+
+For HTTP transport mode (`--transport http`), additional configuration options
+are available:
+
+#### OIDC Authentication (HTTP Mode Only)
+
+OpenID Connect authentication for secure HTTP deployments. All four variables
+must be set to enable OIDC:
+
+| Variable                      | Required | Description                      |
+| ----------------------------- | -------- | -------------------------------- |
+| `DATABEAK_OIDC_CONFIG_URL`    | Yes      | OIDC discovery configuration URL |
+| `DATABEAK_OIDC_CLIENT_ID`     | Yes      | OAuth2 client ID                 |
+| `DATABEAK_OIDC_CLIENT_SECRET` | Yes      | OAuth2 client secret             |
+| `DATABEAK_OIDC_BASE_URL`      | Yes      | Application base URL for OAuth2  |
+
+**Example HTTP deployment with OIDC:**
+
+```bash
+export DATABEAK_OIDC_CONFIG_URL="https://auth.example.com/.well-known/openid-configuration"
+export DATABEAK_OIDC_CLIENT_ID="databeak-client"
+export DATABEAK_OIDC_CLIENT_SECRET="your-secret"
+export DATABEAK_OIDC_BASE_URL="https://databeak.example.com"
+uvx databeak --transport http --host 0.0.0.0 --port 8000
+```
+
+**Note**: OIDC authentication is only applicable for HTTP transport mode. Stdio
+mode (default for MCP clients) does not use OIDC authentication.
 
 ## Verification
 
@@ -194,8 +205,7 @@ DATABEAK_LOG_LEVEL=DEBUG uv run databeak
 npm install -g @modelcontextprotocol/inspector
 
 # Test the server
-mcp-inspector uvx --from \
-  git+https://github.com/jonpspri/databeak.git databeak
+mcp-inspector uvx databeak
 ```
 
 ### Verify in Your AI Client
@@ -210,9 +220,8 @@ mcp-inspector uvx --from \
 
 #### Server not starting
 
-- Check Python version: `python --version` (must be 3.10+)
-- Verify installation:
-  `uvx --from \ git+https://github.com/jonpspri/databeak.git databeak --version`
+- Check Python version: `python --version` (must be 3.12+)
+- Verify installation: `uvx databeak --version`
 - Check logs with debug level
 
 #### Client can't connect

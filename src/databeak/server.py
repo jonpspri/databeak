@@ -8,6 +8,8 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 from fastmcp import FastMCP
+from fastmcp.server.auth.oidc_proxy import OIDCProxy
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from smithery.decorators import smithery
 
 from databeak._version import __version__
@@ -29,6 +31,45 @@ from databeak.utils.logging_config import set_correlation_id, setup_structured_l
 
 # Configure structured logging
 logger = logging.getLogger(__name__)
+
+
+class OidcSettings(BaseSettings):
+    """Settings for OIDC authentication."""
+
+    model_config = SettingsConfigDict(env_prefix="DATABEAK_OIDC_")
+
+    config_url: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
+    base_url: str | None = None
+
+
+oidc_settings = OidcSettings()
+auth: OIDCProxy | None = None
+
+if (
+    oidc_settings.config_url
+    and oidc_settings.client_id
+    and oidc_settings.client_secret
+    and oidc_settings.base_url
+):
+    auth = OIDCProxy(
+        config_url=oidc_settings.config_url,
+        client_id=oidc_settings.client_id,
+        client_secret=oidc_settings.client_secret,
+        base_url=oidc_settings.base_url,
+    )
+elif any(
+    [
+        oidc_settings.config_url,
+        oidc_settings.client_id,
+        oidc_settings.client_secret,
+        oidc_settings.base_url,
+    ]
+):
+    logger.error(
+        "Incomplete OIDC configuration. All of config_url, client_id, client_secret, and base_url must be set."
+    )
 
 
 # ============================================================================
@@ -97,7 +138,7 @@ Consider:
 def create_server() -> FastMCP:
     """Create and return the FastMCP server instance."""
     # Initialize FastMCP server
-    mcp = FastMCP("DataBeak", instructions=_load_instructions(), version=__version__)
+    mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
     # Mount specialized servers
     mcp.mount(system_server)
     mcp.mount(io_server)

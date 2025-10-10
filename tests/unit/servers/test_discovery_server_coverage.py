@@ -1,15 +1,12 @@
 """Comprehensive unit tests for discovery_server module to improve coverage."""
 
 import uuid
-from unittest.mock import Mock, patch
 
 import numpy as np
 import pandas as pd
 import pytest
 from fastmcp import Context
-from fastmcp.exceptions import ToolError
 
-import databeak
 from databeak.core.session import get_session_manager
 from databeak.exceptions import ColumnNotFoundError, InvalidParameterError
 from databeak.servers.discovery_server import (
@@ -621,23 +618,26 @@ class TestInspectDataAround:
 class TestErrorHandling:
     """Test error handling across all functions."""
 
-    @pytest.mark.skip(reason="TODO: Update error message expectations")
     async def test_no_data_loaded(self) -> None:
         """Test all functions when no data is loaded."""
-        with patch.object(databeak, "session_manager") as manager:
-            session = Mock()
-            session.has_data.return_value = False
-            manager.return_value.get_session.return_value = session
+        # Create a real session without data
+        from databeak.exceptions import NoDataLoadedError
 
-            ctx = create_mock_context("no-data")
+        no_data_session_id = str(uuid.uuid4())
+        manager = get_session_manager()
+        # Create session but don't load data
+        _session = manager.get_or_create_session(no_data_session_id)
 
-            with pytest.raises(ToolError):
-                await detect_outliers(ctx)
+        ctx = create_mock_context(no_data_session_id)
 
-            ctx = create_mock_context("no-data")
+        # Both functions should raise NoDataLoadedError
+        with pytest.raises(NoDataLoadedError):
+            await detect_outliers(ctx)
 
-            with pytest.raises(ToolError):
-                await profile_data(ctx)
+        ctx = create_mock_context(no_data_session_id)
+
+        with pytest.raises(NoDataLoadedError):
+            await profile_data(ctx)
 
     async def test_edge_cases(self, outliers_ctx: Context) -> None:
         """Test various edge cases."""
