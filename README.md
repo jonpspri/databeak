@@ -40,11 +40,7 @@ Add this to your MCP Settings file:
   "mcpServers": {
     "databeak": {
       "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/jonpspri/databeak.git",
-        "databeak"
-      ]
+      "args": ["databeak"]
     }
   }
 }
@@ -58,14 +54,18 @@ specific configuration examples.
 
 ### HTTP Mode (Advanced)
 
-For HTTP-based AI clients or custom deployments:
+For HTTP-based AI clients or custom deployments with OIDC authentication:
 
 ```bash
 # Run in HTTP mode
-uv run databeak --transport http --host 0.0.0.0 --port 8000
+uvx databeak --transport http --host 0.0.0.0 --port 8000
 
-# Access server at http://localhost:8000/mcp
-# Health check at http://localhost:8000/health
+# With OIDC authentication
+export DATABEAK_OIDC_CONFIG_URL="https://auth.example.com/.well-known/openid-configuration"
+export DATABEAK_OIDC_CLIENT_ID="databeak-client"
+export DATABEAK_OIDC_CLIENT_SECRET="your-secret"
+export DATABEAK_OIDC_BASE_URL="https://databeak.example.com"
+uvx databeak --transport http --host 0.0.0.0 --port 8000
 ```
 
 ### Quick Test
@@ -97,6 +97,8 @@ Once configured, ask your AI assistant:
 Configure DataBeak behavior with environment variables (all use `DATABEAK_`
 prefix):
 
+### Core Configuration
+
 | Variable                              | Default   | Description                        |
 | ------------------------------------- | --------- | ---------------------------------- |
 | `DATABEAK_SESSION_TIMEOUT`            | 3600      | Session timeout (seconds)          |
@@ -105,6 +107,22 @@ prefix):
 | `DATABEAK_MAX_ROWS`                   | 1,000,000 | Max DataFrame rows                 |
 | `DATABEAK_URL_TIMEOUT_SECONDS`        | 30        | URL download timeout               |
 | `DATABEAK_HEALTH_MEMORY_THRESHOLD_MB` | 2048      | Health monitoring memory threshold |
+
+### Authentication (HTTP Mode Only)
+
+For HTTP mode deployments, DataBeak supports OpenID Connect authentication. All
+four variables must be set to enable OIDC (not applicable for stdio mode):
+
+| Variable                      | Required | Description                      |
+| ----------------------------- | -------- | -------------------------------- |
+| `DATABEAK_OIDC_CONFIG_URL`    | Yes      | OIDC discovery configuration URL |
+| `DATABEAK_OIDC_CLIENT_ID`     | Yes      | OAuth2 client ID                 |
+| `DATABEAK_OIDC_CLIENT_SECRET` | Yes      | OAuth2 client secret             |
+| `DATABEAK_OIDC_BASE_URL`      | Yes      | Application base URL for OAuth2  |
+
+**Note**: OIDC authentication is only used in HTTP transport mode. If any OIDC
+variable is set but not all four, DataBeak will log an error and authentication
+will not be enabled.
 
 See [settings.py](src/databeak/core/settings.py) for complete configuration
 options.
