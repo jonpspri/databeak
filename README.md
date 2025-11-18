@@ -12,6 +12,10 @@ Transform how AI assistants work with CSV data. DataBeak provides 40+
 specialized tools for data manipulation, analysis, and validation through the
 Model Context Protocol (MCP).
 
+<a href="https://glama.ai/mcp/servers/@jonpspri/databeak">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@jonpspri/databeak/badge" alt="DataBeak MCP server" />
+</a>
+
 ## Features
 
 - 🔄 **Complete Data Operations** - Load, transform, and analyze CSV data from
