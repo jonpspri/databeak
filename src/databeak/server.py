@@ -98,12 +98,14 @@ initialize_relaxed_validation()
 # All tools have been migrated to specialized servers
 # No direct tool registration needed - using server composition pattern
 
+mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
 
 # ============================================================================
 # PROMPTS
 # ============================================================================
 
 
+@mcp.prompt
 def analyze_csv_prompt(session_id: str, analysis_type: str = "summary") -> str:
     """Generate a prompt to analyze CSV data."""
     return f"""Please analyze the CSV data in session {session_id}.
@@ -118,6 +120,7 @@ Provide insights about:
 """
 
 
+@mcp.prompt
 def data_cleaning_prompt(session_id: str) -> str:
     """Generate a prompt for data cleaning suggestions."""
     return f"""Review the data in session {session_id} and suggest cleaning operations.
@@ -135,13 +138,29 @@ Consider:
 # MAIN ENTRY POINT
 # ============================================================================
 
+# Mount specialized servers
+mcp.mount(system_server)
+mcp.mount(io_server)
+mcp.mount(row_operations_server)
+mcp.mount(statistics_server)
+mcp.mount(discovery_server)
+mcp.mount(validation_server)
+mcp.mount(transformation_server)
+mcp.mount(column_server)
+mcp.mount(column_text_server)
+
 
 @smithery.server()
+def create_smithery_server() -> FastMCP:
+     """Create and return the Smithery FastMCP server instance."""
+    return mcp
+
+
 def create_server() -> FastMCP:
-    """Create and return the FastMCP server instance."""
-    # Initialize FastMCP server
+     """Create and return the FastMCP server instance."""
+     # Initialize FastMCP server
     mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
-    # Mount specialized servers
+     # Mount specialized servers
     mcp.mount(system_server)
     mcp.mount(io_server)
     mcp.mount(row_operations_server)
@@ -155,10 +174,10 @@ def create_server() -> FastMCP:
     mcp.prompt()(analyze_csv_prompt)
     mcp.prompt()(data_cleaning_prompt)
 
-    # Health check endpoint for HTTP transport (container orchestration)
-    @mcp.custom_route("/health", methods=["GET"])
+     # Health check endpoint for HTTP transport (container orchestration)
+     @mcp.custom_route("/health", methods=["GET"])
     async def health_check(_request: Request) -> PlainTextResponse:
-        """Health check endpoint for container orchestration."""
+         """Health check endpoint for container orchestration."""
         return PlainTextResponse("OK")
 
     return mcp
@@ -208,7 +227,7 @@ def main() -> None:
         run_args["port"] = args.port
 
     # Run the server
-    create_server().run(**run_args)
+    mcp.run(**run_args)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

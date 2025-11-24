@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class DatabeakSettings(BaseSettings):
@@ -31,6 +31,9 @@ class DatabeakSettings(BaseSettings):
     Data Validation:
     - Various thresholds for quality checks and anomaly detection
     """
+
+    # Logging
+    log_level: str = Field(default="INFO", description="Logging level")
 
     # Session management
     session_timeout: int = Field(default=3600, description="Session timeout in seconds")
@@ -110,7 +113,7 @@ class DatabeakSettings(BaseSettings):
         default=100, description="Multiplier for converting ratios to percentages"
     )
 
-    model_config = {"env_prefix": "DATABEAK_", "case_sensitive": False}
+    model_config = SettingsConfigDict(env_prefix="DATABEAK_")
 
 
 _settings: DatabeakSettings | None = None
