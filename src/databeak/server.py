@@ -9,6 +9,8 @@ from pathlib import Path
 
 from fastmcp import FastMCP
 from smithery.decorators import smithery
+from starlette.requests import Request
+from starlette.responses import PlainTextResponse
 
 from databeak._version import __version__
 
@@ -111,6 +113,13 @@ def create_server() -> FastMCP:
 
     mcp.prompt()(analyze_csv_prompt)
     mcp.prompt()(data_cleaning_prompt)
+
+    # Health check endpoint for HTTP transport (container orchestration)
+    @mcp.custom_route("/health", methods=["GET"])
+    async def health_check(_request: Request) -> PlainTextResponse:
+        """Health check endpoint for container orchestration."""
+        return PlainTextResponse("OK")
+
     return mcp
 
 

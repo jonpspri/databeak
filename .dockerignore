@@ -59,3 +59,18 @@ dist/
 
 # Jupyter notebooks
 *.ipynb_checkpoints
+
+# Tests and examples (not needed in production image)
+tests/
+examples/
+
+# Documentation files
+*.md
+!README.md
+!src/databeak/instructions.md
+mkdocs.yml
+site/
+
+# Claude Code configuration
+.claude/
+CLAUDE.md
