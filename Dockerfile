@@ -4,8 +4,8 @@
 # Build stage - install dependencies with uv
 FROM python:3.12-slim AS builder
 
-# Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Install uv for fast dependency management (pinned for reproducibility)
+COPY --from=ghcr.io/astral-sh/uv:0.5.18 /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -51,7 +51,7 @@ EXPOSE 8000
 
 # Health check for container orchestration
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health', timeout=5)" || exit 1
+    CMD python -c "import httpx; httpx.get('http://localhost:8000/health', timeout=5).raise_for_status()"
 
 # Run the MCP server in HTTP mode
 ENTRYPOINT ["python", "-m", "databeak.server"]

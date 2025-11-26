@@ -67,6 +67,7 @@ examples/
 # Documentation files
 *.md
 !README.md
+!src/databeak/instructions.md
 mkdocs.yml
 site/
 
