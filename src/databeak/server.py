@@ -116,7 +116,7 @@ def create_server() -> FastMCP:
 
     # Health check endpoint for HTTP transport (container orchestration)
     @mcp.custom_route("/health", methods=["GET"])
-    async def health_check(request: Request) -> PlainTextResponse:  # noqa: ARG001
+    async def health_check(_request: Request) -> PlainTextResponse:
         """Health check endpoint for container orchestration."""
         return PlainTextResponse("OK")
 

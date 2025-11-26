@@ -49,9 +49,9 @@ USER databeak
 # Expose HTTP port
 EXPOSE 8000
 
-# Health check for container orchestration
+# Health check for container orchestration (uses stdlib to avoid dependency on httpx)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import httpx; httpx.get('http://localhost:8000/health', timeout=5).raise_for_status()"
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"
 
 # Run the MCP server in HTTP mode
 ENTRYPOINT ["python", "-m", "databeak.server"]
