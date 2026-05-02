@@ -805,7 +805,7 @@ async def inspect_data_around(
         # Handle different index types from iterrows safely
         row_index_val = int(orig_idx) if isinstance(orig_idx, int) else 0
         record: dict[str, CsvCellValue] = {"__row_index__": row_index_val}
-        record.update(row_data.to_dict())
+        record.update({str(k): v for k, v in row_data.to_dict().items()})
 
         # Handle pandas/numpy types
         for key, value in record.items():
