@@ -152,15 +152,15 @@ mcp.mount(column_text_server)
 
 @smithery.server()
 def create_smithery_server() -> FastMCP:
-     """Create and return the Smithery FastMCP server instance."""
+    """Create and return the Smithery FastMCP server instance."""
     return mcp
 
 
 def create_server() -> FastMCP:
-     """Create and return the FastMCP server instance."""
-     # Initialize FastMCP server
+    """Create and return the FastMCP server instance."""
+    # Initialize FastMCP server
     mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
-     # Mount specialized servers
+    # Mount specialized servers
     mcp.mount(system_server)
     mcp.mount(io_server)
     mcp.mount(row_operations_server)
@@ -171,13 +171,13 @@ def create_server() -> FastMCP:
     mcp.mount(column_server)
     mcp.mount(column_text_server)
 
-    mcp.prompt()(analyze_csv_prompt)
-    mcp.prompt()(data_cleaning_prompt)
+    mcp.prompt()(analyze_csv_prompt)  # type: ignore[arg-type]
+    mcp.prompt()(data_cleaning_prompt)  # type: ignore[arg-type]
 
-     # Health check endpoint for HTTP transport (container orchestration)
-     @mcp.custom_route("/health", methods=["GET"])
+    # Health check endpoint for HTTP transport (container orchestration)
+    @mcp.custom_route("/health", methods=["GET"])
     async def health_check(_request: Request) -> PlainTextResponse:
-         """Health check endpoint for container orchestration."""
+        """Health check endpoint for container orchestration."""
         return PlainTextResponse("OK")
 
     return mcp
