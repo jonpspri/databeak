@@ -659,7 +659,7 @@ class SecureExpressionEvaluator:
             # Use simpleeval for safe execution
             self._evaluator.names.update(context)
             result = self._evaluator.eval(expression)
-            result = cast(pd.Series[Any], result)
+            result = cast(pd.Series, result)
 
             # Ensure result is a pandas Series
             if not isinstance(result, pd.Series):
