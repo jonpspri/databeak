@@ -76,7 +76,8 @@ async def databeak_client() -> AsyncGenerator[Client[FastMCPTransport], None]:
 
     mcp = create_server()
 
-    # Create FastMCP Client with in-memory FastMCPTransport
-    transport = FastMCPTransport(mcp)
-    async with Client(transport) as client:
+    # Create FastMCP Client with in-memory connection (auto_initialize=False to avoid subprocess)
+    async with Client(mcp, auto_initialize=False) as client:
+        await client._transport.connect()
         yield client
+        await client._transport.disconnect()
