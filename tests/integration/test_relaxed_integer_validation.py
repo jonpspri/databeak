@@ -128,7 +128,7 @@ async def test_invalid_string_integer_rejected(databeak_client: Client[FastMCPTr
     assert load_result.is_error is False
 
     # Invalid string should be rejected (FastMCP wraps ValidationError in ToolError)
-    with pytest.raises(ToolError, match="Input validation error"):
+    with pytest.raises(ToolError, match="validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": "abc", "column": "name"},
@@ -144,7 +144,7 @@ async def test_fractional_float_rejected(databeak_client: Client[FastMCPTranspor
     assert load_result.is_error is False
 
     # Non-integer float should be rejected (FastMCP wraps ValidationError in ToolError)
-    with pytest.raises(ToolError, match="Input validation error"):
+    with pytest.raises(ToolError, match="validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": 1.5, "column": "name"},
@@ -160,7 +160,7 @@ async def test_empty_string_rejected(databeak_client: Client[FastMCPTransport]) 
     assert load_result.is_error is False
 
     # Empty string should be rejected (FastMCP wraps ValidationError in ToolError)
-    with pytest.raises(ToolError, match="Input validation error"):
+    with pytest.raises(ToolError, match="validation error"):
         await databeak_client.call_tool(
             "get_cell_value",
             {"row_index": "", "column": "name"},

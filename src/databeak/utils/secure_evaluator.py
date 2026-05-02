@@ -21,7 +21,7 @@ import math
 import operator
 import re
 import threading
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 import numpy as np
 import pandas as pd
@@ -659,6 +659,7 @@ class SecureExpressionEvaluator:
             # Use simpleeval for safe execution
             self._evaluator.names.update(context)
             result = self._evaluator.eval(expression)
+            result = cast(pd.Series, result)
 
             # Ensure result is a pandas Series
             if not isinstance(result, pd.Series):
@@ -685,7 +686,7 @@ class SecureExpressionEvaluator:
                 f"Expression evaluation failed: {e}",
             ) from e
 
-        return result  # type: ignore[no-any-return]
+        return result
 
     def _evaluate_string_method(
         self, expression: str, series: pd.Series, var_name: str
