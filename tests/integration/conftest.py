@@ -74,10 +74,9 @@ async def databeak_client() -> AsyncGenerator[Client[FastMCPTransport], None]:
     # Create the server instance
     from databeak.server import create_server
 
-    smithery_server = create_server()
-    # Extract the underlying FastMCP instance from the Smithery wrapper
-    mcp = smithery_server._fastmcp
+    mcp = create_server()
 
-    # Create FastMCP Client with direct server connection
-    async with Client(mcp) as client:
+    # Create FastMCP Client with in-memory transport (no subprocess)
+    transport = FastMCPTransport(mcp)
+    async with Client(transport) as client:
         yield client

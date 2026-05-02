@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-# All MCP tools have been migrated to specialized server modules
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
 
 from fastmcp import FastMCP
+from fastmcp.server.auth.oidc_proxy import OIDCProxy
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from smithery.decorators import smithery
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
@@ -31,6 +32,45 @@ from databeak.utils.logging_config import set_correlation_id, setup_structured_l
 
 # Configure structured logging
 logger = logging.getLogger(__name__)
+
+
+class OidcSettings(BaseSettings):
+    """Settings for OIDC authentication."""
+
+    model_config = SettingsConfigDict(env_prefix="DATABEAK_OIDC_")
+
+    config_url: str | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
+    base_url: str | None = None
+
+
+oidc_settings = OidcSettings()
+auth: OIDCProxy | None = None
+
+if (
+    oidc_settings.config_url
+    and oidc_settings.client_id
+    and oidc_settings.client_secret
+    and oidc_settings.base_url
+):
+    auth = OIDCProxy(
+        config_url=oidc_settings.config_url,
+        client_id=oidc_settings.client_id,
+        client_secret=oidc_settings.client_secret,
+        base_url=oidc_settings.base_url,
+    )
+elif any(
+    [
+        oidc_settings.config_url,
+        oidc_settings.client_id,
+        oidc_settings.client_secret,
+        oidc_settings.base_url,
+    ]
+):
+    logger.error(
+        "Incomplete OIDC configuration. All of config_url, client_id, client_secret, and base_url must be set."
+    )
 
 
 # ============================================================================
@@ -57,12 +97,14 @@ initialize_relaxed_validation()
 # All tools have been migrated to specialized servers
 # No direct tool registration needed - using server composition pattern
 
+mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
 
 # ============================================================================
 # PROMPTS
 # ============================================================================
 
 
+@mcp.prompt
 def analyze_csv_prompt(session_id: str, analysis_type: str = "summary") -> str:
     """Generate a prompt to analyze CSV data."""
     return f"""Please analyze the CSV data in session {session_id}.
@@ -77,6 +119,7 @@ Provide insights about:
 """
 
 
+@mcp.prompt
 def data_cleaning_prompt(session_id: str) -> str:
     """Generate a prompt for data cleaning suggestions."""
     return f"""Review the data in session {session_id} and suggest cleaning operations.
@@ -94,12 +137,28 @@ Consider:
 # MAIN ENTRY POINT
 # ============================================================================
 
+# Mount specialized servers
+mcp.mount(system_server)
+mcp.mount(io_server)
+mcp.mount(row_operations_server)
+mcp.mount(statistics_server)
+mcp.mount(discovery_server)
+mcp.mount(validation_server)
+mcp.mount(transformation_server)
+mcp.mount(column_server)
+mcp.mount(column_text_server)
+
 
 @smithery.server()
+def create_smithery_server() -> FastMCP:
+    """Create and return the Smithery FastMCP server instance."""
+    return mcp
+
+
 def create_server() -> FastMCP:
     """Create and return the FastMCP server instance."""
     # Initialize FastMCP server
-    mcp = FastMCP("DataBeak", instructions=_load_instructions(), version=__version__)
+    mcp = FastMCP("DataBeak", auth=auth, instructions=_load_instructions(), version=__version__)
     # Mount specialized servers
     mcp.mount(system_server)
     mcp.mount(io_server)
@@ -167,7 +226,7 @@ def main() -> None:
         run_args["port"] = args.port
 
     # Run the server
-    create_server().run(**run_args)
+    mcp.run(**run_args)  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":
