@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-# All MCP tools have been migrated to specialized server modules
 import logging
 from argparse import ArgumentParser
 from pathlib import Path
@@ -171,8 +170,8 @@ def create_server() -> FastMCP:
     mcp.mount(column_server)
     mcp.mount(column_text_server)
 
-    mcp.prompt()(analyze_csv_prompt)  # type: ignore[arg-type]
-    mcp.prompt()(data_cleaning_prompt)  # type: ignore[arg-type]
+    mcp.prompt()(analyze_csv_prompt)
+    mcp.prompt()(data_cleaning_prompt)
 
     # Health check endpoint for HTTP transport (container orchestration)
     @mcp.custom_route("/health", methods=["GET"])
