@@ -67,15 +67,6 @@ dependencies = [
     "uvicorn>=0.36.0",
     "fastmcp>=3.2.0",
     "smithery>=0.4.2",
-    # Transient pins
-    "python-multipart>=0.0.26",  # fastmcp
-    "authlib>=1.6.11", # fastmcp
-    "urllib3>=2.6.3",
-    "cryptography>=46.0.7",
-    "starlette>=0.49.1",
-    "python-dotenv>=1.2.2",
-    "requests>=2.33.0",
-    "Pygments>=2.20.0",
 ]
 
 
@@ -372,7 +363,6 @@ server = "databeak.server:create_server"
 
 [dependency-groups]
 dev = [
-    "ansible>=13.3.0",
     "mdformat>=0.7.22",
     "mdformat-frontmatter>=2.0.8",
     "mdformat-gfm>=0.4.1",
@@ -398,9 +388,22 @@ dev = [
     "types-psutil>=7.0.0.20250822",
     "types-pytz>=2025.2.0.20250809",
     "types-tabulate>=0.9.0.20241207",
-    # Transient
-    "filelock>=3.20.3", # pre-commit
-    "virtualenv>=20.36.1", # pre-commit
+]
+
+# Transient dependency pins — these are indirect dependencies that need security floors
+# without polluting the public dependency list or downstream install footprints.
+[tool.uv]
+constraint-dependencies = [
+    "urllib3>=2.6.3",
+    "cryptography>=46.0.7",
+    "python-multipart>=0.0.26",
+    "authlib>=1.6.11",
+    "starlette>=0.49.1",
+    "python-dotenv>=1.2.2",
+    "requests>=2.33.0",
+    "Pygments>=2.20.0",
+    "filelock>=3.20.3",
+    "virtualenv>=20.36.1",
 ]
 
 # Pre-commit hooks configuration (for reference)

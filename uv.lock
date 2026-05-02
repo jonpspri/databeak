@@ -2,6 +2,20 @@ version = 1
 revision = 3
 requires-python = ">=3.12"
 
+[manifest]
+constraints = [
+    { name = "authlib", specifier = ">=1.6.11" },
+    { name = "cryptography", specifier = ">=46.0.7" },
+    { name = "filelock", specifier = ">=3.20.3" },
+    { name = "pygments", specifier = ">=2.20.0" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
+    { name = "python-multipart", specifier = ">=0.0.26" },
+    { name = "requests", specifier = ">=2.33.0" },
+    { name = "starlette", specifier = ">=0.49.1" },
+    { name = "urllib3", specifier = ">=2.6.3" },
+    { name = "virtualenv", specifier = ">=20.36.1" },
+]
+
 [[package]]
 name = "aiofile"
 version = "3.9.0"
@@ -39,34 +53,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5ec9c3402f9f51bf748cec26dde048a2f973a4eea7f5/annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89", size = 16081, upload-time = "2024-05-20T21:33:25.928Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl", hash = "sha256:1f02e8b43a8fbbc3f3e0d4f0f4bfc8131bcb4eebe8849b8e5c773f3a1c582a53", size = 13643, upload-time = "2024-05-20T21:33:24.1Z" },
-]
-
-[[package]]
-name = "ansible"
-version = "13.3.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "ansible-core" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/31/47/f9e6efce29415886d80691220e6cba4d3c0d448d1aa074c15007c59cf038/ansible-13.3.0.tar.gz", hash = "sha256:7e7ed052c8ee7b1449fb285d0e1dac0029f6440c70ce9f473af6c1a31887bb84", size = 52495470, upload-time = "2026-01-29T20:42:57.355Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/3b/72251e716fad07e124d89b3e60b232a7336857003ccf3b57316154baec60/ansible-13.3.0-py3-none-any.whl", hash = "sha256:59638dc893088353254b2e589ac732012a0a005ad29d8d859ffecf52b5c1dc90", size = 55036657, upload-time = "2026-01-29T20:42:52.819Z" },
-]
-
-[[package]]
-name = "ansible-core"
-version = "2.20.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cryptography" },
-    { name = "jinja2" },
-    { name = "packaging" },
-    { name = "pyyaml" },
-    { name = "resolvelib" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/22/56/a76adc20dee854b52a3e20fcb9c01280bbac52ef54308e5b1c7bc67ade76/ansible_core-2.20.2.tar.gz", hash = "sha256:75e19a3ad8cf659579ea182cdf948ee0900d700e564802e92876de53dbd9715d", size = 3317427, upload-time = "2026-01-29T19:25:04.814Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/89/9d0d5ce1e63e57d59ae1c873a2c2b08ab104bd3bea365db46c3140371271/ansible_core-2.20.2-py3-none-any.whl", hash = "sha256:1bbd101e3e3b1ace91d8be123007050f7efd94c4c78bbeb9e45ad1c7016d08ef", size = 2412886, upload-time = "2026-01-29T19:25:03.04Z" },
 ]
 
 [[package]]
@@ -503,8 +489,6 @@ version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "aiofiles" },
-    { name = "authlib" },
-    { name = "cryptography" },
     { name = "fastapi" },
     { name = "fastmcp" },
     { name = "httpx" },
@@ -516,25 +500,17 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "pygments" },
     { name = "python-dateutil" },
-    { name = "python-dotenv" },
-    { name = "python-multipart" },
     { name = "pytz" },
-    { name = "requests" },
     { name = "scipy" },
     { name = "simpleeval" },
     { name = "smithery" },
-    { name = "starlette" },
     { name = "tabulate" },
-    { name = "urllib3" },
     { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "ansible" },
-    { name = "filelock" },
     { name = "mdformat" },
     { name = "mdformat-frontmatter" },
     { name = "mdformat-gfm" },
@@ -560,14 +536,11 @@ dev = [
     { name = "types-psutil" },
     { name = "types-pytz" },
     { name = "types-tabulate" },
-    { name = "virtualenv" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
-    { name = "authlib", specifier = ">=1.6.11" },
-    { name = "cryptography", specifier = ">=46.0.7" },
     { name = "fastapi", specifier = ">=0.117.1" },
     { name = "fastmcp", specifier = ">=3.2.0" },
     { name = "httpx", specifier = ">=0.27.0" },
@@ -579,25 +552,17 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=17.0.0" },
     { name = "pydantic", specifier = ">=2.10.4" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "pygments", specifier = ">=2.20.0" },
     { name = "python-dateutil", specifier = ">=2.9.0" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "python-multipart", specifier = ">=0.0.26" },
     { name = "pytz", specifier = ">=2024.2" },
-    { name = "requests", specifier = ">=2.33.0" },
     { name = "scipy", specifier = ">=1.16.1" },
     { name = "simpleeval", specifier = ">=1.0.5" },
     { name = "smithery", specifier = ">=0.4.2" },
-    { name = "starlette", specifier = ">=0.49.1" },
     { name = "tabulate", specifier = ">=0.9.0" },
-    { name = "urllib3", specifier = ">=2.6.3" },
     { name = "uvicorn", specifier = ">=0.36.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "ansible", specifier = ">=13.3.0" },
-    { name = "filelock", specifier = ">=3.20.3" },
     { name = "mdformat", specifier = ">=0.7.22" },
     { name = "mdformat-frontmatter", specifier = ">=2.0.8" },
     { name = "mdformat-gfm", specifier = ">=0.4.1" },
@@ -623,7 +588,6 @@ dev = [
     { name = "types-psutil", specifier = ">=7.0.0.20250822" },
     { name = "types-pytz", specifier = ">=2025.2.0.20250809" },
     { name = "types-tabulate", specifier = ">=0.9.0.20241207" },
-    { name = "virtualenv", specifier = ">=20.36.1" },
 ]
 
 [[package]]
@@ -2205,15 +2169,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/f3/61/d7545dafb7ac2230c70d38d31cbfe4cc64f7144dc41f6e4e4b78ecd9f5bb/requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6", size = 206888, upload-time = "2023-05-01T04:11:33.229Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06", size = 54481, upload-time = "2023-05-01T04:11:28.427Z" },
-]
-
-[[package]]
-name = "resolvelib"
-version = "1.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1d/14/4669927e06631070edb968c78fdb6ce8992e27c9ab2cde4b3993e22ac7af/resolvelib-1.2.1.tar.gz", hash = "sha256:7d08a2022f6e16ce405d60b68c390f054efcfd0477d4b9bd019cc941c28fad1c", size = 24575, upload-time = "2025-10-11T01:07:44.582Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/23/c941a0d0353681ca138489983c4309e0f5095dfd902e1357004f2357ddf2/resolvelib-1.2.1-py3-none-any.whl", hash = "sha256:fb06b66c8da04172d9e72a21d7d06186d8919e32ae5ab5cdf5b9d920be805ac2", size = 18737, upload-time = "2025-10-11T01:07:43.081Z" },
 ]
 
 [[package]]
